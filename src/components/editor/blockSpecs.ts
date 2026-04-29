@@ -1,7 +1,7 @@
 import { BlockType } from "@/lib/types";
 import {
   Type, Heading1, Heading2, Heading3, ListTodo, List, ListOrdered,
-  Quote, Code, Minus, Lightbulb,
+  Quote, Code, Minus, Lightbulb, FileText, Database,
 } from "lucide-react";
 
 export interface BlockSpec {
@@ -14,6 +14,8 @@ export interface BlockSpec {
 
 export const BLOCK_SPECS: BlockSpec[] = [
   { type: "paragraph", label: "Text", hint: "Just start writing with plain text", icon: Type, keywords: ["text", "paragraph", "p"] },
+  { type: "page", label: "Page", hint: "Embed or create a sub-page", icon: FileText, keywords: ["page", "subpage", "doc"] },
+  { type: "database", label: "Database", hint: "Inline database with multiple views", icon: Database, keywords: ["database", "table", "db", "kanban", "board"] },
   { type: "h1", label: "Heading 1", hint: "Big section heading", icon: Heading1, keywords: ["h1", "heading", "title"] },
   { type: "h2", label: "Heading 2", hint: "Medium section heading", icon: Heading2, keywords: ["h2", "heading"] },
   { type: "h3", label: "Heading 3", hint: "Small section heading", icon: Heading3, keywords: ["h3", "heading"] },
