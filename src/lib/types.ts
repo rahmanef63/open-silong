@@ -9,7 +9,9 @@ export type BlockType =
   | "quote"
   | "code"
   | "divider"
-  | "callout";
+  | "callout"
+  | "page"        // link to a child page
+  | "database";   // inline database
 
 export interface Block {
   id: string;
@@ -17,6 +19,10 @@ export interface Block {
   text: string;
   checked?: boolean;
   lang?: string;
+  /** for type === "page": the linked child page id */
+  pageId?: string;
+  /** for type === "database": the database id */
+  databaseId?: string;
 }
 
 export interface Page {
@@ -30,10 +36,137 @@ export interface Page {
   trashed: boolean;
   createdAt: number;
   updatedAt: number;
+  /** Sharing */
+  isPublic?: boolean;
+  /** Snapshots are kept separately on the workspace; pages just live. */
+  /** Database row metadata: if this page belongs to a db row */
+  rowOfDatabaseId?: string;
+  /** Property values when this page is a database row */
+  rowProps?: Record<string, PropertyValue>;
 }
 
 export interface Workspace {
   id: string;
   name: string;
   emoji: string;
+}
+
+export type ThemePref = "light" | "dark" | "system";
+export type SidebarDensity = "compact" | "comfortable";
+export type PageSort = "manual" | "title" | "updated" | "created";
+export type LandingView = "dashboard" | "recent" | "favorites" | "last";
+export type EditorBehavior = "default" | "minimal";
+
+export interface UserProfile {
+  id: string;
+  name: string;
+  email: string;
+  bio: string;
+  icon: string; // emoji avatar
+  color: string; // hsl color string for avatar bg
+}
+
+export interface Preferences {
+  theme: ThemePref;
+  sidebarDensity: SidebarDensity;
+  defaultPageSort: PageSort;
+  editorBehavior: EditorBehavior;
+  landingView: LandingView;
+  lastOpenedPageId: string | null;
+}
+
+/** ===== Database / properties ===== */
+
+export type PropertyType =
+  | "text"
+  | "number"
+  | "select"
+  | "multi_select"
+  | "status"
+  | "date"
+  | "person"
+  | "checkbox"
+  | "url"
+  | "email"
+  | "phone"
+  | "files"
+  | "relation"
+  | "rollup"
+  | "formula"
+  | "created_time"
+  | "created_by"
+  | "last_edited_time"
+  | "last_edited_by";
+
+export interface SelectOption {
+  id: string;
+  name: string;
+  color: string; // semantic palette key
+}
+
+export interface Property {
+  id: string;
+  name: string;
+  type: PropertyType;
+  hidden?: boolean;
+  options?: SelectOption[]; // select / multi_select / status
+}
+
+export type PropertyValue =
+  | string
+  | number
+  | boolean
+  | null
+  | string[] // multi_select option ids, or person ids, or files
+  | { date?: string };
+
+export type DbView = "table" | "board" | "list" | "gallery" | "calendar" | "timeline";
+
+export interface DatabaseFilter {
+  propertyId: string;
+  op: "contains" | "equals" | "not_empty" | "is_empty" | "checked" | "unchecked";
+  value?: string;
+}
+
+export interface DatabaseSort {
+  propertyId: string;
+  direction: "asc" | "desc";
+}
+
+export interface DatabaseViewConfig {
+  id: string;
+  name: string;
+  type: DbView;
+  groupBy?: string;     // property id (for board)
+  sorts: DatabaseSort[];
+  filters: DatabaseFilter[];
+  search: string;
+}
+
+export interface Database {
+  id: string;
+  name: string;
+  icon: string;
+  properties: Property[];
+  /** ordered row-page ids */
+  rowIds: string[];
+  views: DatabaseViewConfig[];
+  activeViewId: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+/** ===== Version history ===== */
+
+export interface PageSnapshot {
+  id: string;
+  pageId: string;
+  authorId: string;
+  authorName: string;
+  takenAt: number;
+  title: string;
+  icon: string;
+  cover?: string | null;
+  blocks: Block[];
+  rowProps?: Record<string, PropertyValue>;
 }

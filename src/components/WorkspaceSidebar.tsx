@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   ChevronRight, Plus, Search, Star, Trash2, FileText,
-  Settings, Inbox, MoreHorizontal, Copy, Pencil, Sparkles,
+  Settings, Inbox, MoreHorizontal, Copy, Pencil, Sparkles, User,
 } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { Page } from "@/lib/types";
@@ -33,7 +33,7 @@ export function WorkspaceSidebar({ onOpenSearch, onClose }: Props) {
 
   return (
     <aside className="flex h-full w-full flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
-      <div className="flex items-center gap-2 px-3 py-3">
+      <button onClick={() => { navigate("/profile"); onClose?.(); }} className="flex items-center gap-2 px-3 py-3 hover:bg-sidebar-accent transition text-left">
         <div className="flex h-8 w-8 items-center justify-center rounded-md bg-brand/15 text-base">
           {workspace.emoji}
         </div>
@@ -41,13 +41,14 @@ export function WorkspaceSidebar({ onOpenSearch, onClose }: Props) {
           <div className="truncate text-sm font-semibold text-foreground">{workspace.name}</div>
           <div className="truncate text-xs text-muted-foreground">Personal workspace</div>
         </div>
-      </div>
+      </button>
 
       <div className="px-2 space-y-0.5">
         <SidebarAction icon={Search} label="Search" shortcut="⌘K" onClick={onOpenSearch} />
         <SidebarAction icon={Sparkles} label="Dashboard" onClick={() => { navigate("/"); onClose?.(); }} active={location.pathname === "/"} />
         <SidebarAction icon={Inbox} label="Inbox" badge="3" />
-        <SidebarAction icon={Settings} label="Settings" />
+        <SidebarAction icon={User} label="Profile" onClick={() => { navigate("/profile"); onClose?.(); }} active={location.pathname === "/profile"} />
+        <SidebarAction icon={Settings} label="Settings" onClick={() => { navigate("/settings"); onClose?.(); }} active={location.pathname === "/settings"} />
       </div>
 
       <ScrollArea className="flex-1 px-2 py-3">

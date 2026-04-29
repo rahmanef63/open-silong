@@ -3,11 +3,22 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useStore } from "@/lib/store";
 import { Page } from "@/lib/types";
 import { BlockEditor } from "./BlockEditor";
-import { ChevronRight, Star, MoreHorizontal, ImagePlus, Smile, Trash2, Copy, FileText } from "lucide-react";
+import {
+  ChevronRight, Star, MoreHorizontal, ImagePlus, Trash2, Copy, Share2, History, FileText, Plus,
+} from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import {
+  DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext, verticalListSortingStrategy, sortableKeyboardCoordinates,
+} from "@dnd-kit/sortable";
+import { ShareDialog } from "../ShareDialog";
+import { VersionHistory } from "../VersionHistory";
+import { Button } from "@/components/ui/button";
 
 const ICONS = ["📄", "📝", "📚", "🚀", "🌱", "🛰️", "🎨", "🧠", "🪄", "🌙", "☕", "🔥", "🌊", "✨", "🪐", "🛠️"];
 const COVERS = [
@@ -20,13 +31,17 @@ const COVERS = [
 
 export function PageEditor() {
   const { id } = useParams<{ id: string }>();
-  const { getPage, updatePage, pushRecent, toggleFavorite, duplicatePage, deletePage, addBlock, moveBlock } = useStore();
+  const { getPage, updatePage, pushRecent, addBlock, reorderBlocks, childrenOf, createPage } = useStore();
   const navigate = useNavigate();
   const page = id ? getPage(id) : undefined;
   const [iconPick, setIconPick] = useState(false);
-  const [draggingIdx, setDraggingIdx] = useState<number | null>(null);
-  const [overIdx, setOverIdx] = useState<number | null>(null);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const refs = useRef<Map<string, HTMLElement | null>>(new Map());
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
 
   useEffect(() => { if (id && page) pushRecent(id); }, [id]);
 
@@ -47,101 +62,154 @@ export function PageEditor() {
   const focusBlock = (idx: number) => {
     const b = page.blocks[idx];
     if (!b) return;
-    const el = refs.current.get(b.id);
-    el?.focus();
+    refs.current.get(b.id)?.focus();
   };
 
-  const dragHandlers = {
-    draggingIdx, overIdx,
-    onDragStart: (i: number) => setDraggingIdx(i),
-    onDragOver: (i: number) => setOverIdx(i),
-    onDrop: (i: number) => {
-      if (draggingIdx !== null && draggingIdx !== i) moveBlock(page.id, draggingIdx, i);
-      setDraggingIdx(null); setOverIdx(null);
-    },
+  const onDragEnd = (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const ids = page.blocks.map(b => b.id);
+    const from = ids.indexOf(String(active.id));
+    const to = ids.indexOf(String(over.id));
+    if (from === -1 || to === -1) return;
+    const next = [...ids];
+    next.splice(to, 0, next.splice(from, 1)[0]);
+    reorderBlocks(page.id, next);
   };
+
+  const subpages = childrenOf(page.id);
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
-      <Header page={page} />
+      <Header page={page} onShare={() => setShareOpen(true)} onHistory={() => setHistoryOpen(o => !o)} historyOpen={historyOpen} />
 
-      <div className="flex-1 overflow-y-auto scrollbar-thin">
-        {page.cover && (
-          <div className="h-44 md:h-56 w-full" style={{ background: page.cover }} />
-        )}
+      <div className="flex flex-1 min-h-0">
+        <div className="flex-1 overflow-y-auto scrollbar-thin">
+          {page.cover && <div className="h-44 md:h-56 w-full" style={{ background: page.cover }} />}
 
-        <div className={cn("mx-auto max-w-3xl px-6 md:px-12", page.cover ? "-mt-10" : "pt-16")}>
-          <div className="relative">
-            <button
-              onClick={() => setIconPick(v => !v)}
-              className="text-6xl leading-none hover:bg-accent rounded-md p-1 transition"
-              aria-label="Change icon"
-            >
-              {page.icon}
-            </button>
-            {iconPick && (
-              <div className="absolute z-20 mt-2 grid grid-cols-8 gap-1 rounded-lg border border-border bg-popover p-2 shadow-pop">
-                {ICONS.map(i => (
-                  <button key={i} onClick={() => { updatePage(page.id, { icon: i }); setIconPick(false); }} className="text-xl rounded hover:bg-accent p-1.5">{i}</button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground opacity-0 hover:opacity-100 transition">
-            {!page.cover && (
-              <button onClick={() => updatePage(page.id, { cover: COVERS[Math.floor(Math.random() * COVERS.length)] })} className="flex items-center gap-1 hover:text-foreground">
-                <ImagePlus className="h-3.5 w-3.5" /> Add cover
+          <div className={cn("mx-auto max-w-3xl px-6 md:px-12", page.cover ? "-mt-10" : "pt-16")}>
+            <div className="relative">
+              <button
+                onClick={() => setIconPick(v => !v)}
+                className="text-6xl leading-none hover:bg-accent rounded-md p-1 transition"
+                aria-label="Change icon"
+              >
+                {page.icon}
               </button>
-            )}
-          </div>
+              {iconPick && (
+                <div className="absolute z-20 mt-2 grid grid-cols-8 gap-1 rounded-lg border border-border bg-popover p-2 shadow-pop">
+                  {ICONS.map(i => (
+                    <button key={i} onClick={() => { updatePage(page.id, { icon: i }); setIconPick(false); }} className="text-xl rounded hover:bg-accent p-1.5">{i}</button>
+                  ))}
+                </div>
+              )}
+            </div>
 
-          <input
-            value={page.title}
-            onChange={e => updatePage(page.id, { title: e.target.value })}
-            placeholder="Untitled"
-            className="mt-3 w-full bg-transparent text-4xl md:text-5xl font-bold tracking-tight font-serif outline-none placeholder:text-muted-foreground/40"
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === "ArrowDown") {
-                e.preventDefault();
-                const first = page.blocks[0];
-                if (first) refs.current.get(first.id)?.focus();
-              }
-            }}
-          />
+            <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+              {!page.cover && (
+                <button onClick={() => updatePage(page.id, { cover: COVERS[Math.floor(Math.random() * COVERS.length)] })} className="flex items-center gap-1 hover:text-foreground transition">
+                  <ImagePlus className="h-3.5 w-3.5" /> Add cover
+                </button>
+              )}
+            </div>
 
-          <div className="mt-6 pb-32 prose-editor">
-            {page.blocks.map((b, i) => (
-              <BlockEditor
-                key={b.id}
-                pageId={page.id}
-                block={b}
-                index={i}
-                total={page.blocks.length}
-                registerRef={registerRef}
-                onFocusNext={() => focusBlock(i + 1)}
-                onFocusPrev={() => focusBlock(i - 1)}
-                dragHandlers={dragHandlers}
-              />
-            ))}
-            <button
-              onClick={() => {
-                const newId = addBlock(page.id, page.blocks.length - 1);
-                setTimeout(() => document.querySelector<HTMLElement>(`[data-block-id="${newId}"]`)?.focus(), 0);
+            <input
+              value={page.title}
+              onChange={e => updatePage(page.id, { title: e.target.value })}
+              placeholder="Untitled"
+              className="mt-3 w-full bg-transparent text-4xl md:text-5xl font-bold tracking-tight font-serif outline-none placeholder:text-muted-foreground/40"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === "ArrowDown") {
+                  e.preventDefault();
+                  refs.current.get(page.blocks[0]?.id ?? "")?.focus();
+                }
               }}
-              className="mt-2 text-sm text-muted-foreground hover:text-foreground"
-            >
-              + Add block
-            </button>
+            />
+
+            <div className="mt-6 pb-32 prose-editor">
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+                <SortableContext items={page.blocks.map(b => b.id)} strategy={verticalListSortingStrategy}>
+                  {page.blocks.map((b, i) => (
+                    <BlockEditor
+                      key={b.id}
+                      pageId={page.id}
+                      block={b}
+                      index={i}
+                      total={page.blocks.length}
+                      registerRef={registerRef}
+                      onFocusNext={() => focusBlock(i + 1)}
+                      onFocusPrev={() => focusBlock(i - 1)}
+                    />
+                  ))}
+                </SortableContext>
+              </DndContext>
+
+              <button
+                onClick={() => {
+                  const newId = addBlock(page.id, page.blocks.length - 1);
+                  setTimeout(() => document.querySelector<HTMLElement>(`[data-block-id="${newId}"]`)?.focus(), 0);
+                }}
+                className="mt-2 text-sm text-muted-foreground hover:text-foreground transition"
+              >
+                + Add block
+              </button>
+
+              {/* Subpages section */}
+              <Subpages page={page} subpages={subpages} />
+            </div>
           </div>
         </div>
+
+        {historyOpen && (
+          <div className="hidden lg:block w-80 border-l border-border bg-surface overflow-y-auto scrollbar-thin shrink-0">
+            <VersionHistory pageId={page.id} onClose={() => setHistoryOpen(false)} />
+          </div>
+        )}
       </div>
+
+      <ShareDialog open={shareOpen} onOpenChange={setShareOpen} page={page} />
     </div>
   );
 }
 
-function Header({ page }: { page: Page }) {
-  const { pages, getPage, toggleFavorite, duplicatePage, deletePage, saving } = useStore();
+function Subpages({ page, subpages }: { page: Page; subpages: Page[] }) {
+  const navigate = useNavigate();
+  const { createPage } = useStore();
+  return (
+    <section className="mt-12 border-t border-border pt-6">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-xs uppercase tracking-wider font-semibold text-muted-foreground">Pages inside</h3>
+        <Button variant="ghost" size="sm" className="h-7 text-xs"
+          onClick={() => { const c = createPage(page.id); navigate(`/p/${c.id}`); }}
+        >
+          <Plus className="h-3 w-3 mr-1" /> Add subpage
+        </Button>
+      </div>
+      {subpages.length === 0 ? (
+        <div className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+          No pages inside yet.
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {subpages.map(sp => (
+            <button
+              key={sp.id}
+              onClick={() => navigate(`/p/${sp.id}`)}
+              className="flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-left hover:border-border-strong transition"
+            >
+              <span>{sp.icon}</span>
+              <span className="flex-1 truncate text-sm">{sp.title || "Untitled"}</span>
+              <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+            </button>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function Header({ page, onShare, onHistory, historyOpen }: { page: Page; onShare: () => void; onHistory: () => void; historyOpen: boolean }) {
+  const { getPage, toggleFavorite, duplicatePage, deletePage, saving } = useStore();
   const navigate = useNavigate();
   const crumbs: Page[] = [];
   let cur: Page | undefined = page;
@@ -164,7 +232,7 @@ function Header({ page }: { page: Page }) {
               )}
             >
               <span>{c.icon}</span>
-              <span className="truncate">{c.title || "Untitled"}</span>
+              <span className="truncate max-w-[160px]">{c.title || "Untitled"}</span>
             </button>
           </div>
         ))}
@@ -173,6 +241,16 @@ function Header({ page }: { page: Page }) {
         <span className={cn("text-xs text-muted-foreground mr-2", saving && "animate-pulse-soft")}>
           {saving ? "Saving…" : "Saved"}
         </span>
+        <button onClick={onShare} className="flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1 text-xs hover:bg-accent">
+          <Share2 className="h-3.5 w-3.5" /> Share
+        </button>
+        <button
+          onClick={onHistory}
+          className={cn("flex h-8 w-8 items-center justify-center rounded hover:bg-accent text-muted-foreground", historyOpen && "bg-accent text-foreground")}
+          aria-label="Version history"
+        >
+          <History className="h-4 w-4" />
+        </button>
         <button
           onClick={() => toggleFavorite(page.id)}
           className="flex h-8 w-8 items-center justify-center rounded hover:bg-accent text-muted-foreground"
