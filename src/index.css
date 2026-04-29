@@ -1,105 +1,133 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
-
+/* Notion-inspired workspace design system. All colors HSL. */
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --foreground: 220 13% 13%;
+
+    --surface: 30 14% 98%;
+    --surface-elevated: 0 0% 100%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 220 13% 13%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 220 13% 13%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 220 13% 13%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 30 10% 96%;
+    --secondary-foreground: 220 13% 18%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 30 10% 96%;
+    --muted-foreground: 220 9% 46%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 30 14% 94%;
+    --accent-foreground: 220 13% 13%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --brand: 24 90% 56%;
+    --brand-foreground: 0 0% 100%;
+    --brand-soft: 28 100% 96%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
 
-    --radius: 0.5rem;
+    --success: 142 64% 38%;
+    --warning: 38 92% 50%;
 
-    --sidebar-background: 0 0% 98%;
+    --border: 30 8% 90%;
+    --border-strong: 30 6% 82%;
+    --input: 30 8% 90%;
+    --ring: 24 90% 56%;
 
-    --sidebar-foreground: 240 5.3% 26.1%;
+    --radius: 0.625rem;
 
-    --sidebar-primary: 240 5.9% 10%;
+    /* Sidebar */
+    --sidebar-background: 30 14% 97%;
+    --sidebar-foreground: 220 10% 30%;
+    --sidebar-primary: 220 13% 13%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 30 14% 92%;
+    --sidebar-accent-foreground: 220 13% 13%;
+    --sidebar-border: 30 8% 88%;
+    --sidebar-ring: 24 90% 56%;
 
-    --sidebar-primary-foreground: 0 0% 98%;
+    /* Block highlight */
+    --block-hover: 30 14% 96%;
+    --block-handle: 220 9% 60%;
 
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --shadow-soft: 0 1px 2px hsl(220 13% 13% / 0.04), 0 4px 12px hsl(220 13% 13% / 0.04);
+    --shadow-pop: 0 8px 28px hsl(220 13% 13% / 0.12);
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --background: 220 14% 10%;
+    --foreground: 30 10% 92%;
+    --surface: 220 14% 12%;
+    --surface-elevated: 220 14% 14%;
+    --card: 220 14% 12%;
+    --card-foreground: 30 10% 92%;
+    --popover: 220 14% 14%;
+    --popover-foreground: 30 10% 92%;
+    --primary: 30 10% 92%;
+    --primary-foreground: 220 14% 10%;
+    --secondary: 220 14% 16%;
+    --secondary-foreground: 30 10% 92%;
+    --muted: 220 14% 16%;
+    --muted-foreground: 220 9% 62%;
+    --accent: 220 14% 18%;
+    --accent-foreground: 30 10% 92%;
+    --brand: 24 90% 60%;
+    --brand-foreground: 220 14% 10%;
+    --brand-soft: 24 40% 18%;
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 10% 22%;
+    --border-strong: 220 10% 28%;
+    --input: 220 10% 22%;
+    --ring: 24 90% 60%;
+    --sidebar-background: 220 14% 11%;
+    --sidebar-foreground: 30 8% 78%;
+    --sidebar-primary: 30 10% 92%;
+    --sidebar-primary-foreground: 220 14% 10%;
+    --sidebar-accent: 220 14% 16%;
+    --sidebar-accent-foreground: 30 10% 92%;
+    --sidebar-border: 220 10% 20%;
+    --sidebar-ring: 24 90% 60%;
+    --block-hover: 220 14% 15%;
   }
 }
 
 @layer base {
-  * {
-    @apply border-border;
-  }
-
+  * { @apply border-border; }
+  html, body, #root { height: 100%; }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "cv11", "ss01", "ss03";
   }
+  ::selection { background: hsl(var(--brand) / 0.25); }
+}
+
+@layer components {
+  .editor-block {
+    @apply relative rounded-md py-1 px-2 -mx-2 transition-colors;
+  }
+  .editor-block:hover { background-color: hsl(var(--block-hover)); }
+  .editor-block .block-handle {
+    @apply absolute -left-7 top-1.5 opacity-0 group-hover/block:opacity-100 transition-opacity cursor-grab text-muted-foreground;
+  }
+  .prose-editor h1 { @apply text-3xl font-bold tracking-tight; font-family: 'Fraunces', serif; }
+  .prose-editor h2 { @apply text-2xl font-semibold tracking-tight; font-family: 'Fraunces', serif; }
+  .prose-editor h3 { @apply text-xl font-semibold tracking-tight; }
+  .prose-editor p { @apply leading-7; }
+  .prose-editor blockquote { @apply border-l-4 border-foreground/30 pl-4 italic text-foreground/80; }
+  .prose-editor code.inline { @apply px-1.5 py-0.5 rounded bg-muted text-[0.9em] font-mono; }
+  .scrollbar-thin::-webkit-scrollbar { width: 8px; height: 8px; }
+  .scrollbar-thin::-webkit-scrollbar-thumb { background: hsl(var(--border-strong)); border-radius: 8px; }
 }
