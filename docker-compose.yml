@@ -1,0 +1,30 @@
+version: "3.8"
+
+services:
+  backend:
+    image: ghcr.io/get-convex/convex-backend:latest
+    restart: unless-stopped
+    environment:
+      - INSTANCE_NAME=${INSTANCE_NAME:-notion-page-clone}
+      - INSTANCE_SECRET=${INSTANCE_SECRET:-change-me-in-production}
+      - CONVEX_CLOUD_ORIGIN=${CONVEX_CLOUD_ORIGIN:-http://localhost:3210}
+      - CONVEX_SITE_ORIGIN=${CONVEX_SITE_ORIGIN:-http://localhost:3211}
+      - JWT_PRIVATE_KEY=${JWT_PRIVATE_KEY:-}
+      - JWKS=${JWKS:-}
+      - CONVEX_ADMIN_KEY=${CONVEX_ADMIN_KEY:-}
+    volumes:
+      - convex_data:/convex/data
+    ports:
+      - "3210:3210"
+      - "3211:3211"
+
+  dashboard:
+    image: ghcr.io/get-convex/convex-dashboard:latest
+    restart: unless-stopped
+    environment:
+      - PORT=6791
+    ports:
+      - "6791:6791"
+
+volumes:
+  convex_data:
