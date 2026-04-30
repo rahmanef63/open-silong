@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import { useDroppable } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { Block, BlockType } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { cn } from "@/shared/lib/utils";
@@ -53,18 +54,20 @@ function ColumnPane({
       )}
     >
       <div className="space-y-0.5 min-h-10">
-        {blocks.map((b, i) => (
-          <NestedBlock
-            key={b.id}
-            block={b}
-            onUpdate={(patch) => onUpdate(b.id, patch)}
-            onAddAfter={(type) => onAdd(i, type)}
-            onDelete={() => onDelete(b.id)}
-            onFocusNext={() => focusBlock(i + 1)}
-            onFocusPrev={() => focusBlock(i - 1)}
-            registerRef={registerRef}
-          />
-        ))}
+        <SortableContext items={blocks.map((b) => b.id)} strategy={verticalListSortingStrategy}>
+          {blocks.map((b, i) => (
+            <NestedBlock
+              key={b.id}
+              block={b}
+              onUpdate={(patch) => onUpdate(b.id, patch)}
+              onAddAfter={(type) => onAdd(i, type)}
+              onDelete={() => onDelete(b.id)}
+              onFocusNext={() => focusBlock(i + 1)}
+              onFocusPrev={() => focusBlock(i - 1)}
+              registerRef={registerRef}
+            />
+          ))}
+        </SortableContext>
       </div>
       <button
         onClick={() => onAdd(blocks.length - 1)}

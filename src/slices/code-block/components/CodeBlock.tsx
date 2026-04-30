@@ -6,17 +6,9 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { CODE_LANGUAGES, normalizeLang } from "../lib/languages";
+import type { CodeBlockProps } from "../types";
 
-interface Props {
-  text: string;
-  lang?: string;
-  registerRef: (el: HTMLElement | null) => void;
-  onText: (next: string) => void;
-  onLang: (next: string) => void;
-  onKeyDown: (e: React.KeyboardEvent<HTMLElement>) => void;
-}
-
-export function CodeBlock({ text, lang, registerRef, onText, onLang, onKeyDown }: Props) {
+export function CodeBlock({ text, lang, registerRef, onText, onLang, onKeyDown }: CodeBlockProps) {
   const [focused, setFocused] = useState(false);
   const [copied, setCopied] = useState(false);
   const editRef = useRef<HTMLPreElement | null>(null);

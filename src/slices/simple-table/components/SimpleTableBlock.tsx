@@ -1,19 +1,14 @@
 import { useMemo } from "react";
 import { Plus, Trash2, X, Database as DatabaseIcon } from "lucide-react";
-import type { Block } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { cn } from "@/shared/lib/utils";
 import { toast } from "sonner";
-
-interface Props {
-  pageId: string;
-  block: Block;
-}
+import type { SimpleTableBlockProps } from "../types";
 
 const DEFAULT_ROWS: string[][] = [["", "", ""], ["", "", ""], ["", "", ""]];
 
-export function SimpleTableBlock({ pageId, block }: Props) {
-  const { updateBlock, addDatabaseFromTable, replaceBlock } = useStore();
+export function SimpleTableBlock({ block, onUpdate, onReplace }: SimpleTableBlockProps) {
+  const { addDatabaseFromTable } = useStore();
   const rows = useMemo<string[][]>(
     () => (block.tableRows && block.tableRows.length ? block.tableRows : DEFAULT_ROWS),
     [block.tableRows],
@@ -21,7 +16,7 @@ export function SimpleTableBlock({ pageId, block }: Props) {
   const cols = rows[0]?.length ?? 0;
   const hasHeader = block.tableHeader !== false;
 
-  const set = (next: string[][]) => updateBlock(pageId, block.id, { tableRows: next });
+  const set = (next: string[][]) => onUpdate({ tableRows: next });
 
   const setCell = (r: number, c: number, v: string) => {
     const next = rows.map((row) => [...row]);
@@ -41,12 +36,16 @@ export function SimpleTableBlock({ pageId, block }: Props) {
   };
 
   const turnIntoDatabase = async () => {
+    if (!onReplace) {
+      toast.error("Cannot convert here — open this block at top level");
+      return;
+    }
     const dbId = await addDatabaseFromTable({
       headerRow: hasHeader ? rows[0] : Array(cols).fill("").map((_, i) => `Column ${i + 1}`),
       bodyRows: hasHeader ? rows.slice(1) : rows,
     });
     if (!dbId) return;
-    replaceBlock(pageId, block.id, {
+    onReplace({
       ...block,
       type: "database",
       tableRows: undefined,
@@ -66,20 +65,22 @@ export function SimpleTableBlock({ pageId, block }: Props) {
             <input
               type="checkbox"
               checked={hasHeader}
-              onChange={(e) => updateBlock(pageId, block.id, { tableHeader: e.target.checked })}
+              onChange={(e) => onUpdate({ tableHeader: e.target.checked })}
               className="h-3 w-3"
             />
             Header row
           </label>
         </div>
-        <button
-          type="button"
-          onClick={turnIntoDatabase}
-          className="inline-flex items-center gap-1 rounded border border-border bg-background px-2 py-0.5 text-[11px] hover:bg-accent"
-          title="Convert to a real database with views, filters, and properties"
-        >
-          <DatabaseIcon className="h-3 w-3" /> Turn into database
-        </button>
+        {onReplace && (
+          <button
+            type="button"
+            onClick={turnIntoDatabase}
+            className="inline-flex items-center gap-1 rounded border border-border bg-background px-2 py-0.5 text-[11px] hover:bg-accent"
+            title="Convert to a real database with views, filters, and properties"
+          >
+            <DatabaseIcon className="h-3 w-3" /> Turn into database
+          </button>
+        )}
       </div>
       <table className="w-full text-sm border-collapse">
         <tbody>
