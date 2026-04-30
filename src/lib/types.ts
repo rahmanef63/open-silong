@@ -120,6 +120,14 @@ export interface Property {
   type: PropertyType;
   hidden?: boolean;
   options?: SelectOption[]; // select / multi_select / status
+  /** Mock relation target; null/undefined means all database rows. */
+  relationDatabaseId?: string | null;
+  /** Mock rollup configuration. */
+  rollupRelationPropertyId?: string | null;
+  rollupTargetPropertyId?: string | null;
+  rollupAggregate?: "count" | "values" | "sum" | "checked" | "latest";
+  /** Mock formula expression. Supports {{title}}, {{Property}}, and simple =math. */
+  formulaExpression?: string;
 }
 
 export type PropertyValue =
@@ -127,7 +135,7 @@ export type PropertyValue =
   | number
   | boolean
   | null
-  | string[] // multi_select option ids, or person ids, or files
+  | string[] // multi_select option ids, person ids, relation ids, or mock files
   | { date?: string };
 
 export type DbView = "table" | "board" | "list" | "gallery" | "calendar" | "timeline";

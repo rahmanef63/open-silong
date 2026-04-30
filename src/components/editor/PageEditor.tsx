@@ -145,8 +145,8 @@ export function PageEditor() {
               </DndContext>
 
               <button
-                onClick={() => {
-                  const newId = addBlock(page.id, page.blocks.length - 1);
+                onClick={async () => {
+                  const newId = await addBlock(page.id, page.blocks.length - 1);
                   setTimeout(() => document.querySelector<HTMLElement>(`[data-block-id="${newId}"]`)?.focus(), 0);
                 }}
                 className="mt-2 text-sm text-muted-foreground hover:text-foreground transition"
@@ -180,7 +180,7 @@ function Subpages({ page, subpages }: { page: Page; subpages: Page[] }) {
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-xs uppercase tracking-wider font-semibold text-muted-foreground">Pages inside</h3>
         <Button variant="ghost" size="sm" className="h-7 text-xs"
-          onClick={() => { const c = createPage(page.id); navigate(`/p/${c.id}`); }}
+          onClick={async () => { const c = await createPage(page.id); navigate(`/p/${c.id}`); }}
         >
           <Plus className="h-3 w-3 mr-1" /> Add subpage
         </Button>
@@ -265,7 +265,7 @@ function Header({ page, onShare, onHistory, historyOpen }: { page: Page; onShare
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => { const c = duplicatePage(page.id); if (c) navigate(`/p/${c.id}`); }}>
+            <DropdownMenuItem onClick={async () => { const c = await duplicatePage(page.id); if (c) navigate(`/p/${c.id}`); }}>
               <Copy className="mr-2 h-4 w-4" /> Duplicate
             </DropdownMenuItem>
             <DropdownMenuSeparator />

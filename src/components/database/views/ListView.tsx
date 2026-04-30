@@ -1,6 +1,7 @@
 import { Database, DatabaseViewConfig, Page } from "@/lib/types";
 import { useNavigate } from "react-router-dom";
 import { PropertyCell } from "../PropertyCell";
+import { focusSiblingBySelector } from "@/lib/keyboard";
 
 export function ListView({ db, rows }: { db: Database; view: DatabaseViewConfig; rows: Page[] }) {
   const navigate = useNavigate();
@@ -14,6 +15,13 @@ export function ListView({ db, rows }: { db: Database; view: DatabaseViewConfig;
         <button
           key={r.id}
           onClick={() => navigate(`/p/${r.id}`)}
+          onKeyDown={(e) => {
+            if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+              e.preventDefault();
+              focusSiblingBySelector(e.currentTarget, "[data-db-nav-item]", e.key === "ArrowDown" ? 1 : -1);
+            }
+          }}
+          data-db-nav-item
           className="flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-accent transition"
         >
           <span className="text-base">{r.icon}</span>

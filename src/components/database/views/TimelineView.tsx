@@ -3,6 +3,7 @@ import { Database, DatabaseViewConfig, Page } from "@/lib/types";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { focusSiblingBySelector } from "@/lib/keyboard";
 
 const DAY_MS = 86400000;
 const CELL_W = 32; // px per day
@@ -140,6 +141,13 @@ export function TimelineView({ db, rows }: { db: Database; view: DatabaseViewCon
               <button
                 style={{ width: LABEL_W }}
                 onClick={() => navigate(`/p/${row.id}`)}
+                onKeyDown={(e) => {
+                  if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+                    e.preventDefault();
+                    focusSiblingBySelector(e.currentTarget, "[data-db-nav-item]", e.key === "ArrowDown" ? 1 : -1);
+                  }
+                }}
+                data-db-nav-item
                 className="shrink-0 flex items-center gap-1 text-xs px-2 border-r border-border text-left truncate hover:underline underline-offset-2"
               >
                 <span>{row.icon}</span>
@@ -159,6 +167,13 @@ export function TimelineView({ db, rows }: { db: Database; view: DatabaseViewCon
                 {bar && inView && (
                   <button
                     onClick={() => navigate(`/p/${row.id}`)}
+                    onKeyDown={(e) => {
+                      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+                        e.preventDefault();
+                        focusSiblingBySelector(e.currentTarget, "[data-db-nav-item]", e.key === "ArrowDown" ? 1 : -1);
+                      }
+                    }}
+                    data-db-nav-item
                     className="absolute top-1 h-6 rounded-full bg-brand/70 hover:bg-brand text-white text-[10px] font-medium px-2 truncate flex items-center transition z-10"
                     style={{ left: bar.left, width: bar.width }}
                   >

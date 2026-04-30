@@ -1,12 +1,22 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
-  ChevronRight, Plus, Search, Star, Trash2, FileText,
-  Settings, Inbox, MoreHorizontal, Copy, Pencil, Sparkles, User,
+  ChevronRight, Copy, GripVertical, Inbox, MoreHorizontal, Pencil, Plus, Search,
+  Settings, Sparkles, Star, Trash2, User,
+  type LucideIcon,
 } from "lucide-react";
+import {
+  closestCenter, DndContext, KeyboardSensor, PointerSensor, type DragEndEvent,
+  useSensor, useSensors,
+} from "@dnd-kit/core";
+import {
+  SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { useStore } from "@/lib/store";
 import { Page } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { focusSiblingBySelector, isTextInputTarget } from "@/lib/keyboard";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuTrigger,
@@ -18,66 +28,185 @@ interface Props {
   onClose?: () => void;
 }
 
+type DensityConfig = {
+  header: string;
+  avatar: string;
+  action: string;
+  actionIcon: string;
+  pageLink: string;
+  toggle: string;
+  section: string;
+  sectionTitle: string;
+  footer: string;
+  indent: number;
+  showWorkspaceMeta: boolean;
+  showActionMeta: boolean;
+};
+
+const DENSITY: Record<"comfortable" | "compact", DensityConfig> = {
+  comfortable: {
+    header: "px-3 py-3",
+    avatar: "h-8 w-8 text-base",
+    action: "min-h-8 gap-2 px-2 py-1.5 text-sm",
+    actionIcon: "h-4 w-4",
+    pageLink: "min-h-8 gap-1.5 py-1.5 text-sm",
+    toggle: "h-6 w-6",
+    section: "mb-4",
+    sectionTitle: "text-[11px]",
+    footer: "px-3 py-2 text-sm",
+    indent: 12,
+    showWorkspaceMeta: true,
+    showActionMeta: true,
+  },
+  compact: {
+    header: "px-2 py-2",
+    avatar: "h-7 w-7 text-sm",
+    action: "min-h-7 gap-1.5 px-2 py-1 text-xs",
+    actionIcon: "h-3.5 w-3.5",
+    pageLink: "min-h-7 gap-1 py-1 text-xs",
+    toggle: "h-5 w-5",
+    section: "mb-2",
+    sectionTitle: "text-[10px]",
+    footer: "px-2 py-1.5 text-xs",
+    indent: 10,
+    showWorkspaceMeta: false,
+    showActionMeta: false,
+  },
+};
+
+type TreeItem = { page: Page; depth: number; parentId: string | null };
+
 export function WorkspaceSidebar({ onOpenSearch, onClose }: Props) {
-  const { workspace, pages, recents, childrenOf, createPage, toggleFavorite, duplicatePage, deletePage, updatePage } = useStore();
+  const {
+    workspace, pages, recents, childrenOf, createPage, preferences, reorderPages,
+  } = useStore();
   const navigate = useNavigate();
   const location = useLocation();
-  const favorites = pages.filter(p => p.favorite && !p.trashed);
-  const recentPages = recents.map(id => pages.find(p => p.id === id)).filter((p): p is Page => !!p && !p.trashed);
+  const density = DENSITY[preferences.sidebarDensity];
+  const [openIds, setOpenIds] = useState<Set<string>>(new Set());
+  const [treeInitialized, setTreeInitialized] = useState(false);
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
 
-  const handleNew = (parentId: string | null = null) => {
-    const p = createPage(parentId);
-    navigate(`/p/${p.id}`);
+  const favorites = pages.filter(p => p.favorite && !p.trashed && !p.rowOfDatabaseId);
+  const recentPages = recents.map(id => pages.find(p => p.id === id)).filter((p): p is Page => !!p && !p.trashed && !p.rowOfDatabaseId);
+  const rootPages = childrenOf(null);
+
+  useEffect(() => {
+    if (treeInitialized || rootPages.length === 0) return;
+    setOpenIds(new Set(rootPages.filter((page) => childrenOf(page.id).length > 0).map((page) => page.id)));
+    setTreeInitialized(true);
+  }, [treeInitialized, rootPages, childrenOf]);
+
+  const pageMap = useMemo(() => new Map(pages.map((page) => [page.id, page])), [pages]);
+
+  const treeItems = useMemo(() => {
+    const walk = (parentId: string | null, depth: number): TreeItem[] =>
+      childrenOf(parentId).flatMap((page) => {
+        const item = { page, depth, parentId };
+        return openIds.has(page.id) ? [item, ...walk(page.id, depth + 1)] : [item];
+      });
+    return walk(null, 0);
+  }, [childrenOf, openIds]);
+
+  const itemById = useMemo(() => new Map(treeItems.map((item) => [item.page.id, item])), [treeItems]);
+
+  const setPageOpen = (id: string, open: boolean) => {
+    setOpenIds((prev) => {
+      const next = new Set(prev);
+      if (open) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  };
+
+  const isDescendantOf = (possibleChildId: string, parentId: string) => {
+    let current = pageMap.get(possibleChildId);
+    while (current?.parentId) {
+      if (current.parentId === parentId) return true;
+      current = pageMap.get(current.parentId);
+    }
+    return false;
+  };
+
+  const handleNew = async (parentId: string | null = null) => {
+    const page = await createPage(parentId);
+    if (parentId) setPageOpen(parentId, true);
+    navigate(`/p/${page.id}`);
     onClose?.();
   };
 
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over, delta } = event;
+    if (!over || active.id === over.id) return;
+    const activeId = String(active.id);
+    const overId = String(over.id);
+    const overItem = itemById.get(overId);
+    if (!overItem || isDescendantOf(overId, activeId)) return;
+
+    if (delta.x > 28) {
+      const childIds = childrenOf(overId).map((page) => page.id).filter((id) => id !== activeId);
+      reorderPages(overId, [...childIds, activeId]);
+      setPageOpen(overId, true);
+      return;
+    }
+
+    const targetParentId = overItem.parentId;
+    const siblingIds = childrenOf(targetParentId).map((page) => page.id).filter((id) => id !== activeId);
+    const overIndex = siblingIds.indexOf(overId);
+    const next = [...siblingIds];
+    next.splice(overIndex === -1 ? next.length : overIndex, 0, activeId);
+    reorderPages(targetParentId, next);
+    if (targetParentId) setPageOpen(targetParentId, true);
+  };
+
   return (
-    <aside className="flex h-full w-full flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
-      <button onClick={() => { navigate("/profile"); onClose?.(); }} className="flex items-center gap-2 px-3 py-3 hover:bg-sidebar-accent transition text-left">
-        <div className="flex h-8 w-8 items-center justify-center rounded-md bg-brand/15 text-base">
+    <aside data-keyboard-scope className="flex h-full w-full flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
+      <button
+        onClick={() => { navigate("/profile"); onClose?.(); }}
+        className={cn("flex items-center gap-2 hover:bg-sidebar-accent transition text-left", density.header)}
+      >
+        <div className={cn("flex items-center justify-center rounded-md bg-brand/15", density.avatar)}>
           {workspace.emoji}
         </div>
         <div className="min-w-0 flex-1">
           <div className="truncate text-sm font-semibold text-foreground">{workspace.name}</div>
-          <div className="truncate text-xs text-muted-foreground">Personal workspace</div>
+          {density.showWorkspaceMeta && (
+            <div className="truncate text-xs text-muted-foreground">Personal workspace</div>
+          )}
         </div>
       </button>
 
       <div className="px-2 space-y-0.5">
-        <SidebarAction icon={Search} label="Search" shortcut="⌘K" onClick={onOpenSearch} />
-        <SidebarAction icon={Sparkles} label="Dashboard" onClick={() => { navigate("/"); onClose?.(); }} active={location.pathname === "/"} />
-        <SidebarAction icon={Inbox} label="Inbox" badge="3" />
-        <SidebarAction icon={User} label="Profile" onClick={() => { navigate("/profile"); onClose?.(); }} active={location.pathname === "/profile"} />
-        <SidebarAction icon={Settings} label="Settings" onClick={() => { navigate("/settings"); onClose?.(); }} active={location.pathname === "/settings"} />
+        <SidebarAction icon={Search} label="Search" shortcut="Ctrl K" onClick={onOpenSearch} density={density} />
+        <SidebarAction icon={Sparkles} label="Dashboard" onClick={() => { navigate("/"); onClose?.(); }} active={location.pathname === "/"} density={density} />
+        <SidebarAction icon={Inbox} label="Inbox" badge="3" density={density} />
+        <SidebarAction icon={User} label="Profile" onClick={() => { navigate("/profile"); onClose?.(); }} active={location.pathname === "/profile"} density={density} />
+        <SidebarAction icon={Settings} label="Settings" onClick={() => { navigate("/settings"); onClose?.(); }} active={location.pathname === "/settings"} density={density} />
       </div>
 
-      <ScrollArea className="flex-1 px-2 py-3">
+      <ScrollArea className={cn("flex-1 px-2", preferences.sidebarDensity === "compact" ? "py-2" : "py-3")}>
         {favorites.length > 0 && (
-          <Section title="Favorites">
-            {favorites.map(p => (
-              <PageRow key={p.id} page={p} depth={0} onClose={onClose} />
+          <Section title="Favorites" density={density}>
+            {favorites.map(page => (
+              <SidebarPageLink key={page.id} page={page} density={density} onClose={onClose} active={location.pathname === `/p/${page.id}`} />
             ))}
           </Section>
         )}
 
         {recentPages.length > 0 && (
-          <Section title="Recent">
-            {recentPages.map(p => (
-              <Link
-                key={p.id}
-                to={`/p/${p.id}`}
-                onClick={onClose}
-                className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-sidebar-accent text-sidebar-foreground"
-              >
-                <span className="text-base leading-none">{p.icon}</span>
-                <span className="truncate">{p.title || "Untitled"}</span>
-              </Link>
+          <Section title="Recent" density={density}>
+            {recentPages.map(page => (
+              <SidebarPageLink key={page.id} page={page} density={density} onClose={onClose} active={location.pathname === `/p/${page.id}`} />
             ))}
           </Section>
         )}
 
         <Section
           title="Workspace"
+          density={density}
           action={
             <button
               onClick={() => handleNew(null)}
@@ -88,26 +217,43 @@ export function WorkspaceSidebar({ onOpenSearch, onClose }: Props) {
             </button>
           }
         >
-          {childrenOf(null).map(p => (
-            <PageRow key={p.id} page={p} depth={0} onClose={onClose} />
-          ))}
-          {childrenOf(null).length === 0 && (
-            <button onClick={() => handleNew(null)} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground hover:bg-sidebar-accent">
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={treeItems.map((item) => item.page.id)} strategy={verticalListSortingStrategy}>
+              {treeItems.map((item) => (
+                <SortablePageRow
+                  key={item.page.id}
+                  item={item}
+                  density={density}
+                  isOpen={openIds.has(item.page.id)}
+                  setOpen={(open) => setPageOpen(item.page.id, open)}
+                  onClose={onClose}
+                />
+              ))}
+            </SortableContext>
+          </DndContext>
+          {rootPages.length === 0 && (
+            <button
+              onClick={() => handleNew(null)}
+              className={cn("flex w-full items-center rounded-md px-2 text-muted-foreground hover:bg-sidebar-accent", density.pageLink)}
+            >
               <Plus className="h-3.5 w-3.5" /> New page
             </button>
           )}
         </Section>
 
-        <Section title="">
+        <Section title="" density={density}>
           <Link
             to="/trash"
             onClick={onClose}
+            data-sidebar-nav-item
+            onKeyDown={(e) => handleSidebarTraversal(e, "[data-sidebar-nav-item]")}
             className={cn(
-              "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-sidebar-accent text-sidebar-foreground",
+              "flex items-center rounded-md px-2 hover:bg-sidebar-accent text-sidebar-foreground",
+              density.pageLink,
               location.pathname === "/trash" && "bg-sidebar-accent"
             )}
           >
-            <Trash2 className="h-4 w-4 text-muted-foreground" />
+            <Trash2 className={cn("text-muted-foreground", density.actionIcon)} />
             <span>Trash</span>
           </Link>
         </Section>
@@ -116,9 +262,9 @@ export function WorkspaceSidebar({ onOpenSearch, onClose }: Props) {
       <div className="border-t border-sidebar-border p-2">
         <button
           onClick={() => handleNew(null)}
-          className="flex w-full items-center justify-center gap-2 rounded-md bg-foreground px-3 py-2 text-sm font-medium text-background hover:opacity-90 transition"
+          className={cn("flex w-full items-center justify-center gap-2 rounded-md bg-foreground font-medium text-background hover:opacity-90 transition", density.footer)}
         >
-          <Plus className="h-4 w-4" /> New page
+          <Plus className="h-4 w-4" /> {preferences.sidebarDensity === "compact" ? "New" : "New page"}
         </button>
       </div>
     </aside>
@@ -126,30 +272,48 @@ export function WorkspaceSidebar({ onOpenSearch, onClose }: Props) {
 }
 
 function SidebarAction({
-  icon: Icon, label, shortcut, badge, onClick, active,
-}: { icon: any; label: string; shortcut?: string; badge?: string; onClick?: () => void; active?: boolean }) {
+  icon: Icon, label, shortcut, badge, onClick, active, density,
+}: {
+  icon: LucideIcon;
+  label: string;
+  shortcut?: string;
+  badge?: string;
+  onClick?: () => void;
+  active?: boolean;
+  density: DensityConfig;
+}) {
   return (
     <button
       onClick={onClick}
+      data-sidebar-nav-item
+      onKeyDown={(e) => handleSidebarTraversal(e, "[data-sidebar-nav-item]")}
       className={cn(
-        "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-sidebar-foreground hover:bg-sidebar-accent transition",
+        "flex w-full items-center rounded-md text-sidebar-foreground hover:bg-sidebar-accent transition",
+        density.action,
         active && "bg-sidebar-accent text-foreground"
       )}
     >
-      <Icon className="h-4 w-4 text-muted-foreground" />
-      <span className="flex-1 text-left">{label}</span>
-      {shortcut && <span className="text-[10px] text-muted-foreground rounded bg-background px-1.5 py-0.5 border border-border">{shortcut}</span>}
-      {badge && <span className="text-[10px] rounded-full bg-brand/15 text-brand px-1.5 py-0.5 font-medium">{badge}</span>}
+      <Icon className={cn("text-muted-foreground", density.actionIcon)} />
+      <span className="flex-1 text-left truncate">{label}</span>
+      {density.showActionMeta && shortcut && <span className="text-[10px] text-muted-foreground rounded bg-background px-1.5 py-0.5 border border-border">{shortcut}</span>}
+      {density.showActionMeta && badge && <span className="text-[10px] rounded-full bg-brand/15 text-brand px-1.5 py-0.5 font-medium">{badge}</span>}
     </button>
   );
 }
 
-function Section({ title, action, children }: { title: string; action?: React.ReactNode; children: React.ReactNode }) {
+function Section({
+  title, action, children, density,
+}: {
+  title: string;
+  action?: ReactNode;
+  children: ReactNode;
+  density: DensityConfig;
+}) {
   return (
-    <div className="mb-4">
+    <div className={density.section}>
       {title && (
         <div className="flex items-center justify-between px-2 mb-1">
-          <span className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground">{title}</span>
+          <span className={cn("uppercase tracking-wider font-semibold text-muted-foreground", density.sectionTitle)}>{title}</span>
           {action}
         </div>
       )}
@@ -158,100 +322,203 @@ function Section({ title, action, children }: { title: string; action?: React.Re
   );
 }
 
-function PageRow({ page, depth, onClose }: { page: Page; depth: number; onClose?: () => void }) {
+function SidebarPageLink({
+  page, active, onClose, density,
+}: {
+  page: Page;
+  active: boolean;
+  onClose?: () => void;
+  density: DensityConfig;
+}) {
+  return (
+    <Link
+      to={`/p/${page.id}`}
+      onClick={onClose}
+      data-sidebar-nav-item
+      onKeyDown={(e) => handleSidebarTraversal(e, "[data-sidebar-nav-item]")}
+      className={cn(
+        "flex items-center rounded-md px-2 hover:bg-sidebar-accent text-sidebar-foreground",
+        density.pageLink,
+        active && "bg-sidebar-accent"
+      )}
+    >
+      <span className={cn("leading-none", density === DENSITY.compact ? "text-sm" : "text-base")}>{page.icon}</span>
+      <span className="truncate">{page.title || "Untitled"}</span>
+    </Link>
+  );
+}
+
+function SortablePageRow({
+  item, density, isOpen, setOpen, onClose,
+}: {
+  item: TreeItem;
+  density: DensityConfig;
+  isOpen: boolean;
+  setOpen: (open: boolean) => void;
+  onClose?: () => void;
+}) {
   const { childrenOf, createPage, duplicatePage, deletePage, toggleFavorite, updatePage } = useStore();
   const navigate = useNavigate();
   const location = useLocation();
-  const [open, setOpen] = useState(depth < 1);
   const [renaming, setRenaming] = useState(false);
-  const [name, setName] = useState(page.title);
-  const kids = childrenOf(page.id);
-  const active = location.pathname === `/p/${page.id}`;
+  const [name, setName] = useState(item.page.title);
+  const kids = childrenOf(item.page.id);
+  const active = location.pathname === `/p/${item.page.id}`;
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.page.id });
+
+  const commitName = () => {
+    updatePage(item.page.id, { title: name });
+    setRenaming(false);
+  };
 
   return (
-    <div>
+    <div
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+      className={cn(isDragging && "opacity-50")}
+    >
       <div
         className={cn(
           "group flex items-center gap-1 rounded-md pr-1 hover:bg-sidebar-accent transition",
           active && "bg-sidebar-accent"
         )}
-        style={{ paddingLeft: `${depth * 12}px` }}
+        style={{ paddingLeft: `${item.depth * density.indent}px` }}
       >
         <button
-          onClick={() => setOpen(o => !o)}
-          className="flex h-6 w-6 items-center justify-center rounded hover:bg-background/60 text-muted-foreground"
+          onClick={() => setOpen(!isOpen)}
+          className={cn("flex items-center justify-center rounded hover:bg-background/60 text-muted-foreground", density.toggle)}
           aria-label="Toggle"
         >
-          <ChevronRight className={cn("h-3.5 w-3.5 transition-transform", open && "rotate-90", kids.length === 0 && "opacity-30")} />
+          <ChevronRight className={cn("h-3.5 w-3.5 transition-transform", isOpen && "rotate-90", kids.length === 0 && "opacity-30")} />
         </button>
         <Link
-          to={`/p/${page.id}`}
+          to={`/p/${item.page.id}`}
           onClick={onClose}
-          className="flex min-w-0 flex-1 items-center gap-1.5 py-1.5 text-sm"
+          data-sidebar-nav-item
+          data-sidebar-tree-item
+          data-sidebar-page-id={item.page.id}
+          data-sidebar-parent-id={item.parentId ?? ""}
+          onKeyDown={(e) => handleTreeKey(e, item, kids, isOpen, setOpen)}
+          className={cn("flex min-w-0 flex-1 items-center", density.pageLink)}
         >
-          <span className="text-base leading-none">{page.icon}</span>
+          <span className={cn("leading-none", density === DENSITY.compact ? "text-sm" : "text-base")}>{item.page.icon}</span>
           {renaming ? (
             <input
               autoFocus
               value={name}
               onChange={e => setName(e.target.value)}
-              onBlur={() => { updatePage(page.id, { title: name }); setRenaming(false); }}
+              onBlur={commitName}
               onKeyDown={e => {
-                if (e.key === "Enter") { updatePage(page.id, { title: name }); setRenaming(false); }
-                if (e.key === "Escape") setRenaming(false);
+                if (e.key === "Enter") commitName();
+                if (e.key === "Escape") { setName(item.page.title); setRenaming(false); }
               }}
-              className="flex-1 bg-background rounded px-1 py-0.5 text-sm outline-none ring-1 ring-ring"
+              className="min-w-0 flex-1 rounded bg-background px-1 py-0.5 text-sm outline-none ring-1 ring-ring"
               onClick={e => e.preventDefault()}
             />
           ) : (
-            <span className="truncate">{page.title || "Untitled"}</span>
+            <span className="truncate">{item.page.title || "Untitled"}</span>
           )}
         </Link>
-        <div className="flex items-center opacity-0 group-hover:opacity-100 transition">
+        <div className="flex items-center opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition">
+          <button
+            {...attributes}
+            {...listeners}
+            className={cn("flex items-center justify-center rounded hover:bg-background/60 text-muted-foreground cursor-grab active:cursor-grabbing", density.toggle)}
+            aria-label="Drag page"
+          >
+            <GripVertical className="h-3.5 w-3.5" />
+          </button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex h-6 w-6 items-center justify-center rounded hover:bg-background/60 text-muted-foreground" aria-label="More">
+              <button className={cn("flex items-center justify-center rounded hover:bg-background/60 text-muted-foreground", density.toggle)} aria-label="More">
                 <MoreHorizontal className="h-3.5 w-3.5" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" side="right">
-              <DropdownMenuItem onClick={() => toggleFavorite(page.id)}>
-                <Star className="mr-2 h-4 w-4" /> {page.favorite ? "Remove from favorites" : "Add to favorites"}
+              <DropdownMenuItem onClick={() => toggleFavorite(item.page.id)}>
+                <Star className="mr-2 h-4 w-4" /> {item.page.favorite ? "Remove from favorites" : "Add to favorites"}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setRenaming(true)}>
                 <Pencil className="mr-2 h-4 w-4" /> Rename
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => { const c = duplicatePage(page.id); if (c) navigate(`/p/${c.id}`); }}>
+              <DropdownMenuItem
+                onClick={async () => {
+                  const copy = await duplicatePage(item.page.id);
+                  if (copy) navigate(`/p/${copy.id}`);
+                }}
+              >
                 <Copy className="mr-2 h-4 w-4" /> Duplicate
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 className="text-destructive focus:text-destructive"
-                onClick={() => { deletePage(page.id); if (active) navigate("/"); }}
+                onClick={() => { deletePage(item.page.id); if (active) navigate("/"); }}
               >
                 <Trash2 className="mr-2 h-4 w-4" /> Move to trash
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           <button
-            onClick={() => { const c = createPage(page.id); setOpen(true); navigate(`/p/${c.id}`); onClose?.(); }}
-            className="flex h-6 w-6 items-center justify-center rounded hover:bg-background/60 text-muted-foreground"
+            onClick={async () => {
+              const child = await createPage(item.page.id);
+              setOpen(true);
+              navigate(`/p/${child.id}`);
+              onClose?.();
+            }}
+            className={cn("flex items-center justify-center rounded hover:bg-background/60 text-muted-foreground", density.toggle)}
             aria-label="Add subpage"
           >
             <Plus className="h-3.5 w-3.5" />
           </button>
         </div>
       </div>
-      {open && kids.length > 0 && (
-        <div className="space-y-0.5">
-          {kids.map(k => <PageRow key={k.id} page={k} depth={depth + 1} onClose={onClose} />)}
-        </div>
-      )}
-      {open && kids.length === 0 && depth > 0 && (
-        <div className="text-xs text-muted-foreground px-2 py-1" style={{ paddingLeft: `${(depth + 1) * 12 + 24}px` }}>
-          No pages inside
-        </div>
-      )}
     </div>
   );
+}
+
+function handleSidebarTraversal(e: React.KeyboardEvent<HTMLElement>, selector: string) {
+  if (isTextInputTarget(e.target)) return;
+  if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+    e.preventDefault();
+    focusSiblingBySelector(e.currentTarget, selector, e.key === "ArrowDown" ? 1 : -1);
+  }
+}
+
+function handleTreeKey(
+  e: React.KeyboardEvent<HTMLElement>,
+  item: TreeItem,
+  kids: Page[],
+  isOpen: boolean,
+  setOpen: (open: boolean) => void,
+) {
+  if (isTextInputTarget(e.target)) return;
+
+  if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+    e.preventDefault();
+    focusSiblingBySelector(e.currentTarget, "[data-sidebar-tree-item]", e.key === "ArrowDown" ? 1 : -1);
+    return;
+  }
+
+  if (e.key === "ArrowRight" && kids.length > 0) {
+    e.preventDefault();
+    if (!isOpen) {
+      setOpen(true);
+      return;
+    }
+    window.setTimeout(() => {
+      document.querySelector<HTMLElement>(`[data-sidebar-parent-id="${item.page.id}"]`)?.focus();
+    }, 0);
+    return;
+  }
+
+  if (e.key === "ArrowLeft") {
+    e.preventDefault();
+    if (isOpen && kids.length > 0) {
+      setOpen(false);
+      return;
+    }
+    if (item.parentId) {
+      document.querySelector<HTMLElement>(`[data-sidebar-page-id="${item.parentId}"]`)?.focus();
+    }
+  }
 }

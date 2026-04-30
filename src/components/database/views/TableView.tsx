@@ -13,6 +13,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, MoreHorizontal, Trash2, Plus, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { focusSiblingBySelector, isTextInputTarget } from "@/lib/keyboard";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
   DropdownMenuSeparator, DropdownMenuLabel, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger,
@@ -67,7 +68,7 @@ export function TableView({ db, view, rows }: ViewProps) {
               </SortableContext>
             </DndContext>
             <button
-              onClick={() => { const r = addRow(db.id); navigate(`/p/${r.id}`); }}
+              onClick={async () => { const r = await addRow(db.id); navigate(`/p/${r.id}`); }}
               className="flex w-full items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:bg-accent border-t border-border"
             >
               <Plus className="h-3 w-3" /> New row
@@ -149,10 +150,26 @@ function SortableHeader({ prop, db }: { prop: Property; db: Database }) {
 
 function SortableRow({ row, db, visibleProps, onOpen, onDelete }: any) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: row.id });
+  const onKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
+    if (isTextInputTarget(e.target)) return;
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault();
+      focusSiblingBySelector(e.currentTarget, "[data-db-nav-item]", e.key === "ArrowDown" ? 1 : -1);
+      return;
+    }
+    if (e.key === "Enter" && e.target === e.currentTarget) {
+      e.preventDefault();
+      onOpen();
+    }
+  };
   return (
     <div
       ref={setNodeRef as any}
       style={{ transform: CSS.Transform.toString(transform), transition }}
+      tabIndex={0}
+      role="button"
+      data-db-nav-item
+      onKeyDown={onKeyDown}
       className={cn("flex border-b border-border last:border-b-0 hover:bg-muted/20 group", isDragging && "opacity-40")}
     >
       <div className="w-8 shrink-0 flex items-center justify-center border-r border-border">

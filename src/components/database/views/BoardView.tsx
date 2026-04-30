@@ -7,6 +7,7 @@ import {
 } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { cn } from "@/lib/utils";
+import { focusSiblingBySelector, isTextInputTarget } from "@/lib/keyboard";
 import { colorClass } from "@/lib/format";
 import { PropertyCell } from "../PropertyCell";
 import { Plus } from "lucide-react";
@@ -52,8 +53,8 @@ export function BoardView({ db, view, rows }: Props) {
     <DndContext sensors={sensors} onDragEnd={onDragEnd}>
       <div className="flex gap-3 overflow-x-auto p-3 min-h-[280px]">
         {columns.map(col => (
-          <BoardColumn key={col.id ?? "none"} db={db} col={col} groupProp={groupProp} onAdd={() => {
-            const r = addRow(db.id, { rowProps: { [groupProp.id]: col.id ?? null } });
+          <BoardColumn key={col.id ?? "none"} db={db} col={col} groupProp={groupProp} onAdd={async () => {
+            const r = await addRow(db.id, { rowProps: { [groupProp.id]: col.id ?? null } });
             navigate(`/p/${r.id}`);
           }} onOpen={(id) => navigate(`/p/${id}`)} />
         ))}
@@ -89,12 +90,29 @@ function BoardColumn({ db, col, groupProp, onAdd, onOpen }: any) {
 function BoardCard({ row, db, onOpen }: any) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: row.id });
   const visibleProps = db.properties.filter((p: Property) => !p.hidden && p.type !== "text").slice(0, 3);
+  const onKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
+    if (isTextInputTarget(e.target)) return;
+    if (e.target !== e.currentTarget) return;
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault();
+      focusSiblingBySelector(e.currentTarget, "[data-db-nav-item]", e.key === "ArrowDown" ? 1 : -1);
+      return;
+    }
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onOpen();
+    }
+  };
   return (
     <div
       ref={setNodeRef}
       {...attributes} {...listeners}
       style={{ transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined }}
       onClick={onOpen}
+      onKeyDown={onKeyDown}
+      tabIndex={0}
+      role="button"
+      data-db-nav-item
       className={cn("rounded-md bg-card border border-border p-3 shadow-soft cursor-grab active:cursor-grabbing hover:border-border-strong transition", isDragging && "opacity-50")}
     >
       <div className="flex items-center gap-1.5 text-sm font-medium mb-1">

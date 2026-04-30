@@ -3,6 +3,7 @@ import { Database, DatabaseViewConfig, Page } from "@/lib/types";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { focusSiblingBySelector } from "@/lib/keyboard";
 
 export function CalendarView({ db, rows }: { db: Database; view: DatabaseViewConfig; rows: Page[] }) {
   const navigate = useNavigate();
@@ -89,6 +90,14 @@ export function CalendarView({ db, rows }: { db: Database; view: DatabaseViewCon
                   <button
                     key={r.id}
                     onClick={() => navigate(`/p/${r.id}`)}
+                    onKeyDown={(e) => {
+                      if (e.key === "ArrowDown" || e.key === "ArrowUp" || e.key === "ArrowLeft" || e.key === "ArrowRight") {
+                        e.preventDefault();
+                        const delta = e.key === "ArrowUp" || e.key === "ArrowLeft" ? -1 : 1;
+                        focusSiblingBySelector(e.currentTarget, "[data-db-nav-item]", delta as 1 | -1);
+                      }
+                    }}
+                    data-db-nav-item
                     className="w-full text-left truncate rounded bg-brand/15 text-brand px-1 py-0.5 hover:bg-brand/25 text-[11px]"
                   >
                     {r.icon} {r.title || "Untitled"}

@@ -3,10 +3,14 @@ import { WorkspaceSidebar } from "./WorkspaceSidebar";
 import { SearchModal } from "./SearchModal";
 import { Menu, X } from "lucide-react";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { useStore } from "@/lib/store";
+import { cn } from "@/lib/utils";
 
 export function AppShell({ children }: { children: ReactNode }) {
+  const { preferences } = useStore();
   const [searchOpen, setSearchOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const compact = preferences.sidebarDensity === "compact";
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -22,13 +26,13 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="flex h-screen w-full bg-surface">
       {/* Desktop sidebar */}
-      <div className="hidden md:flex w-64 shrink-0">
+      <div className={cn("hidden md:flex shrink-0", compact ? "w-56" : "w-64")}>
         <WorkspaceSidebar onOpenSearch={() => setSearchOpen(true)} />
       </div>
 
       {/* Mobile sidebar */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-        <SheetContent side="left" className="p-0 w-72">
+        <SheetContent side="left" className={cn("p-0", compact ? "w-64" : "w-72")}>
           <WorkspaceSidebar onOpenSearch={() => { setSearchOpen(true); setMobileOpen(false); }} onClose={() => setMobileOpen(false)} />
         </SheetContent>
       </Sheet>

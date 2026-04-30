@@ -50,22 +50,16 @@ export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block 
   const navigate = useNavigate();
 
   const db = block.databaseId ? getDatabase(block.databaseId) : undefined;
-  if (!db) {
-    return (
-      <div className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-        Database not found.
-      </div>
-    );
-  }
-
-  const view = db.views.find(v => v.id === db.activeViewId) ?? db.views[0];
+  const view = db ? db.views.find(v => v.id === db.activeViewId) ?? db.views[0] : undefined;
 
   const rows: Page[] = useMemo(() => {
+    if (!db) return [];
     const map = new Map(pages.map(p => [p.id, p]));
     return db.rowIds.map(id => map.get(id)).filter((p): p is Page => !!p && !p.trashed);
-  }, [db.rowIds, pages]);
+  }, [db, pages]);
 
   const filtered = useMemo(() => {
+    if (!view) return [];
     let out = rows;
     if (view.search?.trim()) {
       const q = view.search.toLowerCase();
@@ -101,6 +95,14 @@ export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block 
     return out;
   }, [rows, view]);
 
+  if (!db || !view) {
+    return (
+      <div className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+        Database not found.
+      </div>
+    );
+  }
+
   const ViewComponent = (
     {
       table: TableView, board: BoardView, list: ListView, gallery: GalleryView,
@@ -112,7 +114,7 @@ export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block 
   const activeSorts = (view.sorts ?? []).length;
 
   return (
-    <div className="rounded-lg border border-border bg-card overflow-hidden">
+    <div data-keyboard-scope className="rounded-lg border border-border bg-card overflow-hidden">
       {/* Top bar: db name + view tabs */}
       <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2">
         <div className="flex items-center gap-2 min-w-0">
@@ -221,8 +223,8 @@ export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block 
           <PropertiesMenu db={db} />
 
           <button
-            onClick={() => {
-              const row = addRow(db.id);
+            onClick={async () => {
+              const row = await addRow(db.id);
               navigate(`/p/${row.id}`);
             }}
             className="flex items-center gap-1 rounded-md bg-foreground text-background px-2 py-1 text-xs hover:opacity-90"
