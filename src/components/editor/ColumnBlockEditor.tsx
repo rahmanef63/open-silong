@@ -1,9 +1,10 @@
-import { KeyboardEvent, useRef, useState, useEffect } from "react";
+import { KeyboardEvent, useRef, useEffect } from "react";
+import { useDroppable } from "@dnd-kit/core";
 import { Block, BlockType } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { cn } from "@/shared/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus } from "lucide-react";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 const PLACEHOLDERS: Partial<Record<BlockType, string>> = {
@@ -118,7 +119,7 @@ function InnerBlock({
 
 /** One column pane */
 function ColumnPane({
-  colIndex, blocks, columnBlockId, pageId,
+  colIndex, blocks, columnBlockId,
   onColumnsChange,
 }: {
   colIndex: number;
@@ -127,6 +128,7 @@ function ColumnPane({
   pageId: string;
   onColumnsChange: (colIndex: number, newBlocks: Block[]) => void;
 }) {
+  const { setNodeRef, isOver } = useDroppable({ id: `col:${columnBlockId}:${colIndex}` });
   const refs = useRef<Map<string, HTMLElement | null>>(new Map());
   const registerRef = (id: string, el: HTMLElement | null) => refs.current.set(id, el);
   const focusBlock = (idx: number) => {
@@ -152,7 +154,13 @@ function ColumnPane({
   };
 
   return (
-    <div className="flex-1 min-w-0 px-3 first:pl-0 last:pr-0 border-r border-dashed border-border last:border-r-0 group/col">
+    <div
+      ref={setNodeRef}
+      className={cn(
+        "flex-1 min-w-0 px-3 first:pl-0 last:pr-0 border-r border-dashed border-border last:border-r-0 group/col rounded transition-colors",
+        isOver && "bg-brand/15 ring-2 ring-brand ring-inset",
+      )}
+    >
       <div className="space-y-0.5 min-h-10">
         {blocks.map((b, i) => (
           <InnerBlock
