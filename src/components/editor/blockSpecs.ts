@@ -2,7 +2,7 @@ import { BlockType } from "@/lib/types";
 import {
   Type, Heading1, Heading2, Heading3, ListTodo, List, ListOrdered,
   Quote, Code, Minus, Lightbulb, FileText, Database, Columns2, Columns3,
-  ChevronRight, Image, Sigma,
+  ChevronRight, Image, Sigma, Table,
 } from "lucide-react";
 
 export interface BlockSpec {
@@ -31,5 +31,6 @@ export const BLOCK_SPECS: BlockSpec[] = [
   { type: "image", label: "Image", hint: "Embed an image from a URL", icon: Image, keywords: ["image", "img", "photo", "picture", "url"] },
   { type: "divider", label: "Divider", hint: "Visual separator", icon: Minus, keywords: ["divider", "hr"] },
   { type: "page", label: "Page", hint: "Embed or create a sub-page", icon: FileText, keywords: ["page", "subpage", "doc"] },
-  { type: "database", label: "Database", hint: "Inline database with multiple views", icon: Database, keywords: ["database", "table", "db", "kanban", "board"] },
+  { type: "database", label: "Database", hint: "Inline database with multiple views", icon: Database, keywords: ["database", "db", "kanban", "board"] },
+  { type: "table", label: "Simple table", hint: "Plain table — convert to database later", icon: Table, keywords: ["table", "grid", "spreadsheet", "rows", "columns"] },
 ];

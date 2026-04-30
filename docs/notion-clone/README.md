@@ -39,7 +39,7 @@ Cross-links inside the repo:
 
 | Doc | Done | Total | % |
 | --- | ---: | ---: | ---: |
-| `BACKLOG.md` | 384 | 840 | **45.7%** |
+| `BACKLOG.md` | 387 | 841 | **46.0%** |
 | `ROADMAP.md` | 28 | 53 | **52.8%** |
 
 Recompute with: `cd docs/notion-clone && grep -cE '^- \[x\]\|^  - \[x\]\|^    - \[x\]' BACKLOG.md`.
@@ -91,7 +91,13 @@ The codebase already covers a usable single-user MVP plus most of the V1 surface
 - Stable callbacks (`focusByOffset`), Map-based O(1) lookups, memoized derived collections
 - ErrorBoundary recovers from view crashes without nuking the page
 
-**Recent additions (this session)**
+**Latest additions (this session)**
+- **Cell selection + drag-fill** — Excel/Sheets-style: click a cell to select, drag the bottom-right brand dot to copy the value vertically across rows
+- **Simple table block (`/table`)** — plain rows × cols grid with editable header toggle, add/delete rows + cols, and **Turn into database** that materializes a real database with text properties + a Table view + seeded rows
+- **Full-page database mode** — when a page contains exactly one database block, the page automatically renders full-width with the database's name as the page title (Notion-style standalone DB pages)
+- **Database trash** — sidebar context-menu "Move to trash" sends DBs to the Trash page with restore + permanent-delete; banner UI when viewing a trashed DB
+
+**Earlier this session**
 - **Database templates** — per-DB saved row presets with body blocks + property values; default-template flag; managed via "New ▼ → Manage templates"
 - **Database presets via ⌘K** — one-click `Tasks / Sprints / Projects` databases pre-configured with properties, views, status workflows, default templates, ID prefixes
 - **CSV import** — column → property mapper dialog, type coercion (date / number / select / multi-select / checkbox / text), skips empty rows

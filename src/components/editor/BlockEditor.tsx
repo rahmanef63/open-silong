@@ -20,6 +20,7 @@ import { ColumnBlockEditor } from "./ColumnBlockEditor";
 import { BlockCommentsPopover, useBlockComments } from "@/slices/comments";
 import { CodeBlock } from "@/slices/code-block";
 import { EquationBlock } from "@/slices/equation";
+import { SimpleTableBlock } from "@/slices/simple-table";
 
 interface Props {
   pageId: string;
@@ -323,6 +324,18 @@ function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerR
           onText={(text) => updateBlock(pageId, block.id, { text })}
           registerRef={(el) => registerRef(block.id, el)}
         />
+      </BlockShell>
+    );
+  }
+
+  if (block.type === "table") {
+    return (
+      <BlockShell
+        setNodeRef={setNodeRef} style={style} isDragging={isDragging} isOver={isOver}
+        attributes={attributes} listeners={listeners}
+        controls={<BlockControls pageId={pageId} block={block} index={index} listeners={listeners} convertTo={convertTo} />}
+      >
+        <SimpleTableBlock pageId={pageId} block={block} />
       </BlockShell>
     );
   }
