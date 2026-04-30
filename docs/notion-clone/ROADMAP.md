@@ -36,17 +36,17 @@ Status: **mostly shipped**, gaps below.
 - [x] Board / list / calendar / gallery views (Timeline shipped too)
 - [x] Relations
 - [x] Rollups (count / sum / avg / min / max / earliest / latest / percent-checked)
-- [ ] Formulas basic — *engine not yet built; property type only*
-- [ ] Templates
-- [ ] Backlinks panel — *mention data exists, panel UI missing*
+- [x] Formulas basic (substitution + arithmetic + 18 functions: if/and/or/not/empty/concat/contains/replace/lower/upper/length/round/floor/ceil/abs/min/max/now/today)
+- [x] Templates (per-database, default flag, body block seed via H2/H3/bullet/todo shortcuts)
+- [x] Backlinks panel
 - [x] Comments (page + block, resolve, edit)
 - [x] Public sharing (`/share/:id`)
 - [ ] Duplicate public page (login-walled clone)
 - [x] Code blocks with syntax highlight (highlight.js, 30+ langs, copy button)
 - [x] Math equations (KaTeX block math, click-to-edit, error state)
 - [x] Keyboard shortcuts (in-editor + global ⌘K palette)
-- [ ] Task database preset (default schema + views)
-- [ ] Sprints basic
+- [x] Task database preset (Tasks/Sprints/Projects via ⌘K with seeded schema + views + templates)
+- [ ] Sprints basic — link/start/complete/burndown still missing
 - [ ] Offline read
 
 ---

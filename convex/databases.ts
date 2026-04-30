@@ -55,7 +55,7 @@ export const update = mutation({
 });
 
 export const addRow = mutation({
-  args: { dbId: v.string(), init: v.optional(v.any()) },
+  args: { dbId: v.string(), init: v.optional(v.any()), templateId: v.optional(v.string()) },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
@@ -67,7 +67,15 @@ export const addRow = mutation({
       .filter((p: any) => p.type === "unique_id")
       .map((p: any) => ({ id: p.id, prefix: p.uniqueIdPrefix }));
     let counter = db.uniqueIdCounter ?? 0;
-    const seedRowProps: Record<string, any> = { ...((args.init ?? {}).rowProps ?? {}) };
+
+    const templates = (db as any).templates as any[] | undefined;
+    const tplId = args.templateId ?? db.defaultTemplateId ?? null;
+    const tpl = tplId ? templates?.find((t) => t.id === tplId) : undefined;
+
+    const seedRowProps: Record<string, any> = {
+      ...((tpl?.rowProps as any) ?? {}),
+      ...(((args.init ?? {}).rowProps as any) ?? {}),
+    };
     for (const u of uniqueIdProps) {
       counter += 1;
       seedRowProps[u.id] = u.prefix ? `${u.prefix}-${counter}` : String(counter);
@@ -76,13 +84,17 @@ export const addRow = mutation({
     const init = { ...(args.init ?? {}) };
     delete (init as any).rowProps;
 
+    const seedBlocks = tpl?.blocks?.length
+      ? tpl.blocks.map((b: any) => ({ ...b, id: uid() }))
+      : [{ id: uid(), type: "paragraph", text: "" }];
+
     const rowId = await ctx.db.insert("pages", {
       userId,
       parentId: null,
       title: "",
-      icon: "📄",
+      icon: tpl?.icon ?? "📄",
       cover: null,
-      blocks: [{ id: uid(), type: "paragraph", text: "" }],
+      blocks: seedBlocks,
       favorite: false,
       trashed: false,
       rowOfDatabaseId: args.dbId,

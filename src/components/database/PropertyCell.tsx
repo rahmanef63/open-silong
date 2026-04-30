@@ -437,8 +437,10 @@ function FormulaCell({ db, prop, row, cellClass }: { db: Database; prop: Propert
             placeholder="{{title}}"
             className="h-8 w-full rounded-md border border-border bg-background px-2 font-mono text-xs outline-none"
           />
-          <div className="rounded-md bg-muted/50 px-2 py-1.5 text-xs text-muted-foreground">
-            Use {"{{title}}"} or {"{{Property name}}"}. Start with = for simple math.
+          <div className="rounded-md bg-muted/50 px-2 py-1.5 text-[11px] text-muted-foreground space-y-1">
+            <div>Use <code className="bg-background px-1 rounded">{"{{title}}"}</code> or <code className="bg-background px-1 rounded">{"{{Property}}"}</code>.</div>
+            <div>Math: <code className="bg-background px-1 rounded">= 1 + 2</code></div>
+            <div>Functions: <code className="bg-background px-1 rounded">if(...)</code> · <code className="bg-background px-1 rounded">concat()</code> · <code className="bg-background px-1 rounded">lower()</code> · <code className="bg-background px-1 rounded">upper()</code> · <code className="bg-background px-1 rounded">length()</code> · <code className="bg-background px-1 rounded">contains()</code> · <code className="bg-background px-1 rounded">round()</code> · <code className="bg-background px-1 rounded">abs()</code> · <code className="bg-background px-1 rounded">today()</code></div>
           </div>
           <div className="flex items-center justify-between gap-2">
             <span className="min-w-0 truncate text-xs text-muted-foreground">Preview: {value || "-"}</span>
@@ -580,16 +582,55 @@ function computeRollup(
   return "-";
 }
 
-function evaluateFormula(expression: string, row: Page, db: Database, pages: Page[]) {
+function evaluateFormula(expression: string, row: Page, db: Database, pages: Page[]): string {
+  // Step 1: substitute {{property}} tokens with their string values.
   const rendered = expression.replace(/\{\{([^}]+)\}\}/g, (_, token: string) => {
     const trimmed = token.trim();
     if (trimmed.toLowerCase() === "title" || trimmed.toLowerCase() === "name") return row.title || "Untitled";
+    if (trimmed.toLowerCase() === "now") return new Date().toISOString();
+    if (trimmed.toLowerCase() === "today") return new Date().toISOString().slice(0, 10);
     const prop = db.properties.find((p) => p.id === trimmed || p.name.toLowerCase() === trimmed.toLowerCase());
     return prop ? formatPropertyValue(row.rowProps?.[prop.id], prop, pages, db) : "";
   });
 
-  if (rendered.trim().startsWith("=")) {
-    const math = rendered.trim().slice(1);
+  const trimmed = rendered.trim();
+
+  // Step 2: function-style expressions e.g. concat("a","b") or if(cond,a,b)
+  const fnMatch = trimmed.match(/^([a-zA-Z_]+)\s*\((.*)\)$/s);
+  if (fnMatch) {
+    const fn = fnMatch[1].toLowerCase();
+    const argsText = fnMatch[2];
+    const args = splitArgs(argsText).map((a) => unquote(a.trim()));
+    try {
+      switch (fn) {
+        case "concat": return args.join("");
+        case "lower": return (args[0] ?? "").toLowerCase();
+        case "upper": return (args[0] ?? "").toUpperCase();
+        case "length": return String((args[0] ?? "").length);
+        case "if": return truthy(args[0]) ? (args[1] ?? "") : (args[2] ?? "");
+        case "and": return args.every(truthy) ? "true" : "false";
+        case "or": return args.some(truthy) ? "true" : "false";
+        case "not": return truthy(args[0]) ? "false" : "true";
+        case "empty": return args[0] ? "false" : "true";
+        case "contains": return (args[0] ?? "").includes(args[1] ?? "") ? "true" : "false";
+        case "replace": return (args[0] ?? "").split(args[1] ?? "").join(args[2] ?? "");
+        case "round": return String(Math.round(Number(args[0])));
+        case "floor": return String(Math.floor(Number(args[0])));
+        case "ceil": return String(Math.ceil(Number(args[0])));
+        case "abs": return String(Math.abs(Number(args[0])));
+        case "min": return String(Math.min(...args.map(Number).filter(Number.isFinite)));
+        case "max": return String(Math.max(...args.map(Number).filter(Number.isFinite)));
+        case "now": return new Date().toISOString();
+        case "today": return new Date().toISOString().slice(0, 10);
+      }
+    } catch {
+      return "Invalid formula";
+    }
+  }
+
+  // Step 3: =math expressions with arithmetic only.
+  if (trimmed.startsWith("=")) {
+    const math = trimmed.slice(1);
     if (!/^[\d+\-*/().\s]+$/.test(math)) return "Invalid formula";
     try {
       const result = Function(`"use strict"; return (${math});`)();
@@ -600,6 +641,43 @@ function evaluateFormula(expression: string, row: Page, db: Database, pages: Pag
   }
 
   return rendered;
+}
+
+function splitArgs(s: string): string[] {
+  const out: string[] = [];
+  let depth = 0;
+  let inQuote: '"' | "'" | null = null;
+  let cur = "";
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i];
+    if (inQuote) {
+      if (ch === inQuote && s[i - 1] !== "\\") inQuote = null;
+      cur += ch;
+      continue;
+    }
+    if (ch === '"' || ch === "'") { inQuote = ch; cur += ch; continue; }
+    if (ch === "(") { depth++; cur += ch; continue; }
+    if (ch === ")") { depth--; cur += ch; continue; }
+    if (ch === "," && depth === 0) { out.push(cur); cur = ""; continue; }
+    cur += ch;
+  }
+  if (cur.trim() || out.length) out.push(cur);
+  return out;
+}
+
+function unquote(s: string): string {
+  if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
+    return s.slice(1, -1);
+  }
+  return s;
+}
+
+function truthy(v: any): boolean {
+  if (typeof v === "string") {
+    const t = v.trim().toLowerCase();
+    return t !== "" && t !== "false" && t !== "0" && t !== "no" && t !== "unchecked";
+  }
+  return !!v;
 }
 
 function formatPropertyValue(value: PropertyValue | undefined, prop: Property, pages: Page[], db: Database): string {

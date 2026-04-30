@@ -113,7 +113,7 @@ interface StoreCtx {
   addSelectOption: (dbId: string, propId: string, name: string, color?: string) => SelectOption;
   updateSelectOption: (dbId: string, propId: string, optId: string, patch: Partial<SelectOption>) => void;
   deleteSelectOption: (dbId: string, propId: string, optId: string) => void;
-  addRow: (dbId: string, init?: Partial<Page>) => Promise<Page>;
+  addRow: (dbId: string, init?: Partial<Page>, templateId?: string) => Promise<Page>;
   deleteRow: (dbId: string, rowPageId: string) => void;
   reorderRows: (dbId: string, orderedIds: string[]) => void;
   setRowValue: (dbId: string, rowPageId: string, propId: string, value: PropertyValue) => void;
@@ -701,8 +701,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   );
 
   const addRow = useCallback(
-    async (dbId: string, init: Partial<Page> = {}): Promise<Page> => {
-      const rowId = await mutAddRow({ dbId, init });
+    async (dbId: string, init: Partial<Page> = {}, templateId?: string): Promise<Page> => {
+      const rowId = await mutAddRow({ dbId, init, templateId });
       const now = Date.now();
       return { id: rowId, parentId: null, title: "", icon: "📄", cover: null, blocks: [], favorite: false, trashed: false, rowOfDatabaseId: dbId, rowProps: {}, createdAt: now, updatedAt: now };
     },

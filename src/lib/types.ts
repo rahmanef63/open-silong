@@ -186,6 +186,22 @@ export interface Database {
   updatedAt: number;
   /** Atomic counter for unique_id properties */
   uniqueIdCounter?: number;
+  /** Saved row templates */
+  templates?: DatabaseTemplate[];
+  /** Default template id applied on plain New */
+  defaultTemplateId?: string | null;
+  /** Sub-items relation property id (parent → children) */
+  subItemsParentPropId?: string | null;
+}
+
+export interface DatabaseTemplate {
+  id: string;
+  name: string;
+  icon?: string;
+  /** Seed body blocks for the row page */
+  blocks: Block[];
+  /** Seed property values keyed by property id */
+  rowProps?: Record<string, PropertyValue>;
 }
 
 /** ===== Version history ===== */

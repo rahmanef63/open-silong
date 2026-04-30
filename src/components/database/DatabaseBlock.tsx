@@ -24,6 +24,8 @@ import { FilterBuilder } from "./FilterBuilder";
 import { SortBuilder } from "./SortBuilder";
 import { Input } from "@/components/ui/input";
 import { RowDetailSheet } from "@/slices/database-row";
+import { NewRowMenu } from "@/slices/database-templates";
+import { CsvActions } from "@/slices/database-csv";
 import { DatabaseSkeleton } from "@/shared/components/RouteSkeleton";
 import { ErrorBoundary } from "@/shared/components/ErrorBoundary";
 
@@ -228,15 +230,9 @@ export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block 
 
           <PropertiesMenu db={db} />
 
-          <button
-            onClick={async () => {
-              const row = await addRow(db.id);
-              setOpenRowId(row.id);
-            }}
-            className="flex items-center gap-1 rounded-md bg-foreground text-background px-2 py-1 text-xs hover:opacity-90"
-          >
-            <Plus className="h-3 w-3" /> New
-          </button>
+          <CsvActions db={db} rows={filtered} />
+
+          <NewRowMenu db={db} onCreated={setOpenRowId} />
         </div>
       </div>
 
