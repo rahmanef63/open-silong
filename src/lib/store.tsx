@@ -105,6 +105,8 @@ interface StoreCtx {
   deleteProperty: (dbId: string, propId: string) => void;
   reorderProperties: (dbId: string, orderedIds: string[]) => void;
   addSelectOption: (dbId: string, propId: string, name: string, color?: string) => SelectOption;
+  updateSelectOption: (dbId: string, propId: string, optId: string, patch: Partial<SelectOption>) => void;
+  deleteSelectOption: (dbId: string, propId: string, optId: string) => void;
   addRow: (dbId: string, init?: Partial<Page>) => Promise<Page>;
   deleteRow: (dbId: string, rowPageId: string) => void;
   reorderRows: (dbId: string, orderedIds: string[]) => void;
@@ -532,6 +534,34 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [databases, mutUpdateDatabase]
   );
 
+  const updateSelectOption = useCallback(
+    (dbId: string, propId: string, optId: string, patch: Partial<SelectOption>) => {
+      const db = databases.find((d) => d.id === dbId);
+      if (!db) return;
+      const properties = db.properties.map((p) =>
+        p.id === propId
+          ? { ...p, options: (p.options ?? []).map(o => o.id === optId ? { ...o, ...patch } : o) }
+          : p
+      );
+      mutUpdateDatabase({ dbId, patch: { properties } });
+    },
+    [databases, mutUpdateDatabase]
+  );
+
+  const deleteSelectOption = useCallback(
+    (dbId: string, propId: string, optId: string) => {
+      const db = databases.find((d) => d.id === dbId);
+      if (!db) return;
+      const properties = db.properties.map((p) =>
+        p.id === propId
+          ? { ...p, options: (p.options ?? []).filter(o => o.id !== optId) }
+          : p
+      );
+      mutUpdateDatabase({ dbId, patch: { properties } });
+    },
+    [databases, mutUpdateDatabase]
+  );
+
   const addRow = useCallback(
     async (dbId: string, init: Partial<Page> = {}): Promise<Page> => {
       const rowId = await mutAddRow({ dbId, init });
@@ -669,6 +699,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     deleteProperty,
     reorderProperties,
     addSelectOption,
+    updateSelectOption,
+    deleteSelectOption,
     addRow,
     deleteRow,
     reorderRows,
