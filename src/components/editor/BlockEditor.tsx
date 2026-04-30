@@ -18,6 +18,8 @@ import { toast } from "sonner";
 import { DatabaseBlock } from "../database/DatabaseBlock";
 import { ColumnBlockEditor } from "./ColumnBlockEditor";
 import { BlockCommentsPopover, useBlockComments } from "@/slices/comments";
+import { CodeBlock } from "@/slices/code-block";
+import { EquationBlock } from "@/slices/equation";
 
 interface Props {
   pageId: string;
@@ -277,6 +279,22 @@ function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerR
     );
   }
 
+  if (block.type === "equation") {
+    return (
+      <BlockShell
+        setNodeRef={setNodeRef} style={style} isDragging={isDragging} isOver={isOver}
+        attributes={attributes} listeners={listeners}
+        controls={<BlockControls pageId={pageId} block={block} index={index} listeners={listeners} convertTo={convertTo} />}
+      >
+        <EquationBlock
+          text={block.text}
+          onText={(text) => updateBlock(pageId, block.id, { text })}
+          registerRef={(el) => registerRef(block.id, el)}
+        />
+      </BlockShell>
+    );
+  }
+
   if (block.type === "divider") {
     return (
       <BlockShell
@@ -488,17 +506,14 @@ function BlockBody({
       return wrap(<blockquote ref={setRef as any} {...baseProps} className={baseProps.className + " border-l-4 border-foreground/40 pl-4 italic text-foreground/80 py-1"} />);
     case "code":
       return (
-        <div className="flex-1 rounded-md bg-muted/70 border border-border p-3 font-mono text-sm">
-          <div className="flex items-center justify-between mb-2">
-            <input
-              value={block.lang || ""}
-              onChange={(e) => onLang(e.target.value)}
-              placeholder="language"
-              className="bg-transparent text-xs text-muted-foreground outline-none w-24"
-            />
-          </div>
-          <pre ref={setRef as any} {...baseProps} className={baseProps.className + " whitespace-pre-wrap"} />
-        </div>
+        <CodeBlock
+          text={block.text}
+          lang={block.lang}
+          registerRef={setRef}
+          onText={(next) => handleInput({ currentTarget: { innerText: next } } as any)}
+          onLang={onLang}
+          onKeyDown={handleKeyDown as any}
+        />
       );
     case "callout":
       return (

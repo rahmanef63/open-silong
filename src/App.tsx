@@ -8,6 +8,7 @@ import { ConvexClientProvider } from "./ConvexClientProvider";
 import { useConvexAuth } from "convex/react";
 import { ErrorBoundary } from "@/shared/components/ErrorBoundary";
 import { RouteSkeleton } from "@/shared/components/RouteSkeleton";
+import { CommandPalette } from "@/slices/command-palette";
 
 const Index = lazy(() => import("./pages/Index.tsx"));
 const PageView = lazy(() => import("./pages/PageView.tsx"));
@@ -62,6 +63,7 @@ const App = () => (
         <AuthGuard>
           <StoreProvider>
             <BrowserRouter>
+              <CommandPalette />
               <ErrorBoundary>
                 <Suspense fallback={<RouteSkeleton />}>
                   <Routes>

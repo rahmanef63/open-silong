@@ -969,6 +969,7 @@ function defaultPropName(type: PropertyType): string {
     created_by: "Created by",
     last_edited_time: "Last edited",
     last_edited_by: "Last edited by",
+    unique_id: "ID",
   };
   return map[type];
 }

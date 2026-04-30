@@ -35,6 +35,15 @@ Cross-links inside the repo:
 
 ---
 
+## Completion stats (2026-04-30)
+
+| Doc | Done | Total | % |
+| --- | ---: | ---: | ---: |
+| `BACKLOG.md` | 343 | 833 | **41.2%** |
+| `ROADMAP.md` | 24 | 53 | **45.3%** |
+
+Recompute with: `cd docs/notion-clone && grep -cE '^- \[x\]\|^  - \[x\]\|^    - \[x\]' BACKLOG.md`.
+
 ## Current state snapshot (2026-04-30)
 
 The codebase already covers a usable single-user MVP plus most of the V1 surface. Items below are confirmed shipped:
@@ -82,6 +91,13 @@ The codebase already covers a usable single-user MVP plus most of the V1 surface
 - Stable callbacks (`focusByOffset`), Map-based O(1) lookups, memoized derived collections
 - ErrorBoundary recovers from view crashes without nuking the page
 
+**Recent additions (this session)**
+- **Code block** (`/code`) — highlight.js, 30+ languages via dropdown, GitHub-dark theme, copy-with-feedback button, focus-to-edit
+- **Equation block** (`/equation`, `/math`) — LaTeX block math via KaTeX, live preview while editing, error state on invalid LaTeX
+- **Backlinks panel** — auto-derived from `@title` mentions + page-link blocks, grouped by source page with kind badge, collapsible
+- **Global ⌘K palette** — page search, favorites, recents, databases, theme toggle, navigation shortcuts
+- **Unique ID property** — atomic counter per database, optional prefix, generated on row creation
+
 See `BACKLOG.md` for the full checklist with `[x]` marking shipped work and `[ ]` marking what's left.
 
 ---
@@ -91,8 +107,8 @@ See `BACKLOG.md` for the full checklist with `[x]` marking shipped work and `[ ]
 These are the largest gaps before this can claim "Notion parity":
 
 1. **Multi-user collaboration:** workspace invites, roles (admin/member/guest), realtime presence, conflict resolution
-2. **Rich block coverage:** code blocks w/ syntax highlight, math/LaTeX, synced blocks, embeds (Figma/YouTube/Tweet)
-3. **Backlinks panel:** auto-derived from `@page` mentions and page-link blocks
+2. **Rich block coverage:** synced blocks, embeds (Figma/YouTube/Tweet), inline math, button block
+3. **Code/math markdown shortcuts:** ` ``` ` → code, `$$` → equation (slash command works)
 4. **Formulas & rollups:** parser/evaluator + dependency graph + UI editor
 5. **Offline:** service worker, IndexedDB cache, mutation queue, conflict reconciliation
 6. **Presentation mode:** fullscreen slide split-by-heading

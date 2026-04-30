@@ -60,6 +60,22 @@ export const addRow = mutation({
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
     const now = Date.now();
+    const db = await ctx.db.get(args.dbId as Id<"databases">);
+    if (!db || db.userId !== userId) throw new Error("Database not found");
+
+    const uniqueIdProps: { id: string; prefix?: string }[] = (db.properties ?? [])
+      .filter((p: any) => p.type === "unique_id")
+      .map((p: any) => ({ id: p.id, prefix: p.uniqueIdPrefix }));
+    let counter = db.uniqueIdCounter ?? 0;
+    const seedRowProps: Record<string, any> = { ...((args.init ?? {}).rowProps ?? {}) };
+    for (const u of uniqueIdProps) {
+      counter += 1;
+      seedRowProps[u.id] = u.prefix ? `${u.prefix}-${counter}` : String(counter);
+    }
+
+    const init = { ...(args.init ?? {}) };
+    delete (init as any).rowProps;
+
     const rowId = await ctx.db.insert("pages", {
       userId,
       parentId: null,
@@ -70,18 +86,16 @@ export const addRow = mutation({
       favorite: false,
       trashed: false,
       rowOfDatabaseId: args.dbId,
-      rowProps: {},
+      rowProps: seedRowProps,
       createdAt: now,
       updatedAt: now,
-      ...(args.init ?? {}),
+      ...init,
     });
-    const db = await ctx.db.get(args.dbId as Id<"databases">);
-    if (db && db.userId === userId) {
-      await ctx.db.patch(args.dbId as Id<"databases">, {
-        rowIds: [...db.rowIds, rowId],
-        updatedAt: now,
-      });
-    }
+    await ctx.db.patch(args.dbId as Id<"databases">, {
+      rowIds: [...db.rowIds, rowId],
+      uniqueIdCounter: counter,
+      updatedAt: now,
+    });
     return rowId;
   },
 });

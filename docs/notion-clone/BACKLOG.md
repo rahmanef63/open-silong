@@ -247,23 +247,23 @@
 
 ## 4.5 Code Blocks — P1
 
-- [ ] Code block
-- [ ] Language selector
-- [ ] Syntax highlighting
-- [ ] Copy code button
+- [x] Code block
+- [x] Language selector (30+ languages)
+- [x] Syntax highlighting (highlight.js)
+- [x] Copy code button (with ✓ feedback)
 - [ ] Line wrapping toggle
-- [ ] Plain text fallback
-- [ ] Common languages (JS/TS/Python/PHP/Go/SQL/Bash/JSON/HTML/CSS)
-- [ ] Light/dark code theme
+- [x] Plain text fallback
+- [x] Common languages (JS/TS/Python/PHP/Go/SQL/Bash/JSON/HTML/CSS + 20 more)
+- [x] Light/dark code theme (uses github-dark)
 
 ## 4.6 Math Equations — P1
 
 - [ ] Inline math
-- [ ] Block math
-- [ ] LaTeX parser
-- [ ] Error state for invalid LaTeX
-- [ ] Copy / edit equation modal
-- [ ] Render with KaTeX or MathJax
+- [x] Block math (LaTeX, click-to-edit)
+- [x] LaTeX parser (KaTeX)
+- [x] Error state for invalid LaTeX
+- [x] Edit equation in-place (with live preview)
+- [x] Render with KaTeX
 
 ## 4.7 Advanced Blocks — P2
 
@@ -285,8 +285,8 @@
 - [x] `[]` → checkbox
 - [x] `>` → quote
 - [x] `---` → divider
-- [ ] ` ``` ` → code block
-- [ ] `$` / `$$` → math
+- [ ] ` ``` ` → code block (slash command works; markdown shortcut not yet)
+- [ ] `$` / `$$` → math (slash command works; markdown shortcut not yet)
 - [x] Auto-convert on space / enter
 
 ## 5.2 Page Style
@@ -342,14 +342,14 @@
 
 ## 6.2 Backlinks
 
-- [ ] Track backlinks when page mentioned
-- [ ] Track backlinks when page link inserted
-- [ ] Backlinks section on page
-- [ ] Group backlinks by page
-- [ ] Hide backlinks toggle
-- [ ] Permission-aware backlinks
-- [ ] Remove backlink when mention removed
-- [ ] Update backlink when page title changes
+- [x] Track backlinks when page mentioned (`@TitleHandle`)
+- [x] Track backlinks when page link inserted (page block)
+- [x] Backlinks section on page
+- [x] Group backlinks by page
+- [x] Hide backlinks toggle (collapse panel)
+- [x] Permission-aware backlinks (single-user → all owned)
+- [x] Remove backlink when mention removed (live derivation, no stale state)
+- [x] Update backlink when page title changes (live derivation)
 
 ## 6.3 User Mentions
 
@@ -452,14 +452,14 @@
 
 ## 9.3 Command Palette
 
-- [ ] Wire ⌘K to global palette (cmdk primitives present)
-- [x] Search pages (existing search component)
-- [ ] Create new page action
-- [ ] Navigate to page
-- [ ] Trigger arbitrary actions
+- [x] Wire ⌘K / Ctrl+K to global palette
+- [x] Search pages (live, by title)
+- [x] Create new page action
+- [x] Navigate to page
+- [x] Trigger arbitrary actions (Home / Inbox / Trash / Settings / Theme toggle)
 - [ ] Search settings
-- [ ] Search database records
-- [ ] Recent commands
+- [x] Search database records (database list + jump to host page)
+- [ ] Recent commands history
 
 ---
 
@@ -587,7 +587,7 @@
 ## 14.2 P1 Properties — all shipped
 
 - [x] Formula / Relation / Rollup / Created time / Created by / Last edited time / Last edited by
-- [ ] Unique ID
+- [x] Unique ID
 - [ ] Button property
 
 ## 14.3 Property Management
@@ -922,23 +922,23 @@
 
 ## 24.1 Unique ID Property
 
-- [ ] Add unique-ID property type
-- [ ] Configure prefix
-- [ ] Configure number format
-- [ ] Auto-increment per database
-- [ ] Generate on row creation
-- [ ] Prevent manual duplicate
-- [ ] Preserve on update
-- [ ] Duplicate behavior choice
-- [ ] Read-only display
+- [x] Add unique-ID property type
+- [x] Configure prefix (`uniqueIdPrefix` per property)
+- [ ] Configure number format (zero-pad, hex, etc)
+- [x] Auto-increment per database
+- [x] Generate on row creation
+- [x] Prevent manual duplicate (read-only cell)
+- [x] Preserve on update
+- [ ] Duplicate-row behavior choice
+- [x] Read-only display
 - [ ] Filter / sort by ID
-- [ ] Concurrency-safe
+- [x] Concurrency-safe (Convex mutation atomic)
 
 ## 24.2 ID Backend
 
-- [ ] Atomic counter per database
-- [ ] Transaction-safe generation
-- [ ] Retry on conflict
+- [x] Atomic counter per database (`uniqueIdCounter` field)
+- [x] Transaction-safe generation (single-tx mutation)
+- [x] Retry on conflict (Convex retries)
 - [ ] Migration for existing rows
 - [ ] Audit ID generation
 

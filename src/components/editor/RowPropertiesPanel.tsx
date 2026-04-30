@@ -7,7 +7,7 @@ import { cn } from "@/shared/lib/utils";
 import {
   Type, Hash, ChevronDown, Tags, Circle, Calendar, User, CheckSquare,
   Link2, Mail, Phone, Paperclip, ArrowUpRight, Sigma, Calculator, Clock,
-  UserCheck, Plus, ChevronRight, Trash2,
+  UserCheck, Plus, ChevronRight, Trash2, Fingerprint,
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -33,6 +33,7 @@ const PROP_TYPE_ICON: Record<PropertyType, React.ElementType> = {
   last_edited_time: Clock,
   created_by: UserCheck,
   last_edited_by: UserCheck,
+  unique_id: Fingerprint,
 };
 
 function PropertyNameCell({

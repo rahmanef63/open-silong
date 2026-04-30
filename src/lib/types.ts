@@ -15,7 +15,8 @@ export type BlockType =
   | "columns2"   // 2-column layout
   | "columns3"   // 3-column layout
   | "toggle"     // collapsible block
-  | "image";     // image embed (URL)
+  | "image"      // image embed (URL)
+  | "equation";  // LaTeX block equation
 
 export interface Block {
   id: string;
@@ -114,7 +115,8 @@ export type PropertyType =
   | "created_time"
   | "created_by"
   | "last_edited_time"
-  | "last_edited_by";
+  | "last_edited_by"
+  | "unique_id";
 
 export interface SelectOption {
   id: string;
@@ -136,6 +138,8 @@ export interface Property {
   rollupAggregate?: "count" | "values" | "sum" | "checked" | "latest";
   /** Mock formula expression. Supports {{title}}, {{Property}}, and simple =math. */
   formulaExpression?: string;
+  /** Unique-ID config */
+  uniqueIdPrefix?: string;
 }
 
 export type PropertyValue =
@@ -180,6 +184,8 @@ export interface Database {
   activeViewId: string;
   createdAt: number;
   updatedAt: number;
+  /** Atomic counter for unique_id properties */
+  uniqueIdCounter?: number;
 }
 
 /** ===== Version history ===== */

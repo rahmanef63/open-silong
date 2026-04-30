@@ -6,6 +6,7 @@ import { BlockEditor } from "./BlockEditor";
 import { RowPropertiesPanel } from "./RowPropertiesPanel";
 import { PageActionsMenu } from "./PageActionsMenu";
 import { PageCommentsPanel, PageCommentsProvider } from "@/slices/comments";
+import { BacklinksPanel } from "@/slices/backlinks";
 import {
   ChevronRight, Star, ImagePlus, Share2, History, FileText, Plus,
 } from "lucide-react";
@@ -195,6 +196,9 @@ export function PageEditor() {
 
               {/* Subpages section */}
               <Subpages page={page} subpages={subpages} />
+
+              {/* Backlinks */}
+              <BacklinksPanel pageId={page.id} />
 
               {/* Page-level comments */}
               <PageCommentsPanel pageId={page.id} />

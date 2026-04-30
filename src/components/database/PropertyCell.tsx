@@ -172,6 +172,12 @@ export function PropertyCell({
           {user.name}
         </span>
       );
+    case "unique_id":
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-mono tracking-tight text-muted-foreground">
+          {typeof value === "string" || typeof value === "number" ? String(value) : "—"}
+        </span>
+      );
   }
 }
 

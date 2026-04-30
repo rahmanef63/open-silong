@@ -42,9 +42,9 @@ Status: **mostly shipped**, gaps below.
 - [x] Comments (page + block, resolve, edit)
 - [x] Public sharing (`/share/:id`)
 - [ ] Duplicate public page (login-walled clone)
-- [ ] Code blocks with syntax highlight
-- [ ] Math equations (KaTeX)
-- [x] Keyboard shortcuts (in-editor; global ⌘K palette pending)
+- [x] Code blocks with syntax highlight (highlight.js, 30+ langs, copy button)
+- [x] Math equations (KaTeX block math, click-to-edit, error state)
+- [x] Keyboard shortcuts (in-editor + global ⌘K palette)
 - [ ] Task database preset (default schema + views)
 - [ ] Sprints basic
 - [ ] Offline read
