@@ -46,6 +46,10 @@ function toPage(doc: any): Page {
     isPublic: doc.isPublic,
     rowOfDatabaseId: doc.rowOfDatabaseId,
     rowProps: doc.rowProps,
+    font: doc.font,
+    smallText: doc.smallText,
+    fullWidth: doc.fullWidth,
+    locked: doc.locked,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
   };

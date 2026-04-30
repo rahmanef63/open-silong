@@ -4,12 +4,10 @@ import { useStore } from "@/lib/store";
 import { Page } from "@/lib/types";
 import { BlockEditor } from "./BlockEditor";
 import { RowPropertiesPanel } from "./RowPropertiesPanel";
+import { PageActionsMenu } from "./PageActionsMenu";
 import {
-  ChevronRight, Star, MoreHorizontal, ImagePlus, Trash2, Copy, Share2, History, FileText, Plus,
+  ChevronRight, Star, ImagePlus, Share2, History, FileText, Plus,
 } from "lucide-react";
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import {
   DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent,
@@ -88,7 +86,16 @@ export function PageEditor() {
         <div className="flex-1 overflow-y-auto scrollbar-thin">
           {page.cover && <div className="h-44 md:h-56 w-full" style={{ background: page.cover }} />}
 
-          <div className={cn("mx-auto max-w-3xl px-6 md:px-12", page.cover ? "-mt-10" : "pt-16")}>
+          <div
+            className={cn(
+              "mx-auto px-6 md:px-12",
+              page.fullWidth ? "max-w-none" : "max-w-3xl",
+              page.cover ? "-mt-10" : "pt-16",
+              page.font === "serif" && "font-serif",
+              page.font === "mono" && "font-mono",
+              page.smallText && "text-[14px]",
+            )}
+          >
             <div className="relative">
               <button
                 onClick={() => setIconPick(v => !v)}
@@ -116,9 +123,13 @@ export function PageEditor() {
 
             <input
               value={page.title}
+              readOnly={page.locked}
               onChange={e => updatePage(page.id, { title: e.target.value })}
               placeholder="Untitled"
-              className="mt-3 w-full bg-transparent text-4xl md:text-5xl font-bold tracking-tight font-serif outline-none placeholder:text-muted-foreground/40"
+              className={cn(
+                "mt-3 w-full bg-transparent text-4xl md:text-5xl font-bold tracking-tight outline-none placeholder:text-muted-foreground/40",
+                page.font === "mono" ? "font-mono" : "font-serif",
+              )}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === "ArrowDown") {
                   e.preventDefault();
@@ -127,9 +138,25 @@ export function PageEditor() {
               }}
             />
 
+            {page.locked && (
+              <div className="mt-3 flex items-center gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-xs text-amber-700 dark:text-amber-400">
+                <span>🔒</span>
+                <span className="flex-1">Page is locked. Editing is disabled.</span>
+                <button
+                  onClick={() => updatePage(page.id, { locked: false })}
+                  className="rounded px-2 py-0.5 hover:bg-amber-500/20"
+                >
+                  Unlock
+                </button>
+              </div>
+            )}
+
             {page.rowOfDatabaseId && <RowPropertiesPanel page={page} />}
 
-            <div className="mt-6 pb-32 prose-editor">
+            <div
+              {...(page.locked ? { inert: "" as unknown as boolean } : {})}
+              className={cn("mt-6 pb-32 prose-editor", page.locked && "opacity-90 select-text")}
+            >
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
                 <SortableContext items={page.blocks.map(b => b.id)} strategy={verticalListSortingStrategy}>
                   {page.blocks.map((b, i) => (
@@ -212,7 +239,7 @@ function Subpages({ page, subpages }: { page: Page; subpages: Page[] }) {
 }
 
 function Header({ page, onShare, onHistory, historyOpen }: { page: Page; onShare: () => void; onHistory: () => void; historyOpen: boolean }) {
-  const { getPage, toggleFavorite, duplicatePage, deletePage, saving, pages } = useStore();
+  const { getPage, toggleFavorite, saving, pages } = useStore();
   const navigate = useNavigate();
   const crumbs: Page[] = [];
   let cur: Page | undefined = page;
@@ -279,25 +306,7 @@ function Header({ page, onShare, onHistory, historyOpen }: { page: Page; onShare
         >
           <Star className={cn("h-4 w-4", page.favorite && "fill-brand text-brand")} />
         </button>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button className="flex h-8 w-8 items-center justify-center rounded hover:bg-accent text-muted-foreground">
-              <MoreHorizontal className="h-4 w-4" />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={async () => { const c = await duplicatePage(page.id); if (c) navigate(`/p/${c.id}`); }}>
-              <Copy className="mr-2 h-4 w-4" /> Duplicate
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              className="text-destructive focus:text-destructive"
-              onClick={() => { deletePage(page.id); navigate("/"); }}
-            >
-              <Trash2 className="mr-2 h-4 w-4" /> Move to trash
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <PageActionsMenu page={page} onShowHistory={onHistory} />
       </div>
     </header>
   );
