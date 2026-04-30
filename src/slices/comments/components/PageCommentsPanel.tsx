@@ -1,6 +1,6 @@
 import { MessageSquare } from "lucide-react";
 import { useStore } from "@/lib/store";
-import { useComments } from "../hooks/useComments";
+import { usePageComments } from "../lib/PageCommentsContext";
 import { CommentItem } from "./CommentItem";
 import { CommentComposer } from "./CommentComposer";
 
@@ -10,10 +10,7 @@ interface Props {
 
 export function PageCommentsPanel({ pageId }: Props) {
   const { user } = useStore();
-  const { items, openCount, create, update, resolve, remove } = useComments({ pageId });
-
-  // Filter to page-level only (no blockId). Block comments render inline at the block.
-  const pageLevel = items.filter((c) => !c.blockId);
+  const { pageLevel, pageOpenCount: openCount, create, update, resolve, remove } = usePageComments();
 
   const onCreate = (text: string) => {
     create({

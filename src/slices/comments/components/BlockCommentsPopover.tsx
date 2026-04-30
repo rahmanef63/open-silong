@@ -1,7 +1,7 @@
 import { MessageSquare } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useStore } from "@/lib/store";
-import { useComments } from "../hooks/useComments";
+import { useBlockComments } from "../lib/PageCommentsContext";
 import { CommentItem } from "./CommentItem";
 import { CommentComposer } from "./CommentComposer";
 import { cn } from "@/shared/lib/utils";
@@ -14,7 +14,7 @@ interface Props {
 
 export function BlockCommentsPopover({ pageId, blockId, trigger }: Props) {
   const { user } = useStore();
-  const { items, openCount, create, update, resolve, remove } = useComments({ blockId });
+  const { items, openCount, create, update, resolve, remove } = useBlockComments(blockId);
 
   const onCreate = (text: string) => {
     create({

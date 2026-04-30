@@ -1,4 +1,4 @@
-import { KeyboardEvent, useEffect, useRef, useState, useCallback } from "react";
+import { KeyboardEvent, memo, useEffect, useRef, useState, useCallback } from "react";
 import { Block, BlockType } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { GripVertical, Plus, Trash2, Copy, MessageSquare, FileText, Database as DatabaseIcon, ChevronRight, ExternalLink } from "lucide-react";
@@ -17,19 +17,18 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { DatabaseBlock } from "../database/DatabaseBlock";
 import { ColumnBlockEditor } from "./ColumnBlockEditor";
-import { BlockCommentsPopover, useComments } from "@/slices/comments";
+import { BlockCommentsPopover, useBlockComments } from "@/slices/comments";
 
 interface Props {
   pageId: string;
   block: Block;
   index: number;
   total: number;
-  onFocusNext: () => void;
-  onFocusPrev: () => void;
+  focusByOffset: (blockId: string, delta: number) => void;
   registerRef: (id: string, el: HTMLElement | null) => void;
 }
 
-export function BlockEditor({ pageId, block, index, total, onFocusNext, onFocusPrev, registerRef }: Props) {
+function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerRef }: Props) {
   const {
     updateBlock, addBlock, deleteBlock, setBlockType, duplicateBlock,
     createPage, getPage, createDatabase,
@@ -130,8 +129,9 @@ export function BlockEditor({ pageId, block, index, total, onFocusNext, onFocusP
     if (e.key === "Backspace" && el.innerText === "") {
       e.preventDefault();
       if (total > 1) {
-        deleteBlock(pageId, block.id);
-        setTimeout(onFocusPrev, 0);
+        const blockId = block.id;
+        deleteBlock(pageId, blockId);
+        setTimeout(() => focusByOffset(blockId, -1), 0);
       } else if (block.type !== "paragraph") {
         setBlockType(pageId, block.id, "paragraph");
       }
@@ -147,9 +147,9 @@ export function BlockEditor({ pageId, block, index, total, onFocusNext, onFocusP
       return;
     }
     if (e.key === "ArrowDown" && (window.getSelection()?.focusOffset ?? 0) === el.innerText.length) {
-      onFocusNext();
+      focusByOffset(block.id, 1);
     } else if (e.key === "ArrowUp" && (window.getSelection()?.focusOffset ?? 0) === 0) {
-      onFocusPrev();
+      focusByOffset(block.id, -1);
     }
   };
 
@@ -259,7 +259,7 @@ export function BlockEditor({ pageId, block, index, total, onFocusNext, onFocusP
         pageId={pageId} block={block} index={index}
         setNodeRef={setNodeRef} style={style} isDragging={isDragging} isOver={isOver}
         attributes={attributes} listeners={listeners} convertTo={convertTo}
-        onFocusNext={onFocusNext} onFocusPrev={onFocusPrev} registerRef={registerRef}
+        focusByOffset={focusByOffset} registerRef={registerRef}
         total={total}
       />
     );
@@ -312,6 +312,8 @@ export function BlockEditor({ pageId, block, index, total, onFocusNext, onFocusP
   );
 }
 
+export const BlockEditor = memo(BlockEditorBase);
+
 function BlockShell({
   children, controls, setNodeRef, style, isDragging, isOver, attributes, listeners,
 }: {
@@ -351,7 +353,7 @@ function BlockControls({
   pageId: string; block: Block; index: number; listeners: any; convertTo: (t: BlockType) => void;
 }) {
   const { addBlock, deleteBlock, duplicateBlock, user } = useStore();
-  const { openCount, create } = useComments({ blockId: block.id });
+  const { openCount, create } = useBlockComments(block.id);
   return (
     <div className="flex">
       <button
@@ -513,8 +515,9 @@ function BlockBody({
 // ===== Toggle block =====
 function ToggleBlock({
   pageId, block, index, setNodeRef, style, isDragging, isOver,
-  attributes, listeners, convertTo, onFocusNext, onFocusPrev, registerRef, total,
+  attributes, listeners, convertTo, focusByOffset, registerRef, total,
 }: any) {
+  void focusByOffset; void registerRef; void total;
   const { updateBlock, addBlock, deleteBlock } = useStore();
   const collapsed = block.collapsed !== false; // default collapsed
   const children: Block[] = block.children ?? [];

@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useStore } from "@/lib/store";
 import { Page } from "@/lib/types";
 import { BlockEditor } from "./BlockEditor";
 import { RowPropertiesPanel } from "./RowPropertiesPanel";
 import { PageActionsMenu } from "./PageActionsMenu";
-import { PageCommentsPanel } from "@/slices/comments";
+import { PageCommentsPanel, PageCommentsProvider } from "@/slices/comments";
 import {
   ChevronRight, Star, ImagePlus, Share2, History, FileText, Plus,
 } from "lucide-react";
@@ -38,6 +38,8 @@ export function PageEditor() {
   const [shareOpen, setShareOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const refs = useRef<Map<string, HTMLElement | null>>(new Map());
+  const blocksRef = useRef(page?.blocks);
+  blocksRef.current = page?.blocks;
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
@@ -58,12 +60,18 @@ export function PageEditor() {
     );
   }
 
-  const registerRef = (id: string, el: HTMLElement | null) => { refs.current.set(id, el); };
-  const focusBlock = (idx: number) => {
-    const b = page.blocks[idx];
-    if (!b) return;
-    refs.current.get(b.id)?.focus();
-  };
+  const registerRef = useCallback((id: string, el: HTMLElement | null) => {
+    refs.current.set(id, el);
+  }, []);
+  const focusByOffset = useCallback((blockId: string, delta: number) => {
+    const blocks = blocksRef.current;
+    if (!blocks) return;
+    const idx = blocks.findIndex((b) => b.id === blockId);
+    if (idx === -1) return;
+    const target = blocks[idx + delta];
+    if (!target) return;
+    refs.current.get(target.id)?.focus();
+  }, []);
 
   const onDragEnd = (e: DragEndEvent) => {
     const { active, over } = e;
@@ -80,6 +88,7 @@ export function PageEditor() {
   const subpages = childrenOf(page.id);
 
   return (
+    <PageCommentsProvider pageId={page.id}>
     <div className="flex h-full flex-col overflow-hidden">
       <Header page={page} onShare={() => setShareOpen(true)} onHistory={() => setHistoryOpen(o => !o)} historyOpen={historyOpen} />
 
@@ -168,8 +177,7 @@ export function PageEditor() {
                       index={i}
                       total={page.blocks.length}
                       registerRef={registerRef}
-                      onFocusNext={() => focusBlock(i + 1)}
-                      onFocusPrev={() => focusBlock(i - 1)}
+                      focusByOffset={focusByOffset}
                     />
                   ))}
                 </SortableContext>
@@ -203,6 +211,7 @@ export function PageEditor() {
 
       <ShareDialog open={shareOpen} onOpenChange={setShareOpen} page={page} />
     </div>
+    </PageCommentsProvider>
   );
 }
 

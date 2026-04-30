@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useStore } from "@/lib/store";
-import { useComments } from "@/slices/comments";
+import { usePageComments } from "@/slices/comments";
 import type { Page, Block } from "@/lib/types";
 import type { PageAnalytics } from "../types";
 
@@ -24,7 +24,7 @@ function walkBlocks(blocks: Block[]): { count: number; chars: number; words: num
 
 export function usePageAnalytics(page: Page | undefined): PageAnalytics | null {
   const { snapshotsForPage, childrenOf } = useStore();
-  const { items: comments } = useComments(page ? { pageId: page.id } : { pageId: undefined });
+  const { all: comments } = usePageComments();
   return useMemo(() => {
     if (!page) return null;
     const stats = walkBlocks(page.blocks);
