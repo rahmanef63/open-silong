@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { BLOCK_SPECS } from "./blockSpecs";
 import { BlockType } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/lib/utils";
 
 interface Props {
   query: string;

@@ -2,8 +2,8 @@ import { useState } from "react";
 import { Database, DatabaseViewConfig, Page } from "@/lib/types";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { focusSiblingBySelector } from "@/lib/keyboard";
+import { cn } from "@/shared/lib/utils";
+import { focusSiblingBySelector } from "@/shared/lib/keyboard";
 
 export function CalendarView({ db, rows }: { db: Database; view: DatabaseViewConfig; rows: Page[] }) {
   const navigate = useNavigate();

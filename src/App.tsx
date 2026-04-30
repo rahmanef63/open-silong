@@ -13,6 +13,7 @@ import NotFound from "./pages/NotFound.tsx";
 import Settings from "./pages/Settings.tsx";
 import Profile from "./pages/Profile.tsx";
 import Shared from "./pages/Shared.tsx";
+import Inbox from "./pages/Inbox.tsx";
 import AuthPage from "./pages/AuthPage.tsx";
 
 const queryClient = new QueryClient();
@@ -57,6 +58,7 @@ const App = () => (
                 <Route path="/" element={<LandingRedirect />} />
                 <Route path="/p/:id" element={<PageView />} />
                 <Route path="/share/:id" element={<Shared />} />
+                <Route path="/inbox" element={<Inbox />} />
                 <Route path="/trash" element={<Trash />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/profile" element={<Profile />} />

@@ -12,8 +12,8 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, MoreHorizontal, Trash2, Plus, Check } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { focusSiblingBySelector, isTextInputTarget } from "@/lib/keyboard";
+import { cn } from "@/shared/lib/utils";
+import { focusSiblingBySelector, isTextInputTarget } from "@/shared/lib/keyboard";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
   DropdownMenuSeparator, DropdownMenuLabel, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger,

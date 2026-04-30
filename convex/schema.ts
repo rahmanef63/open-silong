@@ -72,4 +72,36 @@ export default defineSchema({
     userId: v.id("users"),
     pageIds: v.array(v.string()),
   }).index("by_user", ["userId"]),
+
+  // === inbox ===
+  notifications: defineTable({
+    userId: v.id("users"),
+    kind: v.string(),                       // "mention" | "comment" | "share" | "system" | "update"
+    title: v.string(),
+    body: v.optional(v.string()),
+    pageId: v.optional(v.string()),
+    blockId: v.optional(v.string()),
+    actorName: v.optional(v.string()),
+    actorIcon: v.optional(v.string()),
+    read: v.boolean(),
+    createdAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_unread", ["userId", "read"]),
+
+  // === comments ===
+  comments: defineTable({
+    userId: v.id("users"),                  // author
+    pageId: v.string(),
+    blockId: v.optional(v.string()),        // null = page-level comment
+    text: v.string(),
+    authorName: v.string(),
+    authorIcon: v.string(),
+    resolved: v.boolean(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_page", ["pageId"])
+    .index("by_block", ["blockId"]),
 });

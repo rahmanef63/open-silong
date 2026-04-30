@@ -2,8 +2,8 @@ import { useMemo, useState } from "react";
 import { Database, DatabaseViewConfig, Page } from "@/lib/types";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { focusSiblingBySelector } from "@/lib/keyboard";
+import { cn } from "@/shared/lib/utils";
+import { focusSiblingBySelector } from "@/shared/lib/keyboard";
 
 const DAY_MS = 86400000;
 const CELL_W = 32; // px per day

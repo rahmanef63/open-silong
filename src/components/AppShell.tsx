@@ -4,7 +4,7 @@ import { SearchModal } from "./SearchModal";
 import { Menu, X } from "lucide-react";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useStore } from "@/lib/store";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/lib/utils";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { preferences } = useStore();

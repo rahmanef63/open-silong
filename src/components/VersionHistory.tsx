@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useStore } from "@/lib/store";
 import { History, X, RotateCcw, Eye } from "lucide-react";
-import { formatDateTime, formatRelTime } from "@/lib/format";
-import { cn } from "@/lib/utils";
+import { formatDateTime, formatRelTime } from "@/shared/lib/format";
+import { cn } from "@/shared/lib/utils";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,

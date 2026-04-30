@@ -3,7 +3,7 @@ import { useStore } from "@/lib/store";
 import { Page, Property, PropertyType } from "@/lib/types";
 import { PropertyCell } from "../database/PropertyCell";
 import { PROPERTY_TYPE_LABELS } from "../database/DatabaseBlock";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/lib/utils";
 import {
   Type, Hash, ChevronDown, Tags, Circle, Calendar, User, CheckSquare,
   Link2, Mail, Phone, Paperclip, ArrowUpRight, Sigma, Calculator, Clock,

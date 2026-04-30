@@ -26,7 +26,7 @@ import {
   PageSnapshot,
   SelectOption,
 } from "./types";
-import { isTextInputTarget } from "./keyboard";
+import { isTextInputTarget } from "@/shared/lib/keyboard";
 import { seedWorkspace, seedUser, seedPreferences } from "./seed";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
