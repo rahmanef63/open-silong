@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useStore } from "@/lib/store";
 import { Page } from "@/lib/types";
 import { BlockEditor } from "./BlockEditor";
+import { RowPropertiesPanel } from "./RowPropertiesPanel";
 import {
   ChevronRight, Star, MoreHorizontal, ImagePlus, Trash2, Copy, Share2, History, FileText, Plus,
 } from "lucide-react";
@@ -126,6 +127,8 @@ export function PageEditor() {
               }}
             />
 
+            {page.rowOfDatabaseId && <RowPropertiesPanel page={page} />}
+
             <div className="mt-6 pb-32 prose-editor">
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
                 <SortableContext items={page.blocks.map(b => b.id)} strategy={verticalListSortingStrategy}>
@@ -209,7 +212,7 @@ function Subpages({ page, subpages }: { page: Page; subpages: Page[] }) {
 }
 
 function Header({ page, onShare, onHistory, historyOpen }: { page: Page; onShare: () => void; onHistory: () => void; historyOpen: boolean }) {
-  const { getPage, toggleFavorite, duplicatePage, deletePage, saving } = useStore();
+  const { getPage, toggleFavorite, duplicatePage, deletePage, saving, pages } = useStore();
   const navigate = useNavigate();
   const crumbs: Page[] = [];
   let cur: Page | undefined = page;
@@ -218,17 +221,35 @@ function Header({ page, onShare, onHistory, historyOpen }: { page: Page; onShare
     cur = cur.parentId ? getPage(cur.parentId) : undefined;
   }
 
+  // For database row pages, find the page that hosts the database block and prepend it as a breadcrumb
+  const dbHostPage =
+    page.rowOfDatabaseId
+      ? pages.find(
+          (p) =>
+            !p.trashed &&
+            p.blocks.some(
+              (b) => b.type === "database" && b.databaseId === page.rowOfDatabaseId
+            )
+        )
+      : undefined;
+
+  // Prepend dbHostPage if it's not already in the crumbs trail
+  const finalCrumbs =
+    dbHostPage && !crumbs.some((c) => c.id === dbHostPage.id)
+      ? [dbHostPage, ...crumbs]
+      : crumbs;
+
   return (
     <header className="flex items-center justify-between gap-3 border-b border-border bg-background/80 backdrop-blur px-4 md:px-6 h-12 shrink-0">
       <nav className="flex items-center gap-1 text-sm min-w-0 overflow-hidden">
-        {crumbs.map((c, i) => (
+        {finalCrumbs.map((c, i) => (
           <div key={c.id} className="flex items-center gap-1 min-w-0">
             {i > 0 && <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />}
             <button
               onClick={() => navigate(`/p/${c.id}`)}
               className={cn(
                 "flex items-center gap-1.5 rounded px-1.5 py-1 hover:bg-accent min-w-0",
-                i === crumbs.length - 1 ? "text-foreground" : "text-muted-foreground"
+                i === finalCrumbs.length - 1 ? "text-foreground" : "text-muted-foreground"
               )}
             >
               <span>{c.icon}</span>
