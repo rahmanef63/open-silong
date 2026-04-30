@@ -16,6 +16,8 @@ import { BlockControls } from "./blocks/BlockControls";
 import { BlockBody } from "./blocks/BlockBody";
 import { ToggleBlock } from "./blocks/ToggleBlock";
 import { ImageBlock } from "./blocks/ImageBlock";
+import { EmbedBlock } from "./blocks/EmbedBlock";
+import { ButtonBlock } from "./blocks/ButtonBlock";
 import { MARKDOWN_TRIGGERS } from "./lib/markdownTriggers";
 
 interface Props {
@@ -294,6 +296,30 @@ function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerR
         controls={<BlockControls pageId={pageId} block={block} index={index} listeners={listeners} convertTo={convertTo} />}
       >
         <ImageBlock pageId={pageId} block={block} />
+      </BlockShell>
+    );
+  }
+
+  if (block.type === "embed") {
+    return (
+      <BlockShell
+        setNodeRef={setNodeRef} style={style} isDragging={isDragging} isOver={isOver}
+        attributes={attributes} listeners={listeners}
+        controls={<BlockControls pageId={pageId} block={block} index={index} listeners={listeners} convertTo={convertTo} />}
+      >
+        <EmbedBlock block={block} onUpdate={(patch) => updateBlock(pageId, block.id, patch)} />
+      </BlockShell>
+    );
+  }
+
+  if (block.type === "button") {
+    return (
+      <BlockShell
+        setNodeRef={setNodeRef} style={style} isDragging={isDragging} isOver={isOver}
+        attributes={attributes} listeners={listeners}
+        controls={<BlockControls pageId={pageId} block={block} index={index} listeners={listeners} convertTo={convertTo} />}
+      >
+        <ButtonBlock block={block} onUpdate={(patch) => updateBlock(pageId, block.id, patch)} />
       </BlockShell>
     );
   }

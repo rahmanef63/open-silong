@@ -20,6 +20,7 @@ const PLACEHOLDERS: Record<BlockType, string> = {
   quote: "Quote", code: "Type code…", callout: "Highlight an idea",
   divider: "", page: "", database: "",
   columns2: "", columns3: "", toggle: "", image: "", equation: "", table: "",
+  embed: "", button: "",
 };
 
 export function BlockBody({ block, setRef, handleInput, handleKeyDown, onCheck, onLang }: Props) {

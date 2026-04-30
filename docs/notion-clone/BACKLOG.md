@@ -233,9 +233,9 @@
 - [ ] Resize column
 - [ ] Table of contents
 - [ ] Breadcrumb block
-- [ ] Button block
+- [x] Button block (label + URL or page path → opens new tab / navigates internally)
 - [ ] Synced block
-- [ ] Embed block
+- [x] Embed block (iframe — auto-detects YouTube/Vimeo/Loom/Figma/CodePen/CodeSandbox/Spotify; generic fallback)
 
 ## 4.4 Media Blocks — P1
 
@@ -273,8 +273,8 @@
 - [ ] Synced block
 - [x] Simple table block (with "Turn into database" conversion)
 - [ ] Mermaid diagram
-- [ ] Generic third-party embed
-- [ ] Figma / Drive / Gist / Tweet / YouTube / Loom / Map embeds
+- [x] Generic third-party embed (covered by /embed block)
+- [x] Figma / YouTube / Loom / Vimeo / CodePen / CodeSandbox / Spotify embeds (provider-aware URL parser)
 
 ---
 
