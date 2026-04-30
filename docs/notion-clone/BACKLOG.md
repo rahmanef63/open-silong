@@ -132,6 +132,9 @@
   - [x] Inline create
   - [x] Inline rename
   - [x] Context menu
+  - [x] DragOverlay ghost preview (no horizontal scroll, vertical-axis restricted)
+  - [x] Drop indicator line (sibling) + nest highlight (drag right)
+  - [x] Cross-context drop: drag page-link from page body → sidebar to re-parent
 - [x] Favorite pages
 - [x] Recent pages
 - [x] Breadcrumb navigation

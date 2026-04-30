@@ -6,13 +6,16 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import {
-  closestCenter, DndContext, KeyboardSensor, PointerSensor, type DragEndEvent,
+  closestCenter, DndContext, DragOverlay, KeyboardSensor, PointerSensor,
+  type DragEndEvent, type DragMoveEvent, type DragStartEvent,
   useSensor, useSensors,
 } from "@dnd-kit/core";
 import {
   SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
+import { restrictToVerticalAxis, restrictToFirstScrollableAncestor } from "@dnd-kit/modifiers";
 import { CSS } from "@dnd-kit/utilities";
+import { toast } from "sonner";
 import { useStore } from "@/lib/store";
 import { Page } from "@/lib/types";
 import { cn } from "@/shared/lib/utils";
@@ -80,13 +83,17 @@ type TreeItem = { page: Page; depth: number; parentId: string | null };
 export function WorkspaceSidebar({ onOpenSearch, onClose }: Props) {
   const {
     workspace, pages, recents, childrenOf, createPage, preferences, reorderPages,
-    databases, createDatabase, addBlock, updateBlock,
+    databases, createDatabase, addBlock, updateBlock, movePage,
   } = useStore();
   const navigate = useNavigate();
   const location = useLocation();
   const density = DENSITY[preferences.sidebarDensity];
   const [openIds, setOpenIds] = useState<Set<string>>(new Set());
   const [treeInitialized, setTreeInitialized] = useState(false);
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [overId, setOverId] = useState<string | null>(null);
+  const [nestIntent, setNestIntent] = useState(false);
+  const [externalOverId, setExternalOverId] = useState<string | null>(null);
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
@@ -140,29 +147,62 @@ export function WorkspaceSidebar({ onOpenSearch, onClose }: Props) {
     onClose?.();
   };
 
+  const resetDrag = () => {
+    setActiveId(null);
+    setOverId(null);
+    setNestIntent(false);
+  };
+
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(String(event.active.id));
+  };
+
+  const handleDragMove = (event: DragMoveEvent) => {
+    setOverId(event.over ? String(event.over.id) : null);
+    setNestIntent(event.delta.x > 28);
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over, delta } = event;
+    resetDrag();
     if (!over || active.id === over.id) return;
-    const activeId = String(active.id);
-    const overId = String(over.id);
-    const overItem = itemById.get(overId);
-    if (!overItem || isDescendantOf(overId, activeId)) return;
+    const activeIdStr = String(active.id);
+    const overIdStr = String(over.id);
+    const overItem = itemById.get(overIdStr);
+    if (!overItem || isDescendantOf(overIdStr, activeIdStr)) return;
 
     if (delta.x > 28) {
-      const childIds = childrenOf(overId).map((page) => page.id).filter((id) => id !== activeId);
-      reorderPages(overId, [...childIds, activeId]);
-      setPageOpen(overId, true);
+      const childIds = childrenOf(overIdStr).map((page) => page.id).filter((id) => id !== activeIdStr);
+      reorderPages(overIdStr, [...childIds, activeIdStr]);
+      setPageOpen(overIdStr, true);
       return;
     }
 
     const targetParentId = overItem.parentId;
-    const siblingIds = childrenOf(targetParentId).map((page) => page.id).filter((id) => id !== activeId);
-    const overIndex = siblingIds.indexOf(overId);
+    const siblingIds = childrenOf(targetParentId).map((page) => page.id).filter((id) => id !== activeIdStr);
+    const overIndex = siblingIds.indexOf(overIdStr);
     const next = [...siblingIds];
-    next.splice(overIndex === -1 ? next.length : overIndex, 0, activeId);
+    next.splice(overIndex === -1 ? next.length : overIndex, 0, activeIdStr);
     reorderPages(targetParentId, next);
     if (targetParentId) setPageOpen(targetParentId, true);
   };
+
+  const handleNativeDropOnPage = (targetPageId: string | null, e: React.DragEvent) => {
+    setExternalOverId(null);
+    const droppedId = e.dataTransfer.getData("application/x-page-id");
+    if (!droppedId) return;
+    if (droppedId === targetPageId) return;
+    if (targetPageId && isDescendantOf(targetPageId, droppedId)) {
+      toast.error("Can't move a page into its own descendant");
+      return;
+    }
+    e.preventDefault();
+    movePage(droppedId, targetPageId);
+    if (targetPageId) setPageOpen(targetPageId, true);
+    toast.success("Page moved");
+  };
+
+  const activeDraggedItem = activeId ? itemById.get(activeId) : null;
 
   return (
     <aside data-keyboard-scope className="flex h-full w-full flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
@@ -225,20 +265,67 @@ export function WorkspaceSidebar({ onOpenSearch, onClose }: Props) {
               <Plus className="h-3.5 w-3.5" />
             </button>
           }
+          onDragOver={(e) => {
+            if (e.dataTransfer.types.includes("application/x-page-id")) {
+              e.preventDefault();
+              e.dataTransfer.dropEffect = "move";
+            }
+          }}
+          onDrop={(e) => handleNativeDropOnPage(null, e)}
         >
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <SortableContext items={treeItems.map((item) => item.page.id)} strategy={verticalListSortingStrategy}>
-              {treeItems.map((item) => (
-                <SortablePageRow
-                  key={item.page.id}
-                  item={item}
-                  density={density}
-                  isOpen={openIds.has(item.page.id)}
-                  setOpen={(open) => setPageOpen(item.page.id, open)}
-                  onClose={onClose}
-                />
-              ))}
-            </SortableContext>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            modifiers={[restrictToVerticalAxis, restrictToFirstScrollableAncestor]}
+            onDragStart={handleDragStart}
+            onDragMove={handleDragMove}
+            onDragEnd={handleDragEnd}
+            onDragCancel={resetDrag}
+          >
+            <div
+              className="overflow-x-hidden"
+              onDragOver={(e) => {
+                if (e.dataTransfer.types.includes("application/x-page-id")) {
+                  e.preventDefault();
+                  e.dataTransfer.dropEffect = "move";
+                }
+              }}
+            >
+              <SortableContext items={treeItems.map((item) => item.page.id)} strategy={verticalListSortingStrategy}>
+                {treeItems.map((item) => (
+                  <SortablePageRow
+                    key={item.page.id}
+                    item={item}
+                    density={density}
+                    isOpen={openIds.has(item.page.id)}
+                    setOpen={(open) => setPageOpen(item.page.id, open)}
+                    onClose={onClose}
+                    isOverSibling={overId === item.page.id && !nestIntent && activeId !== null}
+                    isOverNesting={overId === item.page.id && nestIntent && activeId !== null}
+                    isExternalOver={externalOverId === item.page.id}
+                    onExternalEnter={() => setExternalOverId(item.page.id)}
+                    onExternalLeave={() => setExternalOverId((cur) => (cur === item.page.id ? null : cur))}
+                    onExternalDrop={(e) => handleNativeDropOnPage(item.page.id, e)}
+                  />
+                ))}
+              </SortableContext>
+            </div>
+            <DragOverlay dropAnimation={{ duration: 150, easing: "cubic-bezier(0.18, 0.67, 0.6, 1.22)" }}>
+              {activeDraggedItem ? (
+                <div
+                  className={cn(
+                    "flex items-center gap-1.5 rounded-md bg-sidebar-accent/95 shadow-pop ring-1 ring-border px-2 backdrop-blur",
+                    density.pageLink,
+                  )}
+                  style={{ paddingLeft: `${activeDraggedItem.depth * density.indent + 8}px` }}
+                >
+                  <span className={cn("leading-none", density === DENSITY.compact ? "text-sm" : "text-base")}>
+                    {activeDraggedItem.page.icon}
+                  </span>
+                  <span className="truncate text-sm">{activeDraggedItem.page.title || "Untitled"}</span>
+                </div>
+              ) : null}
+            </DragOverlay>
           </DndContext>
           {rootPages.length === 0 && (
             <button
@@ -395,15 +482,17 @@ function SidebarAction({
 }
 
 function Section({
-  title, action, children, density,
+  title, action, children, density, onDragOver, onDrop,
 }: {
   title: string;
   action?: ReactNode;
   children: ReactNode;
   density: DensityConfig;
+  onDragOver?: (e: React.DragEvent) => void;
+  onDrop?: (e: React.DragEvent) => void;
 }) {
   return (
-    <div className={density.section}>
+    <div className={density.section} onDragOver={onDragOver} onDrop={onDrop}>
       {title && (
         <div className="flex items-center justify-between px-2 mb-1">
           <span className={cn("uppercase tracking-wider font-semibold text-muted-foreground", density.sectionTitle)}>{title}</span>
@@ -443,12 +532,20 @@ function SidebarPageLink({
 
 function SortablePageRow({
   item, density, isOpen, setOpen, onClose,
+  isOverSibling, isOverNesting, isExternalOver,
+  onExternalEnter, onExternalLeave, onExternalDrop,
 }: {
   item: TreeItem;
   density: DensityConfig;
   isOpen: boolean;
   setOpen: (open: boolean) => void;
   onClose?: () => void;
+  isOverSibling: boolean;
+  isOverNesting: boolean;
+  isExternalOver: boolean;
+  onExternalEnter: () => void;
+  onExternalLeave: () => void;
+  onExternalDrop: (e: React.DragEvent) => void;
 }) {
   const { childrenOf, createPage, duplicatePage, deletePage, toggleFavorite, updatePage } = useStore();
   const navigate = useNavigate();
@@ -468,12 +565,29 @@ function SortablePageRow({
     <div
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={cn(isDragging && "opacity-50")}
+      className={cn("relative", isDragging && "opacity-30")}
+      onDragOver={(e) => {
+        if (e.dataTransfer.types.includes("application/x-page-id")) {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = "move";
+          onExternalEnter();
+        }
+      }}
+      onDragLeave={onExternalLeave}
+      onDrop={onExternalDrop}
     >
+      {isOverSibling && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -top-px left-1.5 right-1.5 h-0.5 rounded-full bg-brand z-10"
+        />
+      )}
       <div
         className={cn(
-          "group flex items-center gap-1 rounded-md pr-1 hover:bg-sidebar-accent transition",
-          active && "bg-sidebar-accent"
+          "group flex items-center gap-1 rounded-md pr-1 transition-colors duration-150",
+          "hover:bg-sidebar-accent/80",
+          active && "bg-sidebar-accent",
+          (isOverNesting || isExternalOver) && "bg-brand/15 ring-1 ring-brand ring-inset",
         )}
         style={{ paddingLeft: `${item.depth * density.indent}px` }}
       >
