@@ -75,7 +75,7 @@ export function BlockEditor({ pageId, block, index, total, onFocusNext, onFocusP
     setBlockType(pageId, block.id, type);
   }, [pageId, block.id, setBlockType]);
 
-  const handleKeyDown = (e: KeyboardEvent<HTMLElement>) => {
+  const handleKeyDown = async (e: KeyboardEvent<HTMLElement>) => {
     const meta = e.metaKey || e.ctrlKey;
     const el = e.currentTarget as HTMLElement;
 
@@ -121,7 +121,7 @@ export function BlockEditor({ pageId, block, index, total, onFocusNext, onFocusP
         block.type === "todo" ? "todo" :
         block.type === "bullet" || block.type === "numbered" ? block.type :
         "paragraph";
-      const newId = addBlock(pageId, index, next);
+      const newId = await addBlock(pageId, index, next);
       setTimeout(() => document.querySelector<HTMLElement>(`[data-block-id="${newId}"]`)?.focus(), 0);
       return;
     }
@@ -347,8 +347,8 @@ function BlockControls({
   return (
     <div className="flex">
       <button
-        onClick={() => {
-          const id = addBlock(pageId, index);
+        onClick={async () => {
+          const id = await addBlock(pageId, index);
           setTimeout(() => document.querySelector<HTMLElement>(`[data-block-id="${id}"]`)?.focus(), 0);
         }}
         className="flex h-6 w-5 items-center justify-center rounded text-muted-foreground hover:bg-accent"

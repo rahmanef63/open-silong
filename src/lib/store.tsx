@@ -26,6 +26,7 @@ import {
   PageSnapshot,
   SelectOption,
 } from "./types";
+import { isTextInputTarget } from "./keyboard";
 import { seedWorkspace, seedUser, seedPreferences } from "./seed";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -78,6 +79,7 @@ interface StoreCtx {
   createPage: (parentId?: string | null, opts?: Partial<Page>) => Promise<Page>;
   updatePage: (id: string, patch: Partial<Page>) => void;
   movePage: (id: string, newParentId: string | null) => void;
+  reorderPages: (parentId: string | null, orderedIds: string[]) => void;
   reorderRootPages: (orderedIds: string[]) => void;
   deletePage: (id: string) => void;
   restorePage: (id: string) => void;
@@ -88,7 +90,7 @@ interface StoreCtx {
   addBlock: (pageId: string, afterIndex: number, type?: BlockType, init?: Partial<Block>) => Promise<string>;
   updateBlock: (pageId: string, blockId: string, patch: Partial<Block>) => void;
   deleteBlock: (pageId: string, blockId: string) => void;
-  duplicateBlock: (pageId: string, blockId: string) => void;
+  duplicateBlock: (pageId: string, blockId: string) => string | undefined;
   moveBlock: (pageId: string, fromIndex: number, toIndex: number) => void;
   reorderBlocks: (pageId: string, orderedIds: string[]) => void;
   setBlockType: (pageId: string, blockId: string, type: BlockType) => void;
@@ -125,6 +127,12 @@ interface StoreCtx {
 }
 
 const Ctx = createContext<StoreCtx | null>(null);
+
+type StructuralAction = {
+  label: string;
+  undo: () => void;
+  redo: () => void;
+};
 
 export function StoreProvider({ children }: { children: ReactNode }) {
   const { signOut: authSignOut } = useAuthActions();
@@ -220,6 +228,45 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [user.name, mutCreateSnapshot]
   );
 
+  const undoStackRef = useRef<StructuralAction[]>([]);
+  const redoStackRef = useRef<StructuralAction[]>([]);
+  const [historyVersion, setHistoryVersion] = useState(0);
+
+  const pushStructuralAction = useCallback((action: StructuralAction) => {
+    undoStackRef.current.push(action);
+    if (undoStackRef.current.length > 80) undoStackRef.current.shift();
+    redoStackRef.current = [];
+    setHistoryVersion((v) => v + 1);
+  }, []);
+
+  const undo = useCallback(() => {
+    const action = undoStackRef.current.pop();
+    if (!action) return;
+    action.undo();
+    redoStackRef.current.push(action);
+    setHistoryVersion((v) => v + 1);
+  }, []);
+
+  const redo = useCallback(() => {
+    const action = redoStackRef.current.pop();
+    if (!action) return;
+    action.redo();
+    undoStackRef.current.push(action);
+    setHistoryVersion((v) => v + 1);
+  }, []);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey) || e.key.toLowerCase() !== "z") return;
+      if (isTextInputTarget(e.target)) return;
+      e.preventDefault();
+      if (e.shiftKey) redo();
+      else undo();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [undo, redo]);
+
   // ===== Implementations =====
 
   const updateUser = useCallback((patch: Partial<UserProfile>) => {
@@ -299,19 +346,62 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const movePage = useCallback(
     (id: string, newParentId: string | null) => {
-      mutUpdatePage({ pageId: id, patch: { parentId: newParentId } });
+      const page = pages.find((p) => p.id === id);
+      if (!page || page.parentId === newParentId) return;
+      const before = { parentId: page.parentId, createdAt: page.createdAt };
+      const after = { parentId: newParentId, createdAt: Date.now() };
+      pushStructuralAction({
+        label: "Move page",
+        undo: () => mutUpdatePage({ pageId: id, patch: before }),
+        redo: () => mutUpdatePage({ pageId: id, patch: after }),
+      });
+      mutUpdatePage({ pageId: id, patch: after });
     },
-    [mutUpdatePage]
+    [pages, mutUpdatePage, pushStructuralAction]
+  );
+
+  const reorderPages = useCallback(
+    (parentId: string | null, orderedIds: string[]) => {
+      const pageMap = new Map(pages.map((p) => [p.id, p]));
+      const affected = orderedIds.map((id) => pageMap.get(id)).filter((p): p is Page => !!p);
+      if (!affected.length) return;
+
+      const before = affected.map((p) => ({ id: p.id, parentId: p.parentId, createdAt: p.createdAt }));
+      const base = Date.now();
+      const after = orderedIds.map((id, i) => ({ id, parentId, createdAt: base + i }));
+
+      const orderedSet = new Set(orderedIds);
+      const currentOrder = pages
+        .filter((p) => orderedSet.has(p.id) && p.parentId === parentId)
+        .sort((a, b) => a.createdAt - b.createdAt)
+        .map((p) => p.id);
+      const same = currentOrder.length === orderedIds.length && currentOrder.every((currentId, i) => currentId === orderedIds[i]);
+      if (same) return;
+
+      const apply = (states: Array<{ id: string; parentId: string | null; createdAt: number }>) => {
+        states.forEach((state) => {
+          mutUpdatePage({
+            pageId: state.id,
+            patch: { parentId: state.parentId, createdAt: state.createdAt },
+          });
+        });
+      };
+
+      pushStructuralAction({
+        label: "Reorder pages",
+        undo: () => apply(before),
+        redo: () => apply(after),
+      });
+      apply(after);
+    },
+    [pages, mutUpdatePage, pushStructuralAction]
   );
 
   const reorderRootPages = useCallback(
     (orderedIds: string[]) => {
-      const base = Date.now();
-      orderedIds.forEach((id, i) => {
-        mutUpdatePage({ pageId: id, patch: { createdAt: base + i } });
-      });
+      reorderPages(null, orderedIds);
     },
-    [mutUpdatePage]
+    [reorderPages]
   );
 
   const deletePage = useCallback(
@@ -385,13 +475,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const duplicateBlock = useCallback(
     (pageId: string, blockId: string) => {
       const page = pages.find((p) => p.id === pageId);
-      if (!page) return;
+      if (!page) return undefined;
       const idx = page.blocks.findIndex((b) => b.id === blockId);
-      if (idx === -1) return;
+      if (idx === -1) return undefined;
       const dup = { ...page.blocks[idx], id: uid() };
       const blocks = [...page.blocks];
       blocks.splice(idx + 1, 0, dup);
       mutUpdatePage({ pageId, patch: { blocks } });
+      return dup.id;
     },
     [pages, mutUpdatePage]
   );
@@ -403,16 +494,33 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const blocks = [...page.blocks];
       const [moved] = blocks.splice(fromIndex, 1);
       blocks.splice(toIndex, 0, moved);
+      const before = [...page.blocks];
+      const after = [...blocks];
+      pushStructuralAction({
+        label: "Move block",
+        undo: () => mutUpdatePage({ pageId, patch: { blocks: before } }),
+        redo: () => mutUpdatePage({ pageId, patch: { blocks: after } }),
+      });
       mutUpdatePage({ pageId, patch: { blocks } });
     },
-    [pages, mutUpdatePage]
+    [pages, mutUpdatePage, pushStructuralAction]
   );
 
   const reorderBlocks = useCallback(
     (pageId: string, orderedIds: string[]) => {
+      const page = pages.find((p) => p.id === pageId);
+      if (!page) return;
+      const oldIds = page.blocks.map((b) => b.id);
+      const same = oldIds.length === orderedIds.length && oldIds.every((id, i) => id === orderedIds[i]);
+      if (same) return;
+      pushStructuralAction({
+        label: "Reorder blocks",
+        undo: () => mutReorderBlocks({ pageId, orderedIds: oldIds }),
+        redo: () => mutReorderBlocks({ pageId, orderedIds }),
+      });
       mutReorderBlocks({ pageId, orderedIds });
     },
-    [mutReorderBlocks]
+    [pages, mutReorderBlocks, pushStructuralAction]
   );
 
   const setBlockType = useCallback(
@@ -478,6 +586,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         name: name ?? defaultPropName(type),
         type,
         options: type === "select" || type === "multi_select" || type === "status" ? [] : undefined,
+        rollupAggregate: type === "rollup" ? "count" : undefined,
+        formulaExpression: type === "formula" ? "{{title}}" : undefined,
       };
       const db = databases.find((d) => d.id === dbId);
       if (db) {
@@ -514,9 +624,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       if (!db) return;
       const map = new Map(db.properties.map((p) => [p.id, p]));
       const properties = orderedIds.map((id) => map.get(id)!).filter(Boolean);
+      const before = db.properties;
+      const after = properties;
+      const same = before.length === after.length && before.every((prop, i) => prop.id === after[i]?.id);
+      if (same) return;
+      pushStructuralAction({
+        label: "Reorder properties",
+        undo: () => mutUpdateDatabase({ dbId, patch: { properties: before } }),
+        redo: () => mutUpdateDatabase({ dbId, patch: { properties: after } }),
+      });
       mutUpdateDatabase({ dbId, patch: { properties } });
     },
-    [databases, mutUpdateDatabase]
+    [databases, mutUpdateDatabase, pushStructuralAction]
   );
 
   const addSelectOption = useCallback(
@@ -582,9 +701,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     (dbId: string, orderedIds: string[]) => {
       const db = databases.find((d) => d.id === dbId);
       if (!db) return;
+      const before = db.rowIds;
+      const same = before.length === orderedIds.length && before.every((id, i) => id === orderedIds[i]);
+      if (same) return;
+      pushStructuralAction({
+        label: "Reorder rows",
+        undo: () => mutUpdateDatabase({ dbId, patch: { rowIds: before } }),
+        redo: () => mutUpdateDatabase({ dbId, patch: { rowIds: orderedIds } }),
+      });
       mutUpdateDatabase({ dbId, patch: { rowIds: orderedIds } });
     },
-    [databases, mutUpdateDatabase]
+    [databases, mutUpdateDatabase, pushStructuralAction]
   );
 
   const setRowValue = useCallback(
@@ -658,6 +785,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     authSignOut();
   }, [authSignOut]);
 
+  const canUndo = historyVersion >= 0 && undoStackRef.current.length > 0;
+  const canRedo = historyVersion >= 0 && redoStackRef.current.length > 0;
+
   const value: StoreCtx = {
     user,
     updateUser,
@@ -672,6 +802,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     createPage,
     updatePage,
     movePage,
+    reorderPages,
     reorderRootPages,
     deletePage,
     restorePage,
@@ -711,10 +842,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     snapshots,
     snapshotsForPage,
     restoreSnapshot: restoreSnapshotFn,
-    undo: () => {},
-    redo: () => {},
-    canUndo: false,
-    canRedo: false,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
     signOut,
   };
 

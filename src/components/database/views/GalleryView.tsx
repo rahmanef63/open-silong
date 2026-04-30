@@ -1,6 +1,7 @@
 import { Database, DatabaseViewConfig, Page } from "@/lib/types";
 import { useNavigate } from "react-router-dom";
 import { PropertyCell } from "../PropertyCell";
+import { focusSiblingBySelector } from "@/lib/keyboard";
 
 export function GalleryView({ db, rows }: { db: Database; view: DatabaseViewConfig; rows: Page[] }) {
   const navigate = useNavigate();
@@ -11,6 +12,14 @@ export function GalleryView({ db, rows }: { db: Database; view: DatabaseViewConf
         <button
           key={r.id}
           onClick={() => navigate(`/p/${r.id}`)}
+          onKeyDown={(e) => {
+            if (e.key === "ArrowDown" || e.key === "ArrowUp" || e.key === "ArrowLeft" || e.key === "ArrowRight") {
+              e.preventDefault();
+              const delta = e.key === "ArrowUp" || e.key === "ArrowLeft" ? -1 : 1;
+              focusSiblingBySelector(e.currentTarget, "[data-db-nav-item]", delta as 1 | -1);
+            }
+          }}
+          data-db-nav-item
           className="rounded-lg border border-border bg-card p-3 text-left hover:border-border-strong shadow-soft transition"
         >
           <div className="h-20 w-full rounded-md mb-2" style={{ background: r.cover || "linear-gradient(135deg, hsl(var(--muted)), hsl(var(--accent)))" }} />

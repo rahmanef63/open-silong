@@ -34,14 +34,14 @@ export function Dashboard() {
             icon={Plus}
             title="New page"
             subtitle="Start with a blank canvas"
-            onClick={() => { const p = createPage(null); navigate(`/p/${p.id}`); }}
+            onClick={async () => { const p = await createPage(null); navigate(`/p/${p.id}`); }}
             primary
           />
           <ActionCard
             icon={Sparkles}
             title="Quick capture"
             subtitle="Jot a thought, organize later"
-            onClick={() => { const p = createPage(null); navigate(`/p/${p.id}`); }}
+            onClick={async () => { const p = await createPage(null); navigate(`/p/${p.id}`); }}
           />
           <ActionCard
             icon={FileText}
@@ -70,7 +70,7 @@ export function Dashboard() {
         <Section title="All pages" icon={FileText}>
           <div className="rounded-lg border border-border divide-y divide-border bg-card">
             {allActive.length === 0 ? (
-              <EmptyState onCreate={() => { const p = createPage(null); navigate(`/p/${p.id}`); }} />
+              <EmptyState onCreate={async () => { const p = await createPage(null); navigate(`/p/${p.id}`); }} />
             ) : (
               allActive
                 .slice()
