@@ -68,6 +68,22 @@
 16. **Workspace/user isolation always.** Every query/mutation starts with
     `getAuthUserId(ctx)`; every query uses the `by_user` index.
 
+17. **Deploy via si-coder, never raw `npx convex deploy`.** The shell's
+    `CONVEX_ADMIN_KEY` is for a different deployment; direct deploys
+    fail with `BadAdminKey`. Use:
+    ```bash
+    node /home/rahman/.agents/skills/si-coder/scripts/deploy.js \
+      "$DOKPLOY_API_URL" "$DOKPLOY_API_KEY" \
+      "notion-page-clone" "notion-page-clone" \
+      "$GITHUB_TOKEN" "notion-page-clone.rahmanef.com"
+    ```
+    Handles: GitHub push, schema migration, function deploy with the
+    project-specific admin key, and Dokploy rebuild — single command.
+
+18. **Module path keys with slashes.** Convex codegen emits string keys
+    for nested feature dirs: `api["features/inbox/queries"].list` (not
+    `api.features.inbox.queries.list`). Match codegen — don't refactor.
+
 ## Process
 
 17. **Never invent UI patterns.** Before writing new menu/dialog UX, search
