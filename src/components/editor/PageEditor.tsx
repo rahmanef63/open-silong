@@ -12,7 +12,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import {
-  DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent,
+  DndContext, closestCenter, pointerWithin, KeyboardSensor, PointerSensor, useSensor, useSensors,
+  type DragEndEvent, type CollisionDetection,
 } from "@dnd-kit/core";
 import {
   SortableContext, verticalListSortingStrategy, sortableKeyboardCoordinates,
@@ -33,6 +34,7 @@ const COVERS = [
 export function PageEditor() {
   const { id } = useParams<{ id: string }>();
   const { getPage, updatePage, pushRecent, addBlock, reorderBlocks, childrenOf, createPage, getDatabase, updateDatabase } = useStore();
+  void createPage;
   const navigate = useNavigate();
   const page = id ? getPage(id) : undefined;
   const [iconPick, setIconPick] = useState(false);
@@ -74,12 +76,63 @@ export function PageEditor() {
     refs.current.get(target.id)?.focus();
   }, []);
 
+  // Collision detection: prefer container droppables (col:* / toggle:*) when the
+  // pointer is inside one, else fall back to closestCenter for sibling reorder.
+  const collisionDetection: CollisionDetection = (args) => {
+    const inside = pointerWithin(args).filter((c) => {
+      const id = String(c.id);
+      return id.startsWith("col:") || id.startsWith("toggle:");
+    });
+    if (inside.length) return inside;
+    return closestCenter(args);
+  };
+
   const onDragEnd = (e: DragEndEvent) => {
     const { active, over } = e;
     if (!over || active.id === over.id) return;
-    const ids = page.blocks.map(b => b.id);
-    const from = ids.indexOf(String(active.id));
-    const to = ids.indexOf(String(over.id));
+    const activeId = String(active.id);
+    const overId = String(over.id);
+
+    // Drop into a column pane → move dragged block as last child of that column
+    const colMatch = overId.match(/^col:(.+):(\d+)$/);
+    if (colMatch) {
+      const [, columnBlockId, colIndexStr] = colMatch;
+      const colIndex = Number(colIndexStr);
+      const dragged = page.blocks.find((b) => b.id === activeId);
+      if (!dragged || activeId === columnBlockId) return;
+      const newBlocks = page.blocks
+        .filter((b) => b.id !== activeId)
+        .map((b) => {
+          if (b.id !== columnBlockId) return b;
+          const cols = b.columns ?? [];
+          const newCols = cols.map((col, i) => (i === colIndex ? [...col, dragged] : col));
+          return { ...b, columns: newCols };
+        });
+      updatePage(page.id, { blocks: newBlocks });
+      return;
+    }
+
+    // Drop into a toggle body → append as child, expand
+    const toggleMatch = overId.match(/^toggle:(.+)$/);
+    if (toggleMatch) {
+      const toggleId = toggleMatch[1];
+      const dragged = page.blocks.find((b) => b.id === activeId);
+      if (!dragged || activeId === toggleId) return;
+      const newBlocks = page.blocks
+        .filter((b) => b.id !== activeId)
+        .map((b) =>
+          b.id === toggleId
+            ? { ...b, children: [...(b.children ?? []), dragged], collapsed: false }
+            : b,
+        );
+      updatePage(page.id, { blocks: newBlocks });
+      return;
+    }
+
+    // Default: sibling reorder at top level
+    const ids = page.blocks.map((b) => b.id);
+    const from = ids.indexOf(activeId);
+    const to = ids.indexOf(overId);
     if (from === -1 || to === -1) return;
     const next = [...ids];
     next.splice(to, 0, next.splice(from, 1)[0]);
@@ -179,7 +232,7 @@ export function PageEditor() {
               {...(page.locked ? { inert: "" as unknown as boolean } : {})}
               className={cn("mt-6 pb-32 prose-editor", page.locked && "opacity-90 select-text")}
             >
-              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+              <DndContext sensors={sensors} collisionDetection={collisionDetection} onDragEnd={onDragEnd}>
                 <SortableContext items={page.blocks.map(b => b.id)} strategy={verticalListSortingStrategy}>
                   {page.blocks.map((b, i) => (
                     <BlockEditor

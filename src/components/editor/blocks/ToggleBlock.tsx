@@ -1,4 +1,5 @@
 import { useEffect, useRef, type CSSProperties, type KeyboardEvent } from "react";
+import { useDroppable } from "@dnd-kit/core";
 import { ChevronRight, Plus } from "lucide-react";
 import type { Block, BlockType } from "@/lib/types";
 import { useStore } from "@/lib/store";
@@ -22,12 +23,18 @@ interface Props {
 const uid = () => Math.random().toString(36).slice(2, 10);
 
 export function ToggleBlock({
-  pageId, block, index, setNodeRef, style, isDragging, isOver,
+  pageId, block, index, setNodeRef, style, isDragging, isOver: shellIsOver,
   attributes, listeners, convertTo,
 }: Props) {
   const { updateBlock } = useStore();
   const collapsed = block.collapsed !== false;
   const children: Block[] = block.children ?? [];
+  const { setNodeRef: setDropRef, isOver: dropIsOver } = useDroppable({ id: `toggle:${block.id}` });
+
+  // Auto-expand on hover-while-dragging so the user sees their target
+  useEffect(() => {
+    if (collapsed && dropIsOver) updateBlock(pageId, block.id, { collapsed: false });
+  }, [dropIsOver]);
 
   const addChild = () => {
     const nb: Block = { id: uid(), type: "paragraph", text: "" };
@@ -37,11 +44,11 @@ export function ToggleBlock({
 
   return (
     <BlockShell
-      setNodeRef={setNodeRef} style={style} isDragging={isDragging} isOver={isOver}
+      setNodeRef={setNodeRef} style={style} isDragging={isDragging} isOver={shellIsOver}
       attributes={attributes} listeners={listeners}
       controls={<BlockControls pageId={pageId} block={block} index={index} listeners={listeners} convertTo={convertTo} />}
     >
-      <div>
+      <div ref={setDropRef} className={cn("rounded transition-colors", dropIsOver && "bg-brand/10 ring-2 ring-brand ring-inset")}>
         <div className="flex items-start gap-1">
           <button
             onClick={() => updateBlock(pageId, block.id, { collapsed: !collapsed })}
