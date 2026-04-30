@@ -3,7 +3,6 @@ import { Database, DatabaseViewConfig, Page, Property, PropertyType } from "@/li
 import { useStore } from "@/lib/store";
 import { PropertyCell } from "../PropertyCell";
 import { PROPERTY_TYPE_LABELS } from "../DatabaseBlock";
-import { useNavigate } from "react-router-dom";
 import {
   DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors, DragEndEvent,
 } from "@dnd-kit/core";
@@ -11,19 +10,19 @@ import {
   SortableContext, horizontalListSortingStrategy, verticalListSortingStrategy, useSortable, sortableKeyboardCoordinates,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, MoreHorizontal, Trash2, Plus, Check } from "lucide-react";
+import { GripVertical, MoreHorizontal, Trash2, Check } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { focusSiblingBySelector, isTextInputTarget } from "@/shared/lib/keyboard";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
   DropdownMenuSeparator, DropdownMenuLabel, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger,
 } from "@/components/ui/dropdown-menu";
+import { AddColumnHeader, AddRowFooter, InlineRowTitle } from "@/slices/database-row";
 
-interface ViewProps { db: Database; view: DatabaseViewConfig; rows: Page[] }
+interface ViewProps { db: Database; view: DatabaseViewConfig; rows: Page[]; onOpenRow: (id: string) => void }
 
-export function TableView({ db, view, rows }: ViewProps) {
+export function TableView({ db, view, rows, onOpenRow }: ViewProps) {
   const { reorderProperties, reorderRows, addRow, deleteRow } = useStore();
-  const navigate = useNavigate();
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
 
   const visibleProps = db.properties.filter(p => !p.hidden);
@@ -59,20 +58,23 @@ export function TableView({ db, view, rows }: ViewProps) {
             <div className="flex border-b border-border bg-muted/30 text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
               <div className="w-8 shrink-0 border-r border-border" />
               {visibleProps.map(p => <SortableHeader key={p.id} prop={p} db={db} />)}
+              <AddColumnHeader dbId={db.id} />
             </div>
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onRowEnd}>
               <SortableContext items={rows.map(r => r.id)} strategy={verticalListSortingStrategy}>
                 {rows.map(row => (
-                  <SortableRow key={row.id} row={row} db={db} visibleProps={visibleProps} onOpen={() => navigate(`/p/${row.id}`)} onDelete={() => deleteRow(db.id, row.id)} />
+                  <SortableRow
+                    key={row.id}
+                    row={row}
+                    db={db}
+                    visibleProps={visibleProps}
+                    onOpen={() => onOpenRow(row.id)}
+                    onDelete={() => deleteRow(db.id, row.id)}
+                  />
                 ))}
               </SortableContext>
             </DndContext>
-            <button
-              onClick={async () => { const r = await addRow(db.id); navigate(`/p/${r.id}`); }}
-              className="flex w-full items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:bg-accent border-t border-border"
-            >
-              <Plus className="h-3 w-3" /> New row
-            </button>
+            <AddRowFooter onAdd={async () => { const r = await addRow(db.id); onOpenRow(r.id); }} />
           </div>
         </SortableContext>
       </DndContext>
@@ -180,10 +182,7 @@ function SortableRow({ row, db, visibleProps, onOpen, onDelete }: any) {
       {visibleProps.map((p: any, i: number) => (
         <div key={p.id} className="border-r border-border min-w-[160px] flex-1 flex items-center">
           {i === 0 ? (
-            <button onClick={onOpen} className="flex w-full items-center gap-1 text-left text-sm px-2 py-1 hover:bg-accent/50 rounded">
-              <span>{row.icon}</span>
-              <span className="truncate underline-offset-2 hover:underline">{row.title || "Untitled"}</span>
-            </button>
+            <InlineRowTitle row={row} onOpen={onOpen} />
           ) : (
             <PropertyCell db={db} prop={p} row={row} />
           )}

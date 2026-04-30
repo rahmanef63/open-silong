@@ -1,7 +1,6 @@
 import { Database, DatabaseViewConfig, Page, Property, SelectOption } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { useMemo } from "react";
-import { useNavigate } from "react-router-dom";
 import {
   DndContext, useDraggable, useDroppable, PointerSensor, useSensor, useSensors, DragEndEvent, KeyboardSensor,
 } from "@dnd-kit/core";
@@ -12,11 +11,11 @@ import { colorClass } from "@/shared/lib/format";
 import { PropertyCell } from "../PropertyCell";
 import { Plus } from "lucide-react";
 
-interface Props { db: Database; view: DatabaseViewConfig; rows: Page[] }
+interface Props { db: Database; view: DatabaseViewConfig; rows: Page[]; onOpenRow: (id: string) => void }
 
-export function BoardView({ db, view, rows }: Props) {
+export function BoardView({ db, view, rows, onOpenRow }: Props) {
   const { setRowValue, updateView, addRow } = useStore();
-  const navigate = useNavigate();
+  void updateView;
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
 
   const groupProp: Property | undefined = useMemo(() => {
@@ -55,8 +54,8 @@ export function BoardView({ db, view, rows }: Props) {
         {columns.map(col => (
           <BoardColumn key={col.id ?? "none"} db={db} col={col} groupProp={groupProp} onAdd={async () => {
             const r = await addRow(db.id, { rowProps: { [groupProp.id]: col.id ?? null } });
-            navigate(`/p/${r.id}`);
-          }} onOpen={(id) => navigate(`/p/${id}`)} />
+            onOpenRow(r.id);
+          }} onOpen={onOpenRow} />
         ))}
       </div>
     </DndContext>

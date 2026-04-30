@@ -1,9 +1,10 @@
 import { useMemo, useState } from "react";
 import { Database, DatabaseViewConfig, Page } from "@/lib/types";
-import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { focusSiblingBySelector } from "@/shared/lib/keyboard";
+
+interface Props { db: Database; view: DatabaseViewConfig; rows: Page[]; onOpenRow: (id: string) => void }
 
 const DAY_MS = 86400000;
 const CELL_W = 32; // px per day
@@ -12,8 +13,7 @@ function toMs(dateStr: string): number {
   return new Date(dateStr + "T00:00:00").getTime();
 }
 
-export function TimelineView({ db, rows }: { db: Database; view: DatabaseViewConfig; rows: Page[] }) {
-  const navigate = useNavigate();
+export function TimelineView({ db, rows, onOpenRow }: Props) {
   const dateProp = db.properties.find(p => p.type === "date");
   const endProp = db.properties.find(p => p.type === "date" && p.id !== dateProp?.id);
 
@@ -140,7 +140,7 @@ export function TimelineView({ db, rows }: { db: Database; view: DatabaseViewCon
               {/* Label */}
               <button
                 style={{ width: LABEL_W }}
-                onClick={() => navigate(`/p/${row.id}`)}
+                onClick={() => onOpenRow(row.id)}
                 onKeyDown={(e) => {
                   if (e.key === "ArrowDown" || e.key === "ArrowUp") {
                     e.preventDefault();
@@ -166,7 +166,7 @@ export function TimelineView({ db, rows }: { db: Database; view: DatabaseViewCon
                 {/* Bar */}
                 {bar && inView && (
                   <button
-                    onClick={() => navigate(`/p/${row.id}`)}
+                    onClick={() => onOpenRow(row.id)}
                     onKeyDown={(e) => {
                       if (e.key === "ArrowDown" || e.key === "ArrowUp") {
                         e.preventDefault();
