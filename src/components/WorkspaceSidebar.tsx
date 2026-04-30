@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   ChevronRight, Copy, GripVertical, Inbox, MoreHorizontal, Pencil, Plus, Search,
@@ -13,7 +13,18 @@ import {
 import {
   SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { restrictToVerticalAxis, restrictToFirstScrollableAncestor } from "@dnd-kit/modifiers";
+import { restrictToFirstScrollableAncestor } from "@dnd-kit/modifiers";
+import type { Modifier } from "@dnd-kit/core";
+
+// Clamp horizontal motion of the dragged ghost: 0..NEST_HINT_MAX_PX so the
+// user gets a small visual cue when dragging right (= nest), but never enough
+// to push horizontal scroll. Vertical motion is untouched.
+const NEST_THRESHOLD_PX = 28;
+const NEST_HINT_MAX_PX = 40;
+const clampHorizontal: Modifier = ({ transform }) => ({
+  ...transform,
+  x: Math.max(0, Math.min(NEST_HINT_MAX_PX, transform.x)),
+});
 import { CSS } from "@dnd-kit/utilities";
 import { toast } from "sonner";
 import { useStore } from "@/lib/store";
@@ -94,6 +105,8 @@ export function WorkspaceSidebar({ onOpenSearch, onClose }: Props) {
   const [overId, setOverId] = useState<string | null>(null);
   const [nestIntent, setNestIntent] = useState(false);
   const [externalOverId, setExternalOverId] = useState<string | null>(null);
+  const dragStartXRef = useRef(0);
+  const nestIntentRef = useRef(false);
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
@@ -151,19 +164,39 @@ export function WorkspaceSidebar({ onOpenSearch, onClose }: Props) {
     setActiveId(null);
     setOverId(null);
     setNestIntent(false);
+    nestIntentRef.current = false;
   };
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(String(event.active.id));
+    const ae = event.activatorEvent;
+    if (ae instanceof PointerEvent || ae instanceof MouseEvent) {
+      dragStartXRef.current = ae.clientX;
+    }
   };
 
   const handleDragMove = (event: DragMoveEvent) => {
     setOverId(event.over ? String(event.over.id) : null);
-    setNestIntent(event.delta.x > 28);
   };
 
+  // Track raw pointer X while dragging; modifiers can clamp transform.x and
+  // therefore zero event.delta.x in newer dnd-kit, so we read the cursor
+  // directly to drive nest-intent.
+  useEffect(() => {
+    if (!activeId) return;
+    const onMove = (e: PointerEvent) => {
+      const dx = e.clientX - dragStartXRef.current;
+      const next = dx > NEST_THRESHOLD_PX;
+      nestIntentRef.current = next;
+      setNestIntent((prev) => (prev === next ? prev : next));
+    };
+    window.addEventListener("pointermove", onMove);
+    return () => window.removeEventListener("pointermove", onMove);
+  }, [activeId]);
+
   const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over, delta } = event;
+    const { active, over } = event;
+    const wantsNest = nestIntentRef.current;
     resetDrag();
     if (!over || active.id === over.id) return;
     const activeIdStr = String(active.id);
@@ -171,7 +204,7 @@ export function WorkspaceSidebar({ onOpenSearch, onClose }: Props) {
     const overItem = itemById.get(overIdStr);
     if (!overItem || isDescendantOf(overIdStr, activeIdStr)) return;
 
-    if (delta.x > 28) {
+    if (wantsNest) {
       const childIds = childrenOf(overIdStr).map((page) => page.id).filter((id) => id !== activeIdStr);
       reorderPages(overIdStr, [...childIds, activeIdStr]);
       setPageOpen(overIdStr, true);
@@ -276,7 +309,7 @@ export function WorkspaceSidebar({ onOpenSearch, onClose }: Props) {
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
-            modifiers={[restrictToVerticalAxis, restrictToFirstScrollableAncestor]}
+            modifiers={[clampHorizontal, restrictToFirstScrollableAncestor]}
             onDragStart={handleDragStart}
             onDragMove={handleDragMove}
             onDragEnd={handleDragEnd}
@@ -564,7 +597,10 @@ function SortablePageRow({
   return (
     <div
       ref={setNodeRef}
-      style={{ transform: CSS.Transform.toString(transform), transition }}
+      style={{
+        transform: isDragging ? undefined : CSS.Transform.toString(transform),
+        transition: isDragging ? undefined : transition,
+      }}
       className={cn("relative", isDragging && "opacity-30")}
       onDragOver={(e) => {
         if (e.dataTransfer.types.includes("application/x-page-id")) {
@@ -577,17 +613,19 @@ function SortablePageRow({
       onDrop={onExternalDrop}
     >
       {isOverSibling && (
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -top-px left-1.5 right-1.5 h-0.5 rounded-full bg-brand z-10"
-        />
+        <div aria-hidden className="pointer-events-none absolute -top-px left-1.5 right-1.5 z-10">
+          <div className="relative h-0.5 rounded-full bg-brand">
+            <span className="absolute -left-1 top-1/2 -translate-y-1/2 h-2 w-2 rounded-full bg-brand ring-2 ring-background" />
+          </div>
+        </div>
       )}
       <div
         className={cn(
-          "group flex items-center gap-1 rounded-md pr-1 transition-colors duration-150",
+          "group flex items-center gap-1 rounded-md pr-1 transition-all duration-150",
           "hover:bg-sidebar-accent/80",
           active && "bg-sidebar-accent",
-          (isOverNesting || isExternalOver) && "bg-brand/15 ring-1 ring-brand ring-inset",
+          (isOverNesting || isExternalOver) &&
+            "bg-brand/25 ring-2 ring-brand ring-offset-1 ring-offset-sidebar scale-[1.01]",
         )}
         style={{ paddingLeft: `${item.depth * density.indent}px` }}
       >
