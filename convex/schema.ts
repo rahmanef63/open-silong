@@ -41,6 +41,11 @@ export default defineSchema({
     activeViewId: v.string(),
     createdAt: v.number(),
     updatedAt: v.number(),
+    uniqueIdCounter: v.optional(v.number()),
+    templates: v.optional(v.array(v.any())),
+    defaultTemplateId: v.optional(v.union(v.string(), v.null())),
+    subItemsParentPropId: v.optional(v.union(v.string(), v.null())),
+    trashed: v.optional(v.boolean()),
   }).index("by_user", ["userId"]),
 
   preferences: defineTable({

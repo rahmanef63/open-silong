@@ -13,6 +13,43 @@ export const list = query({
   },
 });
 
+export const trash = mutation({
+  args: { dbId: v.string() },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+    const db = await ctx.db.get(args.dbId as Id<"databases">);
+    if (!db || db.userId !== userId) throw new Error("Not found");
+    await ctx.db.patch(args.dbId as Id<"databases">, { trashed: true, updatedAt: Date.now() });
+  },
+});
+
+export const restore = mutation({
+  args: { dbId: v.string() },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+    const db = await ctx.db.get(args.dbId as Id<"databases">);
+    if (!db || db.userId !== userId) throw new Error("Not found");
+    await ctx.db.patch(args.dbId as Id<"databases">, { trashed: false, updatedAt: Date.now() });
+  },
+});
+
+export const permanentlyDelete = mutation({
+  args: { dbId: v.string() },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+    const db = await ctx.db.get(args.dbId as Id<"databases">);
+    if (!db || db.userId !== userId) throw new Error("Not found");
+    for (const rowId of db.rowIds) {
+      const row = await ctx.db.get(rowId as Id<"pages">);
+      if (row && row.userId === userId) await ctx.db.delete(rowId as Id<"pages">);
+    }
+    await ctx.db.delete(args.dbId as Id<"databases">);
+  },
+});
+
 export const create = mutation({
   args: { name: v.optional(v.string()) },
   handler: async (ctx, args) => {

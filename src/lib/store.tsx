@@ -66,6 +66,11 @@ function toDatabase(doc: any): Database {
     activeViewId: doc.activeViewId,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
+    uniqueIdCounter: doc.uniqueIdCounter,
+    templates: doc.templates,
+    defaultTemplateId: doc.defaultTemplateId ?? null,
+    subItemsParentPropId: doc.subItemsParentPropId ?? null,
+    trashed: !!doc.trashed,
   };
 }
 
@@ -103,9 +108,13 @@ interface StoreCtx {
   search: (q: string) => Page[];
   saving: boolean;
   databases: Database[];
+  trashedDatabases: Database[];
   getDatabase: (id: string) => Database | undefined;
   createDatabase: (name?: string) => Promise<Database>;
   updateDatabase: (id: string, patch: Partial<Database>) => void;
+  trashDatabase: (id: string) => void;
+  restoreDatabase: (id: string) => void;
+  permanentlyDeleteDatabase: (id: string) => void;
   addProperty: (dbId: string, type: PropertyType, name?: string) => Property;
   updateProperty: (dbId: string, propId: string, patch: Partial<Property>) => void;
   deleteProperty: (dbId: string, propId: string) => void;
@@ -162,6 +171,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const mutReorderBlocks = useMutation(api.pages.reorderBlocks);
   const mutCreateDatabase = useMutation(api.databases.create);
   const mutUpdateDatabase = useMutation(api.databases.update);
+  const mutTrashDatabase = useMutation(api.databases.trash);
+  const mutRestoreDatabase = useMutation(api.databases.restore);
+  const mutPermanentlyDeleteDatabase = useMutation(api.databases.permanentlyDelete);
   const mutAddRow = useMutation(api.databases.addRow);
   const mutDeleteRow = useMutation(api.databases.deleteRow);
   const mutSetRowValue = useMutation(api.databases.setRowValue);
@@ -175,12 +187,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   // Convex's useQuery returns the same array ref when contents are unchanged,
   // so these memos collapse the entire app's re-render fan-out.
   const pages: Page[] = useMemo(() => rawPages.map(toPage), [rawPages]);
-  const databases: Database[] = useMemo(() => rawDatabases.map(toDatabase), [rawDatabases]);
+  const allDatabases: Database[] = useMemo(() => rawDatabases.map(toDatabase), [rawDatabases]);
+  const databases: Database[] = useMemo(() => allDatabases.filter((d) => !d.trashed), [allDatabases]);
+  const trashedDatabases: Database[] = useMemo(() => allDatabases.filter((d) => d.trashed), [allDatabases]);
   const recents: string[] = rawRecents;
 
   // O(1) id lookups
   const pageMap = useMemo(() => new Map(pages.map((p) => [p.id, p])), [pages]);
-  const databaseMap = useMemo(() => new Map(databases.map((d) => [d.id, d])), [databases]);
+  const databaseMap = useMemo(() => new Map(allDatabases.map((d) => [d.id, d])), [allDatabases]);
 
   const preferences: Preferences = useMemo(() => ({
     theme: (rawPrefs?.theme as any) ?? "system",
@@ -598,6 +612,21 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [mutUpdateDatabase]
   );
 
+  const trashDatabase = useCallback(
+    (id: string) => { mutTrashDatabase({ dbId: id }); },
+    [mutTrashDatabase],
+  );
+
+  const restoreDatabase = useCallback(
+    (id: string) => { mutRestoreDatabase({ dbId: id }); },
+    [mutRestoreDatabase],
+  );
+
+  const permanentlyDeleteDatabase = useCallback(
+    (id: string) => { mutPermanentlyDeleteDatabase({ dbId: id }); },
+    [mutPermanentlyDeleteDatabase],
+  );
+
   const addProperty = useCallback(
     (dbId: string, type: PropertyType, name?: string): Property => {
       const prop: Property = {
@@ -858,9 +887,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       search,
       saving: false,
       databases,
+      trashedDatabases,
       getDatabase,
       createDatabase,
       updateDatabase,
+      trashDatabase,
+      restoreDatabase,
+      permanentlyDeleteDatabase,
       addProperty,
       updateProperty,
       deleteProperty,
@@ -917,9 +950,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       trash,
       search,
       databases,
+      trashedDatabases,
       getDatabase,
       createDatabase,
       updateDatabase,
+      trashDatabase,
+      restoreDatabase,
+      permanentlyDeleteDatabase,
       addProperty,
       updateProperty,
       deleteProperty,
