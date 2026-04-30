@@ -1,7 +1,7 @@
 import { KeyboardEvent, useRef, useState, useEffect } from "react";
 import { Block, BlockType } from "@/lib/types";
 import { useStore } from "@/lib/store";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Trash2 } from "lucide-react";
 

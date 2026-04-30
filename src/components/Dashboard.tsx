@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useStore } from "@/lib/store";
 import { Plus, Star, Clock, FileText, Table2 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/lib/utils";
 
 export function Dashboard() {
   const { pages, recents, childrenOf, createPage, createDatabase, databases, workspace, addBlock, updateBlock } = useStore();

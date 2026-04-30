@@ -2,7 +2,7 @@ import { KeyboardEvent, useEffect, useRef, useState, useCallback } from "react";
 import { Block, BlockType } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { GripVertical, Plus, Trash2, Copy, MessageSquare, FileText, Database as DatabaseIcon, ChevronRight, ExternalLink } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/lib/utils";
 import { SlashMenu } from "./SlashMenu";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useSortable } from "@dnd-kit/sortable";
@@ -12,11 +12,12 @@ import {
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { BLOCK_SPECS } from "./blockSpecs";
-import { useBlockHistory } from "@/lib/useBlockHistory";
+import { useBlockHistory } from "@/shared/hooks/useBlockHistory";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { DatabaseBlock } from "../database/DatabaseBlock";
 import { ColumnBlockEditor } from "./ColumnBlockEditor";
+import { BlockCommentsPopover, useComments } from "@/slices/comments";
 
 interface Props {
   pageId: string;
@@ -349,7 +350,8 @@ function BlockControls({
 }: {
   pageId: string; block: Block; index: number; listeners: any; convertTo: (t: BlockType) => void;
 }) {
-  const { addBlock, deleteBlock, duplicateBlock } = useStore();
+  const { addBlock, deleteBlock, duplicateBlock, user } = useStore();
+  const { openCount, create } = useComments({ blockId: block.id });
   return (
     <div className="flex">
       <button
@@ -362,6 +364,24 @@ function BlockControls({
       >
         <Plus className="h-3.5 w-3.5" />
       </button>
+      <BlockCommentsPopover
+        pageId={pageId}
+        blockId={block.id}
+        trigger={
+          <button
+            className={cn(
+              "relative flex h-6 w-5 items-center justify-center rounded hover:bg-accent",
+              openCount > 0 ? "text-brand" : "text-muted-foreground",
+            )}
+            aria-label="Comments"
+          >
+            <MessageSquare className="h-3.5 w-3.5" />
+            {openCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-brand" />
+            )}
+          </button>
+        }
+      />
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button
@@ -381,8 +401,12 @@ function BlockControls({
             <Copy className="mr-2 h-3.5 w-3.5" /> Duplicate
             <span className="ml-auto text-[10px] text-muted-foreground">⌘D</span>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => toast("Comments are coming soon", { description: "Per-block comments will live here." })}>
+          <DropdownMenuItem onClick={() => {
+            const text = window.prompt("Add comment");
+            if (text?.trim()) create({ pageId, blockId: block.id, text: text.trim(), authorName: user.name, authorIcon: user.icon });
+          }}>
             <MessageSquare className="mr-2 h-3.5 w-3.5" /> Add comment
+            {openCount > 0 && <span className="ml-auto text-[10px] text-brand">{openCount}</span>}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuLabel className="text-xs text-muted-foreground">Turn into</DropdownMenuLabel>

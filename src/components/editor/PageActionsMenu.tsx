@@ -4,12 +4,16 @@ import { useStore } from "@/lib/store";
 import { Page, PageFont } from "@/lib/types";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/lib/utils";
 import { toast } from "sonner";
 import {
   pageToMarkdown, pageToPlainText, markdownToBlocks,
   downloadFile, pickFile,
-} from "@/lib/markdown";
+} from "@/shared/lib/markdown";
+import { AnalyticsPopover } from "@/slices/analytics";
+import { NotifyMePopover } from "@/slices/notifications";
+import { MentionsPopover } from "@/slices/mentions";
+import { WikiToggleAction } from "@/slices/wiki";
 import {
   MoreHorizontal, Search, Type, Ruler, MoveHorizontal,
   Link2, ClipboardCopy, Files, ArrowRight, Trash2,
@@ -315,11 +319,29 @@ export function PageActionsMenu({ page, onShowHistory }: Props) {
           <div className="py-1">
             {match("Import") && <Row icon={Upload} label="Import" onClick={onImport} />}
             {match("Export") && <Row icon={Download} label="Export" onClick={onExport} />}
-            {match("Turn into wiki") && <Row icon={BookOpen} label="Turn into wiki" onClick={stub("Turn into wiki")} />}
-            {match("Updates & analytics") && <Row icon={BarChart3} label="Updates & analytics" onClick={stub("Updates & analytics")} />}
-            {match("Version history") && <Row icon={History} label="Version history" onClick={() => { setOpen(false); onShowHistory(); }} />}
-            {match("Notify me") && <Row icon={Bell} label="Notify me" onClick={stub("Notify me")} />}
-            {match("Mentions") && <Row icon={AtSign} label="Mentions" onClick={stub("Mentions")} />}
+            {match("Turn into wiki") && (
+              <WikiToggleAction pageId={page.id} onClose={() => setOpen(false)} />
+            )}
+            {match("Updates & analytics") && (
+              <AnalyticsPopover
+                page={page}
+                trigger={<RowButton icon={BarChart3} label="Updates & analytics" />}
+              />
+            )}
+            {match("Version history") && (
+              <Row icon={History} label="Version history" onClick={() => { setOpen(false); onShowHistory(); }} />
+            )}
+            {match("Notify me") && (
+              <NotifyMePopover
+                pageId={page.id}
+                trigger={<RowButton icon={Bell} label="Notify me" />}
+              />
+            )}
+            {match("Mentions") && (
+              <MentionsPopover
+                trigger={<RowButton icon={AtSign} label="Mentions" />}
+              />
+            )}
           </div>
         )}
 
@@ -335,6 +357,18 @@ export function PageActionsMenu({ page, onShowHistory }: Props) {
     </Popover>
   );
 }
+
+/** Same row visuals but with no onClick — used as a popover trigger. */
+const RowButton = function RowButton({
+  icon: Icon, label,
+}: { icon: typeof Search; label: string }) {
+  return (
+    <button className="flex w-full items-center gap-2 px-3 py-1.5 text-sm hover:bg-accent text-left">
+      <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+      <span className="flex-1 truncate">{label}</span>
+    </button>
+  );
+};
 
 function Row({
   icon: Icon, label, shortcut, onClick, destructive,

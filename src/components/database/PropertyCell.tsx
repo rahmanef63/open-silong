@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Database, Page, Property, PropertyValue, SelectOption } from "@/lib/types";
 import { useStore } from "@/lib/store";
-import { cn } from "@/lib/utils";
-import { colorClass, formatRelTime } from "@/lib/format";
+import { cn } from "@/shared/lib/utils";
+import { colorClass, formatRelTime } from "@/shared/lib/format";
 import {
   Popover, PopoverContent, PopoverTrigger,
 } from "@/components/ui/popover";
@@ -10,6 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import {
   Calculator, Check, File, Link2, Pencil, Plus, Sigma, X,
 } from "lucide-react";
+import { FileChip, FileUploadButton, parseFileRef } from "@/slices/files";
 
 const OPTION_COLORS = [
   "gray", "brown", "orange", "yellow", "green", "blue", "purple", "pink", "red",
@@ -281,13 +282,15 @@ function FilesCell({
 }) {
   const [draft, setDraft] = useState("");
   const files = Array.isArray(value) ? value : [];
-  const add = () => {
-    const name = draft.trim();
-    if (!name) return;
-    onSet([...files, name]);
+
+  const addUrl = () => {
+    const v = draft.trim();
+    if (!v) return;
+    onSet([...files, v]);
     setDraft("");
   };
   const remove = (file: string) => onSet(files.filter((f) => f !== file));
+  const onUploaded = (ref: string) => onSet([...files, ref]);
 
   return (
     <Popover>
@@ -305,42 +308,25 @@ function FilesCell({
         <div className="space-y-2">
           <div className="max-h-48 overflow-y-auto space-y-1">
             {files.map((file) => (
-              <div key={file} className="flex items-center gap-2 rounded border border-border bg-muted/40 px-2 py-1.5 text-xs">
-                <File className="h-3.5 w-3.5 text-muted-foreground" />
-                {isUrl(file) ? (
-                  <a href={file} target="_blank" rel="noreferrer" className="min-w-0 flex-1 truncate text-brand hover:underline">
-                    {fileLabel(file)}
-                  </a>
-                ) : (
-                  <span className="min-w-0 flex-1 truncate">{file}</span>
-                )}
-                <button onClick={() => remove(file)} className="rounded p-0.5 text-muted-foreground hover:bg-accent hover:text-destructive">
-                  <X className="h-3 w-3" />
-                </button>
-              </div>
+              <FileChip key={file} fileRef={file} onRemove={() => remove(file)} />
             ))}
-            {files.length === 0 && <div className="py-6 text-center text-xs text-muted-foreground">No mock files</div>}
+            {files.length === 0 && <div className="py-6 text-center text-xs text-muted-foreground">No files</div>}
           </div>
           <form
-            onSubmit={(e) => { e.preventDefault(); add(); }}
+            onSubmit={(e) => { e.preventDefault(); addUrl(); }}
             className="flex gap-1"
           >
             <input
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
-              placeholder="File name or URL"
+              placeholder="Paste URL"
               className="h-8 min-w-0 flex-1 rounded-md border border-border bg-background px-2 text-xs outline-none"
             />
             <button type="submit" className="h-8 rounded-md bg-foreground px-2 text-xs text-background">
               Add
             </button>
           </form>
-          <button
-            onClick={() => onSet([...files, `Mock upload ${files.length + 1}.pdf`])}
-            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-          >
-            <Plus className="h-3 w-3" /> Add mock upload
-          </button>
+          <FileUploadButton onUploaded={onUploaded} multiple label="Upload file" />
         </div>
       </PopoverContent>
     </Popover>
@@ -627,7 +613,7 @@ function formatPropertyValue(value: PropertyValue | undefined, prop: Property, p
   }
   if (prop.type === "files") {
     const files = Array.isArray(value) ? value : [];
-    return files.map(fileLabel).join(", ");
+    return files.map((f) => parseFileRef(f).filename).join(", ");
   }
   if (prop.type === "created_time") return "";
   if (prop.type === "last_edited_time") return "";
@@ -636,22 +622,3 @@ function formatPropertyValue(value: PropertyValue | undefined, prop: Property, p
   return String(value);
 }
 
-function isUrl(value: string) {
-  try {
-    const parsed = new URL(value);
-    return parsed.protocol === "http:" || parsed.protocol === "https:";
-  } catch {
-    return false;
-  }
-}
-
-function fileLabel(value: string) {
-  if (!isUrl(value)) return value;
-  try {
-    const parsed = new URL(value);
-    const tail = parsed.pathname.split("/").filter(Boolean).at(-1);
-    return tail ? decodeURIComponent(tail) : parsed.hostname;
-  } catch {
-    return value;
-  }
-}

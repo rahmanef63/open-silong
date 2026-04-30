@@ -1,7 +1,7 @@
 import { useMemo, useState, useRef } from "react";
 import { Block, Database, DatabaseViewConfig, DbView, Page, Property, PropertyType } from "@/lib/types";
 import { useStore } from "@/lib/store";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/lib/utils";
 import {
   Table2, LayoutGrid, List as ListIcon, Image, Calendar as CalendarIcon, Clock,
   Plus, Search, MoreHorizontal, Trash2, Eye, EyeOff, ArrowUpDown, Filter, Settings2,

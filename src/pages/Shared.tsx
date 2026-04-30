@@ -2,7 +2,7 @@ import { useParams, Link } from "react-router-dom";
 import { useStore } from "@/lib/store";
 import { Block } from "@/lib/types";
 import { Lock } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/lib/utils";
 
 const SharedPage = () => {
   const { id } = useParams<{ id: string }>();

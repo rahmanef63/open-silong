@@ -6,9 +6,9 @@ import {
   DndContext, useDraggable, useDroppable, PointerSensor, useSensor, useSensors, DragEndEvent, KeyboardSensor,
 } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
-import { cn } from "@/lib/utils";
-import { focusSiblingBySelector, isTextInputTarget } from "@/lib/keyboard";
-import { colorClass } from "@/lib/format";
+import { cn } from "@/shared/lib/utils";
+import { focusSiblingBySelector, isTextInputTarget } from "@/shared/lib/keyboard";
+import { colorClass } from "@/shared/lib/format";
 import { PropertyCell } from "../PropertyCell";
 import { Plus } from "lucide-react";
 

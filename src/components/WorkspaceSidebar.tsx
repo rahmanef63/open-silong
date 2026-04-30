@@ -15,13 +15,14 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { useStore } from "@/lib/store";
 import { Page } from "@/lib/types";
-import { cn } from "@/lib/utils";
-import { focusSiblingBySelector, isTextInputTarget } from "@/lib/keyboard";
+import { cn } from "@/shared/lib/utils";
+import { focusSiblingBySelector, isTextInputTarget } from "@/shared/lib/keyboard";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { InboxBadge } from "@/slices/inbox";
 
 interface Props {
   onOpenSearch: () => void;
@@ -183,7 +184,14 @@ export function WorkspaceSidebar({ onOpenSearch, onClose }: Props) {
       <div className="px-2 space-y-0.5">
         <SidebarAction icon={Search} label="Search" shortcut="Ctrl K" onClick={onOpenSearch} density={density} />
         <SidebarAction icon={Sparkles} label="Dashboard" onClick={() => { navigate("/"); onClose?.(); }} active={location.pathname === "/"} density={density} />
-        <SidebarAction icon={Inbox} label="Inbox" badge="3" density={density} />
+        <SidebarAction
+          icon={Inbox}
+          label="Inbox"
+          onClick={() => { navigate("/inbox"); onClose?.(); }}
+          active={location.pathname === "/inbox"}
+          badge={<InboxBadge />}
+          density={density}
+        />
         <SidebarAction icon={User} label="Profile" onClick={() => { navigate("/profile"); onClose?.(); }} active={location.pathname === "/profile"} density={density} />
         <SidebarAction icon={Settings} label="Settings" onClick={() => { navigate("/settings"); onClose?.(); }} active={location.pathname === "/settings"} density={density} />
       </div>
@@ -314,7 +322,7 @@ function SidebarAction({
   icon: LucideIcon;
   label: string;
   shortcut?: string;
-  badge?: string;
+  badge?: ReactNode;
   onClick?: () => void;
   active?: boolean;
   density: DensityConfig;
@@ -333,7 +341,7 @@ function SidebarAction({
       <Icon className={cn("text-muted-foreground", density.actionIcon)} />
       <span className="flex-1 text-left truncate">{label}</span>
       {density.showActionMeta && shortcut && <span className="text-[10px] text-muted-foreground rounded bg-background px-1.5 py-0.5 border border-border">{shortcut}</span>}
-      {density.showActionMeta && badge && <span className="text-[10px] rounded-full bg-brand/15 text-brand px-1.5 py-0.5 font-medium">{badge}</span>}
+      {density.showActionMeta && badge}
     </button>
   );
 }

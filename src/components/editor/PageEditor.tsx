@@ -5,10 +5,11 @@ import { Page } from "@/lib/types";
 import { BlockEditor } from "./BlockEditor";
 import { RowPropertiesPanel } from "./RowPropertiesPanel";
 import { PageActionsMenu } from "./PageActionsMenu";
+import { PageCommentsPanel } from "@/slices/comments";
 import {
   ChevronRight, Star, ImagePlus, Share2, History, FileText, Plus,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/lib/utils";
 import {
   DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent,
 } from "@dnd-kit/core";
@@ -186,6 +187,9 @@ export function PageEditor() {
 
               {/* Subpages section */}
               <Subpages page={page} subpages={subpages} />
+
+              {/* Page-level comments */}
+              <PageCommentsPanel pageId={page.id} />
             </div>
           </div>
         </div>

@@ -1,7 +1,7 @@
 import { Database, DatabaseViewConfig, Page } from "@/lib/types";
 import { useNavigate } from "react-router-dom";
 import { PropertyCell } from "../PropertyCell";
-import { focusSiblingBySelector } from "@/lib/keyboard";
+import { focusSiblingBySelector } from "@/shared/lib/keyboard";
 
 export function GalleryView({ db, rows }: { db: Database; view: DatabaseViewConfig; rows: Page[] }) {
   const navigate = useNavigate();
