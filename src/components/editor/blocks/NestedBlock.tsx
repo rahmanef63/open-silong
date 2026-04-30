@@ -7,6 +7,9 @@ import type { Block, BlockType } from "@/lib/types";
 import { cn } from "@/shared/lib/utils";
 import { CodeBlock } from "@/slices/code-block";
 import { EquationBlock } from "@/slices/equation";
+import { MARKDOWN_TRIGGERS } from "../lib/markdownTriggers";
+import { EmbedBlock } from "./EmbedBlock";
+import { ButtonBlock } from "./ButtonBlock";
 
 interface Props {
   block: Block;
@@ -42,7 +45,17 @@ export function NestedBlock({
   };
 
   const handleInput = (e: React.FormEvent<HTMLElement>) => {
-    onUpdate({ text: (e.currentTarget as HTMLElement).innerText });
+    const el = e.currentTarget as HTMLElement;
+    const text = el.innerText;
+    if (block.type === "paragraph") {
+      const trigger = MARKDOWN_TRIGGERS[text];
+      if (trigger) {
+        el.innerText = "";
+        onUpdate({ type: trigger.type, text: "", ...(trigger.patch ?? {}) });
+        return;
+      }
+    }
+    onUpdate({ text });
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLElement>) => {
@@ -141,6 +154,14 @@ export function NestedBlock({
           registerRef={(el) => setRef(el)}
         />
       );
+    case "paragraph":
+      return wrap(
+        <p
+          ref={setRef as React.Ref<HTMLParagraphElement>}
+          {...baseProps}
+          className={baseProps.className + " leading-7 py-0.5"}
+        />,
+      );
     case "divider":
       return <hr className="border-border my-2" />;
     case "page": {
@@ -156,6 +177,10 @@ export function NestedBlock({
         </button>
       );
     }
+    case "embed":
+      return <EmbedBlock block={block} onUpdate={onUpdate} />;
+    case "button":
+      return <ButtonBlock block={block} onUpdate={onUpdate} />;
     case "image":
       return block.url ? (
         <figure className="my-1">

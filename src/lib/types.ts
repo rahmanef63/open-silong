@@ -17,7 +17,9 @@ export type BlockType =
   | "toggle"     // collapsible block
   | "image"      // image embed (URL)
   | "equation"   // LaTeX block equation
-  | "table";     // simple table (rows × cols of strings)
+  | "table"      // simple table (rows × cols of strings)
+  | "embed"      // iframe embed (YouTube / Vimeo / Loom / Figma / generic)
+  | "button";    // CTA button → URL or page
 
 export interface Block {
   id: string;
