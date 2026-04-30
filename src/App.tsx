@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
@@ -5,15 +6,18 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { StoreProvider, useStore } from "@/lib/store";
 import { ConvexClientProvider } from "./ConvexClientProvider";
 import { useConvexAuth } from "convex/react";
-import Index from "./pages/Index.tsx";
-import PageView from "./pages/PageView.tsx";
-import Trash from "./pages/Trash.tsx";
-import NotFound from "./pages/NotFound.tsx";
-import Settings from "./pages/Settings.tsx";
-import Profile from "./pages/Profile.tsx";
-import Shared from "./pages/Shared.tsx";
-import Inbox from "./pages/Inbox.tsx";
-import AuthPage from "./pages/AuthPage.tsx";
+import { ErrorBoundary } from "@/shared/components/ErrorBoundary";
+import { RouteSkeleton } from "@/shared/components/RouteSkeleton";
+
+const Index = lazy(() => import("./pages/Index.tsx"));
+const PageView = lazy(() => import("./pages/PageView.tsx"));
+const Trash = lazy(() => import("./pages/Trash.tsx"));
+const NotFound = lazy(() => import("./pages/NotFound.tsx"));
+const Settings = lazy(() => import("./pages/Settings.tsx"));
+const Profile = lazy(() => import("./pages/Profile.tsx"));
+const Shared = lazy(() => import("./pages/Shared.tsx"));
+const Inbox = lazy(() => import("./pages/Inbox.tsx"));
+const AuthPage = lazy(() => import("./pages/AuthPage.tsx"));
 
 function LandingRedirect() {
   const { preferences, pages, recents, getPage } = useStore();
@@ -38,34 +42,46 @@ function LandingRedirect() {
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useConvexAuth();
-  if (isLoading) return <div className="min-h-screen flex items-center justify-center text-muted-foreground text-sm">Loading…</div>;
-  if (!isAuthenticated) return <AuthPage />;
+  if (isLoading) return <RouteSkeleton />;
+  if (!isAuthenticated) {
+    return (
+      <Suspense fallback={<RouteSkeleton />}>
+        <AuthPage />
+      </Suspense>
+    );
+  }
   return <>{children}</>;
 }
 
 const App = () => (
-  <ConvexClientProvider>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <AuthGuard>
-        <StoreProvider>
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<LandingRedirect />} />
-              <Route path="/p/:id" element={<PageView />} />
-              <Route path="/share/:id" element={<Shared />} />
-              <Route path="/inbox" element={<Inbox />} />
-              <Route path="/trash" element={<Trash />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </StoreProvider>
-      </AuthGuard>
-    </TooltipProvider>
-  </ConvexClientProvider>
+  <ErrorBoundary>
+    <ConvexClientProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <AuthGuard>
+          <StoreProvider>
+            <BrowserRouter>
+              <ErrorBoundary>
+                <Suspense fallback={<RouteSkeleton />}>
+                  <Routes>
+                    <Route path="/" element={<LandingRedirect />} />
+                    <Route path="/p/:id" element={<PageView />} />
+                    <Route path="/share/:id" element={<Shared />} />
+                    <Route path="/inbox" element={<Inbox />} />
+                    <Route path="/trash" element={<Trash />} />
+                    <Route path="/settings" element={<Settings />} />
+                    <Route path="/profile" element={<Profile />} />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </Suspense>
+              </ErrorBoundary>
+            </BrowserRouter>
+          </StoreProvider>
+        </AuthGuard>
+      </TooltipProvider>
+    </ConvexClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;

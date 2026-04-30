@@ -1,10 +1,10 @@
 import { Database, DatabaseViewConfig, Page } from "@/lib/types";
-import { useNavigate } from "react-router-dom";
 import { PropertyCell } from "../PropertyCell";
 import { focusSiblingBySelector } from "@/shared/lib/keyboard";
 
-export function ListView({ db, rows }: { db: Database; view: DatabaseViewConfig; rows: Page[] }) {
-  const navigate = useNavigate();
+interface Props { db: Database; view: DatabaseViewConfig; rows: Page[]; onOpenRow: (id: string) => void }
+
+export function ListView({ db, rows, onOpenRow }: Props) {
   const summaryProp = db.properties.find(p => !p.hidden && p.type !== "text");
   return (
     <div className="divide-y divide-border">
@@ -14,7 +14,7 @@ export function ListView({ db, rows }: { db: Database; view: DatabaseViewConfig;
       {rows.map(r => (
         <button
           key={r.id}
-          onClick={() => navigate(`/p/${r.id}`)}
+          onClick={() => onOpenRow(r.id)}
           onKeyDown={(e) => {
             if (e.key === "ArrowDown" || e.key === "ArrowUp") {
               e.preventDefault();

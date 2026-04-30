@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef } from "react";
+import { lazy, Suspense, useMemo, useState } from "react";
 import { Block, Database, DatabaseViewConfig, DbView, Page, Property, PropertyType } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { cn } from "@/shared/lib/utils";
@@ -14,16 +14,18 @@ import {
 import {
   Popover, PopoverContent, PopoverTrigger,
 } from "@/components/ui/popover";
-import { TableView } from "./views/TableView";
-import { BoardView } from "./views/BoardView";
-import { ListView } from "./views/ListView";
-import { GalleryView } from "./views/GalleryView";
-import { CalendarView } from "./views/CalendarView";
-import { TimelineView } from "./views/TimelineView";
+const TableView = lazy(() => import("./views/TableView").then((m) => ({ default: m.TableView })));
+const BoardView = lazy(() => import("./views/BoardView").then((m) => ({ default: m.BoardView })));
+const ListView = lazy(() => import("./views/ListView").then((m) => ({ default: m.ListView })));
+const GalleryView = lazy(() => import("./views/GalleryView").then((m) => ({ default: m.GalleryView })));
+const CalendarView = lazy(() => import("./views/CalendarView").then((m) => ({ default: m.CalendarView })));
+const TimelineView = lazy(() => import("./views/TimelineView").then((m) => ({ default: m.TimelineView })));
 import { FilterBuilder } from "./FilterBuilder";
 import { SortBuilder } from "./SortBuilder";
 import { Input } from "@/components/ui/input";
-import { useNavigate } from "react-router-dom";
+import { RowDetailSheet } from "@/slices/database-row";
+import { DatabaseSkeleton } from "@/shared/components/RouteSkeleton";
+import { ErrorBoundary } from "@/shared/components/ErrorBoundary";
 
 const VIEW_META: Record<DbView, { icon: any; label: string }> = {
   table: { icon: Table2, label: "Table" },
@@ -47,7 +49,7 @@ export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block 
     getDatabase, pages, updateDatabase, addRow, addView, updateView, deleteView,
     addProperty, updateProperty, deleteProperty,
   } = useStore();
-  const navigate = useNavigate();
+  const [openRowId, setOpenRowId] = useState<string | null>(null);
 
   const db = block.databaseId ? getDatabase(block.databaseId) : undefined;
   const view = db ? db.views.find(v => v.id === db.activeViewId) ?? db.views[0] : undefined;
@@ -95,6 +97,9 @@ export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block 
     return out;
   }, [rows, view]);
 
+  if (block.databaseId && !db) {
+    return <DatabaseSkeleton />;
+  }
   if (!db || !view) {
     return (
       <div className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
@@ -225,7 +230,7 @@ export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block 
           <button
             onClick={async () => {
               const row = await addRow(db.id);
-              navigate(`/p/${row.id}`);
+              setOpenRowId(row.id);
             }}
             className="flex items-center gap-1 rounded-md bg-foreground text-background px-2 py-1 text-xs hover:opacity-90"
           >
@@ -234,7 +239,12 @@ export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block 
         </div>
       </div>
 
-      <ViewComponent db={db} view={view} rows={filtered} />
+      <ErrorBoundary>
+        <Suspense fallback={<DatabaseSkeleton />}>
+          <ViewComponent db={db} view={view} rows={filtered} onOpenRow={setOpenRowId} />
+        </Suspense>
+      </ErrorBoundary>
+      <RowDetailSheet pageId={openRowId} onOpenChange={(o) => !o && setOpenRowId(null)} />
     </div>
   );
 }

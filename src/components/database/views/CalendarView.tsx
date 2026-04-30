@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { Database, DatabaseViewConfig, Page } from "@/lib/types";
-import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { focusSiblingBySelector } from "@/shared/lib/keyboard";
 
-export function CalendarView({ db, rows }: { db: Database; view: DatabaseViewConfig; rows: Page[] }) {
-  const navigate = useNavigate();
+interface Props { db: Database; view: DatabaseViewConfig; rows: Page[]; onOpenRow: (id: string) => void }
+
+export function CalendarView({ db, rows, onOpenRow }: Props) {
   const dateProp = db.properties.find(p => p.type === "date");
 
   const now = new Date();
@@ -89,7 +89,7 @@ export function CalendarView({ db, rows }: { db: Database; view: DatabaseViewCon
                 {items.map(r => (
                   <button
                     key={r.id}
-                    onClick={() => navigate(`/p/${r.id}`)}
+                    onClick={() => onOpenRow(r.id)}
                     onKeyDown={(e) => {
                       if (e.key === "ArrowDown" || e.key === "ArrowUp" || e.key === "ArrowLeft" || e.key === "ArrowRight") {
                         e.preventDefault();

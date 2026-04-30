@@ -1,17 +1,17 @@
 import { Database, DatabaseViewConfig, Page } from "@/lib/types";
-import { useNavigate } from "react-router-dom";
 import { PropertyCell } from "../PropertyCell";
 import { focusSiblingBySelector } from "@/shared/lib/keyboard";
 
-export function GalleryView({ db, rows }: { db: Database; view: DatabaseViewConfig; rows: Page[] }) {
-  const navigate = useNavigate();
+interface Props { db: Database; view: DatabaseViewConfig; rows: Page[]; onOpenRow: (id: string) => void }
+
+export function GalleryView({ db, rows, onOpenRow }: Props) {
   const visible = db.properties.filter(p => !p.hidden && p.type !== "text").slice(0, 2);
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 gap-3 p-3">
       {rows.map(r => (
         <button
           key={r.id}
-          onClick={() => navigate(`/p/${r.id}`)}
+          onClick={() => onOpenRow(r.id)}
           onKeyDown={(e) => {
             if (e.key === "ArrowDown" || e.key === "ArrowUp" || e.key === "ArrowLeft" || e.key === "ArrowRight") {
               e.preventDefault();
