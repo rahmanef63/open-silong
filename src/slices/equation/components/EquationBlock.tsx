@@ -2,14 +2,9 @@ import { useMemo, useState } from "react";
 import katex from "katex";
 import "katex/dist/katex.min.css";
 import { Sigma, Pencil } from "lucide-react";
+import type { EquationBlockProps } from "../types";
 
-interface Props {
-  text: string;
-  onText: (next: string) => void;
-  registerRef: (el: HTMLElement | null) => void;
-}
-
-export function EquationBlock({ text, onText, registerRef }: Props) {
+export function EquationBlock({ text, onText, registerRef }: EquationBlockProps) {
   const [editing, setEditing] = useState(!text);
   const [draft, setDraft] = useState(text);
 

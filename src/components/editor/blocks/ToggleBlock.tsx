@@ -1,5 +1,6 @@
 import { useEffect, type CSSProperties } from "react";
 import { useDroppable } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { ChevronRight, Plus } from "lucide-react";
 import type { Block, BlockType } from "@/lib/types";
 import { useStore } from "@/lib/store";
@@ -70,6 +71,7 @@ export function ToggleBlock({
         </div>
         {!collapsed && (
           <div className="ml-5 mt-1 border-l-2 border-border/60 pl-3 space-y-0.5">
+            <SortableContext items={children.map((c) => c.id)} strategy={verticalListSortingStrategy}>
             {children.map((child, ci) => (
               <NestedBlock
                 key={child.id}
@@ -99,6 +101,7 @@ export function ToggleBlock({
                 }}
               />
             ))}
+            </SortableContext>
             <button
               onClick={addChild}
               className="flex items-center gap-1 text-xs text-muted-foreground/50 hover:text-muted-foreground"

@@ -1,15 +1,16 @@
-import { useEffect, useRef, type KeyboardEvent } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { FileText } from "lucide-react";
+import { FileText, GripVertical } from "lucide-react";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useStore } from "@/lib/store";
 import type { Block, BlockType } from "@/lib/types";
 import { cn } from "@/shared/lib/utils";
 import { CodeBlock } from "@/slices/code-block";
-import { EquationBlock } from "@/slices/equation";
 import { MARKDOWN_TRIGGERS } from "../lib/markdownTriggers";
-import { EmbedBlock } from "./EmbedBlock";
-import { ButtonBlock } from "./ButtonBlock";
+import { SlashMenu } from "../SlashMenu";
+import { getBlockRenderer } from "./registry";
 
 interface Props {
   block: Block;
@@ -34,6 +35,15 @@ export function NestedBlock({
   const ref = useRef<HTMLElement | null>(null);
   const navigate = useNavigate();
   const { getPage } = useStore();
+  const [slashOpen, setSlashOpen] = useState(false);
+  const [slashQuery, setSlashQuery] = useState("");
+
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging, isOver } =
+    useSortable({ id: block.id });
+  const sortableStyle = {
+    transform: isDragging ? undefined : CSS.Transform.toString(transform),
+    transition,
+  };
 
   useEffect(() => {
     if (ref.current && ref.current.innerText !== block.text) ref.current.innerText = block.text;
@@ -52,14 +62,49 @@ export function NestedBlock({
       if (trigger) {
         el.innerText = "";
         onUpdate({ type: trigger.type, text: "", ...(trigger.patch ?? {}) });
+        setSlashOpen(false);
         return;
       }
     }
     onUpdate({ text });
+    if (text === "/" || (text.startsWith("/") && !text.includes("\n"))) {
+      setSlashOpen(true);
+      setSlashQuery(text.slice(1));
+    } else {
+      setSlashOpen(false);
+    }
+  };
+
+  const onSlashSelect = (type: BlockType) => {
+    setSlashOpen(false);
+    const patch: Partial<Block> = { type, text: "" };
+    if (type === "toggle") { patch.children = []; patch.collapsed = false; }
+    if (type === "columns2") {
+      const uid = () => Math.random().toString(36).slice(2, 10);
+      patch.columns = [
+        [{ id: uid(), type: "paragraph", text: "" }],
+        [{ id: uid(), type: "paragraph", text: "" }],
+      ];
+    }
+    if (type === "columns3") {
+      const uid = () => Math.random().toString(36).slice(2, 10);
+      patch.columns = [
+        [{ id: uid(), type: "paragraph", text: "" }],
+        [{ id: uid(), type: "paragraph", text: "" }],
+        [{ id: uid(), type: "paragraph", text: "" }],
+      ];
+    }
+    onUpdate(patch);
+    setTimeout(() => {
+      const el = document.querySelector<HTMLElement>(`[data-block-id="${block.id}"]`);
+      el?.focus();
+      if (el) el.innerText = "";
+    }, 0);
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLElement>) => {
     const el = e.currentTarget as HTMLElement;
+    if (slashOpen && ["ArrowDown", "ArrowUp", "Enter", "Escape"].includes(e.key)) return;
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       const next: BlockType =
@@ -92,7 +137,20 @@ export function NestedBlock({
 
   const wrap = (inner: React.ReactNode) => <div className="flex-1 min-w-0">{inner}</div>;
 
-  switch (block.type) {
+  // Leaf blocks (image, embed, button, equation, table, divider) come from registry
+  const Renderer = getBlockRenderer(block.type);
+  if (Renderer) {
+    return (
+      <Renderer
+        block={block}
+        onUpdate={onUpdate}
+        registerRef={(el) => setRef(el)}
+      />
+    );
+  }
+
+  const renderContent = () => {
+    switch (block.type) {
     case "h1":
       return wrap(<h1 ref={setRef as React.Ref<HTMLHeadingElement>} {...baseProps} className={baseProps.className + " text-2xl font-bold tracking-tight font-serif py-1"} />);
     case "h2":
@@ -146,14 +204,6 @@ export function NestedBlock({
           onKeyDown={handleKeyDown as (e: KeyboardEvent<HTMLElement>) => void}
         />
       );
-    case "equation":
-      return (
-        <EquationBlock
-          text={block.text}
-          onText={(text) => onUpdate({ text })}
-          registerRef={(el) => setRef(el)}
-        />
-      );
     case "paragraph":
       return wrap(
         <p
@@ -162,8 +212,6 @@ export function NestedBlock({
           className={baseProps.className + " leading-7 py-0.5"}
         />,
       );
-    case "divider":
-      return <hr className="border-border my-2" />;
     case "page": {
       const target = block.pageId ? getPage(block.pageId) : undefined;
       return (
@@ -177,33 +225,42 @@ export function NestedBlock({
         </button>
       );
     }
-    case "embed":
-      return <EmbedBlock block={block} onUpdate={onUpdate} />;
-    case "button":
-      return <ButtonBlock block={block} onUpdate={onUpdate} />;
-    case "image":
-      return block.url ? (
-        <figure className="my-1">
-          <img
-            src={block.url}
-            alt={block.caption ?? ""}
-            className="max-w-full rounded-md border border-border object-contain"
-            onError={(e) => (e.currentTarget.style.opacity = "0.3")}
-          />
-          {block.caption && (
-            <figcaption className="mt-1 text-xs text-muted-foreground text-center">{block.caption}</figcaption>
-          )}
-        </figure>
-      ) : (
-        <div className="rounded-md border border-dashed border-border p-2 text-xs text-muted-foreground">
-          Image (no URL set — open at top level to embed)
-        </div>
-      );
     default:
       return (
         <div className="rounded-md border border-dashed border-border bg-muted/30 p-2 text-xs text-muted-foreground">
           <span className="font-medium capitalize">{block.type}</span> blocks can't be edited inside a container yet — move to top level.
         </div>
       );
-  }
+    }
+  };
+
+  return (
+    <div
+      ref={setNodeRef as unknown as React.Ref<HTMLDivElement>}
+      style={sortableStyle}
+      {...attributes}
+      className={cn(
+        "group/nested relative flex items-start gap-1 min-w-0",
+        isDragging && "opacity-40",
+        isOver && !isDragging && "before:absolute before:inset-x-0 before:-top-0.5 before:h-0.5 before:bg-brand before:rounded",
+      )}
+    >
+      <button
+        {...listeners}
+        type="button"
+        aria-label="Drag block"
+        className="mt-1 flex h-5 w-4 shrink-0 cursor-grab items-center justify-center rounded text-muted-foreground/50 opacity-0 hover:bg-accent group-hover/nested:opacity-100 active:cursor-grabbing"
+      >
+        <GripVertical className="h-3.5 w-3.5" />
+      </button>
+      <div className="relative flex-1 min-w-0">
+        {renderContent()}
+        {slashOpen && (
+          <div className="relative">
+            <SlashMenu query={slashQuery} onSelect={onSlashSelect} onClose={() => setSlashOpen(false)} />
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }

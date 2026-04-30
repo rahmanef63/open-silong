@@ -21,6 +21,8 @@ import {
 import { ShareDialog } from "../ShareDialog";
 import { VersionHistory } from "../VersionHistory";
 import { Button } from "@/components/ui/button";
+import { findLocation, moveBlock, type Location } from "./lib/blockTree";
+import { prioritizeCollisions } from "./lib/collisionPriority";
 
 const ICONS = ["📄", "📝", "📚", "🚀", "🌱", "🛰️", "🎨", "🧠", "🪄", "🌙", "☕", "🔥", "🌊", "✨", "🪐", "🛠️"];
 const COVERS = [
@@ -76,67 +78,55 @@ export function PageEditor() {
     refs.current.get(target.id)?.focus();
   }, []);
 
-  // Collision detection: prefer container droppables (col:* / toggle:*) when the
-  // pointer is inside one, else fall back to closestCenter for sibling reorder.
+  // Collision detection priority:
+  //  1. Leaf blocks under the pointer (precise drop on a child / sibling).
+  //  2. Container droppables (col:* / toggle:*) when hovering empty space inside.
+  //  3. closestCenter as last resort.
+  // The container's OWN sortable id (e.g. "T" for a toggle block) is suppressed when its
+  // inner droppable ("toggle:T" / "col:T:i") is present — otherwise dropping inside the
+  // container would be misread as a top-level reorder of the container itself.
   const collisionDetection: CollisionDetection = (args) => {
-    const inside = pointerWithin(args).filter((c) => {
-      const id = String(c.id);
-      return id.startsWith("col:") || id.startsWith("toggle:");
-    });
-    if (inside.length) return inside;
-    return closestCenter(args);
+    const prioritized = prioritizeCollisions(pointerWithin(args));
+    return prioritized.length ? prioritized : closestCenter(args);
   };
 
   const onDragEnd = (e: DragEndEvent) => {
+    void reorderBlocks; // kept available; tree-aware move below uses updatePage directly
     const { active, over } = e;
     if (!over || active.id === over.id) return;
     const activeId = String(active.id);
     const overId = String(over.id);
 
-    // Drop into a column pane → move dragged block as last child of that column
+    const from = findLocation(page.blocks, activeId);
+    if (!from) return;
+
+    // Drop on a container droppable (col:* / toggle:*) → append at end of container
     const colMatch = overId.match(/^col:(.+):(\d+)$/);
     if (colMatch) {
-      const [, columnBlockId, colIndexStr] = colMatch;
+      const [, containerId, colIndexStr] = colMatch;
+      if (containerId === activeId) return;
       const colIndex = Number(colIndexStr);
-      const dragged = page.blocks.find((b) => b.id === activeId);
-      if (!dragged || activeId === columnBlockId) return;
-      const newBlocks = page.blocks
-        .filter((b) => b.id !== activeId)
-        .map((b) => {
-          if (b.id !== columnBlockId) return b;
-          const cols = b.columns ?? [];
-          const newCols = cols.map((col, i) => (i === colIndex ? [...col, dragged] : col));
-          return { ...b, columns: newCols };
-        });
-      updatePage(page.id, { blocks: newBlocks });
+      const container = page.blocks.find((b) => b.id === containerId);
+      const colLen = container?.columns?.[colIndex]?.length ?? 0;
+      const to: Location = { kind: "col", containerId, colIndex, index: colLen };
+      updatePage(page.id, { blocks: moveBlock(page.blocks, from, to) });
       return;
     }
-
-    // Drop into a toggle body → append as child, expand
     const toggleMatch = overId.match(/^toggle:(.+)$/);
     if (toggleMatch) {
-      const toggleId = toggleMatch[1];
-      const dragged = page.blocks.find((b) => b.id === activeId);
-      if (!dragged || activeId === toggleId) return;
-      const newBlocks = page.blocks
-        .filter((b) => b.id !== activeId)
-        .map((b) =>
-          b.id === toggleId
-            ? { ...b, children: [...(b.children ?? []), dragged], collapsed: false }
-            : b,
-        );
-      updatePage(page.id, { blocks: newBlocks });
+      const containerId = toggleMatch[1];
+      if (containerId === activeId) return;
+      const container = page.blocks.find((b) => b.id === containerId);
+      const childLen = container?.children?.length ?? 0;
+      const to: Location = { kind: "toggle", containerId, index: childLen };
+      updatePage(page.id, { blocks: moveBlock(page.blocks, from, to) });
       return;
     }
 
-    // Default: sibling reorder at top level
-    const ids = page.blocks.map((b) => b.id);
-    const from = ids.indexOf(activeId);
-    const to = ids.indexOf(overId);
-    if (from === -1 || to === -1) return;
-    const next = [...ids];
-    next.splice(to, 0, next.splice(from, 1)[0]);
-    reorderBlocks(page.id, next);
+    // Drop on another block → insert at that block's location
+    const overLoc = findLocation(page.blocks, overId);
+    if (!overLoc) return;
+    updatePage(page.id, { blocks: moveBlock(page.blocks, from, overLoc) });
   };
 
   const subpages = childrenOf(page.id);

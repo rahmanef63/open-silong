@@ -9,15 +9,11 @@ import { useBlockHistory } from "@/shared/hooks/useBlockHistory";
 import { useNavigate } from "react-router-dom";
 import { DatabaseBlock } from "../database/DatabaseBlock";
 import { ColumnBlockEditor } from "./ColumnBlockEditor";
-import { EquationBlock } from "@/slices/equation";
-import { SimpleTableBlock } from "@/slices/simple-table";
 import { BlockShell } from "./blocks/BlockShell";
 import { BlockControls } from "./blocks/BlockControls";
 import { BlockBody } from "./blocks/BlockBody";
 import { ToggleBlock } from "./blocks/ToggleBlock";
-import { ImageBlock } from "./blocks/ImageBlock";
-import { EmbedBlock } from "./blocks/EmbedBlock";
-import { ButtonBlock } from "./blocks/ButtonBlock";
+import { getBlockRenderer } from "./blocks/registry";
 import { MARKDOWN_TRIGGERS } from "./lib/markdownTriggers";
 
 interface Props {
@@ -33,7 +29,7 @@ interface Props {
 function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerRef }: Props) {
   const {
     updateBlock, addBlock, deleteBlock, setBlockType, duplicateBlock,
-    createPage, getPage, createDatabase,
+    createPage, getPage, createDatabase, replaceBlock,
   } = useStore();
   const navigate = useNavigate();
   const [slashOpen, setSlashOpen] = useState(false);
@@ -288,78 +284,20 @@ function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerR
     );
   }
 
-  if (block.type === "image") {
+  const Renderer = getBlockRenderer(block.type);
+  if (Renderer) {
     return (
       <BlockShell
         setNodeRef={setNodeRef} style={style} isDragging={isDragging} isOver={isOver}
         attributes={attributes} listeners={listeners}
         controls={<BlockControls pageId={pageId} block={block} index={index} listeners={listeners} convertTo={convertTo} />}
       >
-        <ImageBlock pageId={pageId} block={block} />
-      </BlockShell>
-    );
-  }
-
-  if (block.type === "embed") {
-    return (
-      <BlockShell
-        setNodeRef={setNodeRef} style={style} isDragging={isDragging} isOver={isOver}
-        attributes={attributes} listeners={listeners}
-        controls={<BlockControls pageId={pageId} block={block} index={index} listeners={listeners} convertTo={convertTo} />}
-      >
-        <EmbedBlock block={block} onUpdate={(patch) => updateBlock(pageId, block.id, patch)} />
-      </BlockShell>
-    );
-  }
-
-  if (block.type === "button") {
-    return (
-      <BlockShell
-        setNodeRef={setNodeRef} style={style} isDragging={isDragging} isOver={isOver}
-        attributes={attributes} listeners={listeners}
-        controls={<BlockControls pageId={pageId} block={block} index={index} listeners={listeners} convertTo={convertTo} />}
-      >
-        <ButtonBlock block={block} onUpdate={(patch) => updateBlock(pageId, block.id, patch)} />
-      </BlockShell>
-    );
-  }
-
-  if (block.type === "equation") {
-    return (
-      <BlockShell
-        setNodeRef={setNodeRef} style={style} isDragging={isDragging} isOver={isOver}
-        attributes={attributes} listeners={listeners}
-        controls={<BlockControls pageId={pageId} block={block} index={index} listeners={listeners} convertTo={convertTo} />}
-      >
-        <EquationBlock
-          text={block.text}
-          onText={(text) => updateBlock(pageId, block.id, { text })}
+        <Renderer
+          block={block}
+          onUpdate={(patch) => updateBlock(pageId, block.id, patch)}
+          onReplace={(next) => replaceBlock(pageId, block.id, next)}
           registerRef={(el) => registerRef(block.id, el)}
         />
-      </BlockShell>
-    );
-  }
-
-  if (block.type === "table") {
-    return (
-      <BlockShell
-        setNodeRef={setNodeRef} style={style} isDragging={isDragging} isOver={isOver}
-        attributes={attributes} listeners={listeners}
-        controls={<BlockControls pageId={pageId} block={block} index={index} listeners={listeners} convertTo={convertTo} />}
-      >
-        <SimpleTableBlock pageId={pageId} block={block} />
-      </BlockShell>
-    );
-  }
-
-  if (block.type === "divider") {
-    return (
-      <BlockShell
-        setNodeRef={setNodeRef} style={style} isDragging={isDragging} isOver={isOver}
-        attributes={attributes} listeners={listeners}
-        controls={<BlockControls pageId={pageId} block={block} index={index} listeners={listeners} convertTo={convertTo} />}
-      >
-        <hr className="border-border my-2" />
       </BlockShell>
     );
   }
