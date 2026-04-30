@@ -1,4 +1,3 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
@@ -16,15 +15,14 @@ import Shared from "./pages/Shared.tsx";
 import Inbox from "./pages/Inbox.tsx";
 import AuthPage from "./pages/AuthPage.tsx";
 
-const queryClient = new QueryClient();
-
 function LandingRedirect() {
-  const { preferences, pages, recents } = useStore();
+  const { preferences, pages, recents, getPage } = useStore();
   switch (preferences.landingView) {
-    case "last":
-      if (preferences.lastOpenedPageId && pages.find((p) => p.id === preferences.lastOpenedPageId && !p.trashed))
-        return <Navigate to={`/p/${preferences.lastOpenedPageId}`} replace />;
+    case "last": {
+      const last = preferences.lastOpenedPageId ? getPage(preferences.lastOpenedPageId) : undefined;
+      if (last && !last.trashed) return <Navigate to={`/p/${last.id}`} replace />;
       return <Index />;
+    }
     case "recent":
       if (recents[0]) return <Navigate to={`/p/${recents[0]}`} replace />;
       return <Index />;
@@ -47,28 +45,26 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
 
 const App = () => (
   <ConvexClientProvider>
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <AuthGuard>
-          <StoreProvider>
-            <BrowserRouter>
-              <Routes>
-                <Route path="/" element={<LandingRedirect />} />
-                <Route path="/p/:id" element={<PageView />} />
-                <Route path="/share/:id" element={<Shared />} />
-                <Route path="/inbox" element={<Inbox />} />
-                <Route path="/trash" element={<Trash />} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
-          </StoreProvider>
-        </AuthGuard>
-      </TooltipProvider>
-    </QueryClientProvider>
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <AuthGuard>
+        <StoreProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<LandingRedirect />} />
+              <Route path="/p/:id" element={<PageView />} />
+              <Route path="/share/:id" element={<Shared />} />
+              <Route path="/inbox" element={<Inbox />} />
+              <Route path="/trash" element={<Trash />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </StoreProvider>
+      </AuthGuard>
+    </TooltipProvider>
   </ConvexClientProvider>
 );
 

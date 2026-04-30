@@ -171,24 +171,31 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const mutCreateSnapshot = useMutation(api.snapshots.create);
   const mutRestoreSnapshot = useMutation(api.snapshots.restore);
 
-  const pages: Page[] = rawPages.map(toPage);
-  const databases: Database[] = rawDatabases.map(toDatabase);
+  // Memoize derived collections so consumers see stable refs unless data changed.
+  // Convex's useQuery returns the same array ref when contents are unchanged,
+  // so these memos collapse the entire app's re-render fan-out.
+  const pages: Page[] = useMemo(() => rawPages.map(toPage), [rawPages]);
+  const databases: Database[] = useMemo(() => rawDatabases.map(toDatabase), [rawDatabases]);
   const recents: string[] = rawRecents;
 
-  const preferences: Preferences = {
+  // O(1) id lookups
+  const pageMap = useMemo(() => new Map(pages.map((p) => [p.id, p])), [pages]);
+  const databaseMap = useMemo(() => new Map(databases.map((d) => [d.id, d])), [databases]);
+
+  const preferences: Preferences = useMemo(() => ({
     theme: (rawPrefs?.theme as any) ?? "system",
     sidebarDensity: (rawPrefs?.sidebarDensity as any) ?? "comfortable",
     defaultPageSort: (rawPrefs?.defaultPageSort as any) ?? "manual",
     editorBehavior: (rawPrefs?.editorBehavior as any) ?? "default",
     landingView: (rawPrefs?.landingView as any) ?? "dashboard",
     lastOpenedPageId: rawPrefs?.lastOpenedPageId ?? null,
-  };
+  }), [rawPrefs]);
 
-  const workspace: Workspace = {
+  const workspace: Workspace = useMemo(() => ({
     id: rawWorkspace?._id ?? "local",
     name: rawWorkspace?.name ?? "My Workspace",
     emoji: rawWorkspace?.emoji ?? "🏠",
-  };
+  }), [rawWorkspace]);
 
   // User from seed until we wire profile to auth user
   const [user, setUser] = useState<UserProfile>(seedUser);
@@ -292,25 +299,33 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [workspace, mutUpsertWorkspace]
   );
 
-  const getPage = useCallback((id: string) => pages.find((p) => p.id === id), [pages]);
+  const getPage = useCallback((id: string) => pageMap.get(id), [pageMap]);
 
+  // Group children by parentId once per pages/sort change. Lookup becomes O(1).
+  const childrenByParent = useMemo(() => {
+    const map = new Map<string | null, Page[]>();
+    for (const p of pages) {
+      if (p.trashed || p.rowOfDatabaseId) continue;
+      const arr = map.get(p.parentId) ?? [];
+      arr.push(p);
+      map.set(p.parentId, arr);
+    }
+    const cmp = (a: Page, b: Page) => {
+      switch (preferences.defaultPageSort) {
+        case "title":   return a.title.localeCompare(b.title);
+        case "updated": return b.updatedAt - a.updatedAt;
+        case "created": return a.createdAt - b.createdAt;
+        default:        return a.createdAt - b.createdAt;
+      }
+    };
+    for (const arr of map.values()) arr.sort(cmp);
+    return map;
+  }, [pages, preferences.defaultPageSort]);
+
+  const EMPTY_PAGES: Page[] = useMemo(() => [], []);
   const childrenOf = useCallback(
-    (parentId: string | null) =>
-      pages
-        .filter((p) => !p.trashed && !p.rowOfDatabaseId && p.parentId === parentId)
-        .sort((a, b) => {
-          switch (preferences.defaultPageSort) {
-            case "title":
-              return a.title.localeCompare(b.title);
-            case "updated":
-              return b.updatedAt - a.updatedAt;
-            case "created":
-              return a.createdAt - b.createdAt;
-            default:
-              return a.createdAt - b.createdAt;
-          }
-        }),
-    [pages, preferences.defaultPageSort]
+    (parentId: string | null) => childrenByParent.get(parentId) ?? EMPTY_PAGES,
+    [childrenByParent, EMPTY_PAGES],
   );
 
   const createPage = useCallback(
@@ -341,16 +356,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const updatePage = useCallback(
     (id: string, patch: Partial<Page>) => {
-      const page = pages.find((p) => p.id === id);
+      const page = pageMap.get(id);
       if (page) snapshotIfNeeded(id, page);
       mutUpdatePage({ pageId: id, patch });
     },
-    [pages, mutUpdatePage, snapshotIfNeeded]
+    [pageMap, mutUpdatePage, snapshotIfNeeded]
   );
 
   const movePage = useCallback(
     (id: string, newParentId: string | null) => {
-      const page = pages.find((p) => p.id === id);
+      const page = pageMap.get(id);
       if (!page || page.parentId === newParentId) return;
       const before = { parentId: page.parentId, createdAt: page.createdAt };
       const after = { parentId: newParentId, createdAt: Date.now() };
@@ -361,7 +376,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       });
       mutUpdatePage({ pageId: id, patch: after });
     },
-    [pages, mutUpdatePage, pushStructuralAction]
+    [pageMap, mutUpdatePage, pushStructuralAction]
   );
 
   const reorderPages = useCallback(
@@ -398,7 +413,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       });
       apply(after);
     },
-    [pages, mutUpdatePage, pushStructuralAction]
+    [pageMap, mutUpdatePage, pushStructuralAction]
   );
 
   const reorderRootPages = useCallback(
@@ -441,18 +456,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const toggleFavorite = useCallback(
     (id: string) => {
-      const page = pages.find((p) => p.id === id);
+      const page = pageMap.get(id);
       if (page) mutUpdatePage({ pageId: id, patch: { favorite: !page.favorite } });
     },
-    [pages, mutUpdatePage]
+    [pageMap, mutUpdatePage]
   );
 
   const togglePublic = useCallback(
     (id: string) => {
-      const page = pages.find((p) => p.id === id);
+      const page = pageMap.get(id);
       if (page) mutUpdatePage({ pageId: id, patch: { isPublic: !page.isPublic } });
     },
-    [pages, mutUpdatePage]
+    [pageMap, mutUpdatePage]
   );
 
   const addBlock = useCallback(
@@ -478,7 +493,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const duplicateBlock = useCallback(
     (pageId: string, blockId: string) => {
-      const page = pages.find((p) => p.id === pageId);
+      const page = pageMap.get(pageId);
       if (!page) return undefined;
       const idx = page.blocks.findIndex((b) => b.id === blockId);
       if (idx === -1) return undefined;
@@ -488,12 +503,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       mutUpdatePage({ pageId, patch: { blocks } });
       return dup.id;
     },
-    [pages, mutUpdatePage]
+    [pageMap, mutUpdatePage]
   );
 
   const moveBlock = useCallback(
     (pageId: string, fromIndex: number, toIndex: number) => {
-      const page = pages.find((p) => p.id === pageId);
+      const page = pageMap.get(pageId);
       if (!page) return;
       const blocks = [...page.blocks];
       const [moved] = blocks.splice(fromIndex, 1);
@@ -507,12 +522,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       });
       mutUpdatePage({ pageId, patch: { blocks } });
     },
-    [pages, mutUpdatePage, pushStructuralAction]
+    [pageMap, mutUpdatePage, pushStructuralAction]
   );
 
   const reorderBlocks = useCallback(
     (pageId: string, orderedIds: string[]) => {
-      const page = pages.find((p) => p.id === pageId);
+      const page = pageMap.get(pageId);
       if (!page) return;
       const oldIds = page.blocks.map((b) => b.id);
       const same = oldIds.length === orderedIds.length && oldIds.every((id, i) => id === orderedIds[i]);
@@ -524,7 +539,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       });
       mutReorderBlocks({ pageId, orderedIds });
     },
-    [pages, mutReorderBlocks, pushStructuralAction]
+    [pageMap, mutReorderBlocks, pushStructuralAction]
   );
 
   const setBlockType = useCallback(
@@ -565,7 +580,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   // ===== Databases =====
 
-  const getDatabase = useCallback((id: string) => databases.find((d) => d.id === id), [databases]);
+  const getDatabase = useCallback((id: string) => databaseMap.get(id), [databaseMap]);
 
   const createDatabase = useCallback(
     async (name = "Untitled database"): Promise<Database> => {
@@ -593,38 +608,38 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         rollupAggregate: type === "rollup" ? "count" : undefined,
         formulaExpression: type === "formula" ? "{{title}}" : undefined,
       };
-      const db = databases.find((d) => d.id === dbId);
+      const db = databaseMap.get(dbId);
       if (db) {
         mutUpdateDatabase({ dbId, patch: { properties: [...db.properties, prop] } });
       }
       return prop;
     },
-    [databases, mutUpdateDatabase]
+    [databaseMap, mutUpdateDatabase]
   );
 
   const updateProperty = useCallback(
     (dbId: string, propId: string, patch: Partial<Property>) => {
-      const db = databases.find((d) => d.id === dbId);
+      const db = databaseMap.get(dbId);
       if (!db) return;
       const properties = db.properties.map((p) => (p.id === propId ? { ...p, ...patch } : p));
       mutUpdateDatabase({ dbId, patch: { properties } });
     },
-    [databases, mutUpdateDatabase]
+    [databaseMap, mutUpdateDatabase]
   );
 
   const deleteProperty = useCallback(
     (dbId: string, propId: string) => {
-      const db = databases.find((d) => d.id === dbId);
+      const db = databaseMap.get(dbId);
       if (!db) return;
       const properties = db.properties.filter((p) => p.id !== propId);
       mutUpdateDatabase({ dbId, patch: { properties } });
     },
-    [databases, mutUpdateDatabase]
+    [databaseMap, mutUpdateDatabase]
   );
 
   const reorderProperties = useCallback(
     (dbId: string, orderedIds: string[]) => {
-      const db = databases.find((d) => d.id === dbId);
+      const db = databaseMap.get(dbId);
       if (!db) return;
       const map = new Map(db.properties.map((p) => [p.id, p]));
       const properties = orderedIds.map((id) => map.get(id)!).filter(Boolean);
@@ -639,13 +654,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       });
       mutUpdateDatabase({ dbId, patch: { properties } });
     },
-    [databases, mutUpdateDatabase, pushStructuralAction]
+    [databaseMap, mutUpdateDatabase, pushStructuralAction]
   );
 
   const addSelectOption = useCallback(
     (dbId: string, propId: string, name: string, color?: string): SelectOption => {
       const opt: SelectOption = { id: uid(), name, color: color ?? pickColor(Math.floor(Math.random() * 9)) };
-      const db = databases.find((d) => d.id === dbId);
+      const db = databaseMap.get(dbId);
       if (db) {
         const properties = db.properties.map((p) =>
           p.id === propId ? { ...p, options: [...(p.options ?? []), opt] } : p
@@ -654,12 +669,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       }
       return opt;
     },
-    [databases, mutUpdateDatabase]
+    [databaseMap, mutUpdateDatabase]
   );
 
   const updateSelectOption = useCallback(
     (dbId: string, propId: string, optId: string, patch: Partial<SelectOption>) => {
-      const db = databases.find((d) => d.id === dbId);
+      const db = databaseMap.get(dbId);
       if (!db) return;
       const properties = db.properties.map((p) =>
         p.id === propId
@@ -668,12 +683,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       );
       mutUpdateDatabase({ dbId, patch: { properties } });
     },
-    [databases, mutUpdateDatabase]
+    [databaseMap, mutUpdateDatabase]
   );
 
   const deleteSelectOption = useCallback(
     (dbId: string, propId: string, optId: string) => {
-      const db = databases.find((d) => d.id === dbId);
+      const db = databaseMap.get(dbId);
       if (!db) return;
       const properties = db.properties.map((p) =>
         p.id === propId
@@ -682,7 +697,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       );
       mutUpdateDatabase({ dbId, patch: { properties } });
     },
-    [databases, mutUpdateDatabase]
+    [databaseMap, mutUpdateDatabase]
   );
 
   const addRow = useCallback(
@@ -703,7 +718,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const reorderRows = useCallback(
     (dbId: string, orderedIds: string[]) => {
-      const db = databases.find((d) => d.id === dbId);
+      const db = databaseMap.get(dbId);
       if (!db) return;
       const before = db.rowIds;
       const same = before.length === orderedIds.length && before.every((id, i) => id === orderedIds[i]);
@@ -715,7 +730,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       });
       mutUpdateDatabase({ dbId, patch: { rowIds: orderedIds } });
     },
-    [databases, mutUpdateDatabase, pushStructuralAction]
+    [databaseMap, mutUpdateDatabase, pushStructuralAction]
   );
 
   const setRowValue = useCallback(
@@ -728,54 +743,70 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const addView = useCallback(
     (dbId: string, view: Omit<DatabaseViewConfig, "id">): DatabaseViewConfig => {
       const v: DatabaseViewConfig = { ...view, id: uid() };
-      const db = databases.find((d) => d.id === dbId);
+      const db = databaseMap.get(dbId);
       if (db) {
         mutUpdateDatabase({ dbId, patch: { views: [...db.views, v], activeViewId: v.id } });
       }
       return v;
     },
-    [databases, mutUpdateDatabase]
+    [databaseMap, mutUpdateDatabase]
   );
 
   const updateView = useCallback(
     (dbId: string, viewId: string, patch: Partial<DatabaseViewConfig>) => {
-      const db = databases.find((d) => d.id === dbId);
+      const db = databaseMap.get(dbId);
       if (!db) return;
       const views = db.views.map((v) => (v.id === viewId ? { ...v, ...patch } : v));
       mutUpdateDatabase({ dbId, patch: { views } });
     },
-    [databases, mutUpdateDatabase]
+    [databaseMap, mutUpdateDatabase]
   );
 
   const deleteView = useCallback(
     (dbId: string, viewId: string) => {
-      const db = databases.find((d) => d.id === dbId);
+      const db = databaseMap.get(dbId);
       if (!db) return;
       const views = db.views.filter((v) => v.id !== viewId);
       const activeViewId = db.activeViewId === viewId ? views[0]?.id ?? db.activeViewId : db.activeViewId;
       mutUpdateDatabase({ dbId, patch: { views: views.length ? views : db.views, activeViewId } });
     },
-    [databases, mutUpdateDatabase]
+    [databaseMap, mutUpdateDatabase]
   );
 
   // ===== Snapshots =====
 
-  const snapshots: PageSnapshot[] = rawSnapshots.map((s: any) => ({
-    id: s._id,
-    pageId: s.pageId,
-    authorId: s.authorId,
-    authorName: s.authorName,
-    takenAt: s.takenAt,
-    title: s.title,
-    icon: s.icon,
-    cover: s.cover,
-    blocks: s.blocks,
-    rowProps: s.rowProps,
-  }));
+  const snapshots: PageSnapshot[] = useMemo(
+    () =>
+      rawSnapshots.map((s: any) => ({
+        id: s._id,
+        pageId: s.pageId,
+        authorId: s.authorId,
+        authorName: s.authorName,
+        takenAt: s.takenAt,
+        title: s.title,
+        icon: s.icon,
+        cover: s.cover,
+        blocks: s.blocks,
+        rowProps: s.rowProps,
+      })),
+    [rawSnapshots],
+  );
 
+  const snapshotsByPage = useMemo(() => {
+    const map = new Map<string, PageSnapshot[]>();
+    for (const s of snapshots) {
+      const arr = map.get(s.pageId) ?? [];
+      arr.push(s);
+      map.set(s.pageId, arr);
+    }
+    for (const arr of map.values()) arr.sort((a, b) => b.takenAt - a.takenAt);
+    return map;
+  }, [snapshots]);
+
+  const EMPTY_SNAPSHOTS: PageSnapshot[] = useMemo(() => [], []);
   const snapshotsForPage = useCallback(
-    (pageId: string) => snapshots.filter((s) => s.pageId === pageId).sort((a, b) => b.takenAt - a.takenAt),
-    [snapshots]
+    (pageId: string) => snapshotsByPage.get(pageId) ?? EMPTY_SNAPSHOTS,
+    [snapshotsByPage, EMPTY_SNAPSHOTS],
   );
 
   const restoreSnapshotFn = useCallback(
@@ -792,66 +823,127 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const canUndo = historyVersion >= 0 && undoStackRef.current.length > 0;
   const canRedo = historyVersion >= 0 && redoStackRef.current.length > 0;
 
-  const value: StoreCtx = {
-    user,
-    updateUser,
-    preferences,
-    updatePreferences,
-    workspace,
-    updateWorkspace,
-    pages,
-    recents,
-    getPage,
-    childrenOf,
-    createPage,
-    updatePage,
-    movePage,
-    reorderPages,
-    reorderRootPages,
-    deletePage,
-    restorePage,
-    permanentlyDelete,
-    duplicatePage,
-    toggleFavorite,
-    togglePublic,
-    addBlock,
-    updateBlock,
-    deleteBlock,
-    duplicateBlock,
-    moveBlock,
-    reorderBlocks,
-    setBlockType,
-    pushRecent,
-    trash,
-    search,
-    saving: false,
-    databases,
-    getDatabase,
-    createDatabase,
-    updateDatabase,
-    addProperty,
-    updateProperty,
-    deleteProperty,
-    reorderProperties,
-    addSelectOption,
-    updateSelectOption,
-    deleteSelectOption,
-    addRow,
-    deleteRow,
-    reorderRows,
-    setRowValue,
-    addView,
-    updateView,
-    deleteView,
-    snapshots,
-    snapshotsForPage,
-    restoreSnapshot: restoreSnapshotFn,
-    undo,
-    redo,
-    canUndo,
-    canRedo,
-    signOut,
-  };
+  const value: StoreCtx = useMemo(
+    () => ({
+      user,
+      updateUser,
+      preferences,
+      updatePreferences,
+      workspace,
+      updateWorkspace,
+      pages,
+      recents,
+      getPage,
+      childrenOf,
+      createPage,
+      updatePage,
+      movePage,
+      reorderPages,
+      reorderRootPages,
+      deletePage,
+      restorePage,
+      permanentlyDelete,
+      duplicatePage,
+      toggleFavorite,
+      togglePublic,
+      addBlock,
+      updateBlock,
+      deleteBlock,
+      duplicateBlock,
+      moveBlock,
+      reorderBlocks,
+      setBlockType,
+      pushRecent,
+      trash,
+      search,
+      saving: false,
+      databases,
+      getDatabase,
+      createDatabase,
+      updateDatabase,
+      addProperty,
+      updateProperty,
+      deleteProperty,
+      reorderProperties,
+      addSelectOption,
+      updateSelectOption,
+      deleteSelectOption,
+      addRow,
+      deleteRow,
+      reorderRows,
+      setRowValue,
+      addView,
+      updateView,
+      deleteView,
+      snapshots,
+      snapshotsForPage,
+      restoreSnapshot: restoreSnapshotFn,
+      undo,
+      redo,
+      canUndo,
+      canRedo,
+      signOut,
+    }),
+    [
+      user,
+      updateUser,
+      preferences,
+      updatePreferences,
+      workspace,
+      updateWorkspace,
+      pages,
+      recents,
+      getPage,
+      childrenOf,
+      createPage,
+      updatePage,
+      movePage,
+      reorderPages,
+      reorderRootPages,
+      deletePage,
+      restorePage,
+      permanentlyDelete,
+      duplicatePage,
+      toggleFavorite,
+      togglePublic,
+      addBlock,
+      updateBlock,
+      deleteBlock,
+      duplicateBlock,
+      moveBlock,
+      reorderBlocks,
+      setBlockType,
+      pushRecent,
+      trash,
+      search,
+      databases,
+      getDatabase,
+      createDatabase,
+      updateDatabase,
+      addProperty,
+      updateProperty,
+      deleteProperty,
+      reorderProperties,
+      addSelectOption,
+      updateSelectOption,
+      deleteSelectOption,
+      addRow,
+      deleteRow,
+      reorderRows,
+      setRowValue,
+      addView,
+      updateView,
+      deleteView,
+      snapshots,
+      snapshotsForPage,
+      restoreSnapshotFn,
+      undo,
+      redo,
+      canUndo,
+      canRedo,
+      signOut,
+    ],
+  );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
