@@ -257,7 +257,13 @@ function Subpages({ page, subpages }: { page: Page; subpages: Page[] }) {
             <button
               key={sp.id}
               onClick={() => navigate(`/p/${sp.id}`)}
-              className="flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-left hover:border-border-strong transition"
+              draggable
+              onDragStart={(e) => {
+                e.dataTransfer.setData("application/x-page-id", sp.id);
+                e.dataTransfer.effectAllowed = "move";
+              }}
+              title="Drag to sidebar to re-parent"
+              className="flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-left hover:border-border-strong transition cursor-grab active:cursor-grabbing"
             >
               <span>{sp.icon}</span>
               <span className="flex-1 truncate text-sm">{sp.title || "Untitled"}</span>

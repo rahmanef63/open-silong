@@ -39,7 +39,7 @@ Cross-links inside the repo:
 
 | Doc | Done | Total | % |
 | --- | ---: | ---: | ---: |
-| `BACKLOG.md` | 387 | 841 | **46.0%** |
+| `BACKLOG.md` | 390 | 844 | **46.2%** |
 | `ROADMAP.md` | 28 | 53 | **52.8%** |
 
 Recompute with: `cd docs/notion-clone && grep -cE '^- \[x\]\|^  - \[x\]\|^    - \[x\]' BACKLOG.md`.
@@ -92,6 +92,8 @@ The codebase already covers a usable single-user MVP plus most of the V1 surface
 - ErrorBoundary recovers from view crashes without nuking the page
 
 **Latest additions (this session)**
+- **Sidebar DnD polish** — DragOverlay ghost (no original-row jump), vertical-axis restricted (no horizontal scroll), drop-indicator line for sibling drops, brand ring for nesting (drag right ≥ 28px), smooth color transitions
+- **Cross-context page drag** — drag a page-link block (from page body or "Pages inside") into the sidebar to re-parent: drop on a row to nest under it, drop on the "Workspace" section header to move to root
 - **Cell selection + drag-fill** — Excel/Sheets-style: click a cell to select, drag the bottom-right brand dot to copy the value vertically across rows
 - **Simple table block (`/table`)** — plain rows × cols grid with editable header toggle, add/delete rows + cols, and **Turn into database** that materializes a real database with text properties + a Table view + seeded rows
 - **Full-page database mode** — when a page contains exactly one database block, the page automatically renders full-width with the database's name as the page title (Notion-style standalone DB pages)
