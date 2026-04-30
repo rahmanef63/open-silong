@@ -39,8 +39,8 @@ Cross-links inside the repo:
 
 | Doc | Done | Total | % |
 | --- | ---: | ---: | ---: |
-| `BACKLOG.md` | 343 | 833 | **41.2%** |
-| `ROADMAP.md` | 24 | 53 | **45.3%** |
+| `BACKLOG.md` | 380 | 840 | **45.2%** |
+| `ROADMAP.md` | 28 | 53 | **52.8%** |
 
 Recompute with: `cd docs/notion-clone && grep -cE '^- \[x\]\|^  - \[x\]\|^    - \[x\]' BACKLOG.md`.
 
@@ -92,11 +92,18 @@ The codebase already covers a usable single-user MVP plus most of the V1 surface
 - ErrorBoundary recovers from view crashes without nuking the page
 
 **Recent additions (this session)**
-- **Code block** (`/code`) — highlight.js, 30+ languages via dropdown, GitHub-dark theme, copy-with-feedback button, focus-to-edit
-- **Equation block** (`/equation`, `/math`) — LaTeX block math via KaTeX, live preview while editing, error state on invalid LaTeX
-- **Backlinks panel** — auto-derived from `@title` mentions + page-link blocks, grouped by source page with kind badge, collapsible
-- **Global ⌘K palette** — page search, favorites, recents, databases, theme toggle, navigation shortcuts
-- **Unique ID property** — atomic counter per database, optional prefix, generated on row creation
+- **Database templates** — per-DB saved row presets with body blocks + property values; default-template flag; managed via "New ▼ → Manage templates"
+- **Database presets via ⌘K** — one-click `Tasks / Sprints / Projects` databases pre-configured with properties, views, status workflows, default templates, ID prefixes
+- **CSV import** — column → property mapper dialog, type coercion (date / number / select / multi-select / checkbox / text), skips empty rows
+- **CSV export** — download from any view; respects active filters & sorts
+- **Formulas extended** — 18 functions: `if/and/or/not/empty/concat/contains/replace/lower/upper/length/round/floor/ceil/abs/min/max/now/today` + property substitution + arithmetic; inline docs in editor
+
+**Previous session additions**
+- Code block (`/code`) — highlight.js, 30+ languages, GitHub-dark theme, copy button
+- Equation block (`/equation`, `/math`) — LaTeX via KaTeX with live preview
+- Backlinks panel — auto from `@title` mentions + page-link blocks
+- Global ⌘K palette — page search, favorites, recents, databases, actions
+- Unique ID property — atomic counter per database with optional prefix
 
 See `BACKLOG.md` for the full checklist with `[x]` marking shipped work and `[ ]` marking what's left.
 

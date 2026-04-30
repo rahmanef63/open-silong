@@ -720,33 +720,35 @@
 ## 17.1 Formula Engine
 
 - [x] Property type wired
-- [ ] Tokenizer / parser / AST
-- [ ] Evaluator
-- [ ] Type system (string / number / boolean / date / list / null)
-- [ ] Property reference resolution
+- [x] Tokenizer / arg-splitter (basic)
+- [x] Evaluator (substitution + functions + arithmetic)
+- [ ] Type system (string / number / boolean / date / list / null) — currently string-coerced
+- [x] Property reference resolution (`{{title}}`, `{{Property name}}`)
 - [ ] Dependency graph
-- [ ] Recalculate on property change
+- [x] Recalculate on property change (Convex reactivity, not graph-based)
 - [ ] Circular-dependency guard
 - [ ] Cache result
-- [ ] Error state UI
+- [x] Error state UI (`Invalid formula` fallback)
 
 ## 17.2 Formula Functions — P1
 
-- [ ] String: concat / contains / replace / lower / upper / length / substring
-- [ ] Number: arithmetic / round / floor / ceil / abs / min / max
-- [ ] Date: now / dateAdd / dateSubtract / dateBetween / formatDate
-- [ ] Logic: if / and / or / not / empty
+- [x] String: concat / contains / replace / lower / upper / length
+- [ ] String: substring
+- [x] Number: arithmetic (`= a+b`) / round / floor / ceil / abs / min / max
+- [x] Date: now / today
+- [ ] Date: dateAdd / dateSubtract / dateBetween / formatDate
+- [x] Logic: if / and / or / not / empty
 - [ ] List: map / filter / join / sum / count
 
 ## 17.3 Formula UI
 
-- [ ] Formula editor modal
+- [x] Formula editor (popover) on the formula cell
 - [ ] Syntax highlighting
 - [ ] Property / function autocomplete
-- [ ] Inline docs
-- [ ] Preview result
+- [x] Inline docs (function list shown in editor footer)
+- [x] Preview result (live render under expression)
 - [ ] Error message with line/position
-- [ ] Save & recompute
+- [x] Save & recompute (Convex reactivity re-renders on prop change)
 
 ---
 
@@ -820,17 +822,19 @@
 
 ## 20.1 Template System
 
-- [ ] Create database template
-- [ ] Default properties on apply
-- [ ] Default page content
-- [ ] Apply to new row
-- [ ] Default template setting
-- [ ] Multiple templates per DB
-- [ ] Rename / duplicate / delete / edit / preview template
+- [x] Create database template (TemplatesDialog)
+- [x] Default properties on apply (rowProps seed)
+- [x] Default page content (block list with H2/H3/bullet/todo shortcuts)
+- [x] Apply to new row (`addRow(dbId, init, templateId)`)
+- [x] Default template setting (star toggle)
+- [x] Multiple templates per DB
+- [x] Rename / delete / edit template
+- [ ] Duplicate template
+- [ ] Preview template
 
 ## 20.2 Template UX
 
-- [ ] New row dropdown with template list
+- [x] New row dropdown with template list (NewRowMenu split button)
 - [ ] Apply template to existing row
 - [ ] Overwrite confirmation
 - [ ] Template variables (today, current user, db name, auto title)
@@ -870,26 +874,28 @@
 
 ## 22.1 Task Database Preset
 
-- [ ] Default task database template
-- [ ] Default properties (Task name / Status / Assignee / Priority / Due date / Sprint / Project / Tags / Estimate / Actual / Dependencies / Sub-tasks)
-- [ ] Default views (My tasks / Board by status / Calendar by due date / Table all / Sprint board / Overdue)
+- [x] Default task database template (Tasks preset via ⌘K)
+- [x] Default properties (Task / Status / Priority / Due / Assignee / Tags / ID / Created)
+- [ ] Sprint + Project + Estimate + Actual + Dependencies + Sub-tasks (sub-properties)
+- [x] Default views (Board by status / My tasks / Calendar / All) — Sprint board + Overdue not yet
 
 ## 22.2 Sprint System
 
-- [ ] Sprint database
-- [ ] Sprint properties (name, dates, status, goal, capacity, velocity)
-- [ ] Link tasks → sprint
-- [ ] Start / complete sprint
+- [x] Sprint database preset (via ⌘K)
+- [x] Sprint properties (name, status, start, end, goal, ID)
+- [ ] Capacity / velocity properties
+- [ ] Link tasks → sprint (relation property setup)
+- [ ] Start / complete sprint workflow
 - [ ] Move incomplete tasks → next sprint
 - [ ] Burndown / sprint report
 
 ## 22.3 Project Management
 
-- [ ] Project database
+- [x] Project database preset (via ⌘K)
 - [ ] Link tasks → projects
 - [ ] Project status rollup / progress formula
-- [ ] Project timeline / owner / priority
-- [ ] Project health (On track / At risk / Off track)
+- [ ] Project timeline
+- [x] Project owner / priority / health (On track / At risk / Off track) properties
 - [ ] Project dashboard
 
 ---
@@ -908,13 +914,14 @@
 
 ## 23.2 External Data Sources — P2
 
-- [ ] CSV import / export
+- [x] CSV import (column → property mapper, 14+ types coerced)
+- [x] CSV export (download from view, respects visible+filtered rows)
 - [ ] Google Sheets / GitHub issues / Jira sync
 - [ ] Webhook ingestion
 - [ ] API source
 - [ ] Manual / scheduled refresh
 - [ ] Sync error state
-- [ ] Field mapping UI
+- [x] Field mapping UI (CsvImportDialog)
 
 ---
 
@@ -1083,19 +1090,19 @@
 
 - [ ] Markdown import
 - [ ] HTML import
-- [ ] CSV import into database
+- [x] CSV import into database (with type coercion)
 - [ ] JSON backup import
-- [ ] Map CSV columns to properties
+- [x] Map CSV columns to properties (CsvImportDialog)
 - [ ] Import files (media bundle)
-- [ ] Import validation
-- [ ] Import progress UI
-- [ ] Import error report
+- [x] Import validation (skip empty rows, error per row)
+- [x] Import progress UI ("Importing…" state)
+- [x] Import error report (toast + dialog inline)
 
 ## 29.2 Export
 
 - [x] Export page as Markdown (PageActionsMenu)
 - [ ] Export page as HTML
-- [ ] Export database as CSV
+- [x] Export database as CSV
 - [ ] Export workspace as ZIP
 - [ ] Include media files
 - [ ] Export permission check

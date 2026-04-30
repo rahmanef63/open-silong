@@ -6,8 +6,9 @@ import {
 import { useStore } from "@/lib/store";
 import {
   FileText, Plus, Trash2, Inbox, Settings, Star, Search, Home,
-  Sun, Moon, Database as DbIcon, Share2, History,
+  Sun, Moon, Database as DbIcon, Share2, History, Sparkles,
 } from "lucide-react";
+import { DATABASE_PRESETS } from "@/slices/database-presets";
 
 const MAX_PAGES = 12;
 
@@ -16,7 +17,8 @@ export function CommandPalette() {
   const [query, setQuery] = useState("");
   const navigate = useNavigate();
   const {
-    pages, recents, databases, createPage, updatePreferences, preferences,
+    pages, recents, databases, createPage, createDatabase, updateDatabase,
+    addBlock, updateBlock, updatePreferences, preferences,
   } = useStore();
 
   useEffect(() => {
@@ -128,6 +130,37 @@ export function CommandPalette() {
               ? <><Sun className="mr-2 h-3.5 w-3.5" /> Switch to light theme</>
               : <><Moon className="mr-2 h-3.5 w-3.5" /> Switch to dark theme</>}
           </CommandItem>
+        </CommandGroup>
+
+        <CommandGroup heading="Create from preset">
+          {DATABASE_PRESETS.map((preset) => (
+            <CommandItem
+              key={preset.id}
+              value={`preset:${preset.id}:${preset.name}`}
+              onSelect={run(async () => {
+                const seed = preset.build();
+                const stub = await createDatabase(seed.name);
+                await updateDatabase(stub.id, {
+                  name: seed.name,
+                  icon: seed.icon,
+                  properties: seed.properties as any,
+                  views: seed.views as any,
+                  activeViewId: seed.activeViewId,
+                  templates: seed.templates ?? ([] as any),
+                  defaultTemplateId: seed.defaultTemplateId ?? null,
+                } as any);
+                const host = await createPage(null, { title: preset.name, icon: preset.icon });
+                const blockId = await addBlock(host.id, -1, "database");
+                updateBlock(host.id, blockId, { type: "database", databaseId: stub.id, text: "" });
+                navigate(`/p/${host.id}`);
+              })}
+            >
+              <Sparkles className="mr-2 h-3.5 w-3.5 text-brand" />
+              <span className="mr-2">{preset.icon}</span>
+              <span className="flex-1 truncate">{preset.name} database</span>
+              <span className="text-[10px] text-muted-foreground">{preset.description.split(" ").slice(0, 4).join(" ")}…</span>
+            </CommandItem>
+          ))}
         </CommandGroup>
 
         <CommandGroup heading="Hints">
