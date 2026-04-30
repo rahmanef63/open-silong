@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   ChevronRight, Copy, GripVertical, Inbox, MoreHorizontal, Pencil, Plus, Search,
-  Settings, Sparkles, Star, Trash2, User,
+  Settings, Sparkles, Star, Table2, Trash2, User,
   type LucideIcon,
 } from "lucide-react";
 import {
@@ -79,6 +79,7 @@ type TreeItem = { page: Page; depth: number; parentId: string | null };
 export function WorkspaceSidebar({ onOpenSearch, onClose }: Props) {
   const {
     workspace, pages, recents, childrenOf, createPage, preferences, reorderPages,
+    databases, createDatabase, addBlock, updateBlock,
   } = useStore();
   const navigate = useNavigate();
   const location = useLocation();
@@ -240,6 +241,42 @@ export function WorkspaceSidebar({ onOpenSearch, onClose }: Props) {
             </button>
           )}
         </Section>
+
+        {databases.length > 0 && (
+          <Section
+            title="Databases"
+            density={density}
+            action={
+              <button
+                onClick={async () => {
+                  const [p, db] = await Promise.all([
+                    createPage(null, { title: "Untitled database", icon: "🗂️" }),
+                    createDatabase("Untitled database"),
+                  ]);
+                  const blockId = await addBlock(p.id, 0, "database");
+                  updateBlock(p.id, blockId, { databaseId: db.id });
+                  navigate(`/p/${p.id}`);
+                  onClose?.();
+                }}
+                className="rounded p-1 hover:bg-sidebar-accent text-muted-foreground hover:text-foreground"
+                aria-label="New database"
+              >
+                <Plus className="h-3.5 w-3.5" />
+              </button>
+            }
+          >
+            {databases.map(db => (
+              <div
+                key={db.id}
+                className={cn("flex items-center gap-1.5 rounded-md px-2 text-sidebar-foreground hover:bg-sidebar-accent", density.pageLink)}
+              >
+                <Table2 className={cn("shrink-0 text-muted-foreground", density.actionIcon)} />
+                <span className="flex-1 truncate">{db.name}</span>
+                <span className="text-[10px] text-muted-foreground shrink-0">{db.rowIds.length}</span>
+              </div>
+            ))}
+          </Section>
+        )}
 
         <Section title="" density={density}>
           <Link

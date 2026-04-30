@@ -31,7 +31,7 @@ interface Props {
 export function BlockEditor({ pageId, block, index, total, onFocusNext, onFocusPrev, registerRef }: Props) {
   const {
     updateBlock, addBlock, deleteBlock, setBlockType, duplicateBlock,
-    createPage, getPage,
+    createPage, getPage, createDatabase,
   } = useStore();
   const navigate = useNavigate();
   const [slashOpen, setSlashOpen] = useState(false);
@@ -185,6 +185,12 @@ export function BlockEditor({ pageId, block, index, total, onFocusNext, onFocusP
     if (type === "toggle") {
       setBlockType(pageId, block.id, "toggle");
       updateBlock(pageId, block.id, { text: "", children: [], collapsed: false });
+      return;
+    }
+    if (type === "database") {
+      const db = await createDatabase();
+      setBlockType(pageId, block.id, "database");
+      updateBlock(pageId, block.id, { text: "", databaseId: db.id });
       return;
     }
     setBlockType(pageId, block.id, type);
