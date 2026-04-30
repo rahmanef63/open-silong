@@ -103,6 +103,16 @@ export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block 
   if (block.databaseId && !db) {
     return <DatabaseSkeleton />;
   }
+  if (db?.trashed) {
+    return (
+      <div className="rounded-lg border border-dashed border-amber-500/40 bg-amber-500/5 p-6 text-center text-sm">
+        <div className="font-medium text-amber-700 dark:text-amber-400">Database moved to Trash</div>
+        <div className="mt-1 text-xs text-muted-foreground">
+          Restore from <a href="/trash" className="underline">Trash</a> to view it again.
+        </div>
+      </div>
+    );
+  }
   if (!db || !view) {
     return (
       <div className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">

@@ -192,6 +192,8 @@ export interface Database {
   defaultTemplateId?: string | null;
   /** Sub-items relation property id (parent → children) */
   subItemsParentPropId?: string | null;
+  /** Soft-delete flag */
+  trashed?: boolean;
 }
 
 export interface DatabaseTemplate {

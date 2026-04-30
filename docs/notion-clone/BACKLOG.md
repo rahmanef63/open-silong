@@ -285,8 +285,8 @@
 - [x] `[]` → checkbox
 - [x] `>` → quote
 - [x] `---` → divider
-- [ ] ` ``` ` → code block (slash command works; markdown shortcut not yet)
-- [ ] `$` / `$$` → math (slash command works; markdown shortcut not yet)
+- [x] ` ``` ` → code block (space-triggered markdown shortcut)
+- [x] `$$` → equation (space-triggered markdown shortcut)
 - [x] Auto-convert on space / enter
 
 ## 5.2 Page Style
@@ -790,10 +790,10 @@
 - [x] Rename / change icon / change description
 - [x] Lock database (locked flag)
 - [x] Duplicate
-- [x] Delete
+- [x] Delete (trash → restore → permanent delete from Trash page; cascade row deletion)
 - [ ] Move database
-- [ ] Export database
-- [ ] Import CSV
+- [x] Export database (CSV)
+- [x] Import CSV
 - [ ] Permission settings
 - [x] View-level settings
 

@@ -30,6 +30,24 @@ interface Props {
   registerRef: (id: string, el: HTMLElement | null) => void;
 }
 
+const MARKDOWN_TRIGGERS: Record<string, { type: BlockType; patch?: Partial<Block> }> = {
+  "# ":   { type: "h1" },
+  "## ":  { type: "h2" },
+  "### ": { type: "h3" },
+  "- ":   { type: "bullet" },
+  "* ":   { type: "bullet" },
+  "1. ":  { type: "numbered" },
+  "[] ":  { type: "todo", patch: { checked: false } },
+  "[ ] ": { type: "todo", patch: { checked: false } },
+  "> ":   { type: "quote" },
+  "``` ": { type: "code" },
+  "```":  { type: "code" },
+  "$$ ":  { type: "equation" },
+  "$$":   { type: "equation" },
+  "--- ": { type: "divider" },
+  "---":  { type: "divider" },
+};
+
 function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerRef }: Props) {
   const {
     updateBlock, addBlock, deleteBlock, setBlockType, duplicateBlock,
@@ -62,8 +80,22 @@ function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerR
   };
 
   const handleInput = (e: React.FormEvent<HTMLElement>) => {
-    const text = (e.currentTarget as HTMLElement).innerText;
+    const el = e.currentTarget as HTMLElement;
+    const text = el.innerText;
     history.record(text);
+
+    // Markdown auto-shortcuts: only fire on plain paragraphs, at line start.
+    if (block.type === "paragraph") {
+      const trigger = MARKDOWN_TRIGGERS[text];
+      if (trigger) {
+        el.innerText = "";
+        setBlockType(pageId, block.id, trigger.type);
+        updateBlock(pageId, block.id, { text: "", ...(trigger.patch ?? {}) });
+        setSlashOpen(false);
+        return;
+      }
+    }
+
     updateBlock(pageId, block.id, { text });
     if (text === "/" || (text.startsWith("/") && !text.includes("\n"))) {
       setSlashOpen(true);
