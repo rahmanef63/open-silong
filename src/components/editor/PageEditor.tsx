@@ -32,7 +32,7 @@ const COVERS = [
 
 export function PageEditor() {
   const { id } = useParams<{ id: string }>();
-  const { getPage, updatePage, pushRecent, addBlock, reorderBlocks, childrenOf, createPage } = useStore();
+  const { getPage, updatePage, pushRecent, addBlock, reorderBlocks, childrenOf, createPage, getDatabase, updateDatabase } = useStore();
   const navigate = useNavigate();
   const page = id ? getPage(id) : undefined;
   const [iconPick, setIconPick] = useState(false);
@@ -87,6 +87,10 @@ export function PageEditor() {
   };
 
   const subpages = childrenOf(page.id);
+  const onlyBlock = page.blocks.length === 1 ? page.blocks[0] : null;
+  const fullPageDb = onlyBlock?.type === "database" && onlyBlock.databaseId
+    ? getDatabase(onlyBlock.databaseId) ?? null
+    : null;
 
   return (
     <PageCommentsProvider pageId={page.id}>
@@ -100,7 +104,7 @@ export function PageEditor() {
           <div
             className={cn(
               "mx-auto px-6 md:px-12",
-              page.fullWidth ? "max-w-none" : "max-w-3xl",
+              fullPageDb || page.fullWidth ? "max-w-none" : "max-w-3xl",
               page.cover ? "-mt-10" : "pt-16",
               page.font === "serif" && "font-serif",
               page.font === "mono" && "font-mono",
@@ -133,10 +137,17 @@ export function PageEditor() {
             </div>
 
             <input
-              value={page.title}
+              value={fullPageDb ? fullPageDb.name : page.title}
               readOnly={page.locked}
-              onChange={e => updatePage(page.id, { title: e.target.value })}
-              placeholder="Untitled"
+              onChange={e => {
+                if (fullPageDb) {
+                  updateDatabase(fullPageDb.id, { name: e.target.value });
+                  updatePage(page.id, { title: e.target.value });
+                } else {
+                  updatePage(page.id, { title: e.target.value });
+                }
+              }}
+              placeholder={fullPageDb ? "Untitled database" : "Untitled"}
               className={cn(
                 "mt-3 w-full bg-transparent text-4xl md:text-5xl font-bold tracking-tight outline-none placeholder:text-muted-foreground/40",
                 page.font === "mono" ? "font-mono" : "font-serif",
@@ -184,24 +195,28 @@ export function PageEditor() {
                 </SortableContext>
               </DndContext>
 
-              <button
-                onClick={async () => {
-                  const newId = await addBlock(page.id, page.blocks.length - 1);
-                  setTimeout(() => document.querySelector<HTMLElement>(`[data-block-id="${newId}"]`)?.focus(), 0);
-                }}
-                className="mt-2 text-sm text-muted-foreground hover:text-foreground transition"
-              >
-                + Add block
-              </button>
+              {!fullPageDb && (
+                <>
+                  <button
+                    onClick={async () => {
+                      const newId = await addBlock(page.id, page.blocks.length - 1);
+                      setTimeout(() => document.querySelector<HTMLElement>(`[data-block-id="${newId}"]`)?.focus(), 0);
+                    }}
+                    className="mt-2 text-sm text-muted-foreground hover:text-foreground transition"
+                  >
+                    + Add block
+                  </button>
 
-              {/* Subpages section */}
-              <Subpages page={page} subpages={subpages} />
+                  {/* Subpages section */}
+                  <Subpages page={page} subpages={subpages} />
 
-              {/* Backlinks */}
-              <BacklinksPanel pageId={page.id} />
+                  {/* Backlinks */}
+                  <BacklinksPanel pageId={page.id} />
 
-              {/* Page-level comments */}
-              <PageCommentsPanel pageId={page.id} />
+                  {/* Page-level comments */}
+                  <PageCommentsPanel pageId={page.id} />
+                </>
+              )}
             </div>
           </div>
         </div>

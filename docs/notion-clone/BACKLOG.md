@@ -268,7 +268,7 @@
 ## 4.7 Advanced Blocks — P2
 
 - [ ] Synced block
-- [ ] Simple table block
+- [x] Simple table block (with "Turn into database" conversion)
 - [ ] Mermaid diagram
 - [ ] Generic third-party embed
 - [ ] Figma / Drive / Gist / Tweet / YouTube / Loom / Map embeds
@@ -610,7 +610,8 @@
 - [x] Cell editor per property type (PropertyCell with 18-type dispatcher)
 - [x] Keyboard navigation in table
 - [ ] Bulk edit selected rows
-- [ ] Drag-fill
+- [x] Drag-fill (vertical, Excel-style fill handle)
+- [x] Cell selection ring + click-to-select
 - [x] Copy / paste cell (browser default)
 - [x] Empty state display
 - [ ] Error display for invalid value

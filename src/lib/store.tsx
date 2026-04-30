@@ -103,6 +103,7 @@ interface StoreCtx {
   moveBlock: (pageId: string, fromIndex: number, toIndex: number) => void;
   reorderBlocks: (pageId: string, orderedIds: string[]) => void;
   setBlockType: (pageId: string, blockId: string, type: BlockType) => void;
+  replaceBlock: (pageId: string, blockId: string, next: Block) => void;
   pushRecent: (id: string) => void;
   trash: Page[];
   search: (q: string) => Page[];
@@ -115,6 +116,7 @@ interface StoreCtx {
   trashDatabase: (id: string) => void;
   restoreDatabase: (id: string) => void;
   permanentlyDeleteDatabase: (id: string) => void;
+  addDatabaseFromTable: (input: { headerRow: string[]; bodyRows: string[][] }) => Promise<string | null>;
   addProperty: (dbId: string, type: PropertyType, name?: string) => Property;
   updateProperty: (dbId: string, propId: string, patch: Partial<Property>) => void;
   deleteProperty: (dbId: string, propId: string) => void;
@@ -567,6 +569,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [mutUpdateBlock]
   );
 
+  const replaceBlock = useCallback(
+    (pageId: string, blockId: string, next: Block) => {
+      const page = pageMap.get(pageId);
+      if (!page) return;
+      const blocks = page.blocks.map((b) => (b.id === blockId ? { ...next, id: blockId } : b));
+      mutUpdatePage({ pageId, patch: { blocks } });
+    },
+    [pageMap, mutUpdatePage],
+  );
+
   const pushRecent = useCallback(
     (id: string) => {
       mutPushRecent({ pageId: id });
@@ -610,6 +622,34 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       mutUpdateDatabase({ dbId: id, patch });
     },
     [mutUpdateDatabase]
+  );
+
+  const addDatabaseFromTable = useCallback(
+    async ({ headerRow, bodyRows }: { headerRow: string[]; bodyRows: string[][] }): Promise<string | null> => {
+      const cols = headerRow.length;
+      if (cols === 0) return null;
+      const titleName = (headerRow[0] || "Name").trim() || "Name";
+      const dbId = await mutCreateDatabase({ name: titleName });
+      const titleProp: Property = { id: uid(), name: titleName, type: "text" };
+      const extraProps: Property[] = headerRow.slice(1).map((h, i) => ({
+        id: uid(),
+        name: (h || `Column ${i + 2}`).trim() || `Column ${i + 2}`,
+        type: "text" as PropertyType,
+      }));
+      const properties = [titleProp, ...extraProps];
+      const view: DatabaseViewConfig = { id: uid(), name: "Table", type: "table", sorts: [], filters: [], search: "" };
+      await mutUpdateDatabase({
+        dbId,
+        patch: { properties, views: [view], activeViewId: view.id },
+      });
+      for (const row of bodyRows) {
+        const rowProps: Record<string, PropertyValue> = {};
+        extraProps.forEach((p, i) => { rowProps[p.id] = row[i + 1] ?? ""; });
+        await mutAddRow({ dbId, init: { title: row[0] ?? "", rowProps } });
+      }
+      return dbId;
+    },
+    [mutCreateDatabase, mutUpdateDatabase, mutAddRow],
   );
 
   const trashDatabase = useCallback(
@@ -882,6 +922,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       moveBlock,
       reorderBlocks,
       setBlockType,
+      replaceBlock,
       pushRecent,
       trash,
       search,
@@ -894,6 +935,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       trashDatabase,
       restoreDatabase,
       permanentlyDeleteDatabase,
+      addDatabaseFromTable,
       addProperty,
       updateProperty,
       deleteProperty,
@@ -946,6 +988,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       moveBlock,
       reorderBlocks,
       setBlockType,
+      replaceBlock,
       pushRecent,
       trash,
       search,
@@ -957,6 +1000,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       trashDatabase,
       restoreDatabase,
       permanentlyDeleteDatabase,
+      addDatabaseFromTable,
       addProperty,
       updateProperty,
       deleteProperty,

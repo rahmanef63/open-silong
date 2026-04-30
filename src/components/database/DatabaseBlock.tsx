@@ -242,7 +242,7 @@ export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block 
 
           <CsvActions db={db} rows={filtered} />
 
-          <NewRowMenu db={db} onCreated={setOpenRowId} />
+          <NewRowMenu db={db} onCreated={() => { /* row appears inline; user clicks Open to peek */ }} />
         </div>
       </div>
 

@@ -18,14 +18,28 @@ import {
   DropdownMenuSeparator, DropdownMenuLabel, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger,
 } from "@/components/ui/dropdown-menu";
 import { AddColumnHeader, AddRowFooter, InlineRowTitle } from "@/slices/database-row";
+import { useDragFill, SelectableCell, type FillSource } from "@/slices/database-cell-selection";
 
 interface ViewProps { db: Database; view: DatabaseViewConfig; rows: Page[]; onOpenRow: (id: string) => void }
 
 export function TableView({ db, view, rows, onOpenRow }: ViewProps) {
-  const { reorderProperties, reorderRows, addRow, deleteRow } = useStore();
+  void view;
+  const { reorderProperties, reorderRows, addRow, deleteRow, setRowValue } = useStore();
+  const [pendingFocusId, setPendingFocusId] = useState<string | null>(null);
+  const [selectedCell, setSelectedCell] = useState<{ rowId: string; propId: string } | null>(null);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
 
   const visibleProps = db.properties.filter(p => !p.hidden);
+  const rowIds = rows.map(r => r.id);
+
+  const onFill = (source: FillSource, targets: string[]) => {
+    const srcRow = rows.find(r => r.id === source.rowId);
+    if (!srcRow) return;
+    const value = srcRow.rowProps?.[source.propId];
+    if (value === undefined) return;
+    targets.forEach(rid => setRowValue(db.id, rid, source.propId, value));
+  };
+  const fill = useDragFill({ rowIds, onFill });
 
   const onColEnd = (e: DragEndEvent) => {
     const { active, over } = e;
@@ -62,19 +76,28 @@ export function TableView({ db, view, rows, onOpenRow }: ViewProps) {
             </div>
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onRowEnd}>
               <SortableContext items={rows.map(r => r.id)} strategy={verticalListSortingStrategy}>
-                {rows.map(row => (
+                {rows.map((row, rowIndex) => (
                   <SortableRow
                     key={row.id}
                     row={row}
+                    rowIndex={rowIndex}
                     db={db}
                     visibleProps={visibleProps}
                     onOpen={() => onOpenRow(row.id)}
                     onDelete={() => deleteRow(db.id, row.id)}
+                    autoEdit={pendingFocusId === row.id}
+                    onAutoEditConsumed={() => setPendingFocusId(null)}
+                    selectedCell={selectedCell}
+                    onSelectCell={setSelectedCell}
+                    fill={fill}
                   />
                 ))}
               </SortableContext>
             </DndContext>
-            <AddRowFooter onAdd={async () => { const r = await addRow(db.id); onOpenRow(r.id); }} />
+            <AddRowFooter onAdd={async () => {
+              const r = await addRow(db.id);
+              setPendingFocusId(r.id);
+            }} />
           </div>
         </SortableContext>
       </DndContext>
@@ -150,7 +173,7 @@ function SortableHeader({ prop, db }: { prop: Property; db: Database }) {
   );
 }
 
-function SortableRow({ row, db, visibleProps, onOpen, onDelete }: any) {
+function SortableRow({ row, rowIndex, db, visibleProps, onOpen, onDelete, autoEdit, onAutoEditConsumed, selectedCell, onSelectCell, fill }: any) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: row.id });
   const onKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
     if (isTextInputTarget(e.target)) return;
@@ -179,15 +202,29 @@ function SortableRow({ row, db, visibleProps, onOpen, onDelete }: any) {
           <GripVertical className="h-3 w-3" />
         </button>
       </div>
-      {visibleProps.map((p: any, i: number) => (
-        <div key={p.id} className="border-r border-border min-w-[160px] flex-1 flex items-center">
-          {i === 0 ? (
-            <InlineRowTitle row={row} onOpen={onOpen} />
-          ) : (
-            <PropertyCell db={db} prop={p} row={row} />
-          )}
-        </div>
-      ))}
+      {visibleProps.map((p: any, i: number) => {
+        const isSel = selectedCell?.rowId === row.id && selectedCell?.propId === p.id;
+        const inRange = fill.isInFillRange(rowIndex, p.id);
+        return (
+          <div key={p.id} className="border-r border-border min-w-[160px] flex-1 flex items-stretch relative">
+            {i === 0 ? (
+              <InlineRowTitle row={row} onOpen={onOpen} autoEdit={autoEdit} onAutoEditConsumed={onAutoEditConsumed} />
+            ) : (
+              <SelectableCell
+                rowId={row.id}
+                propId={p.id}
+                selected={isSel}
+                inFillRange={inRange}
+                showFillHandle={isSel && !fill.isFilling}
+                onSelect={() => onSelectCell({ rowId: row.id, propId: p.id })}
+                onStartFill={() => fill.start({ rowId: row.id, propId: p.id, rowIndex })}
+              >
+                <PropertyCell db={db} prop={p} row={row} />
+              </SelectableCell>
+            )}
+          </div>
+        );
+      })}
       <div className="w-8 shrink-0 flex items-center justify-center opacity-0 group-hover:opacity-100">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

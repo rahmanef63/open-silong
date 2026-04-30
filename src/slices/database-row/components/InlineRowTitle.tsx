@@ -7,13 +7,22 @@ import type { Page } from "@/lib/types";
 interface Props {
   row: Page;
   onOpen: () => void;
+  autoEdit?: boolean;
+  onAutoEditConsumed?: () => void;
 }
 
-export function InlineRowTitle({ row, onOpen }: Props) {
+export function InlineRowTitle({ row, onOpen, autoEdit, onAutoEditConsumed }: Props) {
   const { updatePage } = useStore();
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing] = useState(!!autoEdit);
   const [draft, setDraft] = useState(row.title);
   const inputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (autoEdit) {
+      setEditing(true);
+      onAutoEditConsumed?.();
+    }
+  }, [autoEdit, onAutoEditConsumed]);
 
   useEffect(() => {
     if (!editing) setDraft(row.title);

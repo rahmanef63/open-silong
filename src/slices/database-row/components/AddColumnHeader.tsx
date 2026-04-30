@@ -13,24 +13,26 @@ interface Props {
 export function AddColumnHeader({ dbId }: Props) {
   const { addProperty } = useStore();
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button
-          className="flex items-center gap-1 px-3 py-1.5 text-[11px] uppercase tracking-wider text-muted-foreground hover:bg-accent/50 transition shrink-0 min-w-[120px]"
-          aria-label="Add column"
-        >
-          <Plus className="h-3 w-3" />
-          <span className="font-semibold">Add column</span>
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-52 max-h-80 overflow-y-auto">
-        <DropdownMenuLabel className="text-xs">Property type</DropdownMenuLabel>
-        {(Object.keys(PROPERTY_TYPE_LABELS) as PropertyType[]).map((t) => (
-          <DropdownMenuItem key={t} onClick={() => addProperty(dbId, t)}>
-            {PROPERTY_TYPE_LABELS[t]}
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <div className="w-8 shrink-0 flex items-center justify-center border-r border-border last:border-r-0">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            className="rounded p-0.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+            aria-label="Add column"
+            title="Add column"
+          >
+            <Plus className="h-3 w-3" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-52 max-h-80 overflow-y-auto">
+          <DropdownMenuLabel className="text-xs">Add column</DropdownMenuLabel>
+          {(Object.keys(PROPERTY_TYPE_LABELS) as PropertyType[]).map((t) => (
+            <DropdownMenuItem key={t} onClick={() => addProperty(dbId, t)}>
+              {PROPERTY_TYPE_LABELS[t]}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   );
 }

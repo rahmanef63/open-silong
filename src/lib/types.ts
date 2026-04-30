@@ -16,7 +16,8 @@ export type BlockType =
   | "columns3"   // 3-column layout
   | "toggle"     // collapsible block
   | "image"      // image embed (URL)
-  | "equation";  // LaTeX block equation
+  | "equation"   // LaTeX block equation
+  | "table";     // simple table (rows × cols of strings)
 
 export interface Block {
   id: string;
@@ -34,6 +35,10 @@ export interface Block {
   /** for image: source URL and optional caption */
   url?: string;
   caption?: string;
+  /** for table: 2D grid of cell text */
+  tableRows?: string[][];
+  /** for table: include first row as header */
+  tableHeader?: boolean;
 }
 
 export type PageFont = "default" | "serif" | "mono";
