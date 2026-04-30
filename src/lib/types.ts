@@ -35,6 +35,8 @@ export interface Block {
   caption?: string;
 }
 
+export type PageFont = "default" | "serif" | "mono";
+
 export interface Page {
   id: string;
   parentId: string | null;
@@ -53,6 +55,12 @@ export interface Page {
   rowOfDatabaseId?: string;
   /** Property values when this page is a database row */
   rowProps?: Record<string, PropertyValue>;
+  /** Layout / typography */
+  font?: PageFont;
+  smallText?: boolean;
+  fullWidth?: boolean;
+  /** Lock prevents editing */
+  locked?: boolean;
 }
 
 export interface Workspace {
