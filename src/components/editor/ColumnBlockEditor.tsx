@@ -1,121 +1,12 @@
-import { KeyboardEvent, useRef, useEffect } from "react";
+import { useRef } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { Block, BlockType } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { cn } from "@/shared/lib/utils";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Plus } from "lucide-react";
+import { NestedBlock } from "./blocks/NestedBlock";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
-const PLACEHOLDERS: Partial<Record<BlockType, string>> = {
-  paragraph: "Write something…",
-  h1: "Heading 1", h2: "Heading 2", h3: "Heading 3",
-  todo: "To-do", bullet: "List item", numbered: "List item",
-  quote: "Quote", code: "Code…", callout: "Callout…",
-};
-
-/** A minimal editable block inside a column — no DnD, no slash menu, no nested blocks */
-function InnerBlock({
-  block, index, total, colIndex,
-  onUpdate, onAdd, onDelete, onFocusNext, onFocusPrev, registerRef,
-}: {
-  block: Block;
-  index: number;
-  total: number;
-  colIndex: number;
-  onUpdate: (id: string, patch: Partial<Block>) => void;
-  onAdd: (afterIndex: number, type?: BlockType) => void;
-  onDelete: (id: string) => void;
-  onFocusNext: () => void;
-  onFocusPrev: () => void;
-  registerRef: (id: string, el: HTMLElement | null) => void;
-}) {
-  const ref = useRef<HTMLElement | null>(null);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (el && el.innerText !== block.text) el.innerText = block.text;
-  }, [block.text, block.type]);
-
-  const setRef = (el: HTMLElement | null) => {
-    ref.current = el;
-    registerRef(block.id, el);
-  };
-
-  const handleInput = (e: React.FormEvent<HTMLElement>) => {
-    onUpdate(block.id, { text: (e.currentTarget as HTMLElement).innerText });
-  };
-
-  const handleKeyDown = (e: KeyboardEvent<HTMLElement>) => {
-    const el = e.currentTarget as HTMLElement;
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      const next: BlockType = block.type === "todo" ? "todo" : block.type === "bullet" ? "bullet" : block.type === "numbered" ? "numbered" : "paragraph";
-      onAdd(index, next);
-      return;
-    }
-    if (e.key === "Backspace" && el.innerText === "") {
-      e.preventDefault();
-      if (total > 1) { onDelete(block.id); setTimeout(onFocusPrev, 0); }
-      else if (block.type !== "paragraph") onUpdate(block.id, { type: "paragraph" as BlockType });
-      return;
-    }
-    if (e.key === "ArrowDown") onFocusNext();
-    if (e.key === "ArrowUp") onFocusPrev();
-  };
-
-  const baseProps = {
-    "data-block-id": block.id,
-    contentEditable: true as any,
-    suppressContentEditableWarning: true,
-    onInput: handleInput,
-    onKeyDown: handleKeyDown,
-    "data-placeholder": PLACEHOLDERS[block.type] ?? "",
-    className: "outline-none min-w-0 w-full whitespace-pre-wrap break-words empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground/50",
-  };
-
-  switch (block.type) {
-    case "h1": return <h1 ref={setRef as any} {...baseProps} className={baseProps.className + " text-2xl font-bold font-serif py-1"} />;
-    case "h2": return <h2 ref={setRef as any} {...baseProps} className={baseProps.className + " text-xl font-semibold font-serif py-0.5"} />;
-    case "h3": return <h3 ref={setRef as any} {...baseProps} className={baseProps.className + " text-lg font-semibold py-0.5"} />;
-    case "todo":
-      return (
-        <div className="flex items-start gap-2 py-0.5">
-          <Checkbox checked={!!block.checked} onCheckedChange={v => onUpdate(block.id, { checked: !!v })} className="mt-1" />
-          <div ref={setRef as any} {...baseProps} className={cn(baseProps.className, block.checked && "line-through text-muted-foreground")} />
-        </div>
-      );
-    case "bullet":
-      return (
-        <div className="flex items-start gap-2 py-0.5">
-          <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-foreground" />
-          <div ref={setRef as any} {...baseProps} />
-        </div>
-      );
-    case "numbered":
-      return (
-        <div className="flex items-start gap-2 py-0.5">
-          <span className="mt-0.5 text-sm text-muted-foreground tabular-nums shrink-0">{index + 1}.</span>
-          <div ref={setRef as any} {...baseProps} />
-        </div>
-      );
-    case "quote":
-      return <blockquote ref={setRef as any} {...baseProps} className={baseProps.className + " border-l-4 border-foreground/40 pl-4 italic text-foreground/80 py-0.5"} />;
-    case "code":
-      return <pre ref={setRef as any} {...baseProps} className={baseProps.className + " rounded-md bg-muted/70 border border-border p-3 font-mono text-sm whitespace-pre-wrap"} />;
-    case "callout":
-      return (
-        <div className="flex items-start gap-3 rounded-md bg-brand/10 border border-brand/20 p-3">
-          <span className="text-lg leading-none">💡</span>
-          <div ref={setRef as any} {...baseProps} />
-        </div>
-      );
-    case "divider":
-      return <hr className="border-border my-2" />;
-    default:
-      return <p ref={setRef as any} {...baseProps} className={baseProps.className + " leading-7 py-0.5"} />;
-  }
-}
 
 /** One column pane */
 function ColumnPane({
@@ -163,15 +54,12 @@ function ColumnPane({
     >
       <div className="space-y-0.5 min-h-10">
         {blocks.map((b, i) => (
-          <InnerBlock
+          <NestedBlock
             key={b.id}
             block={b}
-            index={i}
-            total={blocks.length}
-            colIndex={colIndex}
-            onUpdate={onUpdate}
-            onAdd={onAdd}
-            onDelete={onDelete}
+            onUpdate={(patch) => onUpdate(b.id, patch)}
+            onAddAfter={(type) => onAdd(i, type)}
+            onDelete={() => onDelete(b.id)}
             onFocusNext={() => focusBlock(i + 1)}
             onFocusPrev={() => focusBlock(i - 1)}
             registerRef={registerRef}
