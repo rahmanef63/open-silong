@@ -1,7 +1,7 @@
 import { KeyboardEvent, useEffect, useRef, useState, useCallback } from "react";
 import { Block, BlockType } from "@/lib/types";
 import { useStore } from "@/lib/store";
-import { GripVertical, Plus, Trash2, Copy, Type as TypeIcon, MessageSquare, FileText, Database as DatabaseIcon } from "lucide-react";
+import { GripVertical, Plus, Trash2, Copy, MessageSquare, FileText, Database as DatabaseIcon, ChevronRight, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SlashMenu } from "./SlashMenu";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -16,6 +16,7 @@ import { useBlockHistory } from "@/lib/useBlockHistory";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { DatabaseBlock } from "../database/DatabaseBlock";
+import { ColumnBlockEditor } from "./ColumnBlockEditor";
 
 interface Props {
   pageId: string;
@@ -151,11 +152,39 @@ export function BlockEditor({ pageId, block, index, total, onFocusNext, onFocusP
     }
   };
 
-  const onSlashSelect = (type: BlockType) => {
+  const uid = () => Math.random().toString(36).slice(2, 10);
+
+  const onSlashSelect = async (type: BlockType) => {
     setSlashOpen(false);
     if (type === "page") {
-      const child = createPage(pageId, { title: "New page" });
+      const child = await createPage(pageId, { title: "New page" });
       updateBlock(pageId, block.id, { type: "page", text: "New page", pageId: child.id });
+      return;
+    }
+    if (type === "columns2") {
+      setBlockType(pageId, block.id, "columns2");
+      updateBlock(pageId, block.id, {
+        text: "", columns: [
+          [{ id: uid(), type: "paragraph", text: "" }],
+          [{ id: uid(), type: "paragraph", text: "" }],
+        ],
+      });
+      return;
+    }
+    if (type === "columns3") {
+      setBlockType(pageId, block.id, "columns3");
+      updateBlock(pageId, block.id, {
+        text: "", columns: [
+          [{ id: uid(), type: "paragraph", text: "" }],
+          [{ id: uid(), type: "paragraph", text: "" }],
+          [{ id: uid(), type: "paragraph", text: "" }],
+        ],
+      });
+      return;
+    }
+    if (type === "toggle") {
+      setBlockType(pageId, block.id, "toggle");
+      updateBlock(pageId, block.id, { text: "", children: [], collapsed: false });
       return;
     }
     setBlockType(pageId, block.id, type);
@@ -201,6 +230,42 @@ export function BlockEditor({ pageId, block, index, total, onFocusNext, onFocusP
         }
       >
         <DatabaseBlock pageId={pageId} block={block} />
+      </BlockShell>
+    );
+  }
+
+  if (block.type === "columns2" || block.type === "columns3") {
+    return (
+      <BlockShell
+        setNodeRef={setNodeRef} style={style} isDragging={isDragging} isOver={isOver}
+        attributes={attributes} listeners={listeners}
+        controls={<BlockControls pageId={pageId} block={block} index={index} listeners={listeners} convertTo={convertTo} />}
+      >
+        <ColumnBlockEditor pageId={pageId} block={block} />
+      </BlockShell>
+    );
+  }
+
+  if (block.type === "toggle") {
+    return (
+      <ToggleBlock
+        pageId={pageId} block={block} index={index}
+        setNodeRef={setNodeRef} style={style} isDragging={isDragging} isOver={isOver}
+        attributes={attributes} listeners={listeners} convertTo={convertTo}
+        onFocusNext={onFocusNext} onFocusPrev={onFocusPrev} registerRef={registerRef}
+        total={total}
+      />
+    );
+  }
+
+  if (block.type === "image") {
+    return (
+      <BlockShell
+        setNodeRef={setNodeRef} style={style} isDragging={isDragging} isOver={isOver}
+        attributes={attributes} listeners={listeners}
+        controls={<BlockControls pageId={pageId} block={block} index={index} listeners={listeners} convertTo={convertTo} />}
+      >
+        <ImageBlock pageId={pageId} block={block} />
       </BlockShell>
     );
   }
@@ -413,4 +478,160 @@ function BlockBody({
     default:
       return wrap(<p ref={setRef as any} {...baseProps} className={baseProps.className + " leading-7 py-0.5"} />);
   }
+}
+
+// ===== Toggle block =====
+function ToggleBlock({
+  pageId, block, index, setNodeRef, style, isDragging, isOver,
+  attributes, listeners, convertTo, onFocusNext, onFocusPrev, registerRef, total,
+}: any) {
+  const { updateBlock, addBlock, deleteBlock } = useStore();
+  const collapsed = block.collapsed !== false; // default collapsed
+  const children: Block[] = block.children ?? [];
+
+  const uid = () => Math.random().toString(36).slice(2, 10);
+
+  const addChild = () => {
+    const nb: Block = { id: uid(), type: "paragraph", text: "" };
+    updateBlock(pageId, block.id, { children: [...children, nb], collapsed: false });
+    setTimeout(() => document.querySelector<HTMLElement>(`[data-block-id="tc_${block.id}_${children.length}"]`)?.focus(), 30);
+  };
+
+  return (
+    <BlockShell
+      setNodeRef={setNodeRef} style={style} isDragging={isDragging} isOver={isOver}
+      attributes={attributes} listeners={listeners}
+      controls={<BlockControls pageId={pageId} block={block} index={index} listeners={listeners} convertTo={convertTo} />}
+    >
+      <div>
+        <div className="flex items-start gap-1">
+          <button
+            onClick={() => updateBlock(pageId, block.id, { collapsed: !collapsed })}
+            className="mt-1.5 shrink-0 text-muted-foreground hover:text-foreground transition"
+          >
+            <ChevronRight className={cn("h-4 w-4 transition-transform", !collapsed && "rotate-90")} />
+          </button>
+          <div
+            data-block-id={block.id}
+            contentEditable
+            suppressContentEditableWarning
+            onInput={e => updateBlock(pageId, block.id, { text: (e.currentTarget as HTMLElement).innerText })}
+            data-placeholder="Toggle heading"
+            className="flex-1 outline-none font-semibold text-base leading-7 py-0.5 whitespace-pre-wrap break-words empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground/50"
+          >
+            {block.text}
+          </div>
+        </div>
+        {!collapsed && (
+          <div className="ml-5 mt-1 border-l-2 border-border/60 pl-3 space-y-0.5">
+            {children.map((child: Block, ci: number) => (
+              <ToggleChild
+                key={child.id}
+                child={child}
+                index={ci}
+                total={children.length}
+                parentId={block.id}
+                pageId={pageId}
+                onUpdate={(patch) => {
+                  const nc = children.map((c, j) => j === ci ? { ...c, ...patch } : c);
+                  updateBlock(pageId, block.id, { children: nc });
+                }}
+                onDelete={() => {
+                  const nc = children.filter((_, j) => j !== ci);
+                  updateBlock(pageId, block.id, { children: nc.length ? nc : [] });
+                }}
+                onAddAfter={() => {
+                  const nb: Block = { id: uid(), type: "paragraph", text: "" };
+                  const nc = [...children];
+                  nc.splice(ci + 1, 0, nb);
+                  updateBlock(pageId, block.id, { children: nc });
+                  setTimeout(() => document.querySelector<HTMLElement>(`[data-toggle-child="${block.id}_${ci+1}"]`)?.focus(), 30);
+                }}
+              />
+            ))}
+            <button
+              onClick={addChild}
+              className="flex items-center gap-1 text-xs text-muted-foreground/50 hover:text-muted-foreground"
+            >
+              <Plus className="h-3 w-3" /> Add inside toggle
+            </button>
+          </div>
+        )}
+      </div>
+    </BlockShell>
+  );
+}
+
+function ToggleChild({ child, index, total, parentId, pageId, onUpdate, onDelete, onAddAfter }: any) {
+  const ref = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    if (ref.current && ref.current.innerText !== child.text) ref.current.innerText = child.text;
+  }, [child.text]);
+
+  return (
+    <div
+      data-toggle-child={`${parentId}_${index}`}
+      ref={ref as any}
+      contentEditable
+      suppressContentEditableWarning
+      onInput={e => onUpdate({ text: (e.currentTarget as HTMLElement).innerText })}
+      onKeyDown={(e: KeyboardEvent<HTMLDivElement>) => {
+        const el = e.currentTarget;
+        if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); onAddAfter(); }
+        if (e.key === "Backspace" && el.innerText === "") { e.preventDefault(); onDelete(); }
+      }}
+      data-placeholder="Write inside toggle…"
+      className="outline-none text-sm leading-6 py-0.5 whitespace-pre-wrap break-words empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground/40"
+    />
+  );
+}
+
+// ===== Image block =====
+function ImageBlock({ pageId, block }: { pageId: string; block: Block }) {
+  const { updateBlock } = useStore();
+  const [urlInput, setUrlInput] = useState(block.url ?? "");
+
+  if (!block.url) {
+    return (
+      <div className="rounded-md border border-dashed border-border p-4 text-center">
+        <div className="text-sm text-muted-foreground mb-2">Paste an image URL</div>
+        <form
+          onSubmit={e => { e.preventDefault(); if (urlInput.trim()) updateBlock(pageId, block.id, { url: urlInput.trim() }); }}
+          className="flex gap-2 max-w-sm mx-auto"
+        >
+          <input
+            value={urlInput}
+            onChange={e => setUrlInput(e.target.value)}
+            placeholder="https://…"
+            className="flex-1 rounded-md border border-border bg-transparent px-3 py-1.5 text-sm outline-none focus:ring-2 ring-brand/30"
+          />
+          <button type="submit" className="rounded-md bg-foreground text-background px-3 py-1.5 text-sm">Embed</button>
+        </form>
+      </div>
+    );
+  }
+
+  return (
+    <div className="group/img relative">
+      <img
+        src={block.url}
+        alt={block.caption ?? ""}
+        className="max-w-full rounded-md border border-border object-contain"
+        onError={e => (e.currentTarget.style.opacity = "0.3")}
+      />
+      <div
+        contentEditable
+        suppressContentEditableWarning
+        onInput={e => updateBlock(pageId, block.id, { caption: (e.currentTarget as HTMLElement).innerText })}
+        data-placeholder="Caption"
+        className="mt-1 text-sm text-muted-foreground text-center outline-none empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground/40"
+      />
+      <button
+        onClick={() => updateBlock(pageId, block.id, { url: undefined })}
+        className="absolute top-1 right-1 rounded bg-background/80 border border-border px-1.5 py-0.5 text-xs text-muted-foreground opacity-0 group-hover/img:opacity-100 transition"
+      >
+        Change
+      </button>
+    </div>
+  );
 }

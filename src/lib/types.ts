@@ -10,8 +10,12 @@ export type BlockType =
   | "code"
   | "divider"
   | "callout"
-  | "page"        // link to a child page
-  | "database";   // inline database
+  | "page"
+  | "database"
+  | "columns2"   // 2-column layout
+  | "columns3"   // 3-column layout
+  | "toggle"     // collapsible block
+  | "image";     // image embed (URL)
 
 export interface Block {
   id: string;
@@ -19,10 +23,16 @@ export interface Block {
   text: string;
   checked?: boolean;
   lang?: string;
-  /** for type === "page": the linked child page id */
   pageId?: string;
-  /** for type === "database": the database id */
   databaseId?: string;
+  /** for columns2/columns3: array of column block arrays */
+  columns?: Block[][];
+  /** for toggle: child blocks */
+  children?: Block[];
+  collapsed?: boolean;
+  /** for image: source URL and optional caption */
+  url?: string;
+  caption?: string;
 }
 
 export interface Page {

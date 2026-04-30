@@ -1,6 +1,8 @@
-import { Database, DatabaseViewConfig, Page } from "@/lib/types";
+import { useState } from "react";
+import { Database, DatabaseViewConfig, Page, Property, PropertyType } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { PropertyCell } from "../PropertyCell";
+import { PROPERTY_TYPE_LABELS } from "../DatabaseBlock";
 import { useNavigate } from "react-router-dom";
 import {
   DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors, DragEndEvent,
@@ -9,10 +11,11 @@ import {
   SortableContext, horizontalListSortingStrategy, verticalListSortingStrategy, useSortable, sortableKeyboardCoordinates,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, MoreHorizontal, Trash2, Plus } from "lucide-react";
+import { GripVertical, MoreHorizontal, Trash2, Plus, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+  DropdownMenuSeparator, DropdownMenuLabel, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger,
 } from "@/components/ui/dropdown-menu";
 
 interface ViewProps { db: Database; view: DatabaseViewConfig; rows: Page[] }
@@ -32,7 +35,6 @@ export function TableView({ db, view, rows }: ViewProps) {
     const to = ids.indexOf(String(over.id));
     const next = [...ids];
     next.splice(to, 0, next.splice(from, 1)[0]);
-    // merge with hidden ones at the end (preserve order)
     const hidden = db.properties.filter(p => p.hidden).map(p => p.id);
     reorderProperties(db.id, [...next, ...hidden]);
   };
@@ -55,7 +57,7 @@ export function TableView({ db, view, rows }: ViewProps) {
           <div className="min-w-full">
             <div className="flex border-b border-border bg-muted/30 text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
               <div className="w-8 shrink-0 border-r border-border" />
-              {visibleProps.map(p => <SortableHeader key={p.id} prop={p} />)}
+              {visibleProps.map(p => <SortableHeader key={p.id} prop={p} db={db} />)}
             </div>
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onRowEnd}>
               <SortableContext items={rows.map(r => r.id)} strategy={verticalListSortingStrategy}>
@@ -77,18 +79,70 @@ export function TableView({ db, view, rows }: ViewProps) {
   );
 }
 
-function SortableHeader({ prop }: any) {
+function SortableHeader({ prop, db }: { prop: Property; db: Database }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: prop.id });
+  const { updateProperty, deleteProperty } = useStore();
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(prop.name);
+
+  const commit = () => {
+    setEditing(false);
+    if (draft.trim()) updateProperty(db.id, prop.id, { name: draft.trim() });
+    else setDraft(prop.name);
+  };
+
   return (
     <div
       ref={setNodeRef as any}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className="flex items-center gap-1 border-r border-border px-2 py-2 min-w-[160px] flex-1"
+      className="flex items-center gap-1 border-r border-border px-1 py-1.5 min-w-[160px] flex-1"
     >
-      <button {...attributes} {...listeners} className="cursor-grab text-muted-foreground/50 hover:text-foreground">
+      <button {...attributes} {...listeners} className="cursor-grab text-muted-foreground/40 hover:text-foreground shrink-0">
         <GripVertical className="h-3 w-3" />
       </button>
-      <span className="truncate">{prop.name}</span>
+      {editing ? (
+        <input
+          autoFocus
+          value={draft}
+          onChange={e => setDraft(e.target.value)}
+          onBlur={commit}
+          onKeyDown={e => { if (e.key === "Enter") commit(); if (e.key === "Escape") { setEditing(false); setDraft(prop.name); } }}
+          className="flex-1 bg-background border border-brand rounded px-1 text-xs outline-none min-w-0"
+        />
+      ) : (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              onDoubleClick={() => { setDraft(prop.name); setEditing(true); }}
+              className="flex-1 text-left truncate text-xs hover:text-foreground min-w-0"
+            >
+              {prop.name}
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-52">
+            <DropdownMenuItem onClick={() => { setDraft(prop.name); setEditing(true); }}>
+              Rename
+            </DropdownMenuItem>
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>Change type</DropdownMenuSubTrigger>
+              <DropdownMenuSubContent className="max-h-72 overflow-y-auto">
+                <DropdownMenuLabel className="text-xs">Property type</DropdownMenuLabel>
+                {(Object.keys(PROPERTY_TYPE_LABELS) as PropertyType[]).map(t => (
+                  <DropdownMenuItem key={t} onClick={() => updateProperty(db.id, prop.id, { type: t })}>
+                    {prop.type === t && <Check className="mr-2 h-3.5 w-3.5" />}
+                    {prop.type !== t && <span className="mr-2 w-3.5 inline-block" />}
+                    {PROPERTY_TYPE_LABELS[t]}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="text-destructive" onClick={() => deleteProperty(db.id, prop.id)}>
+              <Trash2 className="mr-2 h-3.5 w-3.5" /> Delete property
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
     </div>
   );
 }

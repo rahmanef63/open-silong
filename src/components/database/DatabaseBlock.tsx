@@ -1,21 +1,27 @@
-import { useMemo, useState } from "react";
-import { Block, DbView, Page, Property, PropertyType, PropertyValue } from "@/lib/types";
+import { useMemo, useState, useRef } from "react";
+import { Block, Database, DatabaseViewConfig, DbView, Page, Property, PropertyType } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import {
   Table2, LayoutGrid, List as ListIcon, Image, Calendar as CalendarIcon, Clock,
   Plus, Search, MoreHorizontal, Trash2, Eye, EyeOff, ArrowUpDown, Filter, Settings2,
+  Check, Pencil,
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
   DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Popover, PopoverContent, PopoverTrigger,
+} from "@/components/ui/popover";
 import { TableView } from "./views/TableView";
 import { BoardView } from "./views/BoardView";
 import { ListView } from "./views/ListView";
 import { GalleryView } from "./views/GalleryView";
 import { CalendarView } from "./views/CalendarView";
 import { TimelineView } from "./views/TimelineView";
+import { FilterBuilder } from "./FilterBuilder";
+import { SortBuilder } from "./SortBuilder";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
 
@@ -38,8 +44,8 @@ export const PROPERTY_TYPE_LABELS: Record<PropertyType, string> = {
 
 export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block }) {
   const {
-    getDatabase, pages, updateDatabase, addRow, addView, updateView, addProperty, updateProperty,
-    deleteProperty,
+    getDatabase, pages, updateDatabase, addRow, addView, updateView, deleteView,
+    addProperty, updateProperty, deleteProperty,
   } = useStore();
   const navigate = useNavigate();
 
@@ -61,14 +67,14 @@ export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block 
 
   const filtered = useMemo(() => {
     let out = rows;
-    if (view.search.trim()) {
+    if (view.search?.trim()) {
       const q = view.search.toLowerCase();
       out = out.filter(p =>
         (p.title || "").toLowerCase().includes(q) ||
         Object.values(p.rowProps ?? {}).some(v => String(v ?? "").toLowerCase().includes(q))
       );
     }
-    for (const f of view.filters) {
+    for (const f of view.filters ?? []) {
       out = out.filter(p => {
         const v = p.rowProps?.[f.propertyId];
         switch (f.op) {
@@ -81,9 +87,9 @@ export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block 
         }
       });
     }
-    if (view.sorts.length) {
+    if ((view.sorts ?? []).length) {
       out = [...out].sort((a, b) => {
-        for (const s of view.sorts) {
+        for (const s of view.sorts!) {
           const av = a.rowProps?.[s.propertyId];
           const bv = b.rowProps?.[s.propertyId];
           const cmp = String(av ?? "").localeCompare(String(bv ?? ""));
@@ -102,8 +108,12 @@ export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block 
     } as Record<DbView, any>
   )[view.type];
 
+  const activeFilters = (view.filters ?? []).length;
+  const activeSorts = (view.sorts ?? []).length;
+
   return (
     <div className="rounded-lg border border-border bg-card overflow-hidden">
+      {/* Top bar: db name + view tabs */}
       <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2">
         <div className="flex items-center gap-2 min-w-0">
           <span className="text-base">{db.icon}</span>
@@ -114,23 +124,22 @@ export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block 
           />
         </div>
         <div className="flex items-center gap-1">
-          {db.views.map(v => {
-            const Meta = VIEW_META[v.type];
-            const active = v.id === db.activeViewId;
-            return (
-              <button
-                key={v.id}
-                onClick={() => updateDatabase(db.id, { activeViewId: v.id })}
-                className={cn(
-                  "flex items-center gap-1 rounded-md px-2 py-1 text-xs hover:bg-accent transition",
-                  active && "bg-accent text-foreground font-medium"
-                )}
-              >
-                <Meta.icon className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">{v.name}</span>
-              </button>
-            );
-          })}
+          {db.views.map(v => (
+            <ViewTab
+              key={v.id}
+              db={db}
+              v={v}
+              active={v.id === db.activeViewId}
+              onActivate={() => updateDatabase(db.id, { activeViewId: v.id })}
+              onRename={(name) => updateView(db.id, v.id, { name })}
+              onDelete={() => {
+                if (db.views.length <= 1) return;
+                const next = db.views.find(x => x.id !== v.id);
+                deleteView(db.id, v.id);
+                if (next && v.id === db.activeViewId) updateDatabase(db.id, { activeViewId: next.id });
+              }}
+            />
+          ))}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="rounded p-1 hover:bg-accent text-muted-foreground" aria-label="Add view">
@@ -144,7 +153,10 @@ export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block 
                 return (
                   <DropdownMenuItem
                     key={t}
-                    onClick={() => addView(db.id, { name: M.label, type: t, sorts: [], filters: [], search: "" })}
+                    onClick={() => {
+                      const nv = addView(db.id, { name: M.label, type: t, sorts: [], filters: [], search: "" });
+                      updateDatabase(db.id, { activeViewId: nv.id });
+                    }}
                   >
                     <M.icon className="mr-2 h-3.5 w-3.5" /> {M.label}
                   </DropdownMenuItem>
@@ -155,19 +167,59 @@ export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block 
         </div>
       </div>
 
+      {/* Toolbar: search + filter/sort/group/properties + new row */}
       <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-1.5 bg-muted/30">
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <Search className="h-3.5 w-3.5" />
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-1 min-w-0">
+          <Search className="h-3.5 w-3.5 shrink-0" />
           <Input
-            value={view.search}
+            value={view.search ?? ""}
             onChange={e => updateView(db.id, view.id, { search: e.target.value })}
             placeholder="Search rows…"
-            className="h-7 text-xs border-0 bg-transparent shadow-none px-1 focus-visible:ring-0"
+            className="h-7 text-xs border-0 bg-transparent shadow-none px-1 focus-visible:ring-0 max-w-48"
           />
         </div>
         <div className="flex items-center gap-1">
-          <SortFilterMenu db={db} view={view} />
+          {/* Filter button */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className={cn(
+                "flex items-center gap-1 rounded-md px-2 py-1 text-xs hover:bg-accent transition",
+                activeFilters > 0 ? "text-brand bg-brand/10" : "text-muted-foreground"
+              )}>
+                <Filter className="h-3 w-3" />
+                Filter
+                {activeFilters > 0 && <span className="ml-0.5 rounded-full bg-brand text-white text-[10px] px-1">{activeFilters}</span>}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="p-0 w-auto">
+              <FilterBuilder db={db} view={view} />
+            </PopoverContent>
+          </Popover>
+
+          {/* Sort button */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className={cn(
+                "flex items-center gap-1 rounded-md px-2 py-1 text-xs hover:bg-accent transition",
+                activeSorts > 0 ? "text-brand bg-brand/10" : "text-muted-foreground"
+              )}>
+                <ArrowUpDown className="h-3 w-3" />
+                Sort
+                {activeSorts > 0 && <span className="ml-0.5 rounded-full bg-brand text-white text-[10px] px-1">{activeSorts}</span>}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="p-0 w-auto">
+              <SortBuilder db={db} view={view} />
+            </PopoverContent>
+          </Popover>
+
+          {/* Board group-by (only in board view) */}
+          {view.type === "board" && (
+            <GroupByButton db={db} view={view} />
+          )}
+
           <PropertiesMenu db={db} />
+
           <button
             onClick={() => {
               const row = addRow(db.id);
@@ -185,33 +237,90 @@ export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block 
   );
 }
 
-function SortFilterMenu({ db, view }: any) {
-  const { updateView } = useStore();
+/** View tab with inline rename (double-click) and delete (context menu) */
+function ViewTab({ db, v, active, onActivate, onRename, onDelete }: {
+  db: Database; v: DatabaseViewConfig; active: boolean;
+  onActivate: () => void; onRename: (name: string) => void; onDelete: () => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(v.name);
+  const Meta = VIEW_META[v.type];
+
+  const commit = () => {
+    setEditing(false);
+    if (draft.trim()) onRename(draft.trim());
+    else setDraft(v.name);
+  };
+
+  if (editing) {
+    return (
+      <input
+        autoFocus
+        value={draft}
+        onChange={e => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={e => { if (e.key === "Enter") commit(); if (e.key === "Escape") { setEditing(false); setDraft(v.name); } }}
+        className="rounded-md px-2 py-1 text-xs border border-brand outline-none bg-background w-24"
+      />
+    );
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="flex items-center gap-1 rounded-md px-2 py-1 text-xs hover:bg-accent text-muted-foreground">
-          <ArrowUpDown className="h-3 w-3" /> Sort
+        <button
+          onPointerDown={e => { if (e.button === 0) onActivate(); }}
+          onDoubleClick={e => { e.preventDefault(); setEditing(true); }}
+          className={cn(
+            "flex items-center gap-1 rounded-md px-2 py-1 text-xs hover:bg-accent transition select-none",
+            active && "bg-accent text-foreground font-medium"
+          )}
+        >
+          <Meta.icon className="h-3.5 w-3.5" />
+          <span className="hidden sm:inline">{v.name}</span>
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel className="text-xs">Sort by</DropdownMenuLabel>
-        {db.properties.map((p: Property) => (
-          <DropdownMenuItem
-            key={p.id}
-            onClick={() => updateView(db.id, view.id, { sorts: [{ propertyId: p.id, direction: "asc" }] })}
-          >
-            {p.name}
-          </DropdownMenuItem>
-        ))}
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => updateView(db.id, view.id, { sorts: [] })}>Clear sort</DropdownMenuItem>
+      <DropdownMenuContent align="start">
+        <DropdownMenuItem onClick={() => { setDraft(v.name); setEditing(true); }}>
+          <Pencil className="mr-2 h-3.5 w-3.5" /> Rename
+        </DropdownMenuItem>
+        <DropdownMenuItem className="text-destructive" onClick={onDelete}>
+          <Trash2 className="mr-2 h-3.5 w-3.5" /> Delete view
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
 }
 
-function PropertiesMenu({ db }: any) {
+/** Board group-by picker */
+function GroupByButton({ db, view }: { db: Database; view: DatabaseViewConfig }) {
+  const { updateView } = useStore();
+  const groupProps = db.properties.filter(p => p.type === "select" || p.type === "status");
+  const current = db.properties.find(p => p.id === view.groupBy) ?? groupProps[0];
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button className="flex items-center gap-1 rounded-md px-2 py-1 text-xs hover:bg-accent text-muted-foreground">
+          <LayoutGrid className="h-3 w-3" />
+          Group: {current?.name ?? "—"}
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuLabel className="text-xs">Group by</DropdownMenuLabel>
+        {groupProps.map(p => (
+          <DropdownMenuItem key={p.id} onClick={() => updateView(db.id, view.id, { groupBy: p.id })}>
+            {current?.id === p.id && <Check className="mr-2 h-3.5 w-3.5" />}
+            {(!current || current.id !== p.id) && <span className="mr-2 w-3.5" />}
+            {p.name}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+function PropertiesMenu({ db }: { db: Database }) {
   const { updateProperty, deleteProperty, addProperty } = useStore();
   return (
     <DropdownMenu>
