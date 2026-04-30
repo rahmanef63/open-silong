@@ -22,19 +22,13 @@ import {
   Upload, Download, BookOpen, BarChart3, History, Bell, AtSign,
   Check, ChevronRight,
 } from "lucide-react";
+import { FONT_OPTIONS } from "./page-actions/fonts";
+import { RowButton, Row, ToggleRow, SectionLabel } from "./page-actions/MenuRows";
 
 interface Props {
   page: Page;
   onShowHistory: () => void;
 }
-
-type FontOption = { id: PageFont; label: string; className: string };
-
-const FONT_OPTIONS: FontOption[] = [
-  { id: "default", label: "Default", className: "font-sans" },
-  { id: "serif",   label: "Serif",   className: "font-serif" },
-  { id: "mono",    label: "Mono",    className: "font-mono" },
-];
 
 export function PageActionsMenu({ page, onShowHistory }: Props) {
   const { updatePage, duplicatePage, deletePage, addBlock, pages, movePage } = useStore();
@@ -355,70 +349,5 @@ export function PageActionsMenu({ page, onShowHistory }: Props) {
         )}
       </PopoverContent>
     </Popover>
-  );
-}
-
-/** Same row visuals but with no onClick — used as a popover trigger. */
-const RowButton = function RowButton({
-  icon: Icon, label,
-}: { icon: typeof Search; label: string }) {
-  return (
-    <button className="flex w-full items-center gap-2 px-3 py-1.5 text-sm hover:bg-accent text-left">
-      <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-      <span className="flex-1 truncate">{label}</span>
-    </button>
-  );
-};
-
-function Row({
-  icon: Icon, label, shortcut, onClick, destructive,
-}: {
-  icon: typeof Search;
-  label: string;
-  shortcut?: string;
-  onClick: () => void;
-  destructive?: boolean;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={cn(
-        "flex w-full items-center gap-2 px-3 py-1.5 text-sm hover:bg-accent text-left",
-        destructive && "text-destructive hover:text-destructive",
-      )}
-    >
-      <Icon className={cn("h-3.5 w-3.5 shrink-0", destructive ? "text-destructive" : "text-muted-foreground")} />
-      <span className="flex-1 truncate">{label}</span>
-      {shortcut && (
-        <span className="text-[10px] text-muted-foreground rounded bg-muted/60 px-1 py-0.5 border border-border">
-          {shortcut}
-        </span>
-      )}
-    </button>
-  );
-}
-
-function ToggleRow({
-  icon: Icon, label, checked, onChange,
-}: {
-  icon: typeof Search;
-  label: string;
-  checked: boolean;
-  onChange: () => void;
-}) {
-  return (
-    <div className="flex items-center gap-2 px-3 py-1.5 text-sm">
-      <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-      <span className="flex-1 truncate">{label}</span>
-      <Switch checked={checked} onCheckedChange={onChange} className="scale-75" />
-    </div>
-  );
-}
-
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="px-3 pt-1.5 pb-1 text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
-      {children}
-    </div>
   );
 }
