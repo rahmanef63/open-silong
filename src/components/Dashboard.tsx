@@ -1,14 +1,17 @@
 import { useNavigate } from "react-router-dom";
 import { useStore } from "@/lib/store";
-import { Plus, Star, Clock, FileText, Sparkles } from "lucide-react";
+import { Plus, Star, Clock, FileText, Table2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function Dashboard() {
-  const { pages, recents, childrenOf, createPage, workspace } = useStore();
+  const { pages, recents, childrenOf, createPage, createDatabase, databases, workspace, addBlock, updateBlock } = useStore();
   const navigate = useNavigate();
-  const favorites = pages.filter(p => p.favorite && !p.trashed);
-  const recentPages = recents.map(id => pages.find(p => p.id === id && !p.trashed)).filter(Boolean) as any[];
-  const allActive = pages.filter(p => !p.trashed);
+
+  const regularPages = pages.filter(p => !p.trashed && !p.rowOfDatabaseId);
+  const favorites = regularPages.filter(p => p.favorite);
+  const recentPages = recents
+    .map(id => regularPages.find(p => p.id === id))
+    .filter((p): p is NonNullable<typeof p> => !!p);
   const root = childrenOf(null);
 
   const greet = (() => {
@@ -27,7 +30,9 @@ export function Dashboard() {
           <span>{workspace.name}</span>
         </div>
         <h1 className="text-4xl md:text-5xl font-bold tracking-tight font-serif">{greet}.</h1>
-        <p className="text-muted-foreground mt-2">You have {allActive.length} pages in this workspace.</p>
+        <p className="text-muted-foreground mt-2">
+          {regularPages.length} page{regularPages.length !== 1 ? "s" : ""} · {databases.length} database{databases.length !== 1 ? "s" : ""}
+        </p>
 
         <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-3">
           <ActionCard
@@ -38,15 +43,23 @@ export function Dashboard() {
             primary
           />
           <ActionCard
-            icon={Sparkles}
-            title="Quick capture"
-            subtitle="Jot a thought, organize later"
-            onClick={async () => { const p = await createPage(null); navigate(`/p/${p.id}`); }}
+            icon={Table2}
+            title="New database"
+            subtitle="Track and organize rows"
+            onClick={async () => {
+              const [p, db] = await Promise.all([
+                createPage(null, { title: "Untitled database", icon: "🗂️" }),
+                createDatabase("Untitled database"),
+              ]);
+              const blockId = await addBlock(p.id, 0, "database");
+              updateBlock(p.id, blockId, { databaseId: db.id });
+              navigate(`/p/${p.id}`);
+            }}
           />
           <ActionCard
             icon={FileText}
             title="Browse all"
-            subtitle={`${allActive.length} pages`}
+            subtitle={`${regularPages.length} pages`}
             onClick={() => { if (root[0]) navigate(`/p/${root[0].id}`); }}
           />
         </div>
@@ -67,12 +80,37 @@ export function Dashboard() {
           </Section>
         )}
 
+        {databases.length > 0 && (
+          <Section title="Databases" icon={Table2}>
+            <div className="rounded-lg border border-border divide-y divide-border bg-card">
+              {databases
+                .slice()
+                .sort((a, b) => b.updatedAt - a.updatedAt)
+                .map(db => (
+                  <div
+                    key={db.id}
+                    className="flex items-center gap-3 px-4 py-3"
+                  >
+                    <span className="text-lg">{db.icon}</span>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-medium">{db.name}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {db.rowIds.length} row{db.rowIds.length !== 1 ? "s" : ""} · {db.properties.length} propert{db.properties.length !== 1 ? "ies" : "y"}
+                      </div>
+                    </div>
+                    <span className="text-xs text-muted-foreground shrink-0">{relTime(db.updatedAt)}</span>
+                  </div>
+                ))}
+            </div>
+          </Section>
+        )}
+
         <Section title="All pages" icon={FileText}>
           <div className="rounded-lg border border-border divide-y divide-border bg-card">
-            {allActive.length === 0 ? (
+            {regularPages.length === 0 ? (
               <EmptyState onCreate={async () => { const p = await createPage(null); navigate(`/p/${p.id}`); }} />
             ) : (
-              allActive
+              regularPages
                 .slice()
                 .sort((a, b) => b.updatedAt - a.updatedAt)
                 .map(p => (
