@@ -47,7 +47,11 @@ export function NestedBlock({
   };
 
   useEffect(() => {
-    if (ref.current && ref.current.innerText !== block.text) ref.current.innerText = block.text;
+    const el = ref.current;
+    if (!el) return;
+    // Don't clobber DOM while user is typing — caret would jump to start.
+    if (document.activeElement === el) return;
+    if (el.innerText !== block.text) el.innerText = block.text;
   }, [block.text, block.type]);
 
   const setRef = (el: HTMLElement | null) => {

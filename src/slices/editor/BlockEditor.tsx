@@ -47,7 +47,11 @@ function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerR
 
   useEffect(() => {
     const el = ref.current;
-    if (el && el.innerText !== block.text) {
+    if (!el) return;
+    // While the user is typing in this element, the DOM is the source of truth.
+    // Clobbering innerText here resets the caret to position 0 — corrupts fast typing.
+    if (document.activeElement === el) return;
+    if (el.innerText !== block.text) {
       el.innerText = block.text;
     }
   }, [block.text, block.type]);

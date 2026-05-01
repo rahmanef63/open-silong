@@ -1,4 +1,4 @@
-import { useEffect, type CSSProperties } from "react";
+import { useEffect, useRef, type CSSProperties } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { ChevronRight, Plus } from "lucide-react";
@@ -33,11 +33,20 @@ export function ToggleBlock({
   const collapsed = block.collapsed !== false;
   const children: Block[] = block.children ?? [];
   const { setNodeRef: setDropRef, isOver: dropIsOver } = useDroppable({ id: `toggle:${block.id}` });
+  const headRef = useRef<HTMLDivElement | null>(null);
 
   // Auto-expand on hover-while-dragging so the user sees their target
   useEffect(() => {
     if (collapsed && dropIsOver) updateBlock(pageId, block.id, { collapsed: false });
   }, [dropIsOver]);
+
+  // Sync heading text from store to DOM only when not focused — avoids caret-jump on fast typing.
+  useEffect(() => {
+    const el = headRef.current;
+    if (!el) return;
+    if (document.activeElement === el) return;
+    if (el.innerText !== block.text) el.innerText = block.text;
+  }, [block.text]);
 
   const addChild = () => {
     const nb: Block = { id: uid(), type: "paragraph", text: "" };
@@ -67,6 +76,7 @@ export function ToggleBlock({
             <ChevronRight className={cn("h-4 w-4 transition-transform", !collapsed && "rotate-90")} />
           </button>
           <div
+            ref={headRef}
             data-block-id={block.id}
             contentEditable
             suppressContentEditableWarning
@@ -76,9 +86,7 @@ export function ToggleBlock({
               "flex-1 outline-none font-semibold text-base leading-7 py-0.5 whitespace-pre-wrap break-words empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground/50",
               colorClass(block.color),
             )}
-          >
-            {block.text}
-          </div>
+          />
         </div>
         {!collapsed && (
           <div className="ml-5 mt-1 border-l-2 border-border/60 pl-3 space-y-0.5">
