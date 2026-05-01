@@ -11,6 +11,7 @@ import { CodeBlock } from "@/slices/code-block";
 import { MARKDOWN_TRIGGERS } from "../lib/markdownTriggers";
 import { SlashMenu } from "../SlashMenu";
 import { getBlockRenderer } from "./registry";
+import { bgColorClass, colorClass } from "../lib/colors";
 
 interface Props {
   block: Block;
@@ -124,6 +125,9 @@ export function NestedBlock({
     if (e.key === "ArrowUp") onFocusPrev?.();
   };
 
+  const textCls = colorClass(block.color);
+  const bgCls = bgColorClass(block.bgColor);
+
   const baseProps = {
     "data-block-id": block.id,
     contentEditable: true,
@@ -131,8 +135,10 @@ export function NestedBlock({
     onInput: handleInput,
     onKeyDown: handleKeyDown,
     "data-placeholder": PLACEHOLDERS[block.type] ?? "",
-    className:
+    className: cn(
       "outline-none flex-1 min-w-0 whitespace-pre-wrap break-words empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground/50",
+      textCls,
+    ),
   } as Record<string, unknown>;
 
   const wrap = (inner: React.ReactNode) => <div className="flex-1 min-w-0">{inner}</div>;
@@ -253,7 +259,7 @@ export function NestedBlock({
       >
         <GripVertical className="h-3.5 w-3.5" />
       </button>
-      <div className="relative flex-1 min-w-0">
+      <div className={cn("relative flex-1 min-w-0", bgCls && "-mx-1 px-1 rounded", bgCls)}>
         {renderContent()}
         {slashOpen && (
           <div className="relative">

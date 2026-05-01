@@ -8,6 +8,7 @@ import { useStore } from "@/shared/lib/store";
 import { cn } from "@/shared/lib/utils";
 import { BLOCK_SPECS } from "../blockSpecs";
 import { BlockCommentsPopover, useBlockComments } from "@/slices/comments";
+import { BlockColorMenu } from "./BlockColorMenu";
 
 interface Props {
   pageId: string;
@@ -18,7 +19,7 @@ interface Props {
 }
 
 export function BlockControls({ pageId, block, index, listeners, convertTo }: Props) {
-  const { addBlock, deleteBlock, duplicateBlock, user } = useStore();
+  const { addBlock, deleteBlock, duplicateBlock, updateBlock, user } = useStore();
   const { openCount, create } = useBlockComments(block.id);
   return (
     <div className="flex">
@@ -76,6 +77,12 @@ export function BlockControls({ pageId, block, index, listeners, convertTo }: Pr
             <MessageSquare className="mr-2 h-3.5 w-3.5" /> Add comment
             {openCount > 0 && <span className="ml-auto text-[10px] text-brand">{openCount}</span>}
           </DropdownMenuItem>
+          <BlockColorMenu
+            value={block.color}
+            bgValue={block.bgColor}
+            onPick={(color) => updateBlock(pageId, block.id, { color })}
+            onPickBg={(bgColor) => updateBlock(pageId, block.id, { bgColor })}
+          />
           <DropdownMenuSeparator />
           <DropdownMenuLabel className="text-xs text-muted-foreground">Turn into</DropdownMenuLabel>
           {BLOCK_SPECS.filter((s) => s.type !== "page" && s.type !== "database").slice(0, 8).map((s) => (

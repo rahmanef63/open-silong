@@ -3,6 +3,7 @@ import type { Block, BlockType } from "@/shared/types/domain";
 import { Checkbox } from "@/shared/ui/checkbox";
 import { cn } from "@/shared/lib/utils";
 import { CodeBlock } from "@/slices/code-block";
+import { bgColorClass, colorClass } from "../lib/colors";
 
 interface Props {
   block: Block;
@@ -24,6 +25,9 @@ const PLACEHOLDERS: Record<BlockType, string> = {
 };
 
 export function BlockBody({ block, setRef, handleInput, handleKeyDown, onCheck, onLang }: Props) {
+  const textCls = colorClass(block.color);
+  const bgCls = bgColorClass(block.bgColor);
+
   const baseProps = {
     "data-block-id": block.id,
     contentEditable: true,
@@ -31,44 +35,56 @@ export function BlockBody({ block, setRef, handleInput, handleKeyDown, onCheck, 
     onInput: handleInput,
     onKeyDown: handleKeyDown,
     "data-placeholder": PLACEHOLDERS[block.type] ?? "",
-    className:
+    className: cn(
       "outline-none flex-1 min-w-0 whitespace-pre-wrap break-words empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground/60",
+      textCls,
+    ),
   } as Record<string, unknown>;
 
   const wrap = (inner: React.ReactNode) => <div className="flex-1 min-w-0">{inner}</div>;
+  const tinted = (inner: React.ReactNode) =>
+    bgCls ? <div className={cn("flex-1 min-w-0 -mx-1 px-1 rounded", bgCls)}>{inner}</div> : <>{inner}</>;
 
+  let body: React.ReactNode;
   switch (block.type) {
     case "h1":
-      return wrap(<h1 ref={setRef as React.Ref<HTMLHeadingElement>} {...baseProps} className={baseProps.className + " text-3xl font-bold tracking-tight font-serif py-1"} />);
+      body = wrap(<h1 ref={setRef as React.Ref<HTMLHeadingElement>} {...baseProps} className={cn(baseProps.className as string, "text-3xl font-bold tracking-tight font-serif py-1")} />);
+      break;
     case "h2":
-      return wrap(<h2 ref={setRef as React.Ref<HTMLHeadingElement>} {...baseProps} className={baseProps.className + " text-2xl font-semibold tracking-tight font-serif py-1"} />);
+      body = wrap(<h2 ref={setRef as React.Ref<HTMLHeadingElement>} {...baseProps} className={cn(baseProps.className as string, "text-2xl font-semibold tracking-tight font-serif py-1")} />);
+      break;
     case "h3":
-      return wrap(<h3 ref={setRef as React.Ref<HTMLHeadingElement>} {...baseProps} className={baseProps.className + " text-xl font-semibold tracking-tight py-0.5"} />);
+      body = wrap(<h3 ref={setRef as React.Ref<HTMLHeadingElement>} {...baseProps} className={cn(baseProps.className as string, "text-xl font-semibold tracking-tight py-0.5")} />);
+      break;
     case "todo":
-      return (
+      body = (
         <div className="flex flex-1 items-start gap-2 py-1">
           <Checkbox checked={!!block.checked} onCheckedChange={(v) => onCheck(!!v)} className="mt-1" />
           <div ref={setRef as React.Ref<HTMLDivElement>} {...baseProps} className={cn(baseProps.className as string, block.checked && "line-through text-muted-foreground")} />
         </div>
       );
+      break;
     case "bullet":
-      return (
+      body = (
         <div className="flex flex-1 items-start gap-2 py-1">
-          <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-foreground" />
+          <span className={cn("mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-foreground", textCls && textCls.replace("text-", "bg-"))} />
           <div ref={setRef as React.Ref<HTMLDivElement>} {...baseProps} />
         </div>
       );
+      break;
     case "numbered":
-      return (
+      body = (
         <div className="flex flex-1 items-start gap-2 py-1">
-          <span className="mt-0.5 text-sm text-muted-foreground tabular-nums">•</span>
+          <span className={cn("mt-0.5 text-sm tabular-nums", textCls || "text-muted-foreground")}>•</span>
           <div ref={setRef as React.Ref<HTMLDivElement>} {...baseProps} />
         </div>
       );
+      break;
     case "quote":
-      return wrap(<blockquote ref={setRef as React.Ref<HTMLQuoteElement>} {...baseProps} className={baseProps.className + " border-l-4 border-foreground/40 pl-4 italic text-foreground/80 py-1"} />);
+      body = wrap(<blockquote ref={setRef as React.Ref<HTMLQuoteElement>} {...baseProps} className={cn(baseProps.className as string, "border-l-4 border-foreground/40 pl-4 italic text-foreground/80 py-1")} />);
+      break;
     case "code":
-      return (
+      body = (
         <CodeBlock
           text={block.text}
           lang={block.lang}
@@ -78,14 +94,18 @@ export function BlockBody({ block, setRef, handleInput, handleKeyDown, onCheck, 
           onKeyDown={handleKeyDown as (e: KeyboardEvent<HTMLElement>) => void}
         />
       );
+      break;
     case "callout":
-      return (
-        <div className="flex-1 flex items-start gap-3 rounded-md bg-brand/10 border border-brand/20 p-3">
+      body = (
+        <div className={cn("flex-1 flex items-start gap-3 rounded-md p-3", bgCls || "bg-brand/10 border border-brand/20")}>
           <span className="text-lg leading-none">💡</span>
           <div ref={setRef as React.Ref<HTMLDivElement>} {...baseProps} />
         </div>
       );
+      // callout already paints its own bg → skip the outer tint
+      return body;
     default:
-      return wrap(<p ref={setRef as React.Ref<HTMLParagraphElement>} {...baseProps} className={baseProps.className + " leading-7 py-0.5"} />);
+      body = wrap(<p ref={setRef as React.Ref<HTMLParagraphElement>} {...baseProps} className={cn(baseProps.className as string, "leading-7 py-0.5")} />);
   }
+  return tinted(body);
 }

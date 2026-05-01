@@ -47,6 +47,10 @@ export interface Block {
   align?: "left" | "center" | "right";
   /** for columns2/3: per-column width as % of container; sum should ≈ 100 */
   colWidths?: number[];
+  /** Notion-style text color palette key (see slices/editor/lib/colors.ts) */
+  color?: string;
+  /** Notion-style background color palette key */
+  bgColor?: string;
 }
 
 export type PageFont = "default" | "serif" | "mono";
