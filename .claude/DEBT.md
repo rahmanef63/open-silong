@@ -36,13 +36,21 @@ Each entry: what's wrong, why it's still there, who'll fix it.
 - **Fix:** continue progressive extraction — sharing → databases → pages
   each get their own slice hook calling Convex directly.
 
-### `src/components/editor/` and `src/components/database/` not as slices
-- Per ARCHITECTURE.md these should live under `src/slices/{editor,databases}/`.
-- **Why still here:** ~80 files; touches every import.
-- **Fix:** dedicated PR with `git mv` + sed.
 
 ## Resolved (kept for history — see git log)
 
+- **2026-05-01** Big project reorg per RULES.md/ARCHITECTURE.md:
+  - `src/components/editor/` → `src/slices/editor/`
+  - `src/components/database/` → `src/slices/databases/`
+  - `src/components/{AppShell}.tsx` → `src/app/AppShell.tsx`
+  - `src/components/{Dashboard,SearchModal,ShareDialog,VersionHistory,TrashView,WorkspaceSidebar}.tsx`
+    → respective slices (`dashboard/`, `command-palette/`, `sharing/`, `snapshots/`, `trash/`, `workspace-sidebar/`)
+  - `src/components/NavLink.tsx` deleted (dead code, 0 importers)
+  - `src/lib/{types,store,seed}` → `src/shared/{types/domain,lib/store,lib/seed}`
+  - `src/{App,main,ConvexClientProvider}.tsx`, `App.css`, `index.css` → `src/app/`
+  - `src/pages/` → `src/app/routes/`
+  - empty `src/hooks/` removed
+  - **Result:** `src/` only contains `app/`, `shared/`, `slices/`, `test/`, `vite-env.d.ts`.
 - **2026-05-01** `src/components/ui/` → `src/shared/ui/` (49 shadcn files,
   50 import sites updated, `components.json` aliases bumped).
 - **2026-05-01** Empty slice scaffolds removed: `page-actions/`, `properties/`,

@@ -1,7 +1,7 @@
 import { BarChart3 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
 import { usePageAnalytics } from "../hooks/usePageAnalytics";
-import type { Page } from "@/lib/types";
+import type { Page } from "@/shared/types/domain";
 
 interface Props { page: Page; trigger?: React.ReactNode }
 

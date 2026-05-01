@@ -1,5 +1,5 @@
 import { MessageSquare } from "lucide-react";
-import { useStore } from "@/lib/store";
+import { useStore } from "@/shared/lib/store";
 import { usePageComments } from "../lib/PageCommentsContext";
 import { CommentItem } from "./CommentItem";
 import { CommentComposer } from "./CommentComposer";

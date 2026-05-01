@@ -1,7 +1,7 @@
 import { useMemo } from "react";
-import { useStore } from "@/lib/store";
+import { useStore } from "@/shared/lib/store";
 import { usePageComments } from "@/slices/comments";
-import type { Page, Block } from "@/lib/types";
+import type { Page, Block } from "@/shared/types/domain";
 import type { PageAnalytics } from "../types";
 
 function walkBlocks(blocks: Block[]): { count: number; chars: number; words: number } {

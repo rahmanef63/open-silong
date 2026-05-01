@@ -10,11 +10,11 @@ import { ExternalLink, Plus } from "lucide-react";
 import {
   Sheet, SheetContent, SheetTitle, SheetDescription,
 } from "@/shared/ui/sheet";
-import { useStore } from "@/lib/store";
-import { BlockEditor } from "@/components/editor/BlockEditor";
-import { RowPropertiesPanel } from "@/components/editor/RowPropertiesPanel";
+import { useStore } from "@/shared/lib/store";
+import { BlockEditor } from "@/slices/editor/BlockEditor";
+import { RowPropertiesPanel } from "@/slices/editor/RowPropertiesPanel";
 import { PageCommentsProvider } from "@/slices/comments";
-import type { Block } from "@/lib/types";
+import type { Block } from "@/shared/types/domain";
 
 interface Props {
   pageId: string | null;

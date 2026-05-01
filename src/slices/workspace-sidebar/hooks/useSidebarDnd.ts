@@ -7,8 +7,8 @@ import {
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { restrictToFirstScrollableAncestor } from "@dnd-kit/modifiers";
 import { toast } from "sonner";
-import type { Page } from "@/lib/types";
-import { useStore } from "@/lib/store";
+import type { Page } from "@/shared/types/domain";
+import { useStore } from "@/shared/lib/store";
 import type { TreeItem } from "../lib/keyboard";
 
 const NEST_THRESHOLD_PX = 28;

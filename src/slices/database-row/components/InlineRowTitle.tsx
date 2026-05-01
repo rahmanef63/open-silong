@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Maximize2 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
-import { useStore } from "@/lib/store";
-import type { Page } from "@/lib/types";
+import { useStore } from "@/shared/lib/store";
+import type { Page } from "@/shared/types/domain";
 
 interface Props {
   row: Page;

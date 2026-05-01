@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import type { Page } from "@/lib/types";
+import type { Page } from "@/shared/types/domain";
 import { cn } from "@/shared/lib/utils";
 import { DENSITY, type DensityConfig } from "../lib/density";
 import { handleSidebarTraversal } from "../lib/keyboard";

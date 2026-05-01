@@ -1,4 +1,4 @@
-import type { Database, Page, Property, PropertyValue } from "@/lib/types";
+import type { Database, Page, Property, PropertyValue } from "@/shared/types/domain";
 
 const CSV_DELIM = ",";
 const CSV_NL = "\n";

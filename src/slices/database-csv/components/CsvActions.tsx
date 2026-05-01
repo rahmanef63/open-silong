@@ -3,9 +3,9 @@ import { Download, Upload } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
-import { useStore } from "@/lib/store";
+import { useStore } from "@/shared/lib/store";
 import { downloadCsv, exportDatabaseToCsv } from "../lib/csv";
-import type { Database, Page } from "@/lib/types";
+import type { Database, Page } from "@/shared/types/domain";
 import { CsvImportDialog } from "./CsvImportDialog";
 
 interface Props {
