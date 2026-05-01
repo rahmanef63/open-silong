@@ -460,8 +460,8 @@
 ## 9.3 Command Palette
 
 - [x] Wire ⌘K / Ctrl+K to global palette
-- [x] Search pages (live, by title — Convex `searchIndex` indexed lookup, permission-aware)
-- [x] Search infrastructure (Convex full-text search index on pages.title + databases.name)
+- [x] Search pages (live, full content — Convex `searchIndex` over title + flattened block text)
+- [x] Search infrastructure (Convex full-text search index on pages.searchText + databases.name; backfill mutation; auto-trigger via localStorage flag)
 - [x] Create new page action
 - [x] Navigate to page
 - [x] Trigger arbitrary actions (Home / Inbox / Trash / Settings / Theme toggle)
