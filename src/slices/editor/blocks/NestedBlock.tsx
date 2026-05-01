@@ -12,6 +12,8 @@ import { MARKDOWN_TRIGGERS } from "../lib/markdownTriggers";
 import { SlashMenu } from "../SlashMenu";
 import { getBlockRenderer } from "./registry";
 import { bgColorClass, colorClass } from "../lib/colors";
+import { ColumnBlockEditor } from "../ColumnBlockEditor";
+import { ToggleContent } from "./ToggleBlock";
 
 interface Props {
   block: Block;
@@ -21,6 +23,21 @@ interface Props {
   onFocusNext?: () => void;
   onFocusPrev?: () => void;
   registerRef?: (id: string, el: HTMLElement | null) => void;
+  /** Nesting depth — 1 means direct child of a top-level container. */
+  depth?: number;
+}
+
+/** Maximum nesting depth for containers (toggle / columns) inside another container.
+ * `depth` here means: this NestedBlock's own depth in the tree. A container at
+ * depth > MAX_NEST collapses to a fallback "max nesting reached" pill. */
+const MAX_NEST = 5;
+
+function NestingCap({ type }: { type: string }) {
+  return (
+    <div className="rounded-md border border-dashed border-amber-500/40 bg-amber-500/10 p-2 text-xs text-amber-700 dark:text-amber-400">
+      Max nesting reached — {type} can't go deeper than {MAX_NEST} levels.
+    </div>
+  );
 }
 
 const PLACEHOLDERS: Partial<Record<BlockType, string>> = {
@@ -31,7 +48,7 @@ const PLACEHOLDERS: Partial<Record<BlockType, string>> = {
 };
 
 export function NestedBlock({
-  block, onUpdate, onAddAfter, onDelete, onFocusNext, onFocusPrev, registerRef,
+  block, onUpdate, onAddAfter, onDelete, onFocusNext, onFocusPrev, registerRef, depth = 1,
 }: Props) {
   const ref = useRef<HTMLElement | null>(null);
   const navigate = useNavigate();
@@ -235,6 +252,13 @@ export function NestedBlock({
         </button>
       );
     }
+    case "toggle":
+      if (depth > MAX_NEST) return wrap(<NestingCap type="Toggle" />);
+      return wrap(<ToggleContent block={block} onUpdate={onUpdate} depth={depth + 1} />);
+    case "columns2":
+    case "columns3":
+      if (depth > MAX_NEST) return wrap(<NestingCap type="Columns" />);
+      return wrap(<ColumnBlockEditor block={block} onUpdate={onUpdate} depth={depth + 1} />);
     default:
       return (
         <div className="rounded-md border border-dashed border-border bg-muted/30 p-2 text-xs text-muted-foreground">

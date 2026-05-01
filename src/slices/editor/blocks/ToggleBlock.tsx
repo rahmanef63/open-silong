@@ -10,6 +10,121 @@ import { BlockControls } from "./BlockControls";
 import { NestedBlock } from "./NestedBlock";
 import { bgColorClass, colorClass } from "../lib/colors";
 
+const uid = () => Math.random().toString(36).slice(2, 10);
+
+/** Body of a toggle block — chevron + heading + children list.
+ * Pure callback API so it can be reused both at the top level (wrapped in BlockShell)
+ * and recursively inside NestedBlock. `depth` is the depth assigned to inner
+ * NestedBlocks; top-level = 1, nested = parent depth + 1.
+ */
+export function ToggleContent({
+  block, onUpdate, depth = 1,
+}: {
+  block: Block;
+  onUpdate: (patch: Partial<Block>) => void;
+  depth?: number;
+}) {
+  const collapsed = block.collapsed !== false;
+  const children: Block[] = block.children ?? [];
+  const { setNodeRef: setDropRef, isOver: dropIsOver } = useDroppable({ id: `toggle:${block.id}` });
+  const headRef = useRef<HTMLDivElement | null>(null);
+
+  // Auto-expand on hover-while-dragging so the user sees their target
+  useEffect(() => {
+    if (collapsed && dropIsOver) onUpdate({ collapsed: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dropIsOver]);
+
+  // Sync heading text from store to DOM only when not focused — avoids caret-jump on fast typing.
+  useEffect(() => {
+    const el = headRef.current;
+    if (!el) return;
+    if (document.activeElement === el) return;
+    if (el.innerText !== block.text) el.innerText = block.text;
+  }, [block.text]);
+
+  const setChildren = (next: Block[]) => onUpdate({ children: next });
+
+  const addChild = () => {
+    const nb: Block = { id: uid(), type: "paragraph", text: "" };
+    onUpdate({ children: [...children, nb], collapsed: false });
+    setTimeout(() => document.querySelector<HTMLElement>(`[data-block-id="${nb.id}"]`)?.focus(), 30);
+  };
+
+  return (
+    <div
+      ref={setDropRef}
+      className={cn(
+        "rounded transition-colors",
+        dropIsOver && "bg-brand/10 ring-2 ring-brand ring-inset",
+        !dropIsOver && bgColorClass(block.bgColor),
+      )}
+    >
+      <div className="flex items-start gap-1">
+        <button
+          onClick={() => onUpdate({ collapsed: !collapsed })}
+          className="mt-1.5 shrink-0 text-muted-foreground hover:text-foreground transition"
+        >
+          <ChevronRight className={cn("h-4 w-4 transition-transform", !collapsed && "rotate-90")} />
+        </button>
+        <div
+          ref={headRef}
+          data-block-id={block.id}
+          contentEditable
+          suppressContentEditableWarning
+          onInput={(e) => onUpdate({ text: (e.currentTarget as HTMLElement).innerText })}
+          data-placeholder="Toggle heading"
+          className={cn(
+            "flex-1 outline-none font-semibold text-base leading-7 py-0.5 whitespace-pre-wrap break-words empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground/50",
+            colorClass(block.color),
+          )}
+        />
+      </div>
+      {!collapsed && (
+        <div className="ml-5 mt-1 border-l-2 border-border/60 pl-3 space-y-0.5">
+          <SortableContext items={children.map((c) => c.id)} strategy={verticalListSortingStrategy}>
+            {children.map((child, ci) => (
+              <NestedBlock
+                key={child.id}
+                block={child}
+                depth={depth}
+                onUpdate={(patch) => {
+                  setChildren(children.map((c, j) => (j === ci ? { ...c, ...patch } : c)));
+                }}
+                onDelete={() => {
+                  setChildren(children.filter((_, j) => j !== ci));
+                }}
+                onAddAfter={(type) => {
+                  const nb: Block = { id: uid(), type: type ?? "paragraph", text: "" };
+                  const nc = [...children];
+                  nc.splice(ci + 1, 0, nb);
+                  setChildren(nc);
+                  setTimeout(() => document.querySelector<HTMLElement>(`[data-block-id="${nb.id}"]`)?.focus(), 30);
+                }}
+                onFocusNext={() => {
+                  const next = children[ci + 1];
+                  if (next) document.querySelector<HTMLElement>(`[data-block-id="${next.id}"]`)?.focus();
+                }}
+                onFocusPrev={() => {
+                  const prev = children[ci - 1];
+                  if (prev) document.querySelector<HTMLElement>(`[data-block-id="${prev.id}"]`)?.focus();
+                }}
+              />
+            ))}
+          </SortableContext>
+          <button
+            onClick={addChild}
+            className="flex items-center gap-1 text-xs text-muted-foreground/50 hover:text-muted-foreground"
+          >
+            <Plus className="h-3 w-3" /> Add inside toggle
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Top-level toggle block — wraps ToggleContent in BlockShell + BlockControls. */
 interface Props {
   pageId: string;
   block: Block;
@@ -23,114 +138,22 @@ interface Props {
   convertTo: (t: BlockType) => void;
 }
 
-const uid = () => Math.random().toString(36).slice(2, 10);
-
 export function ToggleBlock({
   pageId, block, index, setNodeRef, style, isDragging, isOver: shellIsOver,
   attributes, listeners, convertTo,
 }: Props) {
   const { updateBlock } = useStore();
-  const collapsed = block.collapsed !== false;
-  const children: Block[] = block.children ?? [];
-  const { setNodeRef: setDropRef, isOver: dropIsOver } = useDroppable({ id: `toggle:${block.id}` });
-  const headRef = useRef<HTMLDivElement | null>(null);
-
-  // Auto-expand on hover-while-dragging so the user sees their target
-  useEffect(() => {
-    if (collapsed && dropIsOver) updateBlock(pageId, block.id, { collapsed: false });
-  }, [dropIsOver]);
-
-  // Sync heading text from store to DOM only when not focused — avoids caret-jump on fast typing.
-  useEffect(() => {
-    const el = headRef.current;
-    if (!el) return;
-    if (document.activeElement === el) return;
-    if (el.innerText !== block.text) el.innerText = block.text;
-  }, [block.text]);
-
-  const addChild = () => {
-    const nb: Block = { id: uid(), type: "paragraph", text: "" };
-    updateBlock(pageId, block.id, { children: [...children, nb], collapsed: false });
-    setTimeout(() => document.querySelector<HTMLElement>(`[data-block-id="tc_${block.id}_${children.length}"]`)?.focus(), 30);
-  };
-
   return (
     <BlockShell
       setNodeRef={setNodeRef} style={style} isDragging={isDragging} isOver={shellIsOver}
       attributes={attributes} listeners={listeners} blockId={block.id}
       controls={<BlockControls pageId={pageId} block={block} index={index} listeners={listeners} convertTo={convertTo} />}
     >
-      <div
-        ref={setDropRef}
-        className={cn(
-          "rounded transition-colors",
-          dropIsOver && "bg-brand/10 ring-2 ring-brand ring-inset",
-          !dropIsOver && bgColorClass(block.bgColor),
-        )}
-      >
-        <div className="flex items-start gap-1">
-          <button
-            onClick={() => updateBlock(pageId, block.id, { collapsed: !collapsed })}
-            className="mt-1.5 shrink-0 text-muted-foreground hover:text-foreground transition"
-          >
-            <ChevronRight className={cn("h-4 w-4 transition-transform", !collapsed && "rotate-90")} />
-          </button>
-          <div
-            ref={headRef}
-            data-block-id={block.id}
-            contentEditable
-            suppressContentEditableWarning
-            onInput={(e) => updateBlock(pageId, block.id, { text: (e.currentTarget as HTMLElement).innerText })}
-            data-placeholder="Toggle heading"
-            className={cn(
-              "flex-1 outline-none font-semibold text-base leading-7 py-0.5 whitespace-pre-wrap break-words empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground/50",
-              colorClass(block.color),
-            )}
-          />
-        </div>
-        {!collapsed && (
-          <div className="ml-5 mt-1 border-l-2 border-border/60 pl-3 space-y-0.5">
-            <SortableContext items={children.map((c) => c.id)} strategy={verticalListSortingStrategy}>
-            {children.map((child, ci) => (
-              <NestedBlock
-                key={child.id}
-                block={child}
-                onUpdate={(patch) => {
-                  const nc = children.map((c, j) => (j === ci ? { ...c, ...patch } : c));
-                  updateBlock(pageId, block.id, { children: nc });
-                }}
-                onDelete={() => {
-                  const nc = children.filter((_, j) => j !== ci);
-                  updateBlock(pageId, block.id, { children: nc });
-                }}
-                onAddAfter={(type) => {
-                  const nb: Block = { id: uid(), type: type ?? "paragraph", text: "" };
-                  const nc = [...children];
-                  nc.splice(ci + 1, 0, nb);
-                  updateBlock(pageId, block.id, { children: nc });
-                  setTimeout(() => document.querySelector<HTMLElement>(`[data-block-id="${nb.id}"]`)?.focus(), 30);
-                }}
-                onFocusNext={() => {
-                  const next = children[ci + 1];
-                  if (next) document.querySelector<HTMLElement>(`[data-block-id="${next.id}"]`)?.focus();
-                }}
-                onFocusPrev={() => {
-                  const prev = children[ci - 1];
-                  if (prev) document.querySelector<HTMLElement>(`[data-block-id="${prev.id}"]`)?.focus();
-                }}
-              />
-            ))}
-            </SortableContext>
-            <button
-              onClick={addChild}
-              className="flex items-center gap-1 text-xs text-muted-foreground/50 hover:text-muted-foreground"
-            >
-              <Plus className="h-3 w-3" /> Add inside toggle
-            </button>
-          </div>
-        )}
-      </div>
+      <ToggleContent
+        block={block}
+        onUpdate={(patch) => updateBlock(pageId, block.id, patch)}
+        depth={1}
+      />
     </BlockShell>
   );
 }
-

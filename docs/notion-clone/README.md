@@ -92,6 +92,7 @@ The codebase already covers a usable single-user MVP plus most of the V1 surface
 - ErrorBoundary recovers from view crashes without nuking the page
 
 **Latest additions (2026-05-01 session)**
+- **Nested containers up to 5 levels** — toggles and column blocks (`columns2` / `columns3`) can now live inside other toggles/columns. `ColumnBlockEditor` is now pure-callback (`onUpdate(patch)` instead of `pageId`), and `ToggleBlock` was split into a `ToggleContent` body + thin top-level shell wrapper. `NestedBlock` recurses into both with depth tracking; at depth > 5 it shows an amber "max nesting reached" pill so the editor never blows the stack.
 - **Notion-style columns** — invisible borders + on-hover divider line between panes; hover-to-reveal grab handle that drags to redistribute width (existing `colWidths` storage). `ColumnBlockEditor` now uses `group/cols` + `group/divider` for hover layering.
 - **Cursor-jump fix** — `BlockEditor` / `NestedBlock` useEffects now skip DOM sync while the element is `document.activeElement`. `ToggleBlock` heading switched from `{block.text}` child to ref-based pattern. Cures the "cursor flies to position 0 while typing fast" bug caused by every keystroke firing a Convex round-trip that re-rendered with echoed text.
 - **Search ranking polish** — title hits now sort above body hits (Convex BM25 still orders within each group).
