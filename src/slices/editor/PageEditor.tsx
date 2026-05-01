@@ -23,6 +23,7 @@ import { VersionHistory } from "@/slices/snapshots/components/VersionHistory";
 import { Button } from "@/shared/ui/button";
 import { findLocation, moveBlock, type Location } from "./lib/blockTree";
 import { prioritizeCollisions } from "./lib/collisionPriority";
+import { BlockSelectionProvider, SelectionToolbar, SelectionKeyboard } from "@/slices/block-selection";
 
 const ICONS = ["📄", "📝", "📚", "🚀", "🌱", "🛰️", "🎨", "🧠", "🪄", "🌙", "☕", "🔥", "🌊", "✨", "🪐", "🛠️"];
 const COVERS = [
@@ -137,6 +138,7 @@ export function PageEditor() {
 
   return (
     <PageCommentsProvider pageId={page.id}>
+    <BlockSelectionProvider blockOrder={page.blocks.map((b) => b.id)}>
     <div className="flex h-full flex-col overflow-hidden">
       <Header page={page} onShare={() => setShareOpen(true)} onHistory={() => setHistoryOpen(o => !o)} historyOpen={historyOpen} />
 
@@ -272,7 +274,10 @@ export function PageEditor() {
       </div>
 
       <ShareDialog open={shareOpen} onOpenChange={setShareOpen} page={page} />
+      <SelectionToolbar pageId={page.id} />
+      <SelectionKeyboard pageId={page.id} />
     </div>
+    </BlockSelectionProvider>
     </PageCommentsProvider>
   );
 }

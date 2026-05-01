@@ -223,7 +223,7 @@ function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerR
     const target = block.pageId ? getPage(block.pageId) : undefined;
     return (
       <BlockShell
-        setNodeRef={setNodeRef} style={style} isDragging={isDragging} isOver={isOver}
+        setNodeRef={setNodeRef} style={style} isDragging={isDragging} isOver={isOver} blockId={block.id}
         attributes={attributes} listeners={listeners}
         controls={
           <BlockControls pageId={pageId} block={block} index={index} listeners={listeners} convertTo={convertTo} />
@@ -253,7 +253,7 @@ function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerR
   if (block.type === "database") {
     return (
       <BlockShell
-        setNodeRef={setNodeRef} style={style} isDragging={isDragging} isOver={isOver}
+        setNodeRef={setNodeRef} style={style} isDragging={isDragging} isOver={isOver} blockId={block.id}
         attributes={attributes} listeners={listeners}
         controls={
           <BlockControls pageId={pageId} block={block} index={index} listeners={listeners} convertTo={convertTo} />
@@ -267,7 +267,7 @@ function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerR
   if (block.type === "columns2" || block.type === "columns3") {
     return (
       <BlockShell
-        setNodeRef={setNodeRef} style={style} isDragging={isDragging} isOver={isOver}
+        setNodeRef={setNodeRef} style={style} isDragging={isDragging} isOver={isOver} blockId={block.id}
         attributes={attributes} listeners={listeners}
         controls={<BlockControls pageId={pageId} block={block} index={index} listeners={listeners} convertTo={convertTo} />}
       >
@@ -280,7 +280,7 @@ function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerR
     return (
       <ToggleBlock
         pageId={pageId} block={block} index={index}
-        setNodeRef={setNodeRef} style={style} isDragging={isDragging} isOver={isOver}
+        setNodeRef={setNodeRef} style={style} isDragging={isDragging} isOver={isOver} blockId={block.id}
         attributes={attributes} listeners={listeners} convertTo={convertTo}
         focusByOffset={focusByOffset} registerRef={registerRef}
         total={total}
@@ -292,7 +292,7 @@ function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerR
   if (Renderer) {
     return (
       <BlockShell
-        setNodeRef={setNodeRef} style={style} isDragging={isDragging} isOver={isOver}
+        setNodeRef={setNodeRef} style={style} isDragging={isDragging} isOver={isOver} blockId={block.id}
         attributes={attributes} listeners={listeners}
         controls={<BlockControls pageId={pageId} block={block} index={index} listeners={listeners} convertTo={convertTo} />}
       >
@@ -308,7 +308,7 @@ function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerR
 
   return (
     <BlockShell
-      setNodeRef={setNodeRef} style={style} isDragging={isDragging} isOver={isOver}
+      setNodeRef={setNodeRef} style={style} isDragging={isDragging} isOver={isOver} blockId={block.id}
       attributes={attributes} listeners={listeners}
       controls={<BlockControls pageId={pageId} block={block} index={index} listeners={listeners} convertTo={convertTo} />}
     >

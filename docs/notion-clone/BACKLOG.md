@@ -180,7 +180,7 @@
 
 - [x] Editable surface (contentEditable)
 - [x] Cursor & selection handling
-- [ ] Multi-block selection
+- [x] Multi-block selection (Shift-click / ⌘-click on grip; floating toolbar with Delete / Duplicate / Color / Bg / Convert; Esc + click-to-clear; Backspace and ⌘D shortcuts)
 - [x] Enter / Shift+Enter / Backspace behaviors
 - [x] Slash command
 - [x] Drag handle + dnd-kit sortable
@@ -308,7 +308,7 @@
 
 - [x] Duplicate page
 - [x] Duplicate block
-- [ ] Duplicate selected blocks (multi-select)
+- [x] Duplicate selected blocks (multi-select)
 - [x] Move page to another parent
 - [ ] Move page to another workspace
 - [ ] Move block across page

@@ -1,0 +1,50 @@
+import {
+  createContext, useCallback, useContext, useEffect, useMemo, useRef, useState,
+  type ReactNode,
+} from "react";
+import type { SelectionApi, SelectionState } from "../types";
+import {
+  emptySelection, selectSingle, toggleSelection, rangeSelect, clearSelection, pruneToOrder,
+} from "../lib/selectionState";
+
+const Ctx = createContext<SelectionApi | null>(null);
+
+interface Props {
+  blockOrder: string[];
+  children: ReactNode;
+}
+
+export function BlockSelectionProvider({ blockOrder, children }: Props) {
+  const [state, setState] = useState<SelectionState>(emptySelection);
+  const orderRef = useRef(blockOrder);
+  orderRef.current = blockOrder;
+
+  // Drop selection entries for blocks that no longer exist.
+  useEffect(() => {
+    setState((s) => pruneToOrder(s, blockOrder));
+  }, [blockOrder]);
+
+  const selectOne = useCallback((id: string) => setState(() => selectSingle(id)), []);
+  const toggle = useCallback((id: string) => setState((s) => toggleSelection(s, id)), []);
+  const range = useCallback((id: string) => setState((s) => rangeSelect(s, id, orderRef.current)), []);
+  const clear = useCallback(() => setState(clearSelection), []);
+  const isSelected = useCallback((id: string) => state.ids.has(id), [state.ids]);
+
+  const value = useMemo<SelectionApi>(() => ({
+    state, isSelected, selectOne, toggle, range, clear, count: state.ids.size,
+  }), [state, isSelected, selectOne, toggle, range, clear]);
+
+  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
+}
+
+export function useBlockSelection(): SelectionApi {
+  const c = useContext(Ctx);
+  if (!c) throw new Error("useBlockSelection must be used inside BlockSelectionProvider");
+  return c;
+}
+
+// Safe variant for components that may render outside a provider (e.g. NestedBlock when
+// used in DragOverlay or detached previews).
+export function useBlockSelectionOptional(): SelectionApi | null {
+  return useContext(Ctx);
+}
