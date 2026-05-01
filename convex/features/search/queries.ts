@@ -15,8 +15,8 @@ export const search = query({
 
     const pages = await ctx.db
       .query("pages")
-      .withSearchIndex("search_title", (b) =>
-        b.search("title", trimmed).eq("userId", userId).eq("trashed", false),
+      .withSearchIndex("search_content", (b) =>
+        b.search("searchText", trimmed).eq("userId", userId).eq("trashed", false),
       )
       .take(cap);
 

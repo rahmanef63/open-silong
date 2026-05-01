@@ -16,6 +16,8 @@ import type * as features_files_mutations from "../features/files/mutations.js";
 import type * as features_files_queries from "../features/files/queries.js";
 import type * as features_inbox_mutations from "../features/inbox/mutations.js";
 import type * as features_inbox_queries from "../features/inbox/queries.js";
+import type * as features_search_index from "../features/search/index.js";
+import type * as features_search_mutations from "../features/search/mutations.js";
 import type * as features_search_queries from "../features/search/queries.js";
 import type * as http from "../http.js";
 import type * as pages from "../pages.js";
@@ -39,6 +41,8 @@ declare const fullApi: ApiFromModules<{
   "features/files/queries": typeof features_files_queries;
   "features/inbox/mutations": typeof features_inbox_mutations;
   "features/inbox/queries": typeof features_inbox_queries;
+  "features/search/index": typeof features_search_index;
+  "features/search/mutations": typeof features_search_mutations;
   "features/search/queries": typeof features_search_queries;
   http: typeof http;
   pages: typeof pages;
