@@ -29,7 +29,12 @@ export default defineSchema({
     locked: v.optional(v.boolean()),
     createdAt: v.number(),
     updatedAt: v.number(),
-  }).index("by_user", ["userId"]),
+  })
+    .index("by_user", ["userId"])
+    .searchIndex("search_title", {
+      searchField: "title",
+      filterFields: ["userId", "trashed"],
+    }),
 
   databases: defineTable({
     userId: v.id("users"),
@@ -46,7 +51,12 @@ export default defineSchema({
     defaultTemplateId: v.optional(v.union(v.string(), v.null())),
     subItemsParentPropId: v.optional(v.union(v.string(), v.null())),
     trashed: v.optional(v.boolean()),
-  }).index("by_user", ["userId"]),
+  })
+    .index("by_user", ["userId"])
+    .searchIndex("search_name", {
+      searchField: "name",
+      filterFields: ["userId"],
+    }),
 
   preferences: defineTable({
     userId: v.id("users"),
