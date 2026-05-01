@@ -20,6 +20,15 @@ export const search = query({
       )
       .take(cap);
 
+    // Boost: pages whose title matches query come first (preserve relative order otherwise)
+    const ql = trimmed.toLowerCase();
+    const titleMatch = (t: string) => t.toLowerCase().includes(ql);
+    pages.sort((a, b) => {
+      const am = titleMatch(a.title) ? 1 : 0;
+      const bm = titleMatch(b.title) ? 1 : 0;
+      return bm - am;
+    });
+
     // databases.trashed is optional → filter post-query (undefined ≠ false in eq)
     const dbHits = await ctx.db
       .query("databases")
