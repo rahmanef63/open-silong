@@ -241,6 +241,7 @@
 
 - [x] Image (upload + URL + caption + alt placeholder)
 - [x] Resize image (drag right-edge handle, persists `width` %)
+- [x] Align image (left / center / right toolbar, persists `align`)
 - [ ] Download original
 - [x] File block (upload + preview + size)
 - [ ] Video block
