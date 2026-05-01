@@ -12,14 +12,15 @@ src/
 │   ├── inbox/
 │   ├── comments/
 │   ├── files/
-│   ├── pages/              # the notion page editor (legacy ⇢ being migrated)
-│   ├── databases/          # the database engine (legacy ⇢ being migrated)
-│   ├── workspace/          # sidebar, dashboard, search modal
-│   ├── auth/
+│   ├── editor/             # block editor + page editor + DnD
+│   ├── databases/          # database engine + 6 views
+│   ├── workspace-sidebar/  # sidebar tree + DnD
+│   ├── command-palette/    # ⌘K + search modal
+│   ├── dashboard/          # dashboard view
 │   ├── snapshots/          # version history
 │   ├── sharing/
 │   ├── trash/
-│   └── settings/
+│   └── …                   # one folder per feature
 ├── shared/                 # cross-cutting code
 │   ├── ui/                 # shadcn primitives (Button, Popover, Dialog, …)
 │   ├── lib/                # utils, format, keyboard, markdown, cn
@@ -144,10 +145,10 @@ A 500-line file is a code smell, not a milestone.
 
 ## Migration plan (legacy code)
 
-The current `src/lib/store.tsx` (888 lines) is a single React Context wrapping
-all Convex bindings. Target: dissolve into per-slice hooks (`usePages`,
-`useDatabases`, `useSnapshots`, …) that call Convex directly. Components migrate
-slice-by-slice, with `useStore()` deprecated last.
+`src/shared/lib/store.tsx` (235 lines, was 888) is the residual cross-feature
+store. Heavy logic already extracted to `src/shared/lib/store/{history,snapshots,
+pageActions,databaseActions}.ts`. Continue dissolving into per-slice hooks
+(`usePages`, `useDatabases`, …) that call Convex directly; deprecate `useStore()` last.
 
 Tracked in `.claude/DEBT.md`.
 
