@@ -1,6 +1,6 @@
 import { AtSign } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
 import { useStore } from "@/lib/store";
 import { useMentions } from "../hooks/useMentions";
 

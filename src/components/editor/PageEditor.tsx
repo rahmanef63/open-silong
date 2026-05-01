@@ -20,7 +20,7 @@ import {
 } from "@dnd-kit/sortable";
 import { ShareDialog } from "../ShareDialog";
 import { VersionHistory } from "../VersionHistory";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/ui/button";
 import { findLocation, moveBlock, type Location } from "./lib/blockTree";
 import { prioritizeCollisions } from "./lib/collisionPriority";
 

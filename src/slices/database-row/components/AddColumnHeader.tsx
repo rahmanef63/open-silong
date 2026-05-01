@@ -1,7 +1,7 @@
 import { Plus } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/shared/ui/dropdown-menu";
 import { useStore } from "@/lib/store";
 import { PROPERTY_TYPE_LABELS } from "@/components/database/DatabaseBlock";
 import type { PropertyType } from "@/lib/types";

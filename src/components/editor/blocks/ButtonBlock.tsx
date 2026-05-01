@@ -3,7 +3,7 @@ import { ExternalLink, Settings2 } from "lucide-react";
 import type { Block } from "@/lib/types";
 import {
   Popover, PopoverContent, PopoverTrigger,
-} from "@/components/ui/popover";
+} from "@/shared/ui/popover";
 
 interface Props {
   block: Block;

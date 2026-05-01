@@ -9,7 +9,7 @@ import {
 import { ExternalLink, Plus } from "lucide-react";
 import {
   Sheet, SheetContent, SheetTitle, SheetDescription,
-} from "@/components/ui/sheet";
+} from "@/shared/ui/sheet";
 import { useStore } from "@/lib/store";
 import { BlockEditor } from "@/components/editor/BlockEditor";
 import { RowPropertiesPanel } from "@/components/editor/RowPropertiesPanel";

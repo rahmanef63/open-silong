@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useStore } from "@/lib/store";
 import { Page, PageFont } from "@/lib/types";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Switch } from "@/components/ui/switch";
+import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
+import { Switch } from "@/shared/ui/switch";
 import { cn } from "@/shared/lib/utils";
 import { toast } from "sonner";
 import {

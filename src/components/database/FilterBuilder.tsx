@@ -1,8 +1,8 @@
 import { Database, DatabaseFilter, DatabaseViewConfig, Property } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { Plus, X } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
+import { Input } from "@/shared/ui/input";
 
 const OPS: { value: DatabaseFilter["op"]; label: string; needsValue: boolean }[] = [
   { value: "contains", label: "contains", needsValue: true },

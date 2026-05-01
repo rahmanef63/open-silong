@@ -6,7 +6,7 @@ import { cn } from "@/shared/lib/utils";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+} from "@/shared/ui/alert-dialog";
 import { Block, PageSnapshot } from "@/lib/types";
 
 export function VersionHistory({ pageId, onClose }: { pageId: string; onClose: () => void }) {

@@ -16,7 +16,7 @@ import { focusSiblingBySelector, isTextInputTarget } from "@/shared/lib/keyboard
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
   DropdownMenuSeparator, DropdownMenuLabel, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/shared/ui/dropdown-menu";
 import { AddColumnHeader, AddRowFooter, InlineRowTitle } from "@/slices/database-row";
 import { useDragFill, SelectableCell, type FillSource } from "@/slices/database-cell-selection";
 

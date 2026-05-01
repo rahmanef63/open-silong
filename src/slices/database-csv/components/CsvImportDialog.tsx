@@ -2,8 +2,8 @@ import { useState } from "react";
 import { Upload, AlertCircle, Check } from "lucide-react";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+} from "@/shared/ui/dialog";
+import { Button } from "@/shared/ui/button";
 import { useStore } from "@/lib/store";
 import { parseCsv, valueFromString, type ParsedCsv } from "../lib/csv";
 import type { Database } from "@/lib/types";

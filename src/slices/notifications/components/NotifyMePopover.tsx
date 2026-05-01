@@ -1,5 +1,5 @@
 import { Bell, BellOff } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
 import { useSubscription } from "../hooks/useSubscription";
 import { SUBSCRIPTION_SCOPE_LABELS, type SubscriptionScope } from "../types";
 import { cn } from "@/shared/lib/utils";

@@ -1,6 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
-import { Switch } from "@/components/ui/switch";
+import { Switch } from "@/shared/ui/switch";
 import { cn } from "@/shared/lib/utils";
 
 export function RowButton({ icon: Icon, label }: { icon: LucideIcon; label: string }) {

@@ -10,10 +10,10 @@ import {
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
   DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/shared/ui/dropdown-menu";
 import {
   Popover, PopoverContent, PopoverTrigger,
-} from "@/components/ui/popover";
+} from "@/shared/ui/popover";
 const TableView = lazy(() => import("./views/TableView").then((m) => ({ default: m.TableView })));
 const BoardView = lazy(() => import("./views/BoardView").then((m) => ({ default: m.BoardView })));
 const ListView = lazy(() => import("./views/ListView").then((m) => ({ default: m.ListView })));
@@ -22,7 +22,7 @@ const CalendarView = lazy(() => import("./views/CalendarView").then((m) => ({ de
 const TimelineView = lazy(() => import("./views/TimelineView").then((m) => ({ default: m.TimelineView })));
 import { FilterBuilder } from "./FilterBuilder";
 import { SortBuilder } from "./SortBuilder";
-import { Input } from "@/components/ui/input";
+import { Input } from "@/shared/ui/input";
 import { RowDetailSheet } from "@/slices/database-row";
 import { NewRowMenu } from "@/slices/database-templates";
 import { CsvActions } from "@/slices/database-csv";

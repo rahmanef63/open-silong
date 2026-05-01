@@ -6,7 +6,7 @@ import type { Database } from "@/lib/types";
 import { cn } from "@/shared/lib/utils";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/shared/ui/dropdown-menu";
 import type { DensityConfig } from "../lib/density";
 
 interface Props {

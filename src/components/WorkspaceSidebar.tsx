@@ -8,7 +8,7 @@ import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { useStore } from "@/lib/store";
 import { Page } from "@/lib/types";
 import { cn } from "@/shared/lib/utils";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea } from "@/shared/ui/scroll-area";
 import { InboxBadge } from "@/slices/inbox";
 import {
   DENSITY, Section, SidebarAction, SidebarPageLink, DatabaseSidebarRow,

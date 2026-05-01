@@ -3,7 +3,7 @@ import { ChevronDown, Plus, FileText, Settings2 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
   DropdownMenuSeparator, DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/shared/ui/dropdown-menu";
 import { useStore } from "@/lib/store";
 import type { Database } from "@/lib/types";
 import { TemplatesDialog } from "./TemplatesDialog";

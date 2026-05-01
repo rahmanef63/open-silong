@@ -7,7 +7,7 @@ import { useStore } from "@/lib/store";
 import { cn } from "@/shared/lib/utils";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/shared/ui/dropdown-menu";
 import { DENSITY, type DensityConfig } from "../lib/density";
 import { handleTreeKey, type TreeItem } from "../lib/keyboard";
 

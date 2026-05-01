@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/shared/ui/dialog";
 import { useStore } from "@/lib/store";
 import { Search, FileText, Clock } from "lucide-react";
 

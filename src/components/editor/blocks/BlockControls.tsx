@@ -2,7 +2,7 @@ import { Copy, GripVertical, MessageSquare, Plus, Trash2 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/shared/ui/dropdown-menu";
 import type { Block, BlockType } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { cn } from "@/shared/lib/utils";

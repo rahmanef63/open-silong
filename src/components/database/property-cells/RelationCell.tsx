@@ -5,7 +5,7 @@ import { useStore } from "@/lib/store";
 import { cn } from "@/shared/lib/utils";
 import {
   Popover, PopoverContent, PopoverTrigger,
-} from "@/components/ui/popover";
+} from "@/shared/ui/popover";
 import type { CellProps } from "./types";
 
 export function RelationCell({ db, prop, row, value, onSet, cellClass }: CellProps) {

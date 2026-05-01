@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Switch } from "@/components/ui/switch";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/shared/ui/dialog";
+import { Switch } from "@/shared/ui/switch";
 import { Page } from "@/lib/types";
 import { useStore } from "@/lib/store";
 import { Copy, Globe, Lock, ExternalLink } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/ui/button";
 import { toast } from "sonner";
 
 export function ShareDialog({ open, onOpenChange, page }: { open: boolean; onOpenChange: (o: boolean) => void; page: Page }) {
