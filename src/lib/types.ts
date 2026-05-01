@@ -41,6 +41,10 @@ export interface Block {
   tableRows?: string[][];
   /** for table: include first row as header */
   tableHeader?: boolean;
+  /** for image: width as % of container (e.g. 60 = 60%); undefined = auto */
+  width?: number;
+  /** for columns2/3: per-column width as % of container; sum should ≈ 100 */
+  colWidths?: number[];
 }
 
 export type PageFont = "default" | "serif" | "mono";
