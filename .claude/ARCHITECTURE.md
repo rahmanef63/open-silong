@@ -51,7 +51,8 @@ src/slices/<name>/
 │   └── use<Name>.ts
 ├── lib/                    # pure functions (formatters, parsers, validators)
 │   └── <name>.ts
-└── types.ts                # types specific to this slice
+└── types/                  # slice-local types (folder, not flat — leaves room
+    └── index.ts            # to split by domain when the slice grows)
 ```
 
 A slice may export:
