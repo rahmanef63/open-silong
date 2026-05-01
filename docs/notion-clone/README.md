@@ -35,16 +35,16 @@ Cross-links inside the repo:
 
 ---
 
-## Completion stats (2026-04-30)
+## Completion stats (2026-05-01)
 
 | Doc | Done | Total | % |
 | --- | ---: | ---: | ---: |
-| `BACKLOG.md` | 394 | 844 | **46.7%** |
+| `BACKLOG.md` | 398 | 848 | **46.9%** |
 | `ROADMAP.md` | 28 | 53 | **52.8%** |
 
 Recompute with: `cd docs/notion-clone && grep -cE '^- \[x\]\|^  - \[x\]\|^    - \[x\]' BACKLOG.md`.
 
-## Current state snapshot (2026-04-30)
+## Current state snapshot (2026-05-01)
 
 The codebase already covers a usable single-user MVP plus most of the V1 surface. Items below are confirmed shipped:
 
@@ -91,7 +91,16 @@ The codebase already covers a usable single-user MVP plus most of the V1 surface
 - Stable callbacks (`focusByOffset`), Map-based O(1) lookups, memoized derived collections
 - ErrorBoundary recovers from view crashes without nuking the page
 
-**Latest additions (this session)**
+**Latest additions (2026-05-01 session)**
+- **Block renderer registry** (`src/components/editor/blocks/registry.tsx`) — `BLOCK_RENDERERS` maps `BlockType → ComponentType<BlockRendererProps>`. Both top-level `BlockEditor` and nested `NestedBlock` consume it. Adding a leaf block = 1 entry; previous 7-branch if/else collapsed to a single dispatch.
+- **Standardized block component contract** — `BaseBlockProps { block, onUpdate }` + `BlockRendererProps` (`onReplace?`, `registerRef?`) in `src/shared/types/block.ts`. `ImageBlock` + `SimpleTableBlock` no longer couple to `pageId` + `useStore` — pure callback components.
+- **Nested block DnD fully wired** — `NestedBlock` is now `useSortable` with a `GripVertical` handle and `isOver` indicator line. `ColumnPane` + `ToggleBlock` wrap children in `<SortableContext>`. Reorder inside toggle/column, drag between columns, drag out to top level, drag in from top — all six tree-move cases covered.
+- **Tree-aware DnD core** (`src/components/editor/lib/blockTree.ts`) — `findLocation` / `removeAt` / `insertAt` / `moveBlock` over the recursive block structure (top + columns + toggle children). 14 unit tests.
+- **Collision priority** (`src/components/editor/lib/collisionPriority.ts`) — pure helper that picks leaf-block hits first, suppresses container's own sortable id when its inner droppable is present, falls back to container droppables. Fixes the bug where dropping inside a toggle was misread as top-level reorder of the toggle. 7 unit tests.
+- **Slash menu inside nested blocks** — type `/` inside a toggle/column child to convert it (toggle/columns2/columns3 also seed children/columns).
+- **Slice type discipline** — 7 slices migrated from flat `types.ts` to `types/index.ts`; new `types/` for `code-block`, `equation`, `simple-table`. `simple-table` extends shared `BlockRendererProps` for DRY.
+
+**Earlier this session**
 - **Sidebar DnD polish** — DragOverlay ghost (no original-row jump), vertical-axis restricted (no horizontal scroll), drop-indicator line for sibling drops, brand ring for nesting (drag right ≥ 28px), smooth color transitions
 - **Cross-context page drag** — drag a page-link block (from page body or "Pages inside") into the sidebar to re-parent: drop on a row to nest under it, drop on the "Workspace" section header to move to root
 - **Cell selection + drag-fill** — Excel/Sheets-style: click a cell to select, drag the bottom-right brand dot to copy the value vertically across rows
@@ -99,7 +108,7 @@ The codebase already covers a usable single-user MVP plus most of the V1 surface
 - **Full-page database mode** — when a page contains exactly one database block, the page automatically renders full-width with the database's name as the page title (Notion-style standalone DB pages)
 - **Database trash** — sidebar context-menu "Move to trash" sends DBs to the Trash page with restore + permanent-delete; banner UI when viewing a trashed DB
 
-**Earlier this session**
+**Earlier**
 - **Database templates** — per-DB saved row presets with body blocks + property values; default-template flag; managed via "New ▼ → Manage templates"
 - **Database presets via ⌘K** — one-click `Tasks / Sprints / Projects` databases pre-configured with properties, views, status workflows, default templates, ID prefixes
 - **CSV import** — column → property mapper dialog, type coercion (date / number / select / multi-select / checkbox / text), skips empty rows

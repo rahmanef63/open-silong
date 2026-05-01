@@ -312,6 +312,10 @@
 - [ ] Move page to another workspace
 - [ ] Move block across page
 - [x] Drag block into nested toggle / column
+- [x] Reorder blocks inside toggle / column (sortable nested context)
+- [x] Drag block out of toggle / column to top level
+- [x] Drag block between columns
+- [x] Slash menu inside nested blocks (type `/` in toggle/column children)
 - [ ] Preserve permissions during duplicate
 - [ ] Preserve backlinks during duplicate
 - [x] Regenerate IDs for duplicates
