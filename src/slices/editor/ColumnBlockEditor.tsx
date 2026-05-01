@@ -128,11 +128,15 @@ function ColumnDivider({
   return (
     <div
       onPointerDown={onPointerDown}
-      className="relative w-1 shrink-0 cursor-ew-resize group/divider"
+      role="separator"
+      aria-orientation="vertical"
       aria-label="Resize columns"
+      className="relative w-2 shrink-0 cursor-ew-resize group/divider"
     >
-      <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-border group-hover/divider:bg-brand transition-colors" />
-      <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-1 opacity-0 group-hover/divider:opacity-100 bg-brand/40 transition-opacity" />
+      {/* Thin line — invisible by default, faint on cols hover, brand on direct hover/drag */}
+      <div className="absolute inset-y-1 left-1/2 -translate-x-1/2 w-px bg-transparent rounded-full transition-colors group-hover/cols:bg-border group-hover/divider:!bg-brand group-active/divider:!bg-brand" />
+      {/* Wider grab indicator — only on direct divider hover */}
+      <div className="absolute inset-y-1 left-1/2 -translate-x-1/2 w-1 rounded-full bg-brand/40 opacity-0 group-hover/divider:opacity-100 transition-opacity" />
     </div>
   );
 }
@@ -169,7 +173,7 @@ export function ColumnBlockEditor({
   return (
     <div
       ref={containerRef}
-      className="flex gap-0 w-full rounded-md border border-dashed border-border/50 hover:border-border transition p-2 my-1"
+      className="group/cols flex gap-0 w-full my-1"
     >
       {Array.from({ length: n }, (_, i) => (
         <Fragment key={`pane-frag-${i}`}>
