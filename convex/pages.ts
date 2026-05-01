@@ -2,6 +2,7 @@ import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { Id } from "./_generated/dataModel";
+import { buildSearchText } from "./features/search/lib";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
@@ -28,18 +29,20 @@ export const create = mutation({
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
     const now = Date.now();
+    const blocks = [emptyBlock()];
     return await ctx.db.insert("pages", {
       userId,
       parentId: args.parentId,
       title: args.title ?? "",
       icon: args.icon ?? "📄",
       cover: null,
-      blocks: [emptyBlock()],
+      blocks,
       favorite: false,
       trashed: false,
       isPublic: false,
       rowOfDatabaseId: args.rowOfDatabaseId,
       rowProps: args.rowOfDatabaseId ? {} : undefined,
+      searchText: buildSearchText(args.title, blocks),
       createdAt: now,
       updatedAt: now,
     });
@@ -56,8 +59,12 @@ export const update = mutation({
     if (!userId) throw new Error("Not authenticated");
     const page = await ctx.db.get(args.pageId as Id<"pages">);
     if (!page || page.userId !== userId) throw new Error("Not found");
+    const nextTitle = args.patch.title ?? page.title;
+    const nextBlocks = args.patch.blocks ?? page.blocks;
+    const touchesContent = "title" in args.patch || "blocks" in args.patch;
     await ctx.db.patch(args.pageId as Id<"pages">, {
       ...args.patch,
+      ...(touchesContent ? { searchText: buildSearchText(nextTitle, nextBlocks) } : {}),
       updatedAt: Date.now(),
     });
   },
@@ -137,18 +144,21 @@ export const duplicate = mutation({
     const src = await ctx.db.get(args.pageId as Id<"pages">);
     if (!src || src.userId !== userId) throw new Error("Not found");
     const now = Date.now();
+    const blocks = JSON.parse(JSON.stringify(src.blocks)).map((b: any) => ({ ...b, id: uid() }));
+    const title = src.title ? `${src.title} (copy)` : "";
     return await ctx.db.insert("pages", {
       userId,
       parentId: src.parentId,
-      title: src.title ? `${src.title} (copy)` : "",
+      title,
       icon: src.icon,
       cover: src.cover,
-      blocks: JSON.parse(JSON.stringify(src.blocks)).map((b: any) => ({ ...b, id: uid() })),
+      blocks,
       favorite: false,
       trashed: false,
       isPublic: src.isPublic,
       rowOfDatabaseId: src.rowOfDatabaseId,
       rowProps: src.rowProps ? JSON.parse(JSON.stringify(src.rowProps)) : undefined,
+      searchText: buildSearchText(title, blocks),
       createdAt: now,
       updatedAt: now,
     });
@@ -176,7 +186,11 @@ export const addBlock = mutation({
       checked: args.type === "todo" ? false : undefined,
       ...(args.init ?? {}),
     });
-    await ctx.db.patch(args.pageId as Id<"pages">, { blocks, updatedAt: Date.now() });
+    await ctx.db.patch(args.pageId as Id<"pages">, {
+      blocks,
+      searchText: buildSearchText(page.title, blocks),
+      updatedAt: Date.now(),
+    });
     return newId;
   },
 });
@@ -191,7 +205,11 @@ export const updateBlock = mutation({
     const blocks = page.blocks.map((b: any) =>
       b.id === args.blockId ? { ...b, ...args.patch } : b
     );
-    await ctx.db.patch(args.pageId as Id<"pages">, { blocks, updatedAt: Date.now() });
+    await ctx.db.patch(args.pageId as Id<"pages">, {
+      blocks,
+      searchText: buildSearchText(page.title, blocks),
+      updatedAt: Date.now(),
+    });
   },
 });
 
@@ -204,7 +222,11 @@ export const deleteBlock = mutation({
     if (!page || page.userId !== userId) throw new Error("Not found");
     let blocks = page.blocks.filter((b: any) => b.id !== args.blockId);
     if (!blocks.length) blocks = [emptyBlock()];
-    await ctx.db.patch(args.pageId as Id<"pages">, { blocks, updatedAt: Date.now() });
+    await ctx.db.patch(args.pageId as Id<"pages">, {
+      blocks,
+      searchText: buildSearchText(page.title, blocks),
+      updatedAt: Date.now(),
+    });
   },
 });
 
@@ -217,6 +239,10 @@ export const reorderBlocks = mutation({
     if (!page || page.userId !== userId) throw new Error("Not found");
     const map = new Map(page.blocks.map((b: any) => [b.id, b]));
     const blocks = args.orderedIds.map((id) => map.get(id)).filter(Boolean);
-    await ctx.db.patch(args.pageId as Id<"pages">, { blocks, updatedAt: Date.now() });
+    await ctx.db.patch(args.pageId as Id<"pages">, {
+      blocks,
+      // searchText unchanged — reorder doesn't change set of words
+      updatedAt: Date.now(),
+    });
   },
 });

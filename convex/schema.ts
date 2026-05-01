@@ -27,12 +27,15 @@ export default defineSchema({
     smallText: v.optional(v.boolean()),
     fullWidth: v.optional(v.boolean()),
     locked: v.optional(v.boolean()),
+    /** Denormalized title + flattened block text. Updated on every page write
+     *  so Convex searchIndex can match body content, not just title. */
+    searchText: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("by_user", ["userId"])
-    .searchIndex("search_title", {
-      searchField: "title",
+    .searchIndex("search_content", {
+      searchField: "searchText",
       filterFields: ["userId", "trashed"],
     }),
 

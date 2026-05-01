@@ -1,13 +1,15 @@
 import { ReactNode, useEffect, useState } from "react";
 import { WorkspaceSidebar } from "@/slices/workspace-sidebar/components/WorkspaceSidebar";
 import { SearchModal } from "@/slices/command-palette/components/SearchModal";
+import { useSearchBackfill } from "@/slices/search";
 import { Menu, X } from "lucide-react";
 import { Sheet, SheetContent } from "@/shared/ui/sheet";
 import { useStore } from "@/shared/lib/store";
 import { cn } from "@/shared/lib/utils";
 
 export function AppShell({ children }: { children: ReactNode }) {
-  const { preferences } = useStore();
+  const { preferences, user } = useStore();
+  useSearchBackfill(!!user?.id);
   const [searchOpen, setSearchOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const compact = preferences.sidebarDensity === "compact";
