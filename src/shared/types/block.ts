@@ -1,4 +1,4 @@
-import type { Block } from "@/lib/types";
+import type { Block } from "@/shared/types/domain";
 
 /**
  * Base shape every block-content renderer accepts.

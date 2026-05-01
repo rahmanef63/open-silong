@@ -1,4 +1,4 @@
-import type { Database, DatabaseTemplate, DatabaseViewConfig, Property } from "@/lib/types";
+import type { Database, DatabaseTemplate, DatabaseViewConfig, Property } from "@/shared/types/domain";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 

@@ -4,8 +4,8 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
-import { useStore } from "@/lib/store";
-import type { Database } from "@/lib/types";
+import { useStore } from "@/shared/lib/store";
+import type { Database } from "@/shared/types/domain";
 import { TemplatesDialog } from "./TemplatesDialog";
 
 interface Props {

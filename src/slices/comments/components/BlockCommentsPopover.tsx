@@ -1,6 +1,6 @@
 import { MessageSquare } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
-import { useStore } from "@/lib/store";
+import { useStore } from "@/shared/lib/store";
 import { useBlockComments } from "../lib/PageCommentsContext";
 import { CommentItem } from "./CommentItem";
 import { CommentComposer } from "./CommentComposer";

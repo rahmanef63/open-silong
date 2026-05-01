@@ -2,9 +2,9 @@ import { Plus } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
-import { useStore } from "@/lib/store";
-import { PROPERTY_TYPE_LABELS } from "@/components/database/DatabaseBlock";
-import type { PropertyType } from "@/lib/types";
+import { useStore } from "@/shared/lib/store";
+import { PROPERTY_TYPE_LABELS } from "@/slices/databases/DatabaseBlock";
+import type { PropertyType } from "@/shared/types/domain";
 
 interface Props {
   dbId: string;

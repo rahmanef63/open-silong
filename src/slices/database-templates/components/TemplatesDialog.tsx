@@ -5,8 +5,8 @@ import {
 } from "@/shared/ui/dialog";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
-import { useStore } from "@/lib/store";
-import type { Database, DatabaseTemplate } from "@/lib/types";
+import { useStore } from "@/shared/lib/store";
+import type { Database, DatabaseTemplate } from "@/shared/types/domain";
 import { cn } from "@/shared/lib/utils";
 
 interface Props {

@@ -1,6 +1,6 @@
 import { useMemo } from "react";
-import { useStore } from "@/lib/store";
-import type { Block, Page } from "@/lib/types";
+import { useStore } from "@/shared/lib/store";
+import type { Block, Page } from "@/shared/types/domain";
 
 export interface Backlink {
   pageId: string;

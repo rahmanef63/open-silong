@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Plus, Trash2, X, Database as DatabaseIcon } from "lucide-react";
-import { useStore } from "@/lib/store";
+import { useStore } from "@/shared/lib/store";
 import { cn } from "@/shared/lib/utils";
 import { toast } from "sonner";
 import type { SimpleTableBlockProps } from "../types";

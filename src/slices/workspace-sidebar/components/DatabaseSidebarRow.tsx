@@ -1,8 +1,8 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { MoreHorizontal, Table2, Trash2 } from "lucide-react";
-import { useStore } from "@/lib/store";
-import type { Database } from "@/lib/types";
+import { useStore } from "@/shared/lib/store";
+import type { Database } from "@/shared/types/domain";
 import { cn } from "@/shared/lib/utils";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,

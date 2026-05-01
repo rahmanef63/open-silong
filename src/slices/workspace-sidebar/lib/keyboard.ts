@@ -1,4 +1,4 @@
-import type { Page } from "@/lib/types";
+import type { Page } from "@/shared/types/domain";
 import { focusSiblingBySelector, isTextInputTarget } from "@/shared/lib/keyboard";
 
 export interface TreeItem { page: Page; depth: number; parentId: string | null }

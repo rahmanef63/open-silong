@@ -4,9 +4,9 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/shared/ui/dialog";
 import { Button } from "@/shared/ui/button";
-import { useStore } from "@/lib/store";
+import { useStore } from "@/shared/lib/store";
 import { parseCsv, valueFromString, type ParsedCsv } from "../lib/csv";
-import type { Database } from "@/lib/types";
+import type { Database } from "@/shared/types/domain";
 
 interface Props {
   db: Database;

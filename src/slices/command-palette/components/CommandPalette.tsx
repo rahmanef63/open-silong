@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import {
   CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
 } from "@/shared/ui/command";
-import { useStore } from "@/lib/store";
+import { useStore } from "@/shared/lib/store";
 import {
   FileText, Plus, Trash2, Inbox, Settings, Star, Search, Home,
   Sun, Moon, Database as DbIcon, Share2, History, Sparkles,
