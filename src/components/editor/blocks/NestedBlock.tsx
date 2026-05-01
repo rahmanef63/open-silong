@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { FileText, GripVertical } from "lucide-react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Checkbox } from "@/shared/ui/checkbox";
 import { useStore } from "@/lib/store";
 import type { Block, BlockType } from "@/lib/types";
 import { cn } from "@/shared/lib/utils";

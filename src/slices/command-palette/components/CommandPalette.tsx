@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
-} from "@/components/ui/command";
+} from "@/shared/ui/command";
 import { useStore } from "@/lib/store";
 import {
   FileText, Plus, Trash2, Inbox, Settings, Star, Search, Home,

@@ -4,7 +4,7 @@ import { useStore } from "@/lib/store";
 import { cn } from "@/shared/lib/utils";
 import {
   Popover, PopoverContent, PopoverTrigger,
-} from "@/components/ui/popover";
+} from "@/shared/ui/popover";
 import { computeRollup } from "../lib/formula";
 
 interface Props {

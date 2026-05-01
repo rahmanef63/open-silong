@@ -1,6 +1,6 @@
 import type { KeyboardEvent } from "react";
 import type { Block, BlockType } from "@/lib/types";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Checkbox } from "@/shared/ui/checkbox";
 import { cn } from "@/shared/lib/utils";
 import { CodeBlock } from "@/slices/code-block";
 

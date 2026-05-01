@@ -4,7 +4,7 @@ import "highlight.js/styles/github-dark.css";
 import { Check, Copy, ChevronDown } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/shared/ui/dropdown-menu";
 import { CODE_LANGUAGES, normalizeLang } from "../lib/languages";
 import type { CodeBlockProps } from "../types";
 

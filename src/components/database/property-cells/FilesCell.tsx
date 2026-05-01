@@ -3,7 +3,7 @@ import { File } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import {
   Popover, PopoverContent, PopoverTrigger,
-} from "@/components/ui/popover";
+} from "@/shared/ui/popover";
 import { FileChip, FileUploadButton } from "@/slices/files";
 import type { CellProps } from "./types";
 

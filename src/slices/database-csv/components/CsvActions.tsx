@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Download, Upload } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/shared/ui/dropdown-menu";
 import { useStore } from "@/lib/store";
 import { downloadCsv, exportDatabaseToCsv } from "../lib/csv";
 import type { Database, Page } from "@/lib/types";

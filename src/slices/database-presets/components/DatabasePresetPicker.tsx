@@ -1,7 +1,7 @@
 import { Sparkles } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/shared/ui/dropdown-menu";
 import { useStore } from "@/lib/store";
 import { DATABASE_PRESETS } from "../lib/presets";
 

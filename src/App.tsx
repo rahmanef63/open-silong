@@ -1,8 +1,8 @@
 import { lazy, Suspense } from "react";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { Toaster } from "@/components/ui/toaster";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster as Sonner } from "@/shared/ui/sonner";
+import { Toaster } from "@/shared/ui/toaster";
+import { TooltipProvider } from "@/shared/ui/tooltip";
 import { StoreProvider, useStore } from "@/lib/store";
 import { ConvexClientProvider } from "./ConvexClientProvider";
 import { useConvexAuth } from "convex/react";

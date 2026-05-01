@@ -2,9 +2,9 @@ import { useState } from "react";
 import { Plus, Trash2, Star } from "lucide-react";
 import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+} from "@/shared/ui/dialog";
+import { Button } from "@/shared/ui/button";
+import { Input } from "@/shared/ui/input";
 import { useStore } from "@/lib/store";
 import type { Database, DatabaseTemplate } from "@/lib/types";
 import { cn } from "@/shared/lib/utils";

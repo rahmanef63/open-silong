@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/shared/ui/dropdown-menu";
 
 const PROP_TYPE_ICON: Record<PropertyType, React.ElementType> = {
   text: Type,

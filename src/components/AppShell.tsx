@@ -2,7 +2,7 @@ import { ReactNode, useEffect, useState } from "react";
 import { WorkspaceSidebar } from "./WorkspaceSidebar";
 import { SearchModal } from "./SearchModal";
 import { Menu, X } from "lucide-react";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Sheet, SheetContent } from "@/shared/ui/sheet";
 import { useStore } from "@/lib/store";
 import { cn } from "@/shared/lib/utils";
 

@@ -49,17 +49,11 @@ Each entry: what's wrong, why it's still there, who'll fix it.
 ### `src/components/database/views/{Table,Timeline}View.tsx` (200+)
 - **Fix:** extract row/column subcomponents.
 
-## Low
+## Resolved (kept for history — see git log)
 
-### `src/components/ui/` (shadcn) lives outside `shared/`
-- **Wrong:** rule 2 says shared UI is `src/shared/ui/`.
-- **Why still here:** moving it requires a sed pass on ~80 files. Low risk
-  once tests are stable, but no value adding it to the same PR as features.
-- **Fix:** dedicated PR — `git mv src/components/ui src/shared/ui` then
-  `sed -i 's|@/components/ui|@/shared/ui|g' $(git ls-files '*.tsx' '*.ts')`.
-
-### `src/lib/{utils,format,keyboard,markdown}.ts` not yet under `shared/`
-- **Fix:** `git mv` to `src/shared/lib/`. Single sed pass for imports.
-
-### `src/hooks/` not yet under `shared/`
-- **Fix:** `git mv src/hooks src/shared/hooks`.
+- **2026-05-01** `src/components/ui/` → `src/shared/ui/` (49 shadcn files,
+  50 import sites updated, `components.json` aliases bumped).
+- **(prior)** `src/lib/{utils,format,keyboard,markdown}.ts` → `src/shared/lib/`.
+- **(prior)** `src/hooks/` → `src/shared/hooks/`.
+- **2026-05-01** Empty slice scaffolds removed: `page-actions/`, `properties/`,
+  `sub-items/` + 8 empty subfolders inside live slices.

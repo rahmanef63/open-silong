@@ -1,5 +1,5 @@
 import { BarChart3 } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
 import { usePageAnalytics } from "../hooks/usePageAnalytics";
 import type { Page } from "@/lib/types";
 
