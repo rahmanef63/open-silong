@@ -2,58 +2,58 @@
 
 Each entry: what's wrong, why it's still there, who'll fix it.
 
-## High
-
-### `src/lib/store.tsx` (888 lines)
-- **Wrong:** monolithic React Context wrapping all Convex bindings; violates
-  rule 4 (200-line cap), rule 1 (cross-feature concerns in one file).
-- **Why still here:** 30+ components consume `useStore()`. Migrating in one
-  pass would touch every file.
-- **Fix:** progressive extraction — each new slice gets its own
-  `use<Slice>()` hook calling Convex directly. `useStore()` shrinks each PR.
-- **Order:** inbox ✓, comments ✓, files ✓, then snapshots → sharing → databases → pages.
-
-### `src/components/database/PropertyCell.tsx` (657 lines)
-- **Wrong:** all 18 property type cells in one file.
-- **Fix:** extract to `src/slices/properties/components/cells/<type>.tsx`
-  (one cell per file). Wrap in a registry so `PropertyCell` becomes a dispatcher.
-
-### `src/components/editor/BlockEditor.tsx` (643 lines)
-- **Wrong:** every block-type renderer + handlers in one component.
-- **Fix:** extract per-type renderers to
-  `src/slices/blocks/components/types/<type>.tsx`. Use a registry.
-
-### `src/components/WorkspaceSidebar.tsx` (561 lines)
-- **Wrong:** sidebar header, sections, dnd, search all in one file.
-- **Fix:** split into `Header`, `Sections/{Favorites,Recent,Workspace,Databases,Trash}`,
-  `Tree/SortablePageRow`. Move under `src/slices/workspace/`.
-
-### `src/components/editor/PageActionsMenu.tsx` (390 lines)
-- **Wrong:** all handlers + UI inline.
-- **Fix:** extract `useCopyActions`, `useExportImport`, `useMoveActions` hooks.
-  Render rows from a config array.
-
 ## Medium
 
-### `src/components/database/DatabaseBlock.tsx` (367 lines)
-- **Fix:** split toolbar / view-tabs / properties-menu into subcomponents.
+### `src/components/editor/PageEditor.tsx` (394 lines)
+- **Wrong:** view shell + header + DnD wiring + subpages section all inline.
+- **Fix:** extract `Header`, `Subpages`, `IconPicker`, `LockBanner` into own files.
+  DnD wiring stays — already factored into `lib/blockTree.ts` + `lib/collisionPriority.ts`.
 
-### `src/components/editor/PageEditor.tsx` (313 lines)
-- **Fix:** extract `Header` (already a sub-fn, give it its own file),
-  `Subpages`, `IconPicker`, `LockBanner`.
+### `src/components/database/DatabaseBlock.tsx` (384 lines)
+- **Wrong:** toolbar + view-tabs + properties-menu inline.
+- **Fix:** split toolbar / view-tabs / props-menu subcomponents.
+
+### `src/components/editor/PageActionsMenu.tsx` (353 lines)
+- **Fix:** extract `useCopyActions`, `useExportImport`, `useMoveActions` hooks.
+  Render menu rows from a config array.
+
+### `src/components/database/views/{Table,Timeline}View.tsx` (200+)
+- **Fix:** extract row / column subcomponents.
+
+## Low
+
+### `src/components/WorkspaceSidebar.tsx` (250 lines)
+- Still over 200 cap but the heavy lifting moved to `src/slices/workspace-sidebar/`.
+- **Fix:** lift remaining sections (Favorites/Recent/Workspace/Databases/Trash)
+  into the slice, leaving `WorkspaceSidebar.tsx` as a thin host.
 
 ### `src/components/Dashboard.tsx` (217 lines)
 - **Fix:** extract `Greeting`, `ActionCards`, `Section`, `PageCard` to
-  `src/slices/workspace/components/`.
+  `src/slices/dashboard/components/` (new slice).
 
-### `src/components/database/views/{Table,Timeline}View.tsx` (200+)
-- **Fix:** extract row/column subcomponents.
+### `src/lib/store.tsx` (235 lines)
+- Was 888. Most domain hooks already extracted to `src/lib/store/`.
+- **Fix:** continue progressive extraction — sharing → databases → pages
+  each get their own slice hook calling Convex directly.
+
+### `src/components/editor/` and `src/components/database/` not as slices
+- Per ARCHITECTURE.md these should live under `src/slices/{editor,databases}/`.
+- **Why still here:** ~80 files; touches every import.
+- **Fix:** dedicated PR with `git mv` + sed.
 
 ## Resolved (kept for history — see git log)
 
 - **2026-05-01** `src/components/ui/` → `src/shared/ui/` (49 shadcn files,
   50 import sites updated, `components.json` aliases bumped).
-- **(prior)** `src/lib/{utils,format,keyboard,markdown}.ts` → `src/shared/lib/`.
-- **(prior)** `src/hooks/` → `src/shared/hooks/`.
 - **2026-05-01** Empty slice scaffolds removed: `page-actions/`, `properties/`,
   `sub-items/` + 8 empty subfolders inside live slices.
+- **2026-05-01** ARCHITECTURE.md updated: `types/index.ts` is the convention
+  (was flat `types.ts`).
+- **(prior)** `src/lib/store.tsx` shrunk 888 → 235 via extraction to
+  `src/lib/store/{history,snapshots,pageActions,databaseActions}.ts`.
+- **(prior)** `src/components/database/PropertyCell.tsx` 657 → 181 via per-type
+  module extraction to `src/components/database/property-cells/<type>.tsx`.
+- **(prior)** `src/components/editor/BlockEditor.tsx` 643 → 328 via block-shell /
+  block-controls / block-body / per-type renderer split + `BLOCK_RENDERERS` registry.
+- **(prior)** `src/lib/{utils,format,keyboard,markdown}.ts` → `src/shared/lib/`.
+- **(prior)** `src/hooks/` → `src/shared/hooks/`.

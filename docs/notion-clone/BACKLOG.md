@@ -230,7 +230,7 @@
 
 - [x] Columns (2 and 3)
 - [x] Drag block into column
-- [ ] Resize column
+- [x] Resize column (drag divider, persists `colWidths` % per pane)
 - [ ] Table of contents
 - [ ] Breadcrumb block
 - [x] Button block (label + URL or page path → opens new tab / navigates internally)
@@ -240,7 +240,7 @@
 ## 4.4 Media Blocks — P1
 
 - [x] Image (upload + URL + caption + alt placeholder)
-- [ ] Resize image
+- [x] Resize image (drag right-edge handle, persists `width` %)
 - [ ] Download original
 - [x] File block (upload + preview + size)
 - [ ] Video block

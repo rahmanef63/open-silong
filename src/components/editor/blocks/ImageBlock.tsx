@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { Block } from "@/lib/types";
 
 interface Props {
@@ -6,8 +6,13 @@ interface Props {
   onUpdate: (patch: Partial<Block>) => void;
 }
 
+const MIN_W = 15;
+const MAX_W = 100;
+
 export function ImageBlock({ block, onUpdate }: Props) {
   const [urlInput, setUrlInput] = useState(block.url ?? "");
+  const wrapRef = useRef<HTMLDivElement | null>(null);
+  const [dragging, setDragging] = useState(false);
 
   if (!block.url) {
     return (
@@ -29,12 +34,48 @@ export function ImageBlock({ block, onUpdate }: Props) {
     );
   }
 
+  const widthPct = block.width ?? 100;
+
+  const onResizeStart = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const wrap = wrapRef.current;
+    if (!wrap) return;
+    const parent = wrap.parentElement;
+    if (!parent) return;
+    setDragging(true);
+    const parentRect = parent.getBoundingClientRect();
+    const startX = e.clientX;
+    const startW = wrap.getBoundingClientRect().width;
+
+    const onMove = (ev: PointerEvent) => {
+      const delta = ev.clientX - startX;
+      const nextPx = Math.max(60, Math.min(parentRect.width, startW + delta));
+      const pct = Math.round(Math.max(MIN_W, Math.min(MAX_W, (nextPx / parentRect.width) * 100)));
+      wrap.style.width = `${pct}%`;
+    };
+    const onUp = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      setDragging(false);
+      const final = wrap.style.width;
+      const num = parseFloat(final);
+      if (Number.isFinite(num)) onUpdate({ width: num });
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  };
+
   return (
-    <div className="group/img relative">
+    <div
+      ref={wrapRef}
+      style={{ width: `${widthPct}%` }}
+      className="group/img relative"
+    >
       <img
         src={block.url}
         alt={block.caption ?? ""}
-        className="max-w-full rounded-md border border-border object-contain"
+        className="block w-full rounded-md border border-border object-contain"
         onError={(e) => (e.currentTarget.style.opacity = "0.3")}
       />
       <div
@@ -50,6 +91,16 @@ export function ImageBlock({ block, onUpdate }: Props) {
       >
         Change
       </button>
+      {/* Resize handle on right edge */}
+      <div
+        onPointerDown={onResizeStart}
+        className={
+          "absolute top-1/2 -right-1 -translate-y-1/2 h-12 w-1.5 rounded-full bg-foreground/60 cursor-ew-resize " +
+          (dragging ? "opacity-100" : "opacity-0 group-hover/img:opacity-100") +
+          " transition"
+        }
+        aria-label="Resize image"
+      />
     </div>
   );
 }
