@@ -1,4 +1,4 @@
-import { Copy, GripVertical, MessageSquare, Plus, Trash2 } from "lucide-react";
+import { CheckSquare, Copy, GripVertical, MessageSquare, Plus, Trash2 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
@@ -9,6 +9,7 @@ import { cn } from "@/shared/lib/utils";
 import { BLOCK_SPECS } from "../blockSpecs";
 import { BlockCommentsPopover, useBlockComments } from "@/slices/comments";
 import { BlockColorMenu } from "./BlockColorMenu";
+import { useBlockSelectionOptional } from "@/slices/block-selection";
 
 interface Props {
   pageId: string;
@@ -21,6 +22,27 @@ interface Props {
 export function BlockControls({ pageId, block, index, listeners, convertTo }: Props) {
   const { addBlock, deleteBlock, duplicateBlock, updateBlock, user } = useStore();
   const { openCount, create } = useBlockComments(block.id);
+  const sel = useBlockSelectionOptional();
+
+  /**
+   * Modifier-aware grip click:
+   *   shift  → range-select from anchor
+   *   meta   → toggle in selection (Cmd on mac, Ctrl elsewhere)
+   * In both cases we suppress the dropdown opening + drag start.
+   */
+  const onGripPointerDown = (e: React.PointerEvent) => {
+    if (!sel) return;
+    if (e.shiftKey) {
+      e.preventDefault();
+      e.stopPropagation();
+      sel.range(block.id);
+    } else if (e.metaKey || e.ctrlKey) {
+      e.preventDefault();
+      e.stopPropagation();
+      sel.toggle(block.id);
+    }
+  };
+
   return (
     <div className="flex">
       <button
@@ -55,6 +77,9 @@ export function BlockControls({ pageId, block, index, listeners, convertTo }: Pr
         <DropdownMenuTrigger asChild>
           <button
             {...listeners}
+            data-block-grip
+            onPointerDownCapture={onGripPointerDown}
+            title="Drag · Shift-click range · ⌘-click toggle"
             className="flex h-6 w-5 items-center justify-center rounded text-muted-foreground hover:bg-accent cursor-grab active:cursor-grabbing"
             aria-label="Drag or open block menu"
           >
@@ -63,6 +88,12 @@ export function BlockControls({ pageId, block, index, listeners, convertTo }: Pr
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" side="right" className="w-56">
           <DropdownMenuLabel className="text-xs text-muted-foreground">Block actions</DropdownMenuLabel>
+          {sel && (
+            <DropdownMenuItem onClick={() => sel.selectOne(block.id)}>
+              <CheckSquare className="mr-2 h-3.5 w-3.5" /> Select block
+              <span className="ml-auto text-[10px] text-muted-foreground">⌘·Shift-click</span>
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem onClick={() => {
             const id = duplicateBlock(pageId, block.id);
             if (id) setTimeout(() => document.querySelector<HTMLElement>(`[data-block-id="${id}"]`)?.focus(), 0);

@@ -57,7 +57,7 @@ export function ToggleBlock({
   return (
     <BlockShell
       setNodeRef={setNodeRef} style={style} isDragging={isDragging} isOver={shellIsOver}
-      attributes={attributes} listeners={listeners}
+      attributes={attributes} listeners={listeners} blockId={block.id}
       controls={<BlockControls pageId={pageId} block={block} index={index} listeners={listeners} convertTo={convertTo} />}
     >
       <div

@@ -39,7 +39,7 @@ Cross-links inside the repo:
 
 | Doc | Done | Total | % |
 | --- | ---: | ---: | ---: |
-| `BACKLOG.md` | 404 | 850 | **47.5%** |
+| `BACKLOG.md` | 406 | 850 | **47.8%** |
 | `ROADMAP.md` | 28 | 53 | **52.8%** |
 
 Recompute with: `cd docs/notion-clone && grep -cE '^- \[x\]\|^  - \[x\]\|^    - \[x\]' BACKLOG.md`.
