@@ -8,6 +8,7 @@ import { cn } from "@/shared/lib/utils";
 import { BlockShell } from "./BlockShell";
 import { BlockControls } from "./BlockControls";
 import { NestedBlock } from "./NestedBlock";
+import { bgColorClass, colorClass } from "../lib/colors";
 
 interface Props {
   pageId: string;
@@ -50,7 +51,14 @@ export function ToggleBlock({
       attributes={attributes} listeners={listeners}
       controls={<BlockControls pageId={pageId} block={block} index={index} listeners={listeners} convertTo={convertTo} />}
     >
-      <div ref={setDropRef} className={cn("rounded transition-colors", dropIsOver && "bg-brand/10 ring-2 ring-brand ring-inset")}>
+      <div
+        ref={setDropRef}
+        className={cn(
+          "rounded transition-colors",
+          dropIsOver && "bg-brand/10 ring-2 ring-brand ring-inset",
+          !dropIsOver && bgColorClass(block.bgColor),
+        )}
+      >
         <div className="flex items-start gap-1">
           <button
             onClick={() => updateBlock(pageId, block.id, { collapsed: !collapsed })}
@@ -64,7 +72,10 @@ export function ToggleBlock({
             suppressContentEditableWarning
             onInput={(e) => updateBlock(pageId, block.id, { text: (e.currentTarget as HTMLElement).innerText })}
             data-placeholder="Toggle heading"
-            className="flex-1 outline-none font-semibold text-base leading-7 py-0.5 whitespace-pre-wrap break-words empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground/50"
+            className={cn(
+              "flex-1 outline-none font-semibold text-base leading-7 py-0.5 whitespace-pre-wrap break-words empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground/50",
+              colorClass(block.color),
+            )}
           >
             {block.text}
           </div>

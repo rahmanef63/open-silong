@@ -298,8 +298,8 @@
 - [x] Small text toggle
 - [x] Full width toggle
 - [x] Font (default / serif / mono)
-- [ ] Block color
-- [ ] Block background color
+- [x] Block color (10-color palette: gray/brown/orange/yellow/green/blue/purple/pink/red, via Color submenu in block-controls dropdown)
+- [x] Block background color (same 10-color palette, persists `bgColor`)
 - [x] Page icon
 - [x] Page cover
 - [ ] Custom cover positioning
