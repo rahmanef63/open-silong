@@ -2,7 +2,6 @@ import { Fragment, useRef } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { Block, BlockType } from "@/shared/types/domain";
-import { useStore } from "@/shared/lib/store";
 import { cn } from "@/shared/lib/utils";
 import { Plus } from "lucide-react";
 import { NestedBlock } from "./blocks/NestedBlock";
@@ -12,14 +11,14 @@ const MIN_COL = 10;
 
 /** One column pane */
 function ColumnPane({
-  colIndex, blocks, columnBlockId, widthPct,
+  colIndex, blocks, columnBlockId, widthPct, depth,
   onColumnsChange,
 }: {
   colIndex: number;
   blocks: Block[];
   columnBlockId: string;
-  pageId: string;
   widthPct: number;
+  depth: number;
   onColumnsChange: (colIndex: number, newBlocks: Block[]) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: `col:${columnBlockId}:${colIndex}` });
@@ -63,6 +62,7 @@ function ColumnPane({
             <NestedBlock
               key={b.id}
               block={b}
+              depth={depth}
               onUpdate={(patch) => onUpdate(b.id, patch)}
               onAddAfter={(type) => onAdd(i, type)}
               onDelete={() => onDelete(b.id)}
@@ -112,7 +112,6 @@ function ColumnDivider({
       r = combined - l;
       next[leftIdx] = l;
       next[leftIdx + 1] = r;
-      // Live visual update via CSS var (cheap, no re-render):
       const panes = c.querySelectorAll<HTMLElement>("[data-col-pane]");
       panes.forEach((p, i) => { if (next[i] != null) p.style.flex = `0 0 ${next[i]}%`; });
     };
@@ -133,22 +132,23 @@ function ColumnDivider({
       aria-label="Resize columns"
       className="relative w-2 shrink-0 cursor-ew-resize group/divider"
     >
-      {/* Thin line — invisible by default, faint on cols hover, brand on direct hover/drag */}
       <div className="absolute inset-y-1 left-1/2 -translate-x-1/2 w-px bg-transparent rounded-full transition-colors group-hover/cols:bg-border group-hover/divider:!bg-brand group-active/divider:!bg-brand" />
-      {/* Wider grab indicator — only on direct divider hover */}
       <div className="absolute inset-y-1 left-1/2 -translate-x-1/2 w-1 rounded-full bg-brand/40 opacity-0 group-hover/divider:opacity-100 transition-opacity" />
     </div>
   );
 }
 
-/** Root column layout block (columns2 or columns3) */
+/** Root column layout block (columns2 or columns3) — pure callback API.
+ * `depth` is the depth assigned to inner NestedBlocks. Top-level usage = 1; nested
+ * usage = parent depth + 1. The NestedBlock itself enforces the MAX-NEST cap.
+ */
 export function ColumnBlockEditor({
-  pageId, block,
+  block, onUpdate, depth = 1,
 }: {
-  pageId: string;
   block: Block;
+  onUpdate: (patch: Partial<Block>) => void;
+  depth?: number;
 }) {
-  const { updateBlock } = useStore();
   const n = block.type === "columns3" ? 3 : 2;
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -165,16 +165,13 @@ export function ColumnBlockEditor({
   const handleColumnsChange = (colIndex: number, newBlocks: Block[]) => {
     const next = [...columns];
     next[colIndex] = newBlocks;
-    updateBlock(pageId, block.id, { columns: next });
+    onUpdate({ columns: next });
   };
 
-  const commitWidths = (next: number[]) => updateBlock(pageId, block.id, { colWidths: next });
+  const commitWidths = (next: number[]) => onUpdate({ colWidths: next });
 
   return (
-    <div
-      ref={containerRef}
-      className="group/cols flex gap-0 w-full my-1"
-    >
+    <div ref={containerRef} className="group/cols flex gap-0 w-full my-1">
       {Array.from({ length: n }, (_, i) => (
         <Fragment key={`pane-frag-${i}`}>
           {i > 0 && (
@@ -189,8 +186,8 @@ export function ColumnBlockEditor({
             colIndex={i}
             blocks={columns[i] ?? [emptyBlock()]}
             columnBlockId={block.id}
-            pageId={pageId}
             widthPct={widths[i]}
+            depth={depth}
             onColumnsChange={handleColumnsChange}
           />
         </Fragment>

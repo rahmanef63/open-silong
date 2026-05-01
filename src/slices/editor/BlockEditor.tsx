@@ -271,7 +271,7 @@ function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerR
         attributes={attributes} listeners={listeners}
         controls={<BlockControls pageId={pageId} block={block} index={index} listeners={listeners} convertTo={convertTo} />}
       >
-        <ColumnBlockEditor pageId={pageId} block={block} />
+        <ColumnBlockEditor block={block} onUpdate={(p) => updateBlock(pageId, block.id, p)} depth={1} />
       </BlockShell>
     );
   }
@@ -280,10 +280,8 @@ function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerR
     return (
       <ToggleBlock
         pageId={pageId} block={block} index={index}
-        setNodeRef={setNodeRef} style={style} isDragging={isDragging} isOver={isOver} blockId={block.id}
+        setNodeRef={setNodeRef} style={style} isDragging={isDragging} isOver={isOver}
         attributes={attributes} listeners={listeners} convertTo={convertTo}
-        focusByOffset={focusByOffset} registerRef={registerRef}
-        total={total}
       />
     );
   }
