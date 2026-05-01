@@ -23,26 +23,8 @@ export function BlockControls({ pageId, block, index, listeners, convertTo }: Pr
   const { addBlock, deleteBlock, duplicateBlock, updateBlock, user } = useStore();
   const { openCount, create } = useBlockComments(block.id);
   const sel = useBlockSelectionOptional();
-
-  /**
-   * Modifier-aware grip click:
-   *   shift  → range-select from anchor
-   *   meta   → toggle in selection (Cmd on mac, Ctrl elsewhere)
-   * In both cases we suppress the dropdown opening + drag start.
-   */
-  const onGripPointerDown = (e: React.PointerEvent) => {
-    if (!sel) return;
-    if (e.shiftKey) {
-      e.preventDefault();
-      e.stopPropagation();
-      sel.range(block.id);
-    } else if (e.metaKey || e.ctrlKey) {
-      e.preventDefault();
-      e.stopPropagation();
-      sel.toggle(block.id);
-    }
-  };
-
+  // Note: modifier-aware grip click (shift / meta) is intercepted at the
+  // document level by BlockSelectionProvider — see its useEffect for why.
   return (
     <div className="flex">
       <button
@@ -78,7 +60,6 @@ export function BlockControls({ pageId, block, index, listeners, convertTo }: Pr
           <button
             {...listeners}
             data-block-grip
-            onPointerDownCapture={onGripPointerDown}
             title="Drag · Shift-click range · ⌘-click toggle"
             className="flex h-6 w-5 items-center justify-center rounded text-muted-foreground hover:bg-accent cursor-grab active:cursor-grabbing"
             aria-label="Drag or open block menu"

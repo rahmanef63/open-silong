@@ -25,12 +25,13 @@ export function BlockShell({
       ref={setNodeRef as unknown as React.Ref<HTMLDivElement>}
       style={style}
       {...attributes}
+      data-block-shell-id={blockId}
       data-block-selected={selected || undefined}
       className={cn(
-        "group/block relative rounded transition-colors",
+        "group/block relative rounded -mx-1 px-1 transition-colors",
         isDragging && "opacity-40",
         isOver && "before:absolute before:left-7 before:right-0 before:-top-0.5 before:h-0.5 before:bg-brand before:rounded",
-        selected && "bg-brand/10 ring-1 ring-brand/40",
+        selected && "bg-brand/15 ring-2 ring-brand/60 ring-offset-0",
       )}
     >
       <div className="flex items-start gap-1">
