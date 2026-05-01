@@ -92,11 +92,11 @@ The codebase already covers a usable single-user MVP plus most of the V1 surface
 - ErrorBoundary recovers from view crashes without nuking the page
 
 **Latest additions (2026-05-01 session)**
-- **Block renderer registry** (`src/components/editor/blocks/registry.tsx`) — `BLOCK_RENDERERS` maps `BlockType → ComponentType<BlockRendererProps>`. Both top-level `BlockEditor` and nested `NestedBlock` consume it. Adding a leaf block = 1 entry; previous 7-branch if/else collapsed to a single dispatch.
+- **Block renderer registry** (`src/slices/editor/blocks/registry.tsx`) — `BLOCK_RENDERERS` maps `BlockType → ComponentType<BlockRendererProps>`. Both top-level `BlockEditor` and nested `NestedBlock` consume it. Adding a leaf block = 1 entry; previous 7-branch if/else collapsed to a single dispatch.
 - **Standardized block component contract** — `BaseBlockProps { block, onUpdate }` + `BlockRendererProps` (`onReplace?`, `registerRef?`) in `src/shared/types/block.ts`. `ImageBlock` + `SimpleTableBlock` no longer couple to `pageId` + `useStore` — pure callback components.
 - **Nested block DnD fully wired** — `NestedBlock` is now `useSortable` with a `GripVertical` handle and `isOver` indicator line. `ColumnPane` + `ToggleBlock` wrap children in `<SortableContext>`. Reorder inside toggle/column, drag between columns, drag out to top level, drag in from top — all six tree-move cases covered.
-- **Tree-aware DnD core** (`src/components/editor/lib/blockTree.ts`) — `findLocation` / `removeAt` / `insertAt` / `moveBlock` over the recursive block structure (top + columns + toggle children). 14 unit tests.
-- **Collision priority** (`src/components/editor/lib/collisionPriority.ts`) — pure helper that picks leaf-block hits first, suppresses container's own sortable id when its inner droppable is present, falls back to container droppables. Fixes the bug where dropping inside a toggle was misread as top-level reorder of the toggle. 7 unit tests.
+- **Tree-aware DnD core** (`src/slices/editor/lib/blockTree.ts`) — `findLocation` / `removeAt` / `insertAt` / `moveBlock` over the recursive block structure (top + columns + toggle children). 14 unit tests.
+- **Collision priority** (`src/slices/editor/lib/collisionPriority.ts`) — pure helper that picks leaf-block hits first, suppresses container's own sortable id when its inner droppable is present, falls back to container droppables. Fixes the bug where dropping inside a toggle was misread as top-level reorder of the toggle. 7 unit tests.
 - **Slash menu inside nested blocks** — type `/` inside a toggle/column child to convert it (toggle/columns2/columns3 also seed children/columns).
 - **Slice type discipline** — 7 slices migrated from flat `types.ts` to `types/index.ts`; new `types/` for `code-block`, `equation`, `simple-table`. `simple-table` extends shared `BlockRendererProps` for DRY.
 
