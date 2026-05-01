@@ -30,6 +30,32 @@ export function BlockSelectionProvider({ blockOrder, children }: Props) {
   const clear = useCallback(() => setState(clearSelection), []);
   const isSelected = useCallback((id: string) => state.ids.has(id), [state.ids]);
 
+  // Native document-level capture listener:
+  // Runs BEFORE any React handler (and before Radix DropdownMenuTrigger / dnd-kit
+  // listeners on the same grip button). When the user holds a modifier and clicks
+  // a grip, we intercept the pointerdown, fire the selection op, and call
+  // stopImmediatePropagation + preventDefault so the dropdown doesn't open and
+  // dnd-kit doesn't start a drag.
+  useEffect(() => {
+    const handler = (e: PointerEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+      const grip = target.closest<HTMLElement>("[data-block-grip]");
+      if (!grip) return;
+      const wantSelect = e.shiftKey || e.metaKey || e.ctrlKey;
+      if (!wantSelect) return;
+      const shell = grip.closest<HTMLElement>("[data-block-shell-id]");
+      const id = shell?.dataset.blockShellId;
+      if (!id) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      if (e.shiftKey) setState((s) => rangeSelect(s, id, orderRef.current));
+      else setState((s) => toggleSelection(s, id));
+    };
+    document.addEventListener("pointerdown", handler, true);
+    return () => document.removeEventListener("pointerdown", handler, true);
+  }, []);
+
   const value = useMemo<SelectionApi>(() => ({
     state, isSelected, selectOne, toggle, range, clear, count: state.ids.size,
   }), [state, isSelected, selectOne, toggle, range, clear]);
