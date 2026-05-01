@@ -1,5 +1,7 @@
 import { useRef, useState } from "react";
+import { AlignLeft, AlignCenter, AlignRight } from "lucide-react";
 import type { Block } from "@/shared/types/domain";
+import { cn } from "@/shared/lib/utils";
 
 interface Props {
   block: Block;
@@ -8,6 +10,18 @@ interface Props {
 
 const MIN_W = 15;
 const MAX_W = 100;
+
+const ALIGN_WRAPPER: Record<NonNullable<Block["align"]>, string> = {
+  left: "mr-auto",
+  center: "mx-auto",
+  right: "ml-auto",
+};
+
+const ALIGN_OPTIONS: { value: NonNullable<Block["align"]>; Icon: typeof AlignLeft }[] = [
+  { value: "left", Icon: AlignLeft },
+  { value: "center", Icon: AlignCenter },
+  { value: "right", Icon: AlignRight },
+];
 
 export function ImageBlock({ block, onUpdate }: Props) {
   const [urlInput, setUrlInput] = useState(block.url ?? "");
@@ -35,6 +49,7 @@ export function ImageBlock({ block, onUpdate }: Props) {
   }
 
   const widthPct = block.width ?? 100;
+  const align = block.align ?? "center";
 
   const onResizeStart = (e: React.PointerEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -70,7 +85,7 @@ export function ImageBlock({ block, onUpdate }: Props) {
     <div
       ref={wrapRef}
       style={{ width: `${widthPct}%` }}
-      className="group/img relative"
+      className={cn("group/img relative", ALIGN_WRAPPER[align])}
     >
       <img
         src={block.url}
@@ -85,20 +100,38 @@ export function ImageBlock({ block, onUpdate }: Props) {
         data-placeholder="Caption"
         className="mt-1 text-sm text-muted-foreground text-center outline-none empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground/40"
       />
-      <button
-        onClick={() => onUpdate({ url: undefined })}
-        className="absolute top-1 right-1 rounded bg-background/80 border border-border px-1.5 py-0.5 text-xs text-muted-foreground opacity-0 group-hover/img:opacity-100 transition"
-      >
-        Change
-      </button>
+      {/* Floating toolbar: align + change */}
+      <div className="absolute top-1 right-1 flex items-center gap-1 rounded bg-background/85 border border-border px-1 py-0.5 opacity-0 group-hover/img:opacity-100 transition">
+        {ALIGN_OPTIONS.map(({ value, Icon }) => (
+          <button
+            key={value}
+            type="button"
+            onClick={() => onUpdate({ align: value })}
+            aria-label={`Align ${value}`}
+            className={cn(
+              "h-5 w-5 flex items-center justify-center rounded text-muted-foreground hover:bg-accent hover:text-foreground transition",
+              align === value && "bg-accent text-foreground",
+            )}
+          >
+            <Icon className="h-3 w-3" />
+          </button>
+        ))}
+        <span className="mx-0.5 h-3 w-px bg-border" />
+        <button
+          type="button"
+          onClick={() => onUpdate({ url: undefined })}
+          className="rounded px-1 text-[11px] text-muted-foreground hover:text-foreground"
+        >
+          Change
+        </button>
+      </div>
       {/* Resize handle on right edge */}
       <div
         onPointerDown={onResizeStart}
-        className={
-          "absolute top-1/2 -right-1 -translate-y-1/2 h-12 w-1.5 rounded-full bg-foreground/60 cursor-ew-resize " +
-          (dragging ? "opacity-100" : "opacity-0 group-hover/img:opacity-100") +
-          " transition"
-        }
+        className={cn(
+          "absolute top-1/2 -right-1 -translate-y-1/2 h-12 w-1.5 rounded-full bg-foreground/60 cursor-ew-resize transition",
+          dragging ? "opacity-100" : "opacity-0 group-hover/img:opacity-100",
+        )}
         aria-label="Resize image"
       />
     </div>

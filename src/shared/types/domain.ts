@@ -43,6 +43,8 @@ export interface Block {
   tableHeader?: boolean;
   /** for image: width as % of container (e.g. 60 = 60%); undefined = auto */
   width?: number;
+  /** for image: horizontal alignment within its row; default = "center" */
+  align?: "left" | "center" | "right";
   /** for columns2/3: per-column width as % of container; sum should ≈ 100 */
   colWidths?: number[];
 }
