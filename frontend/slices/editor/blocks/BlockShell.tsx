@@ -28,21 +28,21 @@ export function BlockShell({
       data-block-shell-id={blockId}
       data-block-selected={selected || undefined}
       className={cn(
-        "group/block relative rounded -mx-1 px-1 transition-colors",
+        "group/block relative rounded transition-colors",
         isDragging && "opacity-40",
-        isOver && "before:absolute before:left-7 before:right-0 before:-top-0.5 before:h-0.5 before:bg-brand before:rounded",
+        isOver && "before:absolute before:left-0 before:right-0 before:-top-0.5 before:h-0.5 before:bg-brand before:rounded",
         selected && "bg-brand/15 ring-2 ring-brand/60 ring-offset-0",
       )}
     >
-      <div className="flex items-start gap-1">
-        <div className={cn(
-          "flex pt-1.5 transition",
+      <div
+        className={cn(
+          "absolute right-full top-1.5 mr-1 hidden md:flex transition",
           selected ? "opacity-100" : "opacity-0 group-hover/block:opacity-100 focus-within:opacity-100",
-        )}>
-          {controls}
-        </div>
-        <div className="flex-1 min-w-0">{children}</div>
+        )}
+      >
+        {controls}
       </div>
+      <div className="min-w-0">{children}</div>
     </div>
   );
 }

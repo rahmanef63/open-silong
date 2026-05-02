@@ -148,7 +148,7 @@ export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block 
   const activeSorts = (view.sorts ?? []).length;
 
   return (
-    <div data-keyboard-scope data-database-block-root className="rounded-lg border border-border bg-card overflow-hidden">
+    <div data-keyboard-scope data-database-block-root className="rounded-lg border border-border bg-card">
       {/* Top bar: db name + view tabs */}
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-3 py-2">
         <div className="flex items-center gap-2 min-w-0 flex-1">

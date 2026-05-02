@@ -46,7 +46,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <SidebarProvider>
       <WorkspaceSidebar onOpenSearch={() => setSearchOpen(true)} />
-      <SidebarInset className="bg-surface-elevated md:m-2 md:rounded-xl md:border md:border-border md:shadow-soft overflow-hidden">
+      <SidebarInset className="bg-surface-elevated md:m-2 md:rounded-xl md:border md:border-border md:shadow-soft min-w-0">
         <div className="md:hidden flex items-center justify-between border-b border-border px-3 h-12">
           <SidebarTrigger className="-ml-2" />
           <button onClick={() => setSearchOpen(true)} className="text-sm text-muted-foreground rounded-md border border-border px-3 py-1">
