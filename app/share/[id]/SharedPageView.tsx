@@ -26,7 +26,7 @@ export function SharedPageView({ page }: { page: SharedPage }) {
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <span className="text-xs uppercase tracking-wider font-semibold">Shared via Nosion</span>
         </div>
-        <Link href="/" className="text-xs text-muted-foreground hover:text-foreground">
+        <Link href="/dashboard" className="text-xs text-muted-foreground hover:text-foreground">
           Open in workspace →
         </Link>
       </header>

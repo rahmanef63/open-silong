@@ -38,6 +38,16 @@ const nextConfig = {
     ],
   },
   turbopack: {},
+  async redirects() {
+    // Pre-/dashboard URLs from before the app was moved under a route prefix.
+    return [
+      { source: "/p/:id", destination: "/dashboard/p/:id", permanent: true },
+      { source: "/inbox", destination: "/dashboard/inbox", permanent: true },
+      { source: "/trash", destination: "/dashboard/trash", permanent: true },
+      { source: "/settings", destination: "/dashboard/settings", permanent: true },
+      { source: "/profile", destination: "/dashboard/profile", permanent: true },
+    ];
+  },
   async headers() {
     return [
       {
