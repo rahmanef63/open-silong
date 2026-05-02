@@ -14,6 +14,15 @@ export const create = mutation({
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
+    let page;
+    try {
+      page = await ctx.db.get(args.pageId as Id<"pages">);
+    } catch {
+      throw new Error("Not found");
+    }
+    if (!page || (page.userId !== userId && !page.isPublic)) {
+      throw new Error("Not authorized");
+    }
     const now = Date.now();
     return await ctx.db.insert("comments", {
       userId,

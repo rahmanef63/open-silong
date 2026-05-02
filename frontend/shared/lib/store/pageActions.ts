@@ -16,6 +16,7 @@ interface Args {
 export function usePageActions({ pages, pageMap, preferences, snapshotIfNeeded, pushStructuralAction }: Args) {
   const mutCreatePage = useMutation(api.pages.create);
   const mutUpdatePage = useMutation(api.pages.update);
+  const mutSetPublic = useMutation(api.pages.setPublic);
   const mutTrashPage = useMutation(api.pages.trash);
   const mutRestorePage = useMutation(api.pages.restore);
   const mutPermanentlyDelete = useMutation(api.pages.permanentlyDelete);
@@ -157,9 +158,9 @@ export function usePageActions({ pages, pageMap, preferences, snapshotIfNeeded, 
   const togglePublic = useCallback(
     (id: string) => {
       const page = pageMap.get(id);
-      if (page) mutUpdatePage({ pageId: id, patch: { isPublic: !page.isPublic } });
+      if (page) mutSetPublic({ pageId: id, isPublic: !page.isPublic });
     },
-    [pageMap, mutUpdatePage],
+    [pageMap, mutSetPublic],
   );
 
   const addBlock = useCallback(
