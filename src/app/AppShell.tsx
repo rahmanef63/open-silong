@@ -6,10 +6,17 @@ import { Menu, X } from "lucide-react";
 import { Sheet, SheetContent } from "@/shared/ui/sheet";
 import { useStore } from "@/shared/lib/store";
 import { cn } from "@/shared/lib/utils";
+import { useThemePreset } from "@/slices/theme-presets";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { preferences, user } = useStore();
+  useThemePreset();
   useSearchBackfill(!!user?.id);
+  // Apply theme-transition once on mount so subsequent preset / dark-mode
+  // flips ease the colour swap on every descendant.
+  useEffect(() => {
+    document.documentElement.classList.add("theme-transition");
+  }, []);
   const [searchOpen, setSearchOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const compact = preferences.sidebarDensity === "compact";
