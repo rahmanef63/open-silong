@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import type { Block } from "@/shared/types/domain";
 import { useStore } from "@/shared/lib/store";
 import { useBlockSelection } from "./BlockSelectionProvider";
 import { moveTopLevelGroup } from "../lib/multiMove";
@@ -7,10 +8,28 @@ interface Props {
   pageId: string;
 }
 
+const CLIPBOARD_MIME = "application/x-notion-clone-blocks";
+const uid = () => Math.random().toString(36).slice(2, 10);
+
+/** Recursively regenerate ids on a block subtree so a paste doesn't collide
+ * with the source. */
+function regenIds(b: Block): Block {
+  const next: Block = { ...b, id: uid() };
+  if (b.children) next.children = b.children.map(regenIds);
+  if (b.columns) next.columns = b.columns.map((col) => col.map(regenIds));
+  return next;
+}
+
+function blocksToPlainText(blocks: Block[]): string {
+  return blocks.map((b) => b.text || "").join("\n");
+}
+
 /** Document-level keyboard + click handlers driving the active selection.
  *
  * - Esc / click outside the selection UI / click in editable text → clear
  * - Backspace / Delete (when not typing) → batch delete
+ * - ⌘/Ctrl + C / X / V → copy / cut / paste blocks (custom MIME for fidelity,
+ *   plain-text fallback for external apps)
  * - ⌘/Ctrl + D → batch duplicate
  * - ⌘/Ctrl + Shift + ↑ / ↓ → move selected group up / down (top-level only)
  */
@@ -82,13 +101,90 @@ export function SelectionKeyboard({ pageId }: Props) {
       clear();
     };
 
+    const onCopy = (e: ClipboardEvent) => {
+      // If user is typing in editable text, let native copy work for the caret.
+      if (isEditable(document.activeElement)) return;
+      const page = getPage(pageId);
+      if (!page) return;
+      const blocks = page.blocks.filter((b) => state.ids.has(b.id));
+      if (blocks.length === 0) return;
+      e.preventDefault();
+      const json = JSON.stringify({ __type: "notion-clone-blocks", blocks });
+      e.clipboardData?.setData(CLIPBOARD_MIME, json);
+      e.clipboardData?.setData("text/plain", blocksToPlainText(blocks));
+    };
+
+    const onCut = (e: ClipboardEvent) => {
+      if (isEditable(document.activeElement)) return;
+      const page = getPage(pageId);
+      if (!page) return;
+      const blocks = page.blocks.filter((b) => state.ids.has(b.id));
+      if (blocks.length === 0) return;
+      e.preventDefault();
+      const json = JSON.stringify({ __type: "notion-clone-blocks", blocks });
+      e.clipboardData?.setData(CLIPBOARD_MIME, json);
+      e.clipboardData?.setData("text/plain", blocksToPlainText(blocks));
+      ids.forEach((id) => deleteBlock(pageId, id));
+      clear();
+    };
+
     document.addEventListener("keydown", onKey);
     document.addEventListener("pointerdown", onPointerDown, true);
+    document.addEventListener("copy", onCopy);
+    document.addEventListener("cut", onCut);
     return () => {
       document.removeEventListener("keydown", onKey);
       document.removeEventListener("pointerdown", onPointerDown, true);
+      document.removeEventListener("copy", onCopy);
+      document.removeEventListener("cut", onCut);
     };
   }, [count, state.ids, clear, deleteBlock, duplicateBlock, getPage, updatePage, pageId]);
+
+  // Paste handler — always active (user can paste blocks even with no current selection).
+  useEffect(() => {
+    const isEditable = (el: EventTarget | null): boolean => {
+      const t = el as HTMLElement | null;
+      if (!t) return false;
+      if (t.isContentEditable) return true;
+      const tag = t.tagName;
+      return tag === "INPUT" || tag === "TEXTAREA";
+    };
+
+    const onPaste = (e: ClipboardEvent) => {
+      if (isEditable(document.activeElement)) return; // let native paste own the caret
+      const json = e.clipboardData?.getData(CLIPBOARD_MIME);
+      if (!json) return;
+      e.preventDefault();
+      try {
+        const data = JSON.parse(json);
+        if (data?.__type !== "notion-clone-blocks" || !Array.isArray(data.blocks)) return;
+        const fresh = (data.blocks as Block[]).map(regenIds);
+        const page = getPage(pageId);
+        if (!page) return;
+        // Insert after the last currently-selected block; else append.
+        const selSet = state.ids;
+        let insertIdx = page.blocks.length;
+        if (selSet.size > 0) {
+          const lastSelectedIdx = page.blocks
+            .map((b, i) => (selSet.has(b.id) ? i : -1))
+            .filter((i) => i >= 0)
+            .pop();
+          if (lastSelectedIdx != null) insertIdx = lastSelectedIdx + 1;
+        }
+        const next = [
+          ...page.blocks.slice(0, insertIdx),
+          ...fresh,
+          ...page.blocks.slice(insertIdx),
+        ];
+        updatePage(pageId, { blocks: next });
+      } catch {
+        // Malformed payload — just skip.
+      }
+    };
+
+    document.addEventListener("paste", onPaste);
+    return () => document.removeEventListener("paste", onPaste);
+  }, [getPage, updatePage, pageId, state.ids]);
 
   return null;
 }

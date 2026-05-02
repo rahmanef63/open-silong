@@ -25,6 +25,31 @@ export function AppShell({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  // Safety net: when Radix (Sheet / Dialog / DropdownMenu) sets aria-hidden
+  // on an ancestor of the currently-focused element, the browser warns.
+  // Radix moves focus into the modal soon after, but for that brief window
+  // (and when a contentEditable lingers as activeElement) Chromium logs it.
+  // Blur such focus immediately so it doesn't surface in the console.
+  useEffect(() => {
+    const observer = new MutationObserver((records) => {
+      for (const r of records) {
+        if (r.attributeName !== "aria-hidden") continue;
+        const el = r.target as HTMLElement;
+        if (el.getAttribute("aria-hidden") !== "true") continue;
+        const focused = document.activeElement as HTMLElement | null;
+        if (focused && focused !== document.body && el.contains(focused)) {
+          focused.blur();
+        }
+      }
+    });
+    observer.observe(document.body, {
+      attributes: true,
+      subtree: true,
+      attributeFilter: ["aria-hidden"],
+    });
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <div className="flex h-screen w-full bg-surface">
       {/* Desktop sidebar */}

@@ -186,7 +186,7 @@
 - [x] Drag handle + dnd-kit sortable
 - [x] Block context menu
 - [x] Placeholder
-- [x] Copy / paste
+- [x] Copy / paste / cut (multi-block, custom MIME `application/x-notion-clone-blocks` for fidelity, plain-text fallback for external apps; ⌘C / ⌘X / ⌘V; paste re-generates ids recursively)
 - [ ] Markdown paste auto-convert
 - [ ] HTML paste sanitization
 - [x] Image / file paste (via FileUploadButton)
