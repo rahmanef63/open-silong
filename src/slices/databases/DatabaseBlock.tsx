@@ -31,7 +31,7 @@ import { ViewOptions } from "./ViewOptions";
 import { Input } from "@/shared/ui/input";
 import { RowDetailSheet } from "@/slices/database-row";
 import { NewRowMenu } from "@/slices/database-templates";
-import { CsvActions } from "@/slices/database-csv";
+import { DataMenu } from "@/slices/database-json";
 import { DatabaseSkeleton } from "@/shared/components/RouteSkeleton";
 import { ErrorBoundary } from "@/shared/components/ErrorBoundary";
 import {
@@ -430,7 +430,7 @@ function DatabaseMenu({ db, view, rows }: { db: Database; view: DatabaseViewConf
         <div className="my-1 border-t border-border" />
         <div className="px-2 py-1 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Data</div>
         <div className="px-1 flex flex-col gap-0.5">
-          <CsvActions db={db} rows={rows} />
+          <DataMenu db={db} rows={rows} />
         </div>
       </PopoverContent>
     </Popover>

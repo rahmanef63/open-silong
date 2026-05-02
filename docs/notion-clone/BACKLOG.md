@@ -22,7 +22,8 @@
     - [x] Upload media
     - [x] Workspace search
     - [x] Share page (public + signed URL)
-  - [ ] Non-goals (fase awal): AI assistant, marketplace template, enterprise SSO, public API penuh, mobile native
+  - [x] AI assist promoted from non-goal — BYOK Claude generates database schema (with formula expressions) + rows from natural-language prompts (`AIAssistDialog`)
+  - [ ] Non-goals (fase awal): marketplace template, enterprise SSO, public API penuh, mobile native
   - [ ] Feature parity matrix vs Notion
   - [x] Roadmap MVP / V1 / V2 / Scale (lihat `ROADMAP.md`)
 
@@ -1102,7 +1103,7 @@
 - [ ] Markdown import
 - [ ] HTML import
 - [x] CSV import into database (with type coercion)
-- [ ] JSON backup import
+- [x] JSON backup import (full schema + rows + views + templates with id remap)
 - [x] Map CSV columns to properties (CsvImportDialog)
 - [ ] Import files (media bundle)
 - [x] Import validation (skip empty rows, error per row)
@@ -1114,6 +1115,7 @@
 - [x] Export page as Markdown (PageActionsMenu)
 - [ ] Export page as HTML
 - [x] Export database as CSV
+- [x] Export database as JSON (versioned, round-trips through import)
 - [ ] Export workspace as ZIP
 - [ ] Include media files
 - [ ] Export permission check
