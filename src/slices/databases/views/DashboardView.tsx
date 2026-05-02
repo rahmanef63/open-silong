@@ -3,6 +3,7 @@ import { Database, DatabaseViewConfig, Page, Property } from "@/shared/types/dom
 import { Hash, ListChecks, TrendingUp, Calendar as CalIcon, Users } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { colorClass } from "@/shared/lib/format";
+import { getVisibleProps } from "../lib/visibility";
 
 interface Props { db: Database; view: DatabaseViewConfig; rows: Page[]; onOpenRow: (id: string) => void }
 
@@ -12,9 +13,10 @@ function num(v: any): number {
 }
 
 export function DashboardView({ db, view, rows, onOpenRow }: Props) {
-  const allNum = useMemo(() => db.properties.filter(p => p.type === "number" && !p.hidden), [db.properties]);
-  const allGroup = useMemo(() => db.properties.filter(p => (p.type === "select" || p.type === "status") && !p.hidden), [db.properties]);
-  const allCheckbox = useMemo(() => db.properties.filter(p => p.type === "checkbox" && !p.hidden), [db.properties]);
+  const visible = useMemo(() => getVisibleProps(db, view), [db, view]);
+  const allNum = useMemo(() => visible.filter(p => p.type === "number"), [visible]);
+  const allGroup = useMemo(() => visible.filter(p => p.type === "select" || p.type === "status"), [visible]);
+  const allCheckbox = useMemo(() => visible.filter(p => p.type === "checkbox"), [visible]);
 
   const kpiIds = view.dashboardKPIs;
   const breakdownIds = view.dashboardBreakdowns;

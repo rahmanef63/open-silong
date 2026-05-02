@@ -60,8 +60,7 @@ export const PROPERTY_TYPE_LABELS: Record<PropertyType, string> = {
 
 export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block }) {
   const {
-    getDatabase, pages, updateDatabase, addRow, addView, updateView, deleteView,
-    addProperty, updateProperty, deleteProperty,
+    getDatabase, pages, updateDatabase, addView, updateView, deleteView,
   } = useStore();
   const [openRowId, setOpenRowId] = useState<string | null>(null);
 
@@ -253,7 +252,7 @@ export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block 
 
           <ViewOptions db={db} view={view} />
 
-          <PropertiesMenu db={db} />
+          <PropertiesMenu db={db} view={view} />
 
           <CsvActions db={db} rows={filtered} />
 
@@ -354,34 +353,52 @@ function GroupByButton({ db, view }: { db: Database; view: DatabaseViewConfig })
   );
 }
 
-function PropertiesMenu({ db }: { db: Database }) {
-  const { updateProperty, deleteProperty, addProperty } = useStore();
+function PropertiesMenu({ db, view }: { db: Database; view: DatabaseViewConfig }) {
+  const { updateView, deleteProperty, addProperty } = useStore();
+  const hidden = new Set(view.hiddenPropIds ?? []);
+  const toggle = (pid: string) => {
+    const next = new Set(hidden);
+    if (next.has(pid)) next.delete(pid); else next.add(pid);
+    updateView(db.id, view.id, { hiddenPropIds: [...next] });
+  };
+  const showAll = () => updateView(db.id, view.id, { hiddenPropIds: [] });
+  const hideAll = () => updateView(db.id, view.id, { hiddenPropIds: db.properties.map(p => p.id) });
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button className="flex items-center gap-1 rounded-md px-2 py-1 text-xs hover:bg-accent text-muted-foreground">
           <Settings2 className="h-3 w-3" /> Properties
+          {hidden.size > 0 && <span className="ml-0.5 rounded-full bg-muted-foreground/20 text-[10px] px-1">{db.properties.length - hidden.size}/{db.properties.length}</span>}
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-64 max-h-80 overflow-y-auto">
-        <DropdownMenuLabel className="text-xs">Visible properties</DropdownMenuLabel>
-        {db.properties.map((p: Property) => (
-          <DropdownMenuItem
-            key={p.id}
-            onSelect={(e) => e.preventDefault()}
-            className="flex items-center justify-between"
-          >
-            <span className="truncate">{p.name}</span>
-            <div className="flex gap-1">
-              <button onClick={() => updateProperty(db.id, p.id, { hidden: !p.hidden })} className="text-muted-foreground hover:text-foreground">
-                {p.hidden ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+      <DropdownMenuContent align="end" className="w-64 max-h-96 overflow-y-auto">
+        <DropdownMenuLabel className="flex items-center justify-between text-xs">
+          <span>Visible in this view</span>
+          <div className="flex gap-1 text-[10px] font-normal">
+            <button onClick={showAll} className="hover:underline text-muted-foreground">Show all</button>
+            <span className="text-muted-foreground/40">·</span>
+            <button onClick={hideAll} className="hover:underline text-muted-foreground">Hide all</button>
+          </div>
+        </DropdownMenuLabel>
+        {db.properties.map((p: Property) => {
+          const isHidden = hidden.has(p.id);
+          return (
+            <DropdownMenuItem
+              key={p.id}
+              onSelect={(e) => e.preventDefault()}
+              className="flex items-center justify-between"
+            >
+              <button onClick={() => toggle(p.id)} className="flex items-center gap-2 flex-1 min-w-0 text-left">
+                {isHidden ? <EyeOff className="h-3.5 w-3.5 text-muted-foreground/60 shrink-0" /> : <Eye className="h-3.5 w-3.5 shrink-0" />}
+                <span className={cn("truncate", isHidden && "text-muted-foreground line-through decoration-muted-foreground/40")}>{p.name}</span>
+                <span className="text-[10px] text-muted-foreground ml-auto shrink-0">{p.type}</span>
               </button>
-              <button onClick={() => deleteProperty(db.id, p.id)} className="text-muted-foreground hover:text-destructive">
+              <button onClick={() => deleteProperty(db.id, p.id)} className="ml-1 text-muted-foreground hover:text-destructive" title="Delete property (all views)">
                 <Trash2 className="h-3.5 w-3.5" />
               </button>
-            </div>
-          </DropdownMenuItem>
-        ))}
+            </DropdownMenuItem>
+          );
+        })}
         <DropdownMenuSeparator />
         <DropdownMenuSub>
           <DropdownMenuSubTrigger className="text-xs"><Plus className="mr-2 h-3.5 w-3.5" /> Add property</DropdownMenuSubTrigger>

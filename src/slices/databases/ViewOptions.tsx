@@ -248,7 +248,7 @@ function BoardOptions({ db, view }: Props) {
             db={db}
             value={view.boardCardProps}
             onChange={(ids) => set({ boardCardProps: ids })}
-            filter={(p) => !p.hidden && p.type !== "text"}
+            filter={(p) => p.type !== "text"}
             max={6}
           />
         </Row>
@@ -323,7 +323,7 @@ function GalleryOptions({ db, view }: Props) {
             db={db}
             value={view.galleryCardProps}
             onChange={(ids) => set({ galleryCardProps: ids })}
-            filter={(p) => !p.hidden && p.type !== "text"}
+            filter={(p) => p.type !== "text"}
             max={4}
           />
         </Row>
@@ -351,7 +351,7 @@ function ListOptions({ db, view }: Props) {
           db={db}
           value={view.listSummaryProps}
           onChange={(ids) => set({ listSummaryProps: ids })}
-          filter={(p) => !p.hidden && p.type !== "text"}
+          filter={(p) => p.type !== "text"}
           max={4}
         />
       </Section>
@@ -595,7 +595,7 @@ function FeedOptions({ db, view }: Props) {
           db={db}
           value={view.feedSummaryProps}
           onChange={(ids) => set({ feedSummaryProps: ids })}
-          filter={(p) => !p.hidden && p.type !== "text"}
+          filter={(p) => p.type !== "text"}
           max={4}
         />
       </Section>

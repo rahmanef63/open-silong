@@ -1,9 +1,10 @@
 import { useMemo, useState } from "react";
 import { Database, DatabaseViewConfig, Page } from "@/shared/types/domain";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { focusSiblingBySelector } from "@/shared/lib/keyboard";
 import { colorClass } from "@/shared/lib/format";
+import { useStore } from "@/shared/lib/store";
 
 interface Props { db: Database; view: DatabaseViewConfig; rows: Page[]; onOpenRow: (id: string) => void }
 
@@ -14,6 +15,7 @@ function toMs(dateStr: string): number {
 }
 
 export function TimelineView({ db, view, rows, onOpenRow }: Props) {
+  const { addRow } = useStore();
   const dateProp =
     db.properties.find(p => p.id === view.timelineStartProp && p.type === "date")
     ?? db.properties.find(p => p.type === "date");
@@ -95,6 +97,18 @@ export function TimelineView({ db, view, rows, onOpenRow }: Props) {
         {!dateProp && (
           <span className="text-xs text-muted-foreground ml-2">(add a Date property to see bars)</span>
         )}
+        <button
+          onClick={async () => {
+            const today = new Date();
+            const ymd = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+            const init = dateProp ? { rowProps: { [dateProp.id]: { date: ymd } } } : {};
+            const nr = await addRow(db.id, init);
+            onOpenRow(nr.id);
+          }}
+          className="ml-auto flex items-center gap-1 rounded-md border border-border bg-card px-2 py-1 text-xs hover:bg-accent text-muted-foreground"
+        >
+          <Plus className="h-3 w-3" /> New row
+        </button>
       </div>
 
       {/* Grid */}

@@ -43,7 +43,7 @@ export function FormView({ db, view }: Props) {
       const set = new Set(view.formShownProps);
       return formableProps.filter(p => set.has(p.id));
     }
-    return formableProps.filter(p => !p.hidden);
+    return formableProps;
   }, [formableProps, view.formShownProps]);
 
   const requiredSet = useMemo(() => new Set(view.formRequiredProps ?? []), [view.formRequiredProps]);
@@ -312,7 +312,7 @@ function FormSettings({ db, view, formableProps, onClose, onSave }: {
 }) {
   void db;
   const [shown, setShown] = useState<Set<string>>(
-    () => new Set(view.formShownProps ?? formableProps.filter(p => !p.hidden).map(p => p.id))
+    () => new Set(view.formShownProps ?? formableProps.map(p => p.id))
   );
   const [required, setRequired] = useState<Set<string>>(() => new Set(view.formRequiredProps ?? []));
   const [successMessage, setSuccessMessage] = useState(view.formSuccessMessage ?? "Submitted!");
