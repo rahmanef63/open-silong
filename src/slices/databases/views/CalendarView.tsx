@@ -1,13 +1,39 @@
-import { useState } from "react";
-import { Database, DatabaseViewConfig, Page } from "@/shared/types/domain";
+import { useMemo, useState } from "react";
+import { Database, DatabaseViewConfig, Page, Property } from "@/shared/types/domain";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { focusSiblingBySelector } from "@/shared/lib/keyboard";
+import { colorClass } from "@/shared/lib/format";
 
 interface Props { db: Database; view: DatabaseViewConfig; rows: Page[]; onOpenRow: (id: string) => void }
 
-export function CalendarView({ db, rows, onOpenRow }: Props) {
-  const dateProp = db.properties.find(p => p.type === "date");
+function ymd(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function parseYMD(s: string): Date | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s);
+  if (!m) return null;
+  return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+}
+
+export function CalendarView({ db, view, rows, onOpenRow }: Props) {
+  const dateProp = useMemo(
+    () => db.properties.find(p => p.id === view.calendarDateProp && p.type === "date")
+      ?? db.properties.find(p => p.type === "date"),
+    [db.properties, view.calendarDateProp],
+  );
+  const endProp = useMemo(
+    () => db.properties.find(p => p.id === view.calendarEndProp && p.type === "date"),
+    [db.properties, view.calendarEndProp],
+  );
+  const colorProp = useMemo(
+    () => db.properties.find(p => p.id === view.calendarColorByProp && (p.type === "select" || p.type === "status")),
+    [db.properties, view.calendarColorByProp],
+  );
+
+  const weekStart = view.calendarWeekStart ?? 0;
+  const showWeekends = view.calendarShowWeekends ?? true;
 
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
@@ -18,29 +44,49 @@ export function CalendarView({ db, rows, onOpenRow }: Props) {
   const goToday = () => { setYear(now.getFullYear()); setMonth(now.getMonth()); };
 
   const first = new Date(year, month, 1);
-  const startDay = first.getDay();
+  const startDay = (first.getDay() - weekStart + 7) % 7;
   const days = new Date(year, month + 1, 0).getDate();
   const cells: (Date | null)[] = [];
   for (let i = 0; i < startDay; i++) cells.push(null);
   for (let d = 1; d <= days; d++) cells.push(new Date(year, month, d));
 
-  const rowsByDate = new Map<string, Page[]>();
-  if (dateProp) {
+  // Map from YYYY-MM-DD → events on that day
+  const rowsByDate = useMemo(() => {
+    const m = new Map<string, Page[]>();
+    if (!dateProp) return m;
     for (const r of rows) {
-      const v = (r.rowProps?.[dateProp.id] as any)?.date;
-      if (!v) continue;
-      const arr = rowsByDate.get(v) ?? [];
-      arr.push(r);
-      rowsByDate.set(v, arr);
+      const startStr = (r.rowProps?.[dateProp.id] as any)?.date;
+      if (!startStr) continue;
+      const start = parseYMD(startStr);
+      if (!start) continue;
+      const endStr = endProp ? (r.rowProps?.[endProp.id] as any)?.date : undefined;
+      const end = endStr ? parseYMD(endStr) : start;
+      if (!end || end < start) {
+        const key = ymd(start);
+        const arr = m.get(key) ?? [];
+        arr.push(r);
+        m.set(key, arr);
+        continue;
+      }
+      const cursor = new Date(start);
+      while (cursor <= end) {
+        const key = ymd(cursor);
+        const arr = m.get(key) ?? [];
+        arr.push(r);
+        m.set(key, arr);
+        cursor.setDate(cursor.getDate() + 1);
+      }
     }
-  }
+    return m;
+  }, [rows, dateProp, endProp]);
 
-  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  const todayStr = ymd(now);
   const isCurrentMonth = year === now.getFullYear() && month === now.getMonth();
+  const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const orderedDays = [...dayLabels.slice(weekStart), ...dayLabels.slice(0, weekStart)];
 
   return (
     <div className="p-3">
-      {/* Header: nav + month label */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-1">
           <button onClick={prev} className="rounded p-1 hover:bg-accent text-muted-foreground">
@@ -65,14 +111,22 @@ export function CalendarView({ db, rows, onOpenRow }: Props) {
         </div>
       </div>
 
-      <div className="grid grid-cols-7 gap-px bg-border rounded-md overflow-hidden text-xs">
-        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(d => (
-          <div key={d} className="bg-muted/40 px-2 py-1 text-muted-foreground font-medium text-[10px] uppercase tracking-wider">{d}</div>
-        ))}
+      <div className={cn(
+        "grid gap-px bg-border rounded-md overflow-hidden text-xs",
+        showWeekends ? "grid-cols-7" : "grid-cols-5",
+      )}>
+        {orderedDays.map((d, i) => {
+          const isWeekend = (weekStart + i) % 7 === 0 || (weekStart + i) % 7 === 6;
+          if (!showWeekends && isWeekend) return null;
+          return (
+            <div key={d} className="bg-muted/40 px-2 py-1 text-muted-foreground font-medium text-[10px] uppercase tracking-wider">{d}</div>
+          );
+        })}
         {cells.map((d, i) => {
-          const key = d
-            ? `${year}-${String(month + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
-            : `e${i}`;
+          const dayOfWeek = d ? d.getDay() : null;
+          const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+          if (!showWeekends && isWeekend) return null;
+          const key = d ? ymd(d) : `e${i}`;
           const items = d ? (rowsByDate.get(key) ?? []) : [];
           const isToday = key === todayStr;
           return (
@@ -86,28 +140,58 @@ export function CalendarView({ db, rows, onOpenRow }: Props) {
                 </div>
               )}
               <div className="space-y-0.5">
-                {items.map(r => (
-                  <button
-                    key={r.id}
-                    onClick={() => onOpenRow(r.id)}
-                    onKeyDown={(e) => {
-                      if (e.key === "ArrowDown" || e.key === "ArrowUp" || e.key === "ArrowLeft" || e.key === "ArrowRight") {
-                        e.preventDefault();
-                        const delta = e.key === "ArrowUp" || e.key === "ArrowLeft" ? -1 : 1;
-                        focusSiblingBySelector(e.currentTarget, "[data-db-nav-item]", delta as 1 | -1);
-                      }
-                    }}
-                    data-db-nav-item
-                    className="w-full text-left truncate rounded bg-brand/15 text-brand px-1 py-0.5 hover:bg-brand/25 text-[11px]"
-                  >
-                    {r.icon} {r.title || "Untitled"}
-                  </button>
-                ))}
+                {items.map(r => {
+                  const colorOpt: { color?: string; name?: string } | null = colorProp
+                    ? colorProp.options?.find((o: any) => o.id === r.rowProps?.[colorProp.id]) ?? null
+                    : null;
+                  const tone = colorOpt?.color
+                    ? colorClass(colorOpt.color)
+                    : "bg-brand/15 text-brand hover:bg-brand/25";
+                  return (
+                    <button
+                      key={r.id}
+                      onClick={() => onOpenRow(r.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === "ArrowDown" || e.key === "ArrowUp" || e.key === "ArrowLeft" || e.key === "ArrowRight") {
+                          e.preventDefault();
+                          const delta = e.key === "ArrowUp" || e.key === "ArrowLeft" ? -1 : 1;
+                          focusSiblingBySelector(e.currentTarget, "[data-db-nav-item]", delta as 1 | -1);
+                        }
+                      }}
+                      data-db-nav-item
+                      title={colorOpt?.name ?? undefined}
+                      className={cn(
+                        "w-full text-left truncate rounded px-1 py-0.5 text-[11px] border",
+                        tone,
+                      )}
+                    >
+                      {r.icon} {r.title || "Untitled"}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           );
         })}
       </div>
+
+      {colorProp && (
+        <Legend prop={colorProp} />
+      )}
+    </div>
+  );
+}
+
+function Legend({ prop }: { prop: Property }) {
+  if (!prop.options?.length) return null;
+  return (
+    <div className="mt-3 flex flex-wrap items-center gap-2 text-[10px] text-muted-foreground">
+      <span>Legend:</span>
+      {prop.options.map(o => (
+        <span key={o.id} className={cn("inline-flex items-center rounded-full border px-2 py-0.5", colorClass(o.color))}>
+          {o.name}
+        </span>
+      ))}
     </div>
   );
 }

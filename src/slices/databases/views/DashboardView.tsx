@@ -11,28 +11,42 @@ function num(v: any): number {
   return Number.isFinite(n) ? n : 0;
 }
 
-export function DashboardView({ db, rows, onOpenRow }: Props) {
-  const numProps = useMemo(() => db.properties.filter(p => p.type === "number" && !p.hidden), [db.properties]);
-  const groupProps = useMemo(() => db.properties.filter(p => (p.type === "select" || p.type === "status") && !p.hidden), [db.properties]);
-  const checkboxProps = useMemo(() => db.properties.filter(p => p.type === "checkbox" && !p.hidden), [db.properties]);
+export function DashboardView({ db, view, rows, onOpenRow }: Props) {
+  const allNum = useMemo(() => db.properties.filter(p => p.type === "number" && !p.hidden), [db.properties]);
+  const allGroup = useMemo(() => db.properties.filter(p => (p.type === "select" || p.type === "status") && !p.hidden), [db.properties]);
+  const allCheckbox = useMemo(() => db.properties.filter(p => p.type === "checkbox" && !p.hidden), [db.properties]);
+
+  const kpiIds = view.dashboardKPIs;
+  const breakdownIds = view.dashboardBreakdowns;
+  const recentLimit = view.dashboardRecentLimit ?? 5;
+
+  const numProps = kpiIds?.length
+    ? allNum.filter(p => kpiIds.includes(p.id))
+    : allNum.slice(0, 2);
+  const checkboxProps = kpiIds?.length
+    ? allCheckbox.filter(p => kpiIds.includes(p.id))
+    : allCheckbox.slice(0, 1);
+  const groupProps = breakdownIds?.length
+    ? allGroup.filter(p => breakdownIds.includes(p.id))
+    : allGroup.slice(0, 4);
 
   const total = rows.length;
   const recent = useMemo(() => {
     const sorted = [...rows].sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0));
-    return sorted.slice(0, 5);
-  }, [rows]);
+    return sorted.slice(0, recentLimit);
+  }, [rows, recentLimit]);
 
   return (
     <div className="p-3 space-y-3">
       {/* KPI strip */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
         <Stat label="Total rows" value={total} icon={Hash} accent="brand" />
-        {checkboxProps.slice(0, 1).map(p => {
+        {checkboxProps.map(p => {
           const done = rows.filter(r => r.rowProps?.[p.id] === true).length;
           const pct = total ? Math.round((done / total) * 100) : 0;
           return <Stat key={p.id} label={`${p.name} done`} value={`${done}/${total}`} sub={`${pct}%`} icon={ListChecks} accent="emerald" />;
         })}
-        {numProps.slice(0, 2).map(p => {
+        {numProps.map(p => {
           const vals = rows.map(r => num(r.rowProps?.[p.id]));
           const sum = vals.reduce((a, b) => a + b, 0);
           const avg = total ? sum / total : 0;
@@ -55,7 +69,7 @@ export function DashboardView({ db, rows, onOpenRow }: Props) {
       {/* Group breakdowns */}
       {groupProps.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-          {groupProps.slice(0, 4).map(p => (
+          {groupProps.map(p => (
             <GroupBreakdown key={p.id} prop={p} rows={rows} />
           ))}
         </div>

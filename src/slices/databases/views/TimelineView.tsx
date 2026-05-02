@@ -3,22 +3,31 @@ import { Database, DatabaseViewConfig, Page } from "@/shared/types/domain";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { focusSiblingBySelector } from "@/shared/lib/keyboard";
+import { colorClass } from "@/shared/lib/format";
 
 interface Props { db: Database; view: DatabaseViewConfig; rows: Page[]; onOpenRow: (id: string) => void }
 
 const DAY_MS = 86400000;
-const CELL_W = 32; // px per day
 
 function toMs(dateStr: string): number {
   return new Date(dateStr + "T00:00:00").getTime();
 }
 
-export function TimelineView({ db, rows, onOpenRow }: Props) {
-  const dateProp = db.properties.find(p => p.type === "date");
-  const endProp = db.properties.find(p => p.type === "date" && p.id !== dateProp?.id);
+export function TimelineView({ db, view, rows, onOpenRow }: Props) {
+  const dateProp =
+    db.properties.find(p => p.id === view.timelineStartProp && p.type === "date")
+    ?? db.properties.find(p => p.type === "date");
+  const endProp =
+    db.properties.find(p => p.id === view.timelineEndProp && p.type === "date" && p.id !== dateProp?.id)
+    ?? db.properties.find(p => p.type === "date" && p.id !== dateProp?.id);
+  const colorProp = db.properties.find(p => p.id === view.timelineColorByProp && (p.type === "select" || p.type === "status"));
+
+  const zoom = view.timelineZoom ?? "month";
+  const CELL_W = zoom === "day" ? 64 : zoom === "week" ? 40 : zoom === "quarter" ? 14 : 32;
+  const DAYS = zoom === "day" ? 14 : zoom === "week" ? 28 : zoom === "quarter" ? 90 : 28;
 
   const now = new Date();
-  const [startOffset, setStartOffset] = useState(0); // offset in weeks from current week
+  const [startOffset, setStartOffset] = useState(0);
 
   const weekStart = useMemo(() => {
     const d = new Date(now);
@@ -26,8 +35,6 @@ export function TimelineView({ db, rows, onOpenRow }: Props) {
     d.setHours(0, 0, 0, 0);
     return d;
   }, [startOffset]);
-
-  const DAYS = 28; // 4 weeks visible
   const days = useMemo(() => Array.from({ length: DAYS }, (_, i) => {
     const d = new Date(weekStart.getTime() + i * DAY_MS);
     return d;
@@ -164,22 +171,34 @@ export function TimelineView({ db, rows, onOpenRow }: Props) {
                   />
                 ))}
                 {/* Bar */}
-                {bar && inView && (
-                  <button
-                    onClick={() => onOpenRow(row.id)}
-                    onKeyDown={(e) => {
-                      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
-                        e.preventDefault();
-                        focusSiblingBySelector(e.currentTarget, "[data-db-nav-item]", e.key === "ArrowDown" ? 1 : -1);
-                      }
-                    }}
-                    data-db-nav-item
-                    className="absolute top-1 h-6 rounded-full bg-brand/70 hover:bg-brand text-white text-[10px] font-medium px-2 truncate flex items-center transition z-10"
-                    style={{ left: bar.left, width: bar.width }}
-                  >
-                    {bar.width > 40 && (row.title || "Untitled")}
-                  </button>
-                )}
+                {bar && inView && (() => {
+                  const colorOpt = colorProp
+                    ? colorProp.options?.find((o: any) => o.id === row.rowProps?.[colorProp.id])
+                    : null;
+                  const tone = colorOpt?.color
+                    ? colorClass(colorOpt.color)
+                    : "bg-brand/70 hover:bg-brand text-white";
+                  return (
+                    <button
+                      onClick={() => onOpenRow(row.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+                          e.preventDefault();
+                          focusSiblingBySelector(e.currentTarget, "[data-db-nav-item]", e.key === "ArrowDown" ? 1 : -1);
+                        }
+                      }}
+                      data-db-nav-item
+                      title={colorOpt?.name ?? undefined}
+                      className={cn(
+                        "absolute top-1 h-6 rounded-full text-[10px] font-medium px-2 truncate flex items-center transition z-10 border",
+                        tone,
+                      )}
+                      style={{ left: bar.left, width: bar.width }}
+                    >
+                      {bar.width > 40 && (row.title || "Untitled")}
+                    </button>
+                  );
+                })()}
                 {/* No-date indicator */}
                 {!item && (
                   <div className="absolute inset-y-0 flex items-center px-2">

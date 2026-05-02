@@ -49,9 +49,13 @@ export function FeedView({ db, view, rows, onOpenRow }: Props) {
     });
   }, [rows, source]);
 
-  const summaryProps: Property[] = db.properties
-    .filter(p => !p.hidden && p.type !== "text")
-    .slice(0, 3);
+  const summaryProps: Property[] = view.feedSummaryProps?.length
+    ? view.feedSummaryProps
+        .map(id => db.properties.find(p => p.id === id))
+        .filter((p): p is Property => !!p && !p.hidden)
+    : db.properties.filter(p => !p.hidden && p.type !== "text").slice(0, 3);
+
+  const compact = (view.feedDensity ?? "comfortable") === "compact";
 
   return (
     <div className="p-3">
@@ -98,7 +102,10 @@ export function FeedView({ db, view, rows, onOpenRow }: Props) {
                       }
                     }}
                     data-db-nav-item
-                    className="block w-full text-left rounded-lg border border-border bg-card p-3 hover:border-border-strong hover:bg-accent/40 transition"
+                    className={cn(
+                      "block w-full text-left rounded-lg border border-border bg-card hover:border-border-strong hover:bg-accent/40 transition",
+                      compact ? "p-2" : "p-3",
+                    )}
                   >
                     <div className="flex items-center justify-between gap-2 mb-1">
                       <span className="flex items-center gap-1.5 text-sm font-medium min-w-0">
@@ -107,7 +114,7 @@ export function FeedView({ db, view, rows, onOpenRow }: Props) {
                       </span>
                       <span className="text-[10px] text-muted-foreground shrink-0">{timeLabel(ts)}</span>
                     </div>
-                    {summaryProps.length > 0 && (
+                    {!compact && summaryProps.length > 0 && (
                       <div className="flex flex-wrap gap-1 -mx-1">
                         {summaryProps.map(p => (
                           <div key={p.id} onClick={e => e.stopPropagation()} className="text-xs">

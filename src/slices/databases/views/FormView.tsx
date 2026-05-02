@@ -121,8 +121,10 @@ export function FormView({ db, view }: Props) {
     <div className="p-6 max-w-xl mx-auto">
       <div className="mb-4 flex items-start justify-between gap-2">
         <div>
-          <h2 className="text-lg font-semibold">{db.name}</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">Fill the form to add a new row.</p>
+          <h2 className="text-lg font-semibold">{view.formTitle?.trim() || db.name}</h2>
+          <p className="text-xs text-muted-foreground mt-0.5 whitespace-pre-line">
+            {view.formDescription?.trim() || "Fill the form to add a new row."}
+          </p>
         </div>
         <Button variant="ghost" size="sm" onClick={() => setEditing(true)} title="Edit form fields">
           <Pencil className="h-3.5 w-3.5" />
