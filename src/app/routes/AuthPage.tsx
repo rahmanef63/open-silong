@@ -28,9 +28,9 @@ export default function AuthPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="w-full max-w-sm p-8 space-y-6 border rounded-xl shadow-sm">
-        <div className="text-center space-y-1">
-          <div className="text-3xl">📝</div>
-          <h1 className="text-xl font-semibold">Notiony</h1>
+        <div className="text-center space-y-2">
+          <img src="/logo-wordmark-light.svg" alt="Nosion" className="mx-auto h-10 w-auto dark:hidden" />
+          <img src="/logo-wordmark-dark.svg" alt="Nosion" className="mx-auto hidden h-10 w-auto dark:block" />
           <p className="text-sm text-muted-foreground">
             {flow === "signIn" ? "Sign in to your workspace" : "Create your workspace"}
           </p>
