@@ -72,7 +72,12 @@ export function Marquee({
     let additive = false;
 
     const isAlwaysInteractive = (t: HTMLElement): boolean => {
-      if (t.closest("button, a, input, textarea, select, [role='button'], [role='separator'], [role='menuitem'], [role='checkbox'], [role='radio'], [role='switch']")) return true;
+      // Real interactive HTML tags + Radix item roles. NOTE: do NOT include
+      // [role='button'] here — dnd-kit's useSortable spreads role="button"
+      // onto BlockShell, so any closest() match would kill the marquee inside
+      // every block.
+      if (t.closest("button, a, input, textarea, select")) return true;
+      if (t.closest("[role='menuitem'], [role='checkbox'], [role='radio'], [role='switch'], [role='separator']")) return true;
       if (t.closest("[data-block-grip]")) return true;
       if (t.closest("[data-block-selection-toolbar]")) return true;
       if (t.closest("[data-row-selection-toolbar]")) return true;
