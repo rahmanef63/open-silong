@@ -43,6 +43,7 @@ export const markRead = mutation({
 });
 
 export const markAllRead = mutation({
+  args: {},
   handler: async (ctx) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");

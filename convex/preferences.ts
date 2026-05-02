@@ -12,6 +12,7 @@ const defaults = {
 };
 
 export const get = query({
+  args: {},
   handler: async (ctx) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) return defaults;
@@ -21,7 +22,16 @@ export const get = query({
 });
 
 export const upsert = mutation({
-  args: { patch: v.any() },
+  args: {
+    patch: v.object({
+      theme: v.optional(v.string()),
+      sidebarDensity: v.optional(v.string()),
+      defaultPageSort: v.optional(v.string()),
+      editorBehavior: v.optional(v.string()),
+      landingView: v.optional(v.string()),
+      lastOpenedPageId: v.optional(v.union(v.string(), v.null())),
+    }),
+  },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
