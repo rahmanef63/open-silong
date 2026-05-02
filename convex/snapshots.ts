@@ -19,6 +19,7 @@ export const listForPage = query({
 });
 
 export const listAll = query({
+  args: {},
   handler: async (ctx) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) return [];

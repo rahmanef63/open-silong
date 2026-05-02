@@ -1,14 +1,13 @@
-import { mutation } from "../../_generated/server";
-import { getAuthUserId } from "@convex-dev/auth/server";
+import { internalMutation } from "../../_generated/server";
+import { v } from "convex/values";
 import { buildSearchText } from "./lib";
 
-/** One-shot: backfill `searchText` on all pages owned by the calling user.
- *  Idempotent — recomputes regardless of existing value. Run once per user
- *  after the searchText field was added; subsequent writes maintain it. */
-export const backfillSearchText = mutation({
-  handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) return { updated: 0 };
+/** One-shot: backfill `searchText` on all pages owned by the given user.
+ *  Internal — caller is a migration script, not a logged-in client.
+ *  Idempotent — recomputes regardless of existing value. */
+export const backfillSearchText = internalMutation({
+  args: { userId: v.id("users") },
+  handler: async (ctx, { userId }) => {
     const pages = await ctx.db
       .query("pages")
       .withIndex("by_user", (q) => q.eq("userId", userId))

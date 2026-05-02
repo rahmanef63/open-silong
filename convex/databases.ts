@@ -6,6 +6,7 @@ import { Id } from "./_generated/dataModel";
 const uid = () => Math.random().toString(36).slice(2, 10);
 
 export const list = query({
+  args: {},
   handler: async (ctx) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) return [];

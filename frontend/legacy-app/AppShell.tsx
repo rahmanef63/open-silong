@@ -1,7 +1,6 @@
 import { ReactNode, useEffect, useState } from "react";
 import { WorkspaceSidebar } from "@/slices/workspace-sidebar/components/WorkspaceSidebar";
 import { SearchModal } from "@/slices/command-palette/components/SearchModal";
-import { useSearchBackfill } from "@/slices/search";
 import { Menu, X } from "lucide-react";
 import { Sheet, SheetContent } from "@/shared/ui/sheet";
 import { useStore } from "@/shared/lib/store";
@@ -9,9 +8,8 @@ import { cn } from "@/shared/lib/utils";
 import { useThemePreset } from "@/slices/theme-presets";
 
 export function AppShell({ children }: { children: ReactNode }) {
-  const { preferences, user } = useStore();
+  const { preferences } = useStore();
   useThemePreset();
-  useSearchBackfill(!!user?.id);
   // Apply theme-transition once on mount so subsequent preset / dark-mode
   // flips ease the colour swap on every descendant.
   useEffect(() => {
