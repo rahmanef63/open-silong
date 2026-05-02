@@ -24,6 +24,9 @@ import { Button } from "@/shared/ui/button";
 import { findLocation, moveBlock, type Location } from "./lib/blockTree";
 import { prioritizeCollisions } from "./lib/collisionPriority";
 import { BlockSelectionProvider, SelectionToolbar, SelectionKeyboard, MarqueeOverlay } from "@/slices/block-selection";
+import {
+  placeTopLevelGroupAtBlock, appendTopLevelGroupToContainer, topLevelIdsInOrder,
+} from "@/slices/block-selection/lib/multiMove";
 
 const ICONS = ["📄", "📝", "📚", "🚀", "🌱", "🛰️", "🎨", "🧠", "🪄", "🌙", "☕", "🔥", "🌊", "✨", "🪐", "🛠️"];
 const COVERS = [
@@ -92,12 +95,56 @@ export function PageEditor() {
     return prioritized.length ? prioritized : closestCenter(args);
   };
 
+  /** Read the active selection straight from the DOM — avoids restructuring
+   * PageEditor to live inside BlockSelectionProvider's hook scope. */
+  const getSelectedTopLevelIds = (): string[] => {
+    const els = document.querySelectorAll<HTMLElement>(
+      "[data-block-shell-id][data-block-selected]",
+    );
+    const all: string[] = [];
+    els.forEach((el) => {
+      const id = el.dataset.blockShellId;
+      if (id) all.push(id);
+    });
+    // Filter to ids that are actually top-level on this page.
+    return topLevelIdsInOrder(blocksRef.current ?? [], all);
+  };
+
   const onDragEnd = (e: DragEndEvent) => {
     void reorderBlocks; // kept available; tree-aware move below uses updatePage directly
     const { active, over } = e;
     if (!over || active.id === over.id) return;
     const activeId = String(active.id);
     const overId = String(over.id);
+
+    // ----- Multi-drag: active is a top-level block AND part of the active selection -----
+    const selIds = getSelectedTopLevelIds();
+    const isMulti = selIds.length > 1 && selIds.includes(activeId);
+
+    if (isMulti) {
+      const colMatch = overId.match(/^col:(.+):(\d+)$/);
+      if (colMatch) {
+        const [, containerId, colIndexStr] = colMatch;
+        const colIndex = Number(colIndexStr);
+        const next = appendTopLevelGroupToContainer(page.blocks, selIds, containerId, "column", colIndex);
+        if (next !== page.blocks) updatePage(page.id, { blocks: next });
+        return;
+      }
+      const toggleMatch = overId.match(/^toggle:(.+)$/);
+      if (toggleMatch) {
+        const containerId = toggleMatch[1];
+        const next = appendTopLevelGroupToContainer(page.blocks, selIds, containerId, "toggle");
+        if (next !== page.blocks) updatePage(page.id, { blocks: next });
+        return;
+      }
+      // Drop on a sibling top-level block
+      if (page.blocks.some((b) => b.id === overId)) {
+        const next = placeTopLevelGroupAtBlock(page.blocks, selIds, overId);
+        if (next !== page.blocks) updatePage(page.id, { blocks: next });
+        return;
+      }
+      // Unrecognized over — fall through to single-block path
+    }
 
     const from = findLocation(page.blocks, activeId);
     if (!from) return;
