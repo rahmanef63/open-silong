@@ -5,7 +5,7 @@ import { cn } from "@/shared/lib/utils";
 import {
   Table2, LayoutGrid, List as ListIcon, Image, Calendar as CalendarIcon, Clock,
   Plus, Search, MoreHorizontal, Trash2, Eye, EyeOff, ArrowUpDown, Filter, Settings2,
-  Check, Pencil, BarChart3, LayoutDashboard, Rss, Map as MapIcon, ClipboardList,
+  Check, Pencil, BarChart3, LayoutDashboard, Rss, Map as MapIcon, ClipboardList, Copy,
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
@@ -164,6 +164,12 @@ export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block 
               active={v.id === db.activeViewId}
               onActivate={() => updateDatabase(db.id, { activeViewId: v.id })}
               onRename={(name) => updateView(db.id, v.id, { name })}
+              onDuplicate={() => {
+                const { id: _id, ...rest } = v;
+                void _id;
+                const nv = addView(db.id, { ...rest, name: `${v.name} copy` });
+                updateDatabase(db.id, { activeViewId: nv.id });
+              }}
               onDelete={() => {
                 if (db.views.length <= 1) return;
                 const next = db.views.find(x => x.id !== v.id);
@@ -266,9 +272,9 @@ export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block 
 }
 
 /** View tab with inline rename (double-click) and delete (context menu) */
-function ViewTab({ db, v, active, onActivate, onRename, onDelete }: {
+function ViewTab({ db, v, active, onActivate, onRename, onDuplicate, onDelete }: {
   db: Database; v: DatabaseViewConfig; active: boolean;
-  onActivate: () => void; onRename: (name: string) => void; onDelete: () => void;
+  onActivate: () => void; onRename: (name: string) => void; onDuplicate: () => void; onDelete: () => void;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(v.name);
@@ -321,6 +327,9 @@ function ViewTab({ db, v, active, onActivate, onRename, onDelete }: {
           <DropdownMenuContent align="start">
             <DropdownMenuItem onClick={() => { setDraft(v.name); setEditing(true); }}>
               <Pencil className="mr-2 h-3.5 w-3.5" /> Rename
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={onDuplicate}>
+              <Copy className="mr-2 h-3.5 w-3.5" /> Duplicate
             </DropdownMenuItem>
             <DropdownMenuItem className="text-destructive" onClick={onDelete}>
               <Trash2 className="mr-2 h-3.5 w-3.5" /> Delete view

@@ -619,7 +619,7 @@
 - [x] Cell editor per property type (PropertyCell with 18-type dispatcher)
 - [x] Keyboard navigation in table
 - [x] Bulk delete selected rows (drag-marquee in TableView selects rows; bottom toolbar deletes; Esc clears; Backspace shortcut)
-- [ ] Bulk edit (color / property values) selected rows
+- [x] Bulk edit (property values) selected rows — toolbar "Edit" popover sets value across selection
 - [x] Drag-fill (vertical, Excel-style fill handle)
 - [x] Cell selection ring + click-to-select
 - [x] Copy / paste cell (browser default)
@@ -665,10 +665,10 @@
 
 - [x] Group rows by date property
 - [x] Month view
-- [ ] Week view
-- [ ] Drag item to change date
-- [ ] Create item by clicking date
-- [ ] Overdue / no-date group
+- [x] Week view (segmented Month/Week toggle)
+- [x] Drag item to change date (DnD onto day cell)
+- [x] Create item by clicking date (per-day "+" → QuickCreateDialog)
+- [x] Overdue / no-date group (OverflowPanel)
 - [ ] Timezone handling
 
 ## 15.5 Gallery View — P1
@@ -683,14 +683,14 @@
 
 - [x] Start / end date property
 - [x] Horizontal timeline
-- [ ] Drag to adjust date
+- [x] Drag to adjust date (move bar + edge resize for start/end)
 - [ ] Group by property
 - [ ] Dependency lines
 
 ## 15.7 View Settings
 
 - [x] Create / rename / delete view
-- [ ] Duplicate view
+- [x] Duplicate view (active-tab kabab → Duplicate)
 - [x] Set active view
 - [x] Per-view filters / sorts / grouping / property visibility
 - [ ] Per-view layout settings
