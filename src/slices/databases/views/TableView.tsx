@@ -23,6 +23,7 @@ import {
   RowSelectionProvider, RowMarqueeOverlay, RowSelectionToolbar, RowSelectionKeyboard,
   useRowSelectionOptional,
 } from "@/slices/database-row-selection";
+import { getVisibleProps } from "../lib/visibility";
 
 interface ViewProps { db: Database; view: DatabaseViewConfig; rows: Page[]; onOpenRow: (id: string) => void }
 
@@ -37,7 +38,7 @@ export function TableView({ db, view, rows, onOpenRow }: ViewProps) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
   const tableScrollRef = useRef<HTMLDivElement | null>(null);
 
-  const visibleProps = db.properties.filter(p => !p.hidden);
+  const visibleProps = getVisibleProps(db, view);
   const rowIds = rows.map(r => r.id);
 
   const onFill = (source: FillSource, targets: string[]) => {
@@ -57,8 +58,8 @@ export function TableView({ db, view, rows, onOpenRow }: ViewProps) {
     const to = ids.indexOf(String(over.id));
     const next = [...ids];
     next.splice(to, 0, next.splice(from, 1)[0]);
-    const hidden = db.properties.filter(p => p.hidden).map(p => p.id);
-    reorderProperties(db.id, [...next, ...hidden]);
+    const hiddenInView = db.properties.filter(p => !visibleProps.includes(p)).map(p => p.id);
+    reorderProperties(db.id, [...next, ...hiddenInView]);
   };
 
   const onRowEnd = (e: DragEndEvent) => {

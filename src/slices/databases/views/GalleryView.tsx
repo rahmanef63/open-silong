@@ -2,6 +2,12 @@ import { Database, DatabaseViewConfig, Page, Property } from "@/shared/types/dom
 import { PropertyCell } from "../PropertyCell";
 import { focusSiblingBySelector } from "@/shared/lib/keyboard";
 import { cn } from "@/shared/lib/utils";
+import { getVisibleProps } from "../lib/visibility";
+import { useStore } from "@/shared/lib/store";
+import { Plus, MoreHorizontal, Trash2 } from "lucide-react";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from "@/shared/ui/dropdown-menu";
 
 interface Props { db: Database; view: DatabaseViewConfig; rows: Page[]; onOpenRow: (id: string) => void }
 
@@ -24,6 +30,7 @@ function pickCover(view: DatabaseViewConfig, db: Database, r: Page): string | un
 }
 
 export function GalleryView({ db, view, rows, onOpenRow }: Props) {
+  const { addRow, deleteRow } = useStore();
   const size = view.gallerySize ?? "medium";
   const aspect = view.galleryAspect ?? "video";
   const fit = view.galleryCoverFit ?? "cover";
@@ -38,11 +45,13 @@ export function GalleryView({ db, view, rows, onOpenRow }: Props) {
       : aspect === "portrait" ? "aspect-[3/4]"
       : "aspect-video";
 
+  const viewVisible = getVisibleProps(db, view);
+  const visibleSet = new Set(viewVisible.map(p => p.id));
   const visible: Property[] = view.galleryCardProps?.length
     ? view.galleryCardProps
         .map(id => db.properties.find(p => p.id === id))
-        .filter((p): p is Property => !!p && !p.hidden)
-    : db.properties.filter(p => !p.hidden && p.type !== "text").slice(0, 2);
+        .filter((p): p is Property => !!p && visibleSet.has(p.id))
+    : viewVisible.filter(p => p.type !== "text").slice(0, 2);
 
   return (
     <div className={cn("grid gap-3 p-3", gridCols)}>
@@ -52,8 +61,24 @@ export function GalleryView({ db, view, rows, onOpenRow }: Props) {
       {rows.map(r => {
         const cover = pickCover(view, db, r);
         return (
-          <button
+          <div
             key={r.id}
+            className="relative group rounded-lg border border-border bg-card hover:border-border-strong shadow-soft transition"
+          >
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="absolute top-1 right-1 z-10 opacity-0 group-hover:opacity-100 rounded bg-card/90 backdrop-blur p-1 hover:bg-accent text-muted-foreground" aria-label="Row actions">
+                  <MoreHorizontal className="h-3.5 w-3.5" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => onOpenRow(r.id)}>Open</DropdownMenuItem>
+                <DropdownMenuItem className="text-destructive" onClick={() => deleteRow(db.id, r.id)}>
+                  <Trash2 className="mr-2 h-3.5 w-3.5" /> Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          <button
             onClick={() => onOpenRow(r.id)}
             onKeyDown={(e) => {
               if (e.key === "ArrowDown" || e.key === "ArrowUp" || e.key === "ArrowLeft" || e.key === "ArrowRight") {
@@ -63,7 +88,7 @@ export function GalleryView({ db, view, rows, onOpenRow }: Props) {
               }
             }}
             data-db-nav-item
-            className="rounded-lg border border-border bg-card p-3 text-left hover:border-border-strong shadow-soft transition"
+            className="block w-full rounded-lg p-3 text-left"
           >
             {(view.galleryCoverSource ?? "cover") !== "none" && (
               <div className={cn("w-full rounded-md mb-2 bg-muted overflow-hidden flex items-center justify-center", aspectClass)}>
@@ -92,8 +117,18 @@ export function GalleryView({ db, view, rows, onOpenRow }: Props) {
               </div>
             )}
           </button>
+          </div>
         );
       })}
+      <button
+        onClick={async () => {
+          const r = await addRow(db.id);
+          onOpenRow(r.id);
+        }}
+        className="rounded-lg border border-dashed border-border p-3 text-sm text-muted-foreground hover:bg-accent hover:border-border-strong transition flex items-center justify-center min-h-[120px]"
+      >
+        <Plus className="mr-1 h-4 w-4" /> New
+      </button>
     </div>
   );
 }

@@ -1,9 +1,10 @@
 import { useMemo, useState } from "react";
 import { Database, DatabaseViewConfig, Page, Property } from "@/shared/types/domain";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { focusSiblingBySelector } from "@/shared/lib/keyboard";
 import { colorClass } from "@/shared/lib/format";
+import { useStore } from "@/shared/lib/store";
 
 interface Props { db: Database; view: DatabaseViewConfig; rows: Page[]; onOpenRow: (id: string) => void }
 
@@ -18,6 +19,7 @@ function parseYMD(s: string): Date | null {
 }
 
 export function CalendarView({ db, view, rows, onOpenRow }: Props) {
+  const { addRow } = useStore();
   const dateProp = useMemo(
     () => db.properties.find(p => p.id === view.calendarDateProp && p.type === "date")
       ?? db.properties.find(p => p.type === "date"),
@@ -130,13 +132,28 @@ export function CalendarView({ db, view, rows, onOpenRow }: Props) {
           const items = d ? (rowsByDate.get(key) ?? []) : [];
           const isToday = key === todayStr;
           return (
-            <div key={key} className={cn("bg-card min-h-20 p-1.5", isToday && "bg-brand/5")}>
+            <div key={key} className={cn("bg-card min-h-20 p-1.5 group relative", isToday && "bg-brand/5")}>
               {d && (
-                <div className={cn(
-                  "text-[10px] mb-1 w-5 h-5 flex items-center justify-center rounded-full",
-                  isToday ? "bg-brand text-white font-bold" : "text-muted-foreground"
-                )}>
-                  {d.getDate()}
+                <div className="flex items-center justify-between mb-1">
+                  <div className={cn(
+                    "text-[10px] w-5 h-5 flex items-center justify-center rounded-full",
+                    isToday ? "bg-brand text-white font-bold" : "text-muted-foreground"
+                  )}>
+                    {d.getDate()}
+                  </div>
+                  {dateProp && (
+                    <button
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        const nr = await addRow(db.id, { rowProps: { [dateProp.id]: { date: key } } });
+                        onOpenRow(nr.id);
+                      }}
+                      title="Add row on this date"
+                      className="opacity-0 group-hover:opacity-100 rounded p-0.5 hover:bg-accent text-muted-foreground"
+                    >
+                      <Plus className="h-3 w-3" />
+                    </button>
+                  )}
                 </div>
               )}
               <div className="space-y-0.5">

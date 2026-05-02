@@ -2,9 +2,13 @@ import { useMemo } from "react";
 import { Database, DatabaseViewConfig, Page, Property } from "@/shared/types/domain";
 import { PropertyCell } from "../PropertyCell";
 import { useStore } from "@/shared/lib/store";
-import { Clock } from "lucide-react";
+import { Clock, Plus, MoreHorizontal, Trash2 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { focusSiblingBySelector } from "@/shared/lib/keyboard";
+import { getVisibleProps } from "../lib/visibility";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from "@/shared/ui/dropdown-menu";
 
 interface Props { db: Database; view: DatabaseViewConfig; rows: Page[]; onOpenRow: (id: string) => void }
 
@@ -28,7 +32,7 @@ function timeLabel(ts: number): string {
 }
 
 export function FeedView({ db, view, rows, onOpenRow }: Props) {
-  const { updateView } = useStore();
+  const { updateView, addRow, deleteRow } = useStore();
   const source = view.feedTimestamp ?? "updatedAt";
 
   const grouped = useMemo(() => {
@@ -49,28 +53,41 @@ export function FeedView({ db, view, rows, onOpenRow }: Props) {
     });
   }, [rows, source]);
 
+  const viewVisible = getVisibleProps(db, view);
+  const visibleSet = new Set(viewVisible.map(p => p.id));
   const summaryProps: Property[] = view.feedSummaryProps?.length
     ? view.feedSummaryProps
         .map(id => db.properties.find(p => p.id === id))
-        .filter((p): p is Property => !!p && !p.hidden)
-    : db.properties.filter(p => !p.hidden && p.type !== "text").slice(0, 3);
+        .filter((p): p is Property => !!p && visibleSet.has(p.id))
+    : viewVisible.filter(p => p.type !== "text").slice(0, 3);
 
   const compact = (view.feedDensity ?? "comfortable") === "compact";
 
   return (
     <div className="p-3">
-      <div className="flex items-center justify-end gap-1 text-xs mb-2">
-        <span className="text-muted-foreground">Sort by:</span>
+      <div className="flex items-center justify-between gap-1 text-xs mb-2">
         <button
-          onClick={() => updateView(db.id, view.id, { feedTimestamp: "updatedAt" })}
-          className={cn("rounded px-2 py-0.5 hover:bg-accent",
-            source === "updatedAt" ? "bg-accent font-medium" : "text-muted-foreground")}
-        >Last edited</button>
-        <button
-          onClick={() => updateView(db.id, view.id, { feedTimestamp: "createdAt" })}
-          className={cn("rounded px-2 py-0.5 hover:bg-accent",
-            source === "createdAt" ? "bg-accent font-medium" : "text-muted-foreground")}
-        >Created</button>
+          onClick={async () => {
+            const r = await addRow(db.id);
+            onOpenRow(r.id);
+          }}
+          className="flex items-center gap-1 rounded-md border border-border bg-card px-2 py-1 hover:bg-accent text-muted-foreground"
+        >
+          <Plus className="h-3 w-3" /> New row
+        </button>
+        <div className="flex items-center gap-1">
+          <span className="text-muted-foreground">Sort by:</span>
+          <button
+            onClick={() => updateView(db.id, view.id, { feedTimestamp: "updatedAt" })}
+            className={cn("rounded px-2 py-0.5 hover:bg-accent",
+              source === "updatedAt" ? "bg-accent font-medium" : "text-muted-foreground")}
+          >Last edited</button>
+          <button
+            onClick={() => updateView(db.id, view.id, { feedTimestamp: "createdAt" })}
+            className={cn("rounded px-2 py-0.5 hover:bg-accent",
+              source === "createdAt" ? "bg-accent font-medium" : "text-muted-foreground")}
+          >Created</button>
+        </div>
       </div>
 
       {grouped.length === 0 && (
@@ -92,8 +109,21 @@ export function FeedView({ db, view, rows, onOpenRow }: Props) {
               {g.items.map(r => {
                 const ts = (r[source] ?? r.updatedAt ?? Date.now()) as number;
                 return (
+                  <div key={r.id} className="relative group">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="absolute top-1 right-1 z-10 opacity-0 group-hover:opacity-100 rounded bg-card/90 backdrop-blur p-1 hover:bg-accent text-muted-foreground" aria-label="Row actions">
+                        <MoreHorizontal className="h-3.5 w-3.5" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => onOpenRow(r.id)}>Open</DropdownMenuItem>
+                      <DropdownMenuItem className="text-destructive" onClick={() => deleteRow(db.id, r.id)}>
+                        <Trash2 className="mr-2 h-3.5 w-3.5" /> Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                   <button
-                    key={r.id}
                     onClick={() => onOpenRow(r.id)}
                     onKeyDown={(e) => {
                       if (e.key === "ArrowDown" || e.key === "ArrowUp") {
@@ -124,6 +154,7 @@ export function FeedView({ db, view, rows, onOpenRow }: Props) {
                       </div>
                     )}
                   </button>
+                  </div>
                 );
               })}
             </div>

@@ -211,6 +211,10 @@ export interface DatabaseViewConfig {
   formShownProps?: string[];
   /** Form view: success message after submit */
   formSuccessMessage?: string;
+
+  /** Per-view hidden property ids — independent of global Property.hidden so
+   *  hiding a column in one view never affects another. */
+  hiddenPropIds?: string[];
   /** Feed view: secondary timestamp source */
   feedTimestamp?: "createdAt" | "updatedAt";
 

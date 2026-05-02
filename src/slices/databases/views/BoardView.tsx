@@ -10,6 +10,7 @@ import { focusSiblingBySelector, isTextInputTarget } from "@/shared/lib/keyboard
 import { colorClass } from "@/shared/lib/format";
 import { PropertyCell } from "../PropertyCell";
 import { Plus } from "lucide-react";
+import { getVisibleProps } from "../lib/visibility";
 
 interface Props { db: Database; view: DatabaseViewConfig; rows: Page[]; onOpenRow: (id: string) => void }
 
@@ -39,6 +40,7 @@ export function BoardView({ db, view, rows, onOpenRow }: Props) {
   const cardPadding = cardSize === "small" ? "p-2" : cardSize === "large" ? "p-4" : "p-3";
   const cardSpacing = cardSize === "small" ? "space-y-1.5" : cardSize === "large" ? "space-y-3" : "space-y-2";
   const cardPropIds = view.boardCardProps;
+  const viewVisible = getVisibleProps(db, view);
 
   let columns: { id: string | null; option?: SelectOption; rows: Page[] }[] = [
     ...groupProp.options.map(o => ({
@@ -66,6 +68,7 @@ export function BoardView({ db, view, rows, onOpenRow }: Props) {
           <BoardColumn key={col.id ?? "none"} db={db} col={col} groupProp={groupProp}
             cardPadding={cardPadding} cardSpacing={cardSpacing}
             colorByProp={colorByProp} cardPropIds={cardPropIds}
+            viewVisible={viewVisible}
             onAdd={async () => {
               const r = await addRow(db.id, { rowProps: { [groupProp.id]: col.id ?? null } });
               onOpenRow(r.id);
@@ -76,7 +79,7 @@ export function BoardView({ db, view, rows, onOpenRow }: Props) {
   );
 }
 
-function BoardColumn({ db, col, groupProp, onAdd, onOpen, cardPadding, cardSpacing, colorByProp, cardPropIds }: any) {
+function BoardColumn({ db, col, groupProp, onAdd, onOpen, cardPadding, cardSpacing, colorByProp, cardPropIds, viewVisible }: any) {
   const { setNodeRef, isOver } = useDroppable({ id: `col_${col.id ?? "null"}` });
   return (
     <div ref={setNodeRef} className={cn("w-64 shrink-0 rounded-lg bg-muted/40 p-2 transition", isOver && "ring-2 ring-brand bg-muted/70")}>
@@ -99,6 +102,7 @@ function BoardColumn({ db, col, groupProp, onAdd, onOpen, cardPadding, cardSpaci
             cardPadding={cardPadding}
             colorByProp={colorByProp}
             cardPropIds={cardPropIds}
+            viewVisible={viewVisible}
           />
         ))}
       </div>
@@ -106,13 +110,14 @@ function BoardColumn({ db, col, groupProp, onAdd, onOpen, cardPadding, cardSpaci
   );
 }
 
-function BoardCard({ row, db, onOpen, cardPadding, colorByProp, cardPropIds }: any) {
+function BoardCard({ row, db, onOpen, cardPadding, colorByProp, cardPropIds, viewVisible }: any) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: row.id });
+  const visibleSet = new Set<string>((viewVisible as Property[]).map((p) => p.id));
   const visibleProps: Property[] = cardPropIds?.length
     ? cardPropIds
         .map((id: string) => db.properties.find((p: Property) => p.id === id))
-        .filter((p: Property | undefined): p is Property => !!p && !p.hidden)
-    : db.properties.filter((p: Property) => !p.hidden && p.type !== "text").slice(0, 3);
+        .filter((p: Property | undefined): p is Property => !!p && visibleSet.has(p.id))
+    : (viewVisible as Property[]).filter((p) => p.type !== "text").slice(0, 3);
   const colorOpt: { color?: string } | null = colorByProp
     ? colorByProp.options?.find((o: any) => o.id === row.rowProps?.[colorByProp.id]) ?? null
     : null;

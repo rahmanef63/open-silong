@@ -39,8 +39,15 @@ function labelFor(prop: Property | undefined, raw: any): string {
     const opt = prop.options?.find(o => o.id === raw);
     return opt?.name ?? "—";
   }
+  if (prop.type === "multi_select") {
+    const ids = Array.isArray(raw) ? raw : [];
+    if (ids.length === 0) return "—";
+    return ids.map(id => prop.options?.find(o => o.id === id)?.name ?? "—").join(", ");
+  }
   if (prop.type === "checkbox") return raw ? "Checked" : "Unchecked";
   if (prop.type === "date") return (raw as any)?.date ?? "—";
+  if (prop.type === "number") return Number.isFinite(raw) ? String(raw) : "—";
+  if (Array.isArray(raw)) return raw.length ? raw.join(", ") : "—";
   return String(raw);
 }
 
@@ -63,6 +70,7 @@ export function ChartView({ db, view, rows }: Props) {
   const xProp = useMemo(
     () => db.properties.find(p => p.id === view.chartXProp)
       ?? db.properties.find(p => p.type === "select" || p.type === "status")
+      ?? db.properties.find(p => p.type !== "number")
       ?? db.properties[0],
     [db.properties, view.chartXProp],
   );
@@ -82,9 +90,16 @@ export function ChartView({ db, view, rows }: Props) {
   const data = useMemo(() => {
     if (!xProp) return [] as { name: string; value: number; key: string }[];
     const buckets = new Map<string, { values: number[]; label: string }>();
+    const keyFor = (raw: any): string => {
+      if (raw === undefined || raw === null || raw === "") return "__empty__";
+      if (xProp.type === "date") return (raw as any)?.date ?? "__empty__";
+      if (Array.isArray(raw)) return raw.length ? [...raw].sort().join("|") : "__empty__";
+      if (typeof raw === "object") return JSON.stringify(raw);
+      return String(raw);
+    };
     for (const r of rows) {
       const raw = r.rowProps?.[xProp.id];
-      const key = raw === undefined || raw === null || raw === "" ? "__empty__" : String(raw);
+      const key = keyFor(raw);
       const num = yProp ? Number(r.rowProps?.[yProp.id] ?? 0) || 0 : 1;
       const b = buckets.get(key) ?? { values: [], label: labelFor(xProp, raw) };
       b.values.push(num);
@@ -112,9 +127,7 @@ export function ChartView({ db, view, rows }: Props) {
   }, [rows, xProp, yProp, agg, decimals, sortBy, sortDir, topN]);
 
   const numProps = db.properties.filter(p => p.type === "number");
-  const xCandidates = db.properties.filter(p =>
-    p.type === "select" || p.type === "status" || p.type === "checkbox" || p.type === "person"
-  );
+  const xCandidates = db.properties; // any column is valid as a category
 
   const renderChart = () => {
     if (!xProp) return <Empty msg="Pick a category property" />;

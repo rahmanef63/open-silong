@@ -4,7 +4,7 @@ import { useStore } from "@/shared/lib/store";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
-import { ChevronDown, MapPin } from "lucide-react";
+import { ChevronDown, MapPin, Plus, MoreHorizontal, Trash2 } from "lucide-react";
 
 const COLOR_HEX: Record<string, string> = {
   gray: "#6b7280",
@@ -51,7 +51,7 @@ const CONTINENTS = [
 ];
 
 export function MapView({ db, view, rows, onOpenRow }: Props) {
-  const { updateView } = useStore();
+  const { updateView, addRow, deleteRow } = useStore();
   const numProps = useMemo(() => db.properties.filter(p => p.type === "number"), [db.properties]);
 
   const latProp = useMemo(
@@ -109,6 +109,15 @@ export function MapView({ db, view, rows, onOpenRow }: Props) {
         <span className="ml-auto text-muted-foreground">
           {pins.length} of {rows.length} pinned
         </span>
+        <button
+          onClick={async () => {
+            const r = await addRow(db.id);
+            onOpenRow(r.id);
+          }}
+          className="flex items-center gap-1 rounded-md border border-border bg-card px-2 py-1 hover:bg-accent text-muted-foreground"
+        >
+          <Plus className="h-3 w-3" /> New row
+        </button>
       </div>
 
       {(!latProp || !lngProp) ? (
@@ -182,15 +191,26 @@ export function MapView({ db, view, rows, onOpenRow }: Props) {
       {showList && pins.length > 0 && (
         <div className="rounded-lg border border-border bg-card divide-y divide-border max-h-48 overflow-y-auto">
           {pins.map(p => (
-            <button
-              key={p.row.id}
-              onClick={() => onOpenRow(p.row.id)}
-              className="flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-accent/50 text-xs"
-            >
-              <MapPin className="h-3 w-3 shrink-0" style={{ color: p.color }} />
-              <span className="flex-1 truncate">{p.row.icon} {p.row.title || "Untitled"}</span>
-              <span className="text-muted-foreground tabular-nums">{p.lat.toFixed(2)}, {p.lng.toFixed(2)}</span>
-            </button>
+            <div key={p.row.id} className="flex items-center gap-2 px-3 py-1.5 hover:bg-accent/50 text-xs group">
+              <button onClick={() => onOpenRow(p.row.id)} className="flex flex-1 items-center gap-2 text-left min-w-0">
+                <MapPin className="h-3 w-3 shrink-0" style={{ color: p.color }} />
+                <span className="flex-1 truncate">{p.row.icon} {p.row.title || "Untitled"}</span>
+                <span className="text-muted-foreground tabular-nums">{p.lat.toFixed(2)}, {p.lng.toFixed(2)}</span>
+              </button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="opacity-0 group-hover:opacity-100 rounded p-0.5 hover:bg-accent text-muted-foreground" aria-label="Row actions">
+                    <MoreHorizontal className="h-3 w-3" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => onOpenRow(p.row.id)}>Open</DropdownMenuItem>
+                  <DropdownMenuItem className="text-destructive" onClick={() => deleteRow(db.id, p.row.id)}>
+                    <Trash2 className="mr-2 h-3.5 w-3.5" /> Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           ))}
         </div>
       )}
