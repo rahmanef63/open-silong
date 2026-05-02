@@ -6,8 +6,11 @@ import {
 import { Button } from "@/shared/ui/button";
 import { useStore } from "@/shared/lib/store";
 import { parseCsv, valueFromString, type ParsedCsv } from "../lib/csv";
-import type { Database, PropertyType } from "@/shared/types/domain";
+import type { Database, Property, PropertyType, SelectOption } from "@/shared/types/domain";
 import { PROPERTY_TYPE_LABELS } from "@/slices/databases/DatabaseBlock";
+
+const uid = () => Math.random().toString(36).slice(2, 10);
+const OPTION_COLORS = ["default", "gray", "brown", "orange", "yellow", "green", "blue", "purple", "pink", "red"];
 
 interface Props {
   db: Database;
@@ -25,7 +28,7 @@ const NEW_TYPES: PropertyType[] = [
 ];
 
 export function CsvImportDialog({ db, open, onOpenChange }: Props) {
-  const { addRow, setRowValue, updatePage, addProperty, updateProperty, pages } = useStore();
+  const { addRow, setRowValue, updatePage, updateDatabase, pages } = useStore();
   const [parsed, setParsed] = useState<ParsedCsv | null>(null);
   const [mapping, setMapping] = useState<Record<number, string>>({});
   const [importing, setImporting] = useState(false);
@@ -158,31 +161,38 @@ export function CsvImportDialog({ db, open, onOpenChange }: Props) {
               setImporting(true);
               setError(null);
               try {
-                // 1) Resolve __new:<type> mappings → real property ids, capturing
-                //    each created Property object so subsequent value coercion has
-                //    the freshest definition (incl. seeded options).
+                // 1) Build all "+ Create new" properties LOCALLY, then commit them
+                //    in a single updateDatabase call. Calling addProperty in a loop
+                //    races on the React-state baseline (each call sees the same
+                //    stale db.properties → last write wins → only one prop survives).
                 const resolved: Record<number, string> = { ...mapping };
-                const createdProps = new Map<string, import("@/shared/types/domain").Property>();
+                const createdProps = new Map<string, Property>();
+                const newProps: Property[] = [];
                 for (let i = 0; i < parsed.headers.length; i++) {
                   const target = resolved[i];
                   if (!target?.startsWith(NEW_PREFIX)) continue;
                   const type = target.slice(NEW_PREFIX.length) as PropertyType;
                   const name = parsed.headers[i] || `Column ${i + 1}`;
-                  const created = await addProperty(db.id, type, name);
-                  let final = created;
-                  const optionNames = collectNewOptionNames(i, type);
-                  if (optionNames.length > 0) {
-                    const colors = ["default", "gray", "brown", "orange", "yellow", "green", "blue", "purple", "pink", "red"];
-                    const options = optionNames.map((n, idx) => ({
-                      id: `${created.id}_opt_${idx}`,
+                  const propId = uid();
+
+                  let options: SelectOption[] | undefined;
+                  if (type === "select" || type === "multi_select" || type === "status") {
+                    const optionNames = collectNewOptionNames(i, type);
+                    options = optionNames.map((n, idx) => ({
+                      id: `${propId}_opt_${idx}`,
                       name: n,
-                      color: colors[idx % colors.length],
+                      color: OPTION_COLORS[idx % OPTION_COLORS.length],
                     }));
-                    await updateProperty(db.id, created.id, { options });
-                    final = { ...created, options };
                   }
-                  createdProps.set(final.id, final);
-                  resolved[i] = final.id;
+
+                  const prop: Property = { id: propId, name, type, options };
+                  newProps.push(prop);
+                  createdProps.set(propId, prop);
+                  resolved[i] = propId;
+                }
+
+                if (newProps.length > 0) {
+                  await updateDatabase(db.id, { properties: [...db.properties, ...newProps] });
                 }
 
                 const propLookup = (id: string) =>
