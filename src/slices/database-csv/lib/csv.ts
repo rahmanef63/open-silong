@@ -89,9 +89,20 @@ export function parseCsv(text: string): ParsedCsv {
   return { headers, rows };
 }
 
-export function valueFromString(raw: string, prop: Property): PropertyValue {
+/** Property types that are computed / system-managed — never written from CSV. */
+const COMPUTED_TYPES = new Set<Property["type"]>([
+  "rollup", "formula", "created_time", "created_by",
+  "last_edited_time", "last_edited_by", "unique_id",
+]);
+
+export function valueFromString(
+  raw: string,
+  prop: Property,
+  ctx?: { pages?: Page[]; relationScope?: string },
+): PropertyValue {
   const trimmed = raw.trim();
   if (!trimmed) return null;
+  if (COMPUTED_TYPES.has(prop.type)) return null;
   switch (prop.type) {
     case "checkbox":
       return /^(true|yes|1|x|✓)$/i.test(trimmed);
@@ -111,6 +122,27 @@ export function valueFromString(raw: string, prop: Property): PropertyValue {
       return parts
         .map((name) => prop.options?.find((o) => o.name.toLowerCase() === name.toLowerCase())?.id ?? null)
         .filter((id): id is string => !!id);
+    }
+    case "relation": {
+      const all = ctx?.pages ?? [];
+      const scopeId = prop.relationDatabaseId ?? ctx?.relationScope ?? null;
+      const candidates = scopeId
+        ? all.filter((p) => p.rowOfDatabaseId === scopeId)
+        : all;
+      const parts = trimmed.split(/[;,]/).map((s) => s.trim()).filter(Boolean);
+      return parts
+        .map((needle) => {
+          const lc = needle.toLowerCase();
+          const hit = candidates.find((p) => p.title.toLowerCase() === lc)
+                   ?? candidates.find((p) => p.id === needle);
+          return hit?.id ?? null;
+        })
+        .filter((id): id is string => !!id);
+    }
+    case "person":
+    case "files": {
+      const parts = trimmed.split(/[;,]/).map((s) => s.trim()).filter(Boolean);
+      return parts;
     }
     case "url":
     case "email":

@@ -10,7 +10,7 @@ import {
   SortableContext, horizontalListSortingStrategy, verticalListSortingStrategy, useSortable, sortableKeyboardCoordinates,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, MoreHorizontal, Trash2, Check } from "lucide-react";
+import { GripVertical, MoreHorizontal, Trash2, Check, Minus } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { focusSiblingBySelector, isTextInputTarget } from "@/shared/lib/keyboard";
 import {
@@ -21,7 +21,7 @@ import { AddColumnHeader, AddRowFooter, InlineRowTitle } from "@/slices/database
 import { useDragFill, SelectableCell, type FillSource } from "@/slices/database-cell-selection";
 import {
   RowSelectionProvider, RowMarqueeOverlay, RowSelectionToolbar, RowSelectionKeyboard,
-  useRowSelectionOptional,
+  useRowSelection, useRowSelectionOptional,
 } from "@/slices/database-row-selection";
 import { getVisibleProps } from "../lib/visibility";
 
@@ -83,7 +83,7 @@ export function TableView({ db, view, rows, onOpenRow }: ViewProps) {
         <SortableContext items={visibleProps.map(p => p.id)} strategy={horizontalListSortingStrategy}>
           <div className="min-w-full">
             <div className="flex border-b border-border bg-muted/30 text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
-              <div className="w-8 shrink-0 border-r border-border" />
+              <HeaderCheckboxGutter rowIds={rowIds} />
               {visibleProps.map(p => <SortableHeader key={p.id} prop={p} db={db} />)}
               <AddColumnHeader dbId={db.id} />
             </div>
@@ -118,6 +118,63 @@ export function TableView({ db, view, rows, onOpenRow }: ViewProps) {
       </DndContext>
     </div>
     </RowSelectionProvider>
+  );
+}
+
+function HeaderCheckboxGutter({ rowIds }: { rowIds: string[] }) {
+  const sel = useRowSelection();
+  const total = rowIds.length;
+  const selectedCount = rowIds.filter((id) => sel.isSelected(id)).length;
+  const state: "checked" | "indeterminate" | "unchecked" =
+    selectedCount === 0 ? "unchecked" : selectedCount === total ? "checked" : "indeterminate";
+  const onClick = () => {
+    if (state === "checked") sel.clear();
+    else sel.setIds(rowIds);
+  };
+  return (
+    <div className="w-12 shrink-0 flex items-center justify-center border-r border-border">
+      <button
+        type="button"
+        role="checkbox"
+        aria-checked={state === "indeterminate" ? "mixed" : state === "checked"}
+        aria-label={state === "checked" ? "Clear selection" : "Select all rows"}
+        title={state === "checked" ? "Clear selection" : "Select all"}
+        onClick={onClick}
+        className={cn(
+          "h-4 w-4 rounded-sm border flex items-center justify-center transition",
+          state !== "unchecked"
+            ? "bg-primary border-primary text-primary-foreground"
+            : "border-muted-foreground/40 hover:border-foreground",
+        )}
+      >
+        {state === "checked" && <Check className="h-3 w-3" />}
+        {state === "indeterminate" && <Minus className="h-3 w-3" />}
+      </button>
+    </div>
+  );
+}
+
+function RowCheckbox({ rowId }: { rowId: string }) {
+  const sel = useRowSelection();
+  const checked = sel.isSelected(rowId);
+  const onClick = (e: React.MouseEvent) => { e.stopPropagation(); sel.toggle(rowId); };
+  return (
+    <button
+      type="button"
+      role="checkbox"
+      aria-checked={checked}
+      aria-label={checked ? "Deselect row" : "Select row"}
+      onClick={onClick}
+      onMouseDown={(e) => e.stopPropagation()}
+      className={cn(
+        "h-4 w-4 rounded-sm border flex items-center justify-center transition shrink-0",
+        checked
+          ? "bg-primary border-primary text-primary-foreground"
+          : "border-muted-foreground/40 hover:border-foreground opacity-60 group-hover:opacity-100",
+      )}
+    >
+      {checked && <Check className="h-3 w-3" />}
+    </button>
   );
 }
 
@@ -221,8 +278,9 @@ function SortableRow({ row, rowIndex, db, visibleProps, onOpen, onDelete, autoEd
         isRowSelected && "bg-brand/15 ring-2 ring-brand/60 ring-inset",
       )}
     >
-      <div className="w-8 shrink-0 flex items-center justify-center border-r border-border">
-        <button {...attributes} {...listeners} className="cursor-grab text-muted-foreground/30 hover:text-foreground opacity-0 group-hover:opacity-100">
+      <div className="w-12 shrink-0 flex items-center justify-center gap-0.5 border-r border-border">
+        <RowCheckbox rowId={row.id} />
+        <button {...attributes} {...listeners} aria-label="Drag to reorder" className="cursor-grab text-muted-foreground/30 hover:text-foreground opacity-0 group-hover:opacity-100">
           <GripVertical className="h-3 w-3" />
         </button>
       </div>
