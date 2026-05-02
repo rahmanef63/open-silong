@@ -4,12 +4,17 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://nosion.rahmanef.com
 const nextConfig = {
   output: "standalone",
   reactStrictMode: true,
+  // cacheComponents: requires every route under a Suspense boundary OR
+  // explicit "use cache" — the ConvexAuthNextjsServerProvider in layout
+  // reads cookies dynamically, currently blocking layout-level enablement.
+  // Re-enable once auth provider is moved behind a per-route Suspense and
+  // /share/[id] gets a "use cache" + cacheTag annotation.
+  // cacheComponents: true,
   deploymentId: process.env.NEXT_PUBLIC_DEPLOYMENT_ID,
   // Pre-existing legacy slice TS drift; tightened to strictNullChecks=false
   // tsconfig. TODO(s6+): tsc --noEmit in CI, fix tree, drop this flag.
   typescript: { ignoreBuildErrors: true },
   experimental: {
-    // cacheComponents enabled in S5 once routes promoted out of catch-all
     serverActions: {
       allowedOrigins: [new URL(siteUrl).host],
       bodySizeLimit: "5mb",
