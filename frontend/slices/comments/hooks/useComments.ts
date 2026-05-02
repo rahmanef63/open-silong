@@ -23,7 +23,7 @@ export function useComments(opts: { pageId?: string; blockId?: string }) {
   );
   const byBlock = useQuery(
     api["features/comments/queries"].listForBlock,
-    opts.blockId ? { blockId: opts.blockId } : "skip",
+    opts.blockId && opts.pageId ? { blockId: opts.blockId, pageId: opts.pageId } : "skip",
   );
 
   const create = useMutation(api["features/comments/mutations"].create);

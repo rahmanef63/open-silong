@@ -79,10 +79,29 @@ export const create = mutation({
   },
 });
 
+/**
+ * Page content patch. Whitelisted fields only — userId / isPublic / trashed
+ * / rowOfDatabaseId / createdAt cannot be flipped via this mutation. Use
+ * setPublic / trash / restore for those state transitions.
+ */
 export const update = mutation({
   args: {
     pageId: v.string(),
-    patch: v.any(),
+    patch: v.object({
+      title: v.optional(v.string()),
+      icon: v.optional(v.string()),
+      cover: v.optional(v.union(v.string(), v.null())),
+      blocks: v.optional(v.array(v.any())),
+      favorite: v.optional(v.boolean()),
+      parentId: v.optional(v.union(v.string(), v.null())),
+      font: v.optional(v.string()),
+      smallText: v.optional(v.boolean()),
+      fullWidth: v.optional(v.boolean()),
+      locked: v.optional(v.boolean()),
+      rowProps: v.optional(v.any()),
+      // Manual sort uses createdAt as the order key; reorder undo restores it.
+      createdAt: v.optional(v.number()),
+    }),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -97,6 +116,19 @@ export const update = mutation({
       ...(touchesContent ? { searchText: buildSearchText(nextTitle, nextBlocks) } : {}),
       updatedAt: Date.now(),
     });
+  },
+});
+
+/** Toggle public-share status. Carved out of update() so the public flip
+ *  cannot piggyback on a routine content patch. */
+export const setPublic = mutation({
+  args: { pageId: v.string(), isPublic: v.boolean() },
+  handler: async (ctx, { pageId, isPublic }) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+    const page = await ctx.db.get(pageId as Id<"pages">);
+    if (!page || page.userId !== userId) throw new Error("Not found");
+    await ctx.db.patch(pageId as Id<"pages">, { isPublic, updatedAt: Date.now() });
   },
 });
 

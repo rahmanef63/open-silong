@@ -107,6 +107,15 @@ export default defineSchema({
     .index("by_user", ["userId"])
     .index("by_user_unread", ["userId", "read"]),
 
+  // === uploaded files (storage ownership ledger) ===
+  files: defineTable({
+    userId: v.id("users"),
+    storageId: v.string(),
+    createdAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_storage", ["storageId"]),
+
   // === comments ===
   comments: defineTable({
     userId: v.id("users"),                  // author
