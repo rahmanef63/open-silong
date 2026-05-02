@@ -39,7 +39,7 @@ Cross-links inside the repo:
 
 | Doc | Done | Total | % |
 | --- | ---: | ---: | ---: |
-| `BACKLOG.md` | 406 | 850 | **47.8%** |
+| `BACKLOG.md` | 407 | 851 | **47.8%** |
 | `ROADMAP.md` | 28 | 53 | **52.8%** |
 
 Recompute with: `cd docs/notion-clone && grep -cE '^- \[x\]\|^  - \[x\]\|^    - \[x\]' BACKLOG.md`.
@@ -97,7 +97,8 @@ The codebase already covers a usable single-user MVP plus most of the V1 surface
 - **Cursor-jump fix** — `BlockEditor` / `NestedBlock` useEffects now skip DOM sync while the element is `document.activeElement`. `ToggleBlock` heading switched from `{block.text}` child to ref-based pattern. Cures the "cursor flies to position 0 while typing fast" bug caused by every keystroke firing a Convex round-trip that re-rendered with echoed text.
 - **Search ranking polish** — title hits now sort above body hits (Convex BM25 still orders within each group).
 - **Block color + background** — 10-color Notion palette (gray/brown/orange/yellow/green/blue/purple/pink/red + default). Submenu in the block-controls dropdown picks text color and bg independently. Tailwind class literals live in `slices/editor/lib/colors.ts` so JIT scans them.
-- **Block multi-select** — `slices/block-selection/`. Dedicated select button (`Square` / `CheckSquare`) in BlockControls is the primary entry: plain click = select one, Shift-click = range from anchor, ⌘-click = toggle. Selected blocks show a brand ring + bg fill; the controls strip stays visible while selected. Floating bottom toolbar offers Duplicate / Turn into / Color / Bg / Delete / Clear. Esc clears, Backspace/Delete batch-deletes, ⌘D batch-duplicates. Click in any contentEditable returns to caret + clears. Top-level blocks only (V1).
+- **Block multi-select via drag-marquee** — `slices/block-selection/` + shared `Marquee` primitive in `shared/components/Marquee.tsx`. Press the pointer in non-text space (gutter / page background / between blocks) and drag → translucent rubber-band; every top-level block whose bbox overlaps the band is selected live. Hold Shift/⌘ while starting the drag to add to the existing selection; plain drag clears first. Floating bottom toolbar offers Duplicate / Turn into / Color / Bg / Delete / Clear. Esc clears, Backspace/Delete batch-deletes, ⌘D batch-duplicates. Click in any contentEditable returns to caret + clears. Top-level blocks only (V1).
+- **Database row multi-select** — `slices/database-row-selection/` reuses the same `Marquee` primitive. Drag-band in TableView selects rows (selected rows get a brand ring + bg fill). Bottom toolbar shows row count + Delete + Clear. Esc/Backspace/Del wired. Same drag/Shift behavior as blocks.
 - **Block renderer registry** (`src/slices/editor/blocks/registry.tsx`) — `BLOCK_RENDERERS` maps `BlockType → ComponentType<BlockRendererProps>`. Both top-level `BlockEditor` and nested `NestedBlock` consume it. Adding a leaf block = 1 entry; previous 7-branch if/else collapsed to a single dispatch.
 - **Standardized block component contract** — `BaseBlockProps { block, onUpdate }` + `BlockRendererProps` (`onReplace?`, `registerRef?`) in `src/shared/types/block.ts`. `ImageBlock` + `SimpleTableBlock` no longer couple to `pageId` + `useStore` — pure callback components.
 - **Nested block DnD fully wired** — `NestedBlock` is now `useSortable` with a `GripVertical` handle and `isOver` indicator line. `ColumnPane` + `ToggleBlock` wrap children in `<SortableContext>`. Reorder inside toggle/column, drag between columns, drag out to top level, drag in from top — all six tree-move cases covered.

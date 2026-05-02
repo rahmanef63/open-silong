@@ -27,6 +27,9 @@ export function BlockSelectionProvider({ blockOrder, children }: Props) {
   const selectOne = useCallback((id: string) => setState(() => selectSingle(id)), []);
   const toggle = useCallback((id: string) => setState((s) => toggleSelection(s, id)), []);
   const range = useCallback((id: string) => setState((s) => rangeSelect(s, id, orderRef.current)), []);
+  const setIds = useCallback((ids: string[]) => {
+    setState((s) => ({ ids: new Set(ids), anchor: ids[ids.length - 1] ?? s.anchor }));
+  }, []);
   const clear = useCallback(() => setState(clearSelection), []);
   const isSelected = useCallback((id: string) => state.ids.has(id), [state.ids]);
 
@@ -57,8 +60,8 @@ export function BlockSelectionProvider({ blockOrder, children }: Props) {
   }, []);
 
   const value = useMemo<SelectionApi>(() => ({
-    state, isSelected, selectOne, toggle, range, clear, count: state.ids.size,
-  }), [state, isSelected, selectOne, toggle, range, clear]);
+    state, isSelected, selectOne, toggle, range, setIds, clear, count: state.ids.size,
+  }), [state, isSelected, selectOne, toggle, range, setIds, clear]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

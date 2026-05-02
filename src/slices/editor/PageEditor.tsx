@@ -23,7 +23,7 @@ import { VersionHistory } from "@/slices/snapshots/components/VersionHistory";
 import { Button } from "@/shared/ui/button";
 import { findLocation, moveBlock, type Location } from "./lib/blockTree";
 import { prioritizeCollisions } from "./lib/collisionPriority";
-import { BlockSelectionProvider, SelectionToolbar, SelectionKeyboard } from "@/slices/block-selection";
+import { BlockSelectionProvider, SelectionToolbar, SelectionKeyboard, MarqueeOverlay } from "@/slices/block-selection";
 
 const ICONS = ["📄", "📝", "📚", "🚀", "🌱", "🛰️", "🎨", "🧠", "🪄", "🌙", "☕", "🔥", "🌊", "✨", "🪐", "🛠️"];
 const COVERS = [
@@ -44,6 +44,7 @@ export function PageEditor() {
   const [shareOpen, setShareOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const refs = useRef<Map<string, HTMLElement | null>>(new Map());
+  const scrollRef = useRef<HTMLDivElement | null>(null);
   const blocksRef = useRef(page?.blocks);
   blocksRef.current = page?.blocks;
   const sensors = useSensors(
@@ -143,7 +144,7 @@ export function PageEditor() {
       <Header page={page} onShare={() => setShareOpen(true)} onHistory={() => setHistoryOpen(o => !o)} historyOpen={historyOpen} />
 
       <div className="flex flex-1 min-h-0">
-        <div className="flex-1 overflow-y-auto scrollbar-thin">
+        <div ref={scrollRef} className="relative flex-1 overflow-y-auto scrollbar-thin">
           {page.cover && <div className="h-44 md:h-56 w-full" style={{ background: page.cover }} />}
 
           <div
@@ -274,6 +275,7 @@ export function PageEditor() {
       </div>
 
       <ShareDialog open={shareOpen} onOpenChange={setShareOpen} page={page} />
+      <MarqueeOverlay containerRef={scrollRef} />
       <SelectionToolbar pageId={page.id} />
       <SelectionKeyboard pageId={page.id} />
     </div>
