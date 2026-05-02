@@ -180,7 +180,7 @@
 
 - [x] Editable surface (contentEditable)
 - [x] Cursor & selection handling
-- [ ] Multi-block selection — WIP. Slice scaffolded (block-selection/), floating toolbar + visual ring + Esc/Backspace/⌘D wiring shipped, but modifier-click on grip still doesn't reliably activate selection (Radix DropdownMenuTrigger / dnd-kit pointer listeners conflict). Selecting via "Select block" menu item works.
+- [x] Multi-block selection (dedicated select button in BlockControls + Shift-click range + ⌘-click toggle; floating toolbar with Delete / Duplicate / Color / Bg / Convert; Esc + click-to-clear; Backspace and ⌘D shortcuts; top-level blocks only)
 - [x] Enter / Shift+Enter / Backspace behaviors
 - [x] Slash command
 - [x] Drag handle + dnd-kit sortable
@@ -308,7 +308,7 @@
 
 - [x] Duplicate page
 - [x] Duplicate block
-- [ ] Duplicate selected blocks (multi-select) — code path implemented, blocked behind multi-select activation bug
+- [x] Duplicate selected blocks (multi-select)
 - [x] Move page to another parent
 - [ ] Move page to another workspace
 - [ ] Move block across page
