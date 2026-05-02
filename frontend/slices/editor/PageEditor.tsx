@@ -21,6 +21,7 @@ import {
 import { ShareDialog } from "@/slices/sharing/components/ShareDialog";
 import { VersionHistory } from "@/slices/snapshots/components/VersionHistory";
 import { Button } from "@/shared/ui/button";
+import { SidebarTrigger } from "@/shared/ui/sidebar";
 import { findLocation, moveBlock, type Location } from "./lib/blockTree";
 import { prioritizeCollisions } from "./lib/collisionPriority";
 import { BlockSelectionProvider, SelectionToolbar, SelectionKeyboard, MarqueeOverlay } from "@/slices/block-selection";
@@ -196,7 +197,7 @@ export function PageEditor() {
 
           <div
             className={cn(
-              "mx-auto px-6 md:px-12",
+              "mx-auto px-4 sm:px-6 md:px-12",
               fullPageDb || page.fullWidth ? "max-w-none" : "max-w-3xl",
               page.cover ? "-mt-10" : "pt-16",
               page.font === "serif" && "font-serif",
@@ -402,7 +403,9 @@ function Header({ page, onShare, onHistory, historyOpen }: { page: Page; onShare
       : crumbs;
 
   return (
-    <header className="flex items-center justify-between gap-3 border-b border-border bg-background/80 backdrop-blur px-4 md:px-6 h-12 shrink-0">
+    <header className="flex items-center justify-between gap-3 border-b border-border bg-background/80 backdrop-blur px-3 md:px-4 h-12 shrink-0">
+      <div className="flex items-center gap-2 min-w-0 flex-1">
+      <SidebarTrigger className="hidden md:flex shrink-0 -ml-1" />
       <nav className="flex items-center gap-1 text-sm min-w-0 overflow-hidden">
         {finalCrumbs.map((c, i) => (
           <div key={c.id} className="flex items-center gap-1 min-w-0">
@@ -420,6 +423,7 @@ function Header({ page, onShare, onHistory, historyOpen }: { page: Page; onShare
           </div>
         ))}
       </nav>
+      </div>
       <div className="flex items-center gap-1 shrink-0">
         <span className={cn("text-xs text-muted-foreground mr-2", saving && "animate-pulse-soft")}>
           {saving ? "Saving…" : "Saved"}
