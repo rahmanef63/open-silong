@@ -11,32 +11,49 @@ interface Props {
   onDragStart?: (additive: boolean) => void;
   onDragEnd?: () => void;
   getBaseline?: () => string[];
+  /** Pixels of movement before the marquee activates from a non-text origin. */
   threshold?: number;
+  /** Press-and-hold duration (ms) before the marquee activates from inside
+   * editable text. Lets users lasso from anywhere — same gesture Notion uses
+   * on touch / extended-press. Default 320 ms. */
+  longPressMs?: number;
+  /** Pixels of movement BEFORE the long-press fires that cancels the gesture
+   * (so the user can still start a normal text selection). Default 6. */
+  longPressMoveCancel?: number;
   skipSelector?: string;
 }
 
 /** Generic rubber-band drag-to-select overlay.
  *
- * The effect attaches once per mount; all live props are read through refs so
- * frequent re-renders (e.g. selection state changing on every pointermove) do
- * NOT tear down and re-attach the listeners — that would wipe the in-flight
- * `armed` / `startX` / `additive` state mid-drag and was the root cause of
- * "the marquee just shows a tiny rect and never expands."
+ * Two activation paths:
+ *   1. Origin is non-text (gutter, page background, between blocks): drag past
+ *      `threshold` pixels and the marquee begins.
+ *   2. Origin is contentEditable / inside text: hold for `longPressMs` without
+ *      moving and the marquee enters with a 0×0 rect at the press point —
+ *      hits the block under the pointer immediately so a long-press alone
+ *      selects one block. Subsequent drag expands.
+ *
+ * Always-interactive targets (buttons, inputs, grips, popovers, toolbars) bail
+ * unconditionally so the marquee never fights with a real click/drag.
+ *
+ * The effect runs once per mount; live props are read through `propsRef` so
+ * frequent re-renders (selection state changing on every move) don't tear
+ * down listeners and wipe the in-flight gesture state.
  */
 export function Marquee({
   containerRef, itemSelector, getItemId, onSelect, onDragStart, onDragEnd,
-  getBaseline, threshold = 4, skipSelector,
+  getBaseline, threshold = 4, longPressMs = 320, longPressMoveCancel = 6,
+  skipSelector,
 }: Props) {
   const [rect, setRect] = useState<Rect | null>(null);
 
-  // Single ref bundle, refreshed every render. Effect reads through it.
   const propsRef = useRef({
     itemSelector, getItemId, onSelect, onDragStart, onDragEnd, getBaseline,
-    threshold, skipSelector,
+    threshold, longPressMs, longPressMoveCancel, skipSelector,
   });
   propsRef.current = {
     itemSelector, getItemId, onSelect, onDragStart, onDragEnd, getBaseline,
-    threshold, skipSelector,
+    threshold, longPressMs, longPressMoveCancel, skipSelector,
   };
 
   useEffect(() => {
@@ -45,14 +62,16 @@ export function Marquee({
 
     let active = false;
     let armed = false;
+    let originIsText = false;
+    let longPressTimer: number | null = null;
     let startX = 0;
     let startY = 0;
+    let rawClientX = 0;
+    let rawClientY = 0;
     let baseSnapshot: string[] = [];
     let additive = false;
 
-    const isInteractiveTarget = (t: HTMLElement): boolean => {
-      if (t.isContentEditable) return true;
-      if (t.closest("[contenteditable='true']")) return true;
+    const isAlwaysInteractive = (t: HTMLElement): boolean => {
       if (t.closest("button, a, input, textarea, select, [role='button'], [role='separator'], [role='menuitem'], [role='checkbox'], [role='radio'], [role='switch']")) return true;
       if (t.closest("[data-block-grip]")) return true;
       if (t.closest("[data-block-selection-toolbar]")) return true;
@@ -65,9 +84,36 @@ export function Marquee({
       return false;
     };
 
+    const isTextTarget = (t: HTMLElement): boolean => {
+      if (t.isContentEditable) return true;
+      if (t.closest("[contenteditable='true']")) return true;
+      return false;
+    };
+
     const containerOrigin = () => {
       const cr = container.getBoundingClientRect();
       return { left: cr.left, top: cr.top };
+    };
+
+    const cancelLongPress = () => {
+      if (longPressTimer != null) {
+        window.clearTimeout(longPressTimer);
+        longPressTimer = null;
+      }
+    };
+
+    const fireLongPress = () => {
+      longPressTimer = null;
+      if (!armed || active) return;
+      // Cancel any in-progress native text selection.
+      window.getSelection()?.removeAllRanges();
+      document.body.style.userSelect = "none";
+      document.body.style.cursor = "crosshair";
+      active = true;
+      propsRef.current.onDragStart?.(additive);
+      const mx: Rect = { x: startX, y: startY, w: 0, h: 0 };
+      setRect(mx);
+      propsRef.current.onSelect(collectHits(mx), additive);
     };
 
     const onPointerDown = (e: PointerEvent) => {
@@ -75,20 +121,28 @@ export function Marquee({
       if (e.pointerType === "touch") return;
       const target = e.target as HTMLElement;
       if (!container.contains(target)) return;
-      if (isInteractiveTarget(target)) return;
+      if (isAlwaysInteractive(target)) return;
 
       armed = true;
       additive = e.shiftKey || e.metaKey || e.ctrlKey;
       const o = containerOrigin();
       startX = e.clientX - o.left + container.scrollLeft;
       startY = e.clientY - o.top + container.scrollTop;
+      rawClientX = e.clientX;
+      rawClientY = e.clientY;
       baseSnapshot = additive && propsRef.current.getBaseline
         ? propsRef.current.getBaseline()
         : [];
+      originIsText = isTextTarget(target);
+      cancelLongPress();
+      if (originIsText) {
+        longPressTimer = window.setTimeout(fireLongPress, propsRef.current.longPressMs!);
+      }
     };
 
     const beginIfThreshold = (e: PointerEvent): boolean => {
       if (active) return true;
+      if (originIsText) return false; // text origin requires long-press
       const o = containerOrigin();
       const curX = e.clientX - o.left + container.scrollLeft;
       const curY = e.clientY - o.top + container.scrollTop;
@@ -123,6 +177,18 @@ export function Marquee({
 
     const onPointerMove = (e: PointerEvent) => {
       if (!armed) return;
+
+      // Pre-long-press: cancel marquee gesture if user is dragging to text-select.
+      if (originIsText && !active) {
+        const dx = Math.abs(e.clientX - rawClientX);
+        const dy = Math.abs(e.clientY - rawClientY);
+        if (dx > propsRef.current.longPressMoveCancel! || dy > propsRef.current.longPressMoveCancel!) {
+          armed = false;
+          cancelLongPress();
+        }
+        return;
+      }
+
       if (!beginIfThreshold(e)) return;
       const o = containerOrigin();
       const curX = e.clientX - o.left + container.scrollLeft;
@@ -140,8 +206,11 @@ export function Marquee({
       const wasActive = active;
       armed = false;
       active = false;
+      originIsText = false;
+      cancelLongPress();
       setRect(null);
       document.body.style.userSelect = "";
+      document.body.style.cursor = "";
       if (wasActive) propsRef.current.onDragEnd?.();
     };
 
@@ -160,9 +229,10 @@ export function Marquee({
       window.removeEventListener("pointerup", finish);
       window.removeEventListener("pointercancel", finish);
       document.removeEventListener("keydown", onKey);
+      cancelLongPress();
       document.body.style.userSelect = "";
+      document.body.style.cursor = "";
     };
-    // Run once per mount — all props are read through propsRef.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [containerRef]);
 
