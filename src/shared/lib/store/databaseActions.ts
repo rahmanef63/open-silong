@@ -106,7 +106,40 @@ export function useDatabaseActions({ databaseMap, pushStructuralAction }: Args) 
       const db = databaseMap.get(dbId);
       if (!db) return;
       const properties = db.properties.filter((p) => p.id !== propId);
-      mutUpdateDatabase({ dbId, patch: { properties } });
+      // Cascade-strip the deleted prop from every view config so we don't
+      // leave orphan ids in hiddenPropIds / sorts / filters / role props.
+      const stripList = (xs?: string[]) => (xs ? xs.filter((id) => id !== propId) : xs);
+      const nullIfMatch = <T extends string | undefined | null>(x: T): T | undefined =>
+        x === propId ? undefined : x;
+      const views = db.views.map((v) => ({
+        ...v,
+        hiddenPropIds: stripList(v.hiddenPropIds),
+        sorts: (v.sorts ?? []).filter((s) => s.propertyId !== propId),
+        filters: (v.filters ?? []).filter((f) => f.propertyId !== propId),
+        boardCardProps: stripList(v.boardCardProps),
+        galleryCardProps: stripList(v.galleryCardProps),
+        listSummaryProps: stripList(v.listSummaryProps),
+        feedSummaryProps: stripList(v.feedSummaryProps),
+        formRequiredProps: stripList(v.formRequiredProps),
+        formShownProps: stripList(v.formShownProps),
+        dashboardKPIs: stripList(v.dashboardKPIs),
+        dashboardBreakdowns: stripList(v.dashboardBreakdowns),
+        groupBy: nullIfMatch(v.groupBy),
+        boardColorByProp: nullIfMatch(v.boardColorByProp),
+        galleryCoverProp: nullIfMatch(v.galleryCoverProp),
+        calendarDateProp: nullIfMatch(v.calendarDateProp),
+        calendarEndProp: nullIfMatch(v.calendarEndProp),
+        calendarColorByProp: nullIfMatch(v.calendarColorByProp),
+        timelineStartProp: nullIfMatch(v.timelineStartProp),
+        timelineEndProp: nullIfMatch(v.timelineEndProp),
+        timelineColorByProp: nullIfMatch(v.timelineColorByProp),
+        chartXProp: nullIfMatch(v.chartXProp),
+        chartYProp: nullIfMatch(v.chartYProp),
+        mapLatProp: nullIfMatch(v.mapLatProp),
+        mapLngProp: nullIfMatch(v.mapLngProp),
+        mapPinColorProp: nullIfMatch(v.mapPinColorProp),
+      }));
+      mutUpdateDatabase({ dbId, patch: { properties, views } });
     },
     [databaseMap, mutUpdateDatabase],
   );

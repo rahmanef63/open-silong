@@ -169,7 +169,22 @@ export function CalendarView({ db, view, rows, onOpenRow }: Props) {
     if (!overId.startsWith("cal-day:")) return;
     const targetDate = overId.slice("cal-day:".length);
     const rowId = String(active.id);
+    const row = rows.find(r => r.id === rowId);
+    const startVal = row?.rowProps?.[dateProp.id];
+    const oldStart = (typeof startVal === "object" && startVal && "date" in startVal) ? startVal.date : null;
     setRowValue(db.id, rowId, dateProp.id, { date: targetDate });
+    if (endProp && oldStart) {
+      const endVal = row?.rowProps?.[endProp.id];
+      const oldEnd = (typeof endVal === "object" && endVal && "date" in endVal) ? endVal.date : null;
+      if (oldEnd) {
+        const dayMs = 86_400_000;
+        const deltaDays = Math.round((new Date(targetDate).getTime() - new Date(oldStart).getTime()) / dayMs);
+        if (deltaDays !== 0) {
+          const shifted = new Date(new Date(oldEnd).getTime() + deltaDays * dayMs);
+          setRowValue(db.id, rowId, endProp.id, { date: ymd(shifted) });
+        }
+      }
+    }
   };
 
   const isCurrentNav = mode === "week"

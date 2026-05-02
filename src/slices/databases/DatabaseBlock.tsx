@@ -34,6 +34,9 @@ import { NewRowMenu } from "@/slices/database-templates";
 import { CsvActions } from "@/slices/database-csv";
 import { DatabaseSkeleton } from "@/shared/components/RouteSkeleton";
 import { ErrorBoundary } from "@/shared/components/ErrorBoundary";
+import {
+  RowSelectionProvider, RowSelectionToolbar, RowSelectionKeyboard,
+} from "@/slices/database-row-selection";
 
 const VIEW_META: Record<DbView, { icon: any; label: string }> = {
   table: { icon: Table2, label: "Table" },
@@ -167,7 +170,8 @@ export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block 
               onDuplicate={() => {
                 const { id: _id, ...rest } = v;
                 void _id;
-                const nv = addView(db.id, { ...rest, name: `${v.name} copy` });
+                const cloned = structuredClone(rest);
+                const nv = addView(db.id, { ...cloned, name: `${v.name} copy` });
                 updateDatabase(db.id, { activeViewId: nv.id });
               }}
               onDelete={() => {
@@ -261,11 +265,15 @@ export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block 
         </div>
       </div>
 
-      <ErrorBoundary>
-        <Suspense fallback={<DatabaseSkeleton />}>
-          <ViewComponent db={db} view={view} rows={filtered} onOpenRow={setOpenRowId} />
-        </Suspense>
-      </ErrorBoundary>
+      <RowSelectionProvider rowOrder={filtered.map(r => r.id)}>
+        <RowSelectionToolbar databaseId={db.id} />
+        <RowSelectionKeyboard databaseId={db.id} />
+        <ErrorBoundary>
+          <Suspense fallback={<DatabaseSkeleton />}>
+            <ViewComponent db={db} view={view} rows={filtered} onOpenRow={setOpenRowId} />
+          </Suspense>
+        </ErrorBoundary>
+      </RowSelectionProvider>
       <RowDetailSheet pageId={openRowId} onOpenChange={(o) => !o && setOpenRowId(null)} />
     </div>
   );

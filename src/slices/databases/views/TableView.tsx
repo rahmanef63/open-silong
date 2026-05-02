@@ -20,8 +20,7 @@ import {
 import { AddColumnHeader, AddRowFooter, InlineRowTitle } from "@/slices/database-row";
 import { useDragFill, SelectableCell, type FillSource } from "@/slices/database-cell-selection";
 import {
-  RowSelectionProvider, RowMarqueeOverlay, RowSelectionToolbar, RowSelectionKeyboard,
-  useRowSelection, useRowSelectionOptional,
+  RowMarqueeOverlay, useRowSelection, useRowSelectionOptional,
 } from "@/slices/database-row-selection";
 import { getVisibleProps } from "../lib/visibility";
 
@@ -74,11 +73,8 @@ export function TableView({ db, view, rows, onOpenRow }: ViewProps) {
   };
 
   return (
-    <RowSelectionProvider rowOrder={rowIds}>
     <div ref={tableScrollRef} className="relative overflow-x-auto">
       <RowMarqueeOverlay containerRef={tableScrollRef} />
-      <RowSelectionToolbar databaseId={db.id} />
-      <RowSelectionKeyboard databaseId={db.id} />
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onColEnd}>
         <SortableContext items={visibleProps.map(p => p.id)} strategy={horizontalListSortingStrategy}>
           <div className="min-w-full">
@@ -117,7 +113,6 @@ export function TableView({ db, view, rows, onOpenRow }: ViewProps) {
         </SortableContext>
       </DndContext>
     </div>
-    </RowSelectionProvider>
   );
 }
 
