@@ -1,5 +1,5 @@
-import { Pencil, Trash2, X } from "lucide-react";
-import { useState } from "react";
+import { Lock, Pencil, Trash2, X } from "lucide-react";
+import { useMemo, useState } from "react";
 import { useStore } from "@/shared/lib/store";
 import { useRowSelection } from "./RowSelectionProvider";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
@@ -16,25 +16,33 @@ interface Props {
 
 export function RowSelectionToolbar({ databaseId }: Props) {
   const { state, count, clear } = useRowSelection();
-  const { deleteRow, getDatabase, setRowValue } = useStore();
+  const { deleteRow, getDatabase, setRowValue, pages } = useStore();
   const db = getDatabase(databaseId);
   const [editOpen, setEditOpen] = useState(false);
   const [editProp, setEditProp] = useState<Property | null>(null);
   const [editValue, setEditValue] = useState<PropertyValue>(null);
 
+  const lockedSet = useMemo(() => {
+    const s = new Set<string>();
+    for (const p of pages) if (p.locked) s.add(p.id);
+    return s;
+  }, [pages]);
+
   if (count === 0 || !db) return null;
 
   const ids = [...state.ids];
+  const editableIds = ids.filter((id) => !lockedSet.has(id));
+  const lockedCount = ids.length - editableIds.length;
   const editableProps = db.properties.filter(isFormableProperty);
 
   const onDelete = () => {
-    ids.forEach((id) => deleteRow(databaseId, id));
+    editableIds.forEach((id) => deleteRow(databaseId, id));
     clear();
   };
 
   const onApply = () => {
     if (!editProp) return;
-    ids.forEach((id) => setRowValue(databaseId, id, editProp.id, editValue));
+    editableIds.forEach((id) => setRowValue(databaseId, id, editProp.id, editValue));
     setEditOpen(false);
     setEditProp(null);
     setEditValue(null);
@@ -52,6 +60,14 @@ export function RowSelectionToolbar({ databaseId }: Props) {
       <span className="px-2 text-xs text-muted-foreground tabular-nums">
         {count} {count === 1 ? "row" : "rows"} selected
       </span>
+      {lockedCount > 0 && (
+        <span
+          title={`${lockedCount} row${lockedCount === 1 ? "" : "s"} locked — will be skipped`}
+          className="flex items-center gap-1 px-2 text-[11px] text-amber-600 dark:text-amber-400"
+        >
+          <Lock className="h-3 w-3" /> {lockedCount} locked
+        </span>
+      )}
       <div className="h-5 w-px bg-border" />
       <Popover open={editOpen} onOpenChange={(o) => { setEditOpen(o); if (!o) { setEditProp(null); setEditValue(null); } }}>
         <PopoverTrigger asChild>
@@ -99,7 +115,7 @@ export function RowSelectionToolbar({ databaseId }: Props) {
                 </button>
                 <div className="flex gap-1">
                   <button
-                    onClick={() => { ids.forEach((id) => setRowValue(databaseId, id, editProp.id, null)); setEditOpen(false); setEditProp(null); }}
+                    onClick={() => { editableIds.forEach((id) => setRowValue(databaseId, id, editProp.id, null)); setEditOpen(false); setEditProp(null); }}
                     className="rounded px-2 py-1 text-xs text-muted-foreground hover:bg-accent"
                   >
                     Clear

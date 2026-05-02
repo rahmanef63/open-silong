@@ -22,9 +22,18 @@ const SKIP = "__skip__";
 const TITLE = "__title__";
 const NEW_PREFIX = "__new:";
 
+/** Types that can be created fresh from a CSV column. Excludes computed
+ *  fields (rollup, formula, created_time, created_by, last_edited_time,
+ *  last_edited_by, unique_id) and types whose values can't come from raw
+ *  CSV strings (person, files — those need real ids). */
 const NEW_TYPES: PropertyType[] = [
-  "text", "number", "select", "multi_select", "status", "date", "person",
-  "checkbox", "url", "email", "phone", "files", "relation",
+  "text", "number", "select", "multi_select", "status", "date",
+  "checkbox", "url", "email", "phone", "relation",
+];
+
+const COMPUTED_TYPES: PropertyType[] = [
+  "rollup", "formula", "created_time", "created_by",
+  "last_edited_time", "last_edited_by", "unique_id",
 ];
 
 export function CsvImportDialog({ db, open, onOpenChange }: Props) {
@@ -68,17 +77,22 @@ export function CsvImportDialog({ db, open, onOpenChange }: Props) {
   const collectNewOptionNames = (colIdx: number, type: PropertyType): string[] => {
     if (!parsed) return [];
     if (type !== "select" && type !== "multi_select" && type !== "status") return [];
-    const set = new Set<string>();
+    // Case-insensitive dedupe; preserve first-seen casing.
+    const seen = new Map<string, string>();
+    const add = (n: string) => {
+      const lc = n.toLowerCase();
+      if (!seen.has(lc)) seen.set(lc, n);
+    };
     for (const row of parsed.rows) {
       const raw = (row[colIdx] ?? "").trim();
       if (!raw) continue;
       if (type === "multi_select") {
-        raw.split(/[;,]/).map((s) => s.trim()).filter(Boolean).forEach((n) => set.add(n));
+        raw.split(/[;,]/).map((s) => s.trim()).filter(Boolean).forEach(add);
       } else {
-        set.add(raw);
+        add(raw);
       }
     }
-    return [...set];
+    return [...seen.values()];
   };
 
   return (
@@ -121,9 +135,14 @@ export function CsvImportDialog({ db, open, onOpenChange }: Props) {
                   <option value={SKIP}>(skip)</option>
                   <option value={TITLE}>Title</option>
                   <optgroup label="Existing properties">
-                    {db.properties.map((p) => (
-                      <option key={p.id} value={p.id}>{p.name} · {p.type}</option>
-                    ))}
+                    {db.properties.map((p) => {
+                      const computed = COMPUTED_TYPES.includes(p.type) || p.type === "person" || p.type === "files";
+                      return (
+                        <option key={p.id} value={p.id} disabled={computed}>
+                          {p.name} · {p.type}{computed ? " (read-only)" : ""}
+                        </option>
+                      );
+                    })}
                   </optgroup>
                   <optgroup label="+ Create new property">
                     {NEW_TYPES.map((t) => (

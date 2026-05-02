@@ -196,13 +196,22 @@ export function TimelineView({ db, view, rows, onOpenRow }: Props) {
                     onOpenRow={onOpenRow}
                     onShift={(deltaDays, mode) => {
                       if (!dateProp || deltaDays === 0) return;
+                      // Clamp so start <= end at all times.
+                      let nextStartMs = item.startMs;
+                      let nextEndMs = item.endMs;
+                      if (mode === "move") {
+                        nextStartMs = item.startMs + deltaDays * DAY_MS;
+                        nextEndMs = item.endMs + deltaDays * DAY_MS;
+                      } else if (mode === "start") {
+                        nextStartMs = Math.min(item.startMs + deltaDays * DAY_MS, item.endMs);
+                      } else if (mode === "end") {
+                        nextEndMs = Math.max(item.endMs + deltaDays * DAY_MS, item.startMs);
+                      }
                       if (mode === "move" || mode === "start") {
-                        const next = msToYMD(item.startMs + deltaDays * DAY_MS);
-                        setRowValue(db.id, row.id, dateProp.id, { date: next });
+                        setRowValue(db.id, row.id, dateProp.id, { date: msToYMD(nextStartMs) });
                       }
                       if ((mode === "move" || mode === "end") && endProp) {
-                        const next = msToYMD(item.endMs + deltaDays * DAY_MS);
-                        setRowValue(db.id, row.id, endProp.id, { date: next });
+                        setRowValue(db.id, row.id, endProp.id, { date: msToYMD(nextEndMs) });
                       }
                     }}
                   />

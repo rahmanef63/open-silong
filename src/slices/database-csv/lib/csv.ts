@@ -124,7 +124,7 @@ export function valueFromString(
         .filter((id): id is string => !!id);
     }
     case "relation": {
-      const all = ctx?.pages ?? [];
+      const all = (ctx?.pages ?? []).filter((p) => !p.trashed);
       const scopeId = prop.relationDatabaseId ?? ctx?.relationScope ?? null;
       const candidates = scopeId
         ? all.filter((p) => p.rowOfDatabaseId === scopeId)
@@ -140,10 +140,10 @@ export function valueFromString(
         .filter((id): id is string => !!id);
     }
     case "person":
-    case "files": {
-      const parts = trimmed.split(/[;,]/).map((s) => s.trim()).filter(Boolean);
-      return parts;
-    }
+    case "files":
+      // Raw CSV strings aren't real person ids / file refs; skip rather than
+      // write garbage that the UI can't render.
+      return null;
     case "url":
     case "email":
     case "phone":
