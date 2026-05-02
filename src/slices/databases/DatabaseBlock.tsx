@@ -27,6 +27,7 @@ const MapView = lazy(() => import("./views/MapView").then((m) => ({ default: m.M
 const FormView = lazy(() => import("./views/FormView").then((m) => ({ default: m.FormView })));
 import { FilterBuilder } from "./FilterBuilder";
 import { SortBuilder } from "./SortBuilder";
+import { ViewOptions } from "./ViewOptions";
 import { Input } from "@/shared/ui/input";
 import { RowDetailSheet } from "@/slices/database-row";
 import { NewRowMenu } from "@/slices/database-templates";
@@ -249,6 +250,8 @@ export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block 
           {view.type === "board" && (
             <GroupByButton db={db} view={view} />
           )}
+
+          <ViewOptions db={db} view={view} />
 
           <PropertiesMenu db={db} />
 

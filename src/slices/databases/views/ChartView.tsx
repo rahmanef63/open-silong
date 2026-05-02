@@ -13,7 +13,12 @@ import { cn } from "@/shared/lib/utils";
 
 interface Props { db: Database; view: DatabaseViewConfig; rows: Page[]; onOpenRow: (id: string) => void }
 
-const PALETTE = ["#f97316", "#3b82f6", "#10b981", "#a855f7", "#ec4899", "#eab308", "#06b6d4", "#ef4444", "#84cc16", "#6366f1"];
+const PALETTES: Record<string, string[]> = {
+  warm: ["#f97316", "#ef4444", "#eab308", "#f43f5e", "#ec4899", "#dc2626", "#fb923c", "#facc15"],
+  cool: ["#3b82f6", "#06b6d4", "#10b981", "#6366f1", "#0ea5e9", "#14b8a6", "#22d3ee", "#3aa6ff"],
+  rainbow: ["#f97316", "#3b82f6", "#10b981", "#a855f7", "#ec4899", "#eab308", "#06b6d4", "#ef4444", "#84cc16", "#6366f1"],
+  mono: ["#0f172a", "#334155", "#475569", "#64748b", "#94a3b8", "#cbd5e1", "#e2e8f0", "#f1f5f9"],
+};
 
 const KIND_META: Record<ChartKind, { icon: any; label: string }> = {
   bar: { icon: BarChart3, label: "Bar" },
@@ -66,6 +71,14 @@ export function ChartView({ db, view, rows }: Props) {
     [db.properties, view.chartYProp],
   );
 
+  const palette = PALETTES[view.chartPalette ?? "warm"] ?? PALETTES.warm;
+  const decimals = Math.max(0, Math.min(4, view.chartDecimals ?? 0));
+  const showGrid = view.chartShowGrid ?? true;
+  const showLegend = view.chartShowLegend ?? true;
+  const sortBy = view.chartSortBy ?? "value";
+  const sortDir = view.chartSortDir ?? "desc";
+  const topN = view.chartTopN ?? 0;
+
   const data = useMemo(() => {
     if (!xProp) return [] as { name: string; value: number; key: string }[];
     const buckets = new Map<string, { values: number[]; label: string }>();
@@ -77,10 +90,26 @@ export function ChartView({ db, view, rows }: Props) {
       b.values.push(num);
       buckets.set(key, b);
     }
-    return [...buckets.entries()].map(([key, { values, label }]) => ({
-      key, name: label, value: aggregate(values, agg),
+    let arr = [...buckets.entries()].map(([key, { values, label }]) => ({
+      key, name: label, value: Number(aggregate(values, agg).toFixed(decimals)),
     }));
-  }, [rows, xProp, yProp, agg]);
+    arr.sort((a, b) => {
+      if (sortBy === "name") {
+        const c = a.name.localeCompare(b.name);
+        return sortDir === "asc" ? c : -c;
+      }
+      const c = a.value - b.value;
+      return sortDir === "asc" ? c : -c;
+    });
+    if (topN > 0 && arr.length > topN) {
+      const top = arr.slice(0, topN);
+      const rest = arr.slice(topN);
+      const restValue = aggregate(rest.map(r => r.value), "sum");
+      top.push({ key: "__other__", name: `Other (${rest.length})`, value: Number(restValue.toFixed(decimals)) });
+      arr = top;
+    }
+    return arr;
+  }, [rows, xProp, yProp, agg, decimals, sortBy, sortDir, topN]);
 
   const numProps = db.properties.filter(p => p.type === "number");
   const xCandidates = db.properties.filter(p =>
@@ -97,9 +126,9 @@ export function ChartView({ db, view, rows }: Props) {
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Tooltip />
-            <Legend />
+            {showLegend && <Legend />}
             <Pie data={data} dataKey="value" nameKey="name" outerRadius={100} innerRadius={inner} label>
-              {data.map((_, i) => <Cell key={i} fill={PALETTE[i % PALETTE.length]} />)}
+              {data.map((_, i) => <Cell key={i} fill={palette[i % palette.length]} />)}
             </Pie>
           </PieChart>
         </ResponsiveContainer>
@@ -109,13 +138,14 @@ export function ChartView({ db, view, rows }: Props) {
     return (
       <ResponsiveContainer width="100%" height="100%">
         <Wrapper data={data} margin={{ top: 12, right: 12, left: 0, bottom: 12 }}>
-          <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+          {showGrid && <CartesianGrid strokeDasharray="3 3" className="stroke-border" />}
           <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-          <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+          <YAxis tick={{ fontSize: 11 }} allowDecimals={decimals > 0} />
           <Tooltip />
-          {kind === "bar" && <Bar dataKey="value" fill={PALETTE[0]} radius={[4, 4, 0, 0]} />}
-          {kind === "line" && <Line type="monotone" dataKey="value" stroke={PALETTE[0]} strokeWidth={2} dot />}
-          {kind === "area" && <Area type="monotone" dataKey="value" stroke={PALETTE[0]} fill={PALETTE[0]} fillOpacity={0.25} />}
+          {showLegend && <Legend />}
+          {kind === "bar" && <Bar dataKey="value" fill={palette[0]} radius={[4, 4, 0, 0]} />}
+          {kind === "line" && <Line type="monotone" dataKey="value" stroke={palette[0]} strokeWidth={2} dot />}
+          {kind === "area" && <Area type="monotone" dataKey="value" stroke={palette[0]} fill={palette[0]} fillOpacity={0.25} />}
         </Wrapper>
       </ResponsiveContainer>
     );

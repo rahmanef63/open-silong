@@ -32,13 +32,24 @@ export function BoardView({ db, view, rows, onOpenRow }: Props) {
     );
   }
 
-  const columns: { id: string | null; option?: SelectOption; rows: Page[] }[] = [
+  const colorByProp = view.boardColorByProp
+    ? db.properties.find(p => p.id === view.boardColorByProp)
+    : undefined;
+  const cardSize = view.boardCardSize ?? "medium";
+  const cardPadding = cardSize === "small" ? "p-2" : cardSize === "large" ? "p-4" : "p-3";
+  const cardSpacing = cardSize === "small" ? "space-y-1.5" : cardSize === "large" ? "space-y-3" : "space-y-2";
+  const cardPropIds = view.boardCardProps;
+
+  let columns: { id: string | null; option?: SelectOption; rows: Page[] }[] = [
     ...groupProp.options.map(o => ({
       id: o.id, option: o,
       rows: rows.filter(r => r.rowProps?.[groupProp.id] === o.id),
     })),
     { id: null, rows: rows.filter(r => !r.rowProps?.[groupProp.id]) },
   ];
+  if (view.boardHideEmptyGroups) {
+    columns = columns.filter(c => c.rows.length > 0);
+  }
 
   const onDragEnd = (e: DragEndEvent) => {
     const { active, over } = e;
@@ -52,17 +63,20 @@ export function BoardView({ db, view, rows, onOpenRow }: Props) {
     <DndContext sensors={sensors} onDragEnd={onDragEnd}>
       <div className="flex gap-3 overflow-x-auto p-3 min-h-[280px]">
         {columns.map(col => (
-          <BoardColumn key={col.id ?? "none"} db={db} col={col} groupProp={groupProp} onAdd={async () => {
-            const r = await addRow(db.id, { rowProps: { [groupProp.id]: col.id ?? null } });
-            onOpenRow(r.id);
-          }} onOpen={onOpenRow} />
+          <BoardColumn key={col.id ?? "none"} db={db} col={col} groupProp={groupProp}
+            cardPadding={cardPadding} cardSpacing={cardSpacing}
+            colorByProp={colorByProp} cardPropIds={cardPropIds}
+            onAdd={async () => {
+              const r = await addRow(db.id, { rowProps: { [groupProp.id]: col.id ?? null } });
+              onOpenRow(r.id);
+            }} onOpen={onOpenRow} />
         ))}
       </div>
     </DndContext>
   );
 }
 
-function BoardColumn({ db, col, groupProp, onAdd, onOpen }: any) {
+function BoardColumn({ db, col, groupProp, onAdd, onOpen, cardPadding, cardSpacing, colorByProp, cardPropIds }: any) {
   const { setNodeRef, isOver } = useDroppable({ id: `col_${col.id ?? "null"}` });
   return (
     <div ref={setNodeRef} className={cn("w-64 shrink-0 rounded-lg bg-muted/40 p-2 transition", isOver && "ring-2 ring-brand bg-muted/70")}>
@@ -77,18 +91,34 @@ function BoardColumn({ db, col, groupProp, onAdd, onOpen }: any) {
         </div>
         <button onClick={onAdd} className="rounded p-1 hover:bg-accent text-muted-foreground"><Plus className="h-3 w-3" /></button>
       </div>
-      <div className="space-y-2">
+      <div className={cardSpacing}>
         {col.rows.map((r: Page) => (
-          <BoardCard key={r.id} row={r} db={db} onOpen={() => onOpen(r.id)} />
+          <BoardCard
+            key={r.id} row={r} db={db}
+            onOpen={() => onOpen(r.id)}
+            cardPadding={cardPadding}
+            colorByProp={colorByProp}
+            cardPropIds={cardPropIds}
+          />
         ))}
       </div>
     </div>
   );
 }
 
-function BoardCard({ row, db, onOpen }: any) {
+function BoardCard({ row, db, onOpen, cardPadding, colorByProp, cardPropIds }: any) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: row.id });
-  const visibleProps = db.properties.filter((p: Property) => !p.hidden && p.type !== "text").slice(0, 3);
+  const visibleProps: Property[] = cardPropIds?.length
+    ? cardPropIds
+        .map((id: string) => db.properties.find((p: Property) => p.id === id))
+        .filter((p: Property | undefined): p is Property => !!p && !p.hidden)
+    : db.properties.filter((p: Property) => !p.hidden && p.type !== "text").slice(0, 3);
+  const colorOpt: { color?: string } | null = colorByProp
+    ? colorByProp.options?.find((o: any) => o.id === row.rowProps?.[colorByProp.id]) ?? null
+    : null;
+  const accentBar = colorOpt?.color
+    ? cn("border-l-4", colorClass(colorOpt.color).split(" ").find((c) => c.startsWith("border-")) ?? "")
+    : "";
   const onKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
     if (isTextInputTarget(e.target)) return;
     if (e.target !== e.currentTarget) return;
@@ -112,7 +142,7 @@ function BoardCard({ row, db, onOpen }: any) {
       tabIndex={0}
       role="button"
       data-db-nav-item
-      className={cn("rounded-md bg-card border border-border p-3 shadow-soft cursor-grab active:cursor-grabbing hover:border-border-strong transition", isDragging && "opacity-50")}
+      className={cn("rounded-md bg-card border border-border shadow-soft cursor-grab active:cursor-grabbing hover:border-border-strong transition", cardPadding, accentBar, isDragging && "opacity-50")}
     >
       <div className="flex items-center gap-1.5 text-sm font-medium mb-1">
         <span>{row.icon}</span>

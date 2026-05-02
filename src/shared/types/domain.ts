@@ -213,6 +213,71 @@ export interface DatabaseViewConfig {
   formSuccessMessage?: string;
   /** Feed view: secondary timestamp source */
   feedTimestamp?: "createdAt" | "updatedAt";
+
+  // ─── Table view ──────────────────────────────────────
+  tableWrapCells?: boolean;
+  tableRowHeight?: "short" | "medium" | "tall";
+
+  // ─── Board view ──────────────────────────────────────
+  /** Number of card props rendered (besides title). */
+  boardCardSize?: "small" | "medium" | "large";
+  /** Property ids shown on each card. */
+  boardCardProps?: string[];
+  /** Hide groups with zero rows. */
+  boardHideEmptyGroups?: boolean;
+  /** Property id used to color cards (select/status). */
+  boardColorByProp?: string;
+
+  // ─── Gallery view ────────────────────────────────────
+  gallerySize?: "small" | "medium" | "large";
+  galleryCoverSource?: "cover" | "property" | "none";
+  galleryCoverProp?: string;
+  galleryCoverFit?: "cover" | "contain";
+  galleryCardProps?: string[];
+  galleryAspect?: "square" | "video" | "portrait";
+
+  // ─── List view ───────────────────────────────────────
+  listSummaryProps?: string[];
+  listDensity?: "compact" | "comfortable";
+
+  // ─── Calendar view ───────────────────────────────────
+  calendarDateProp?: string;
+  calendarEndProp?: string;
+  calendarColorByProp?: string;
+  calendarWeekStart?: 0 | 1; // Sunday | Monday
+  calendarShowWeekends?: boolean;
+
+  // ─── Timeline view ───────────────────────────────────
+  timelineStartProp?: string;
+  timelineEndProp?: string;
+  timelineZoom?: "day" | "week" | "month" | "quarter";
+  timelineColorByProp?: string;
+
+  // ─── Chart view (additional) ─────────────────────────
+  chartShowLegend?: boolean;
+  chartShowGrid?: boolean;
+  chartTopN?: number;       // 0 = all
+  chartSortBy?: "name" | "value";
+  chartSortDir?: "asc" | "desc";
+  chartPalette?: "warm" | "cool" | "rainbow" | "mono";
+  chartDecimals?: number;   // 0..4
+
+  // ─── Dashboard view ──────────────────────────────────
+  dashboardKPIs?: string[];     // numeric / checkbox prop ids
+  dashboardBreakdowns?: string[]; // select / status prop ids
+  dashboardRecentLimit?: number;
+
+  // ─── Feed view (additional) ──────────────────────────
+  feedDensity?: "compact" | "comfortable";
+  feedSummaryProps?: string[];
+
+  // ─── Map view (additional) ───────────────────────────
+  mapPinColorProp?: string;
+  mapShowList?: boolean;
+
+  // ─── Form view (additional) ──────────────────────────
+  formTitle?: string;
+  formDescription?: string;
 }
 
 export interface Database {

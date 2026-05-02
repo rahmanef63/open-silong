@@ -6,6 +6,18 @@ import {
 } from "@/shared/ui/dropdown-menu";
 import { ChevronDown, MapPin } from "lucide-react";
 
+const COLOR_HEX: Record<string, string> = {
+  gray: "#6b7280",
+  brown: "#a16207",
+  orange: "#f97316",
+  yellow: "#eab308",
+  green: "#10b981",
+  blue: "#3b82f6",
+  purple: "#a855f7",
+  pink: "#ec4899",
+  red: "#ef4444",
+};
+
 interface Props { db: Database; view: DatabaseViewConfig; rows: Page[]; onOpenRow: (id: string) => void }
 
 const VW = 720;
@@ -55,18 +67,27 @@ export function MapView({ db, view, rows, onOpenRow }: Props) {
     [db.properties, view.mapLngProp, numProps, latProp],
   );
 
+  const colorProp = useMemo(
+    () => db.properties.find(p => p.id === view.mapPinColorProp && (p.type === "select" || p.type === "status")),
+    [db.properties, view.mapPinColorProp],
+  );
+
   const pins = useMemo(() => {
-    if (!latProp || !lngProp) return [] as { row: Page; x: number; y: number; lat: number; lng: number }[];
-    const out: { row: Page; x: number; y: number; lat: number; lng: number }[] = [];
+    if (!latProp || !lngProp) return [] as { row: Page; x: number; y: number; lat: number; lng: number; color: string }[];
+    const out: { row: Page; x: number; y: number; lat: number; lng: number; color: string }[] = [];
     for (const r of rows) {
       const lat = Number(r.rowProps?.[latProp.id]);
       const lng = Number(r.rowProps?.[lngProp.id]);
       if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
       const { x, y } = project(lat, lng);
-      out.push({ row: r, x, y, lat, lng });
+      const opt = colorProp ? colorProp.options?.find(o => o.id === r.rowProps?.[colorProp.id]) : null;
+      const color = (opt && COLOR_HEX[opt.color ?? "gray"]) ?? "hsl(var(--brand))";
+      out.push({ row: r, x, y, lat, lng, color });
     }
     return out;
-  }, [rows, latProp, lngProp]);
+  }, [rows, latProp, lngProp, colorProp]);
+
+  const showList = view.mapShowList ?? true;
 
   const [hover, setHover] = useState<string | null>(null);
 
@@ -123,7 +144,7 @@ export function MapView({ db, view, rows, onOpenRow }: Props) {
               <path key={i} d={d} fill="hsl(var(--card))" stroke="hsl(var(--border))" strokeWidth={1} />
             ))}
             {/* Pins */}
-            {pins.map(({ row, x, y }) => {
+            {pins.map(({ row, x, y, color }) => {
               const isHover = hover === row.id;
               return (
                 <g
@@ -134,8 +155,8 @@ export function MapView({ db, view, rows, onOpenRow }: Props) {
                   onMouseLeave={() => setHover((h) => (h === row.id ? null : h))}
                   onClick={() => onOpenRow(row.id)}
                 >
-                  <circle r={isHover ? 7 : 5} fill="hsl(var(--brand))" stroke="white" strokeWidth={1.5} className="transition-all" />
-                  <circle r={isHover ? 14 : 10} fill="hsl(var(--brand))" opacity={0.2} />
+                  <circle r={isHover ? 7 : 5} fill={color} stroke="white" strokeWidth={1.5} className="transition-all" />
+                  <circle r={isHover ? 14 : 10} fill={color} opacity={0.2} />
                 </g>
               );
             })}
@@ -158,7 +179,7 @@ export function MapView({ db, view, rows, onOpenRow }: Props) {
       )}
 
       {/* List fallback for accessibility / dense maps */}
-      {pins.length > 0 && (
+      {showList && pins.length > 0 && (
         <div className="rounded-lg border border-border bg-card divide-y divide-border max-h-48 overflow-y-auto">
           {pins.map(p => (
             <button
@@ -166,10 +187,22 @@ export function MapView({ db, view, rows, onOpenRow }: Props) {
               onClick={() => onOpenRow(p.row.id)}
               className="flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-accent/50 text-xs"
             >
-              <MapPin className="h-3 w-3 text-brand shrink-0" />
+              <MapPin className="h-3 w-3 shrink-0" style={{ color: p.color }} />
               <span className="flex-1 truncate">{p.row.icon} {p.row.title || "Untitled"}</span>
               <span className="text-muted-foreground tabular-nums">{p.lat.toFixed(2)}, {p.lng.toFixed(2)}</span>
             </button>
+          ))}
+        </div>
+      )}
+
+      {colorProp && colorProp.options && colorProp.options.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 text-[10px] text-muted-foreground">
+          <span>Legend:</span>
+          {colorProp.options.map(o => (
+            <span key={o.id} className="inline-flex items-center gap-1">
+              <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: COLOR_HEX[o.color ?? "gray"] }} />
+              {o.name}
+            </span>
           ))}
         </div>
       )}

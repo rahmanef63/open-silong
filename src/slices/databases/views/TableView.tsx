@@ -27,8 +27,11 @@ import {
 interface ViewProps { db: Database; view: DatabaseViewConfig; rows: Page[]; onOpenRow: (id: string) => void }
 
 export function TableView({ db, view, rows, onOpenRow }: ViewProps) {
-  void view;
   const { reorderProperties, reorderRows, addRow, deleteRow, setRowValue } = useStore();
+  const wrap = !!view.tableWrapCells;
+  const rowHeight = view.tableRowHeight ?? "medium";
+  const rowHeightClass =
+    rowHeight === "short" ? "min-h-7" : rowHeight === "tall" ? "min-h-12" : "min-h-9";
   const [pendingFocusId, setPendingFocusId] = useState<string | null>(null);
   const [selectedCell, setSelectedCell] = useState<{ rowId: string; propId: string } | null>(null);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
@@ -99,6 +102,8 @@ export function TableView({ db, view, rows, onOpenRow }: ViewProps) {
                     selectedCell={selectedCell}
                     onSelectCell={setSelectedCell}
                     fill={fill}
+                    wrap={wrap}
+                    rowHeightClass={rowHeightClass}
                   />
                 ))}
               </SortableContext>
@@ -183,7 +188,7 @@ function SortableHeader({ prop, db }: { prop: Property; db: Database }) {
   );
 }
 
-function SortableRow({ row, rowIndex, db, visibleProps, onOpen, onDelete, autoEdit, onAutoEditConsumed, selectedCell, onSelectCell, fill }: any) {
+function SortableRow({ row, rowIndex, db, visibleProps, onOpen, onDelete, autoEdit, onAutoEditConsumed, selectedCell, onSelectCell, fill, wrap, rowHeightClass }: any) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: row.id });
   const rowSel = useRowSelectionOptional();
   const isRowSelected = !!rowSel?.isSelected(row.id);
@@ -209,6 +214,8 @@ function SortableRow({ row, rowIndex, db, visibleProps, onOpen, onDelete, autoEd
       onKeyDown={onKeyDown}
       className={cn(
         "flex border-b border-border last:border-b-0 hover:bg-muted/20 group transition-colors",
+        rowHeightClass,
+        wrap ? "items-start" : "items-stretch",
         isDragging && "opacity-40",
         isRowSelected && "bg-brand/15 ring-2 ring-brand/60 ring-inset",
       )}
@@ -222,7 +229,10 @@ function SortableRow({ row, rowIndex, db, visibleProps, onOpen, onDelete, autoEd
         const isSel = selectedCell?.rowId === row.id && selectedCell?.propId === p.id;
         const inRange = fill.isInFillRange(rowIndex, p.id);
         return (
-          <div key={p.id} className="border-r border-border min-w-[160px] flex-1 flex items-stretch relative">
+          <div key={p.id} className={cn(
+            "border-r border-border min-w-[160px] flex-1 flex items-stretch relative",
+            wrap ? "whitespace-normal break-words" : "truncate",
+          )}>
             {i === 0 ? (
               <InlineRowTitle row={row} onOpen={onOpen} autoEdit={autoEdit} onAutoEditConsumed={onAutoEditConsumed} />
             ) : (
