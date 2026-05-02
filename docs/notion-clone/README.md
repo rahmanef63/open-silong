@@ -39,7 +39,7 @@ Cross-links inside the repo:
 
 | Doc | Done | Total | % |
 | --- | ---: | ---: | ---: |
-| `BACKLOG.md` | 407 | 851 | **47.8%** |
+| `BACKLOG.md` | 414 | 851 | **48.6%** |
 | `ROADMAP.md` | 28 | 53 | **52.8%** |
 
 Recompute with: `cd docs/notion-clone && grep -cE '^- \[x\]\|^  - \[x\]\|^    - \[x\]' BACKLOG.md`.
@@ -70,7 +70,8 @@ The codebase already covers a usable single-user MVP plus most of the V1 surface
 
 **Database**
 - CRUD + 18 property types (text, number, select, multi-select, status, date, person, checkbox, url, email, phone, files, relation, rollup, formula, created_time, created_by, last_edited_time, last_edited_by)
-- 6 views: Table, Board, List, Gallery, Calendar, Timeline
+- 11 views: Table, Board, List, Gallery, Calendar, Timeline, Chart, Dashboard, Feed, Map, Form
+- Per-view column visibility (`view.hiddenPropIds`) — independent of global hide
 - Filters, sorts, board group-by, view tabs (rename/delete/add)
 - Inline title editor, hover "Open" peek (right-side Sheet), inline `+ Add column` header, inline `+ Add row` footer (no route nav)
 - Row → page integration (every row is a page with subblocks)
@@ -91,7 +92,21 @@ The codebase already covers a usable single-user MVP plus most of the V1 surface
 - Stable callbacks (`focusByOffset`), Map-based O(1) lookups, memoized derived collections
 - ErrorBoundary recovers from view crashes without nuking the page
 
-**Latest additions (2026-05-02 session)**
+**Latest additions (current session)**
+- **5 missing views shipped** — Chart (recharts: bar/line/area/pie/donut + legend/grid/topN/sort/palette/decimals/title/labels), Dashboard (KPI tiles + breakdown bars + recent rows), Feed (chronological timeline), Map (mock geo plot via lat/lng props with pin colour), Form (public-facing input form with required/shown props + success message)
+- **Per-view column visibility** — `DatabaseViewConfig.hiddenPropIds`; hiding a column in one view never affects another
+- **Reusable QuickCreateDialog** — Title input + Accordion (primary "Properties" + "Hidden in this view"); shared by Calendar/List/Gallery/Feed/Map/Timeline/Board "+ create row" actions; backed by `PropertyFormInput` (also used by FormView)
+- **Calendar week-mode + drag + overdue panel** — segmented Month/Week toggle; drop event onto another day to update its date; overdue + no-date OverflowPanel
+- **Timeline drag-to-adjust** — pixel-precise pointer drag: move bar (shifts both start+end), or grab edge handle to resize start or end alone
+- **Duplicate view** — active-tab kabab → Duplicate clones config + activates
+- **Bulk edit** — RowSelectionToolbar "Edit" popover sets a property value across the selected rows (with Clear / Apply)
+- **CSV import — full type list** — mapping dropdown gains "+ Create new property" submenu over all writable types incl. relation; new select/multi/status props auto-seed options from CSV cells; relation resolves by row title; computed types (rollup/formula/created_*/last_edited_*/unique_id) skipped
+- **TableView row checkboxes** — header master checkbox (checked / indeterminate / clear) + per-row checkbox in widened gutter; integrates with existing RowSelectionProvider
+- **Tab activate / menu split** — clicking a view tab no longer auto-opens its menu; kabab only shown on the active tab
+- **Database block survives container drop** — `NestedBlock` now has a `case "database"` and threads `pageId` through Toggle/Column panes (was data-loss before)
+- **Database area skips block-marquee** — `data-database-block-root` + `skipSelector` on `MarqueeOverlay` so kanban DnD doesn't trigger block selection
+
+**Previous (2026-05-02 session)**
 - **Nested containers up to 5 levels** — toggles and column blocks (`columns2` / `columns3`) can now live inside other toggles/columns. `ColumnBlockEditor` is now pure-callback (`onUpdate(patch)` instead of `pageId`), and `ToggleBlock` was split into a `ToggleContent` body + thin top-level shell wrapper. `NestedBlock` recurses into both with depth tracking; at depth > 5 it shows an amber "max nesting reached" pill so the editor never blows the stack.
 - **Notion-style columns** — invisible borders + on-hover divider line between panes; hover-to-reveal grab handle that drags to redistribute width (existing `colWidths` storage). `ColumnBlockEditor` now uses `group/cols` + `group/divider` for hover layering.
 - **Cursor-jump fix** — `BlockEditor` / `NestedBlock` useEffects now skip DOM sync while the element is `document.activeElement`. `ToggleBlock` heading switched from `{block.text}` child to ref-based pattern. Cures the "cursor flies to position 0 while typing fast" bug caused by every keystroke firing a Convex round-trip that re-rendered with echoed text.
@@ -142,7 +157,7 @@ See `BACKLOG.md` for the full checklist with `[x]` marking shipped work and `[ ]
 These are the largest gaps before this can claim "Notion parity":
 
 1. **Multi-user collaboration:** workspace invites, roles (admin/member/guest), realtime presence, conflict resolution
-2. **Rich block coverage:** synced blocks, embeds (Figma/YouTube/Tweet), inline math, button block
+2. **Rich block coverage:** synced blocks, inline math (embed + button blocks shipped)
 3. **Code/math markdown shortcuts:** ` ``` ` → code, `$$` → equation (slash command works)
 4. **Formulas & rollups:** parser/evaluator + dependency graph + UI editor
 5. **Offline:** service worker, IndexedDB cache, mutation queue, conflict reconciliation
