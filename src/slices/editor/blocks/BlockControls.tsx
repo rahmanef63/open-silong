@@ -1,4 +1,4 @@
-import { CheckSquare, Copy, GripVertical, MessageSquare, Plus, Trash2 } from "lucide-react";
+import { CheckSquare, Copy, GripVertical, MessageSquare, Plus, Square, Trash2 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
@@ -55,6 +55,26 @@ export function BlockControls({ pageId, block, index, listeners, convertTo }: Pr
           </button>
         }
       />
+      {sel && (
+        <button
+          data-block-select-button
+          onClick={(e) => {
+            if (e.shiftKey) sel.range(block.id);
+            else if (e.metaKey || e.ctrlKey) sel.toggle(block.id);
+            else sel.selectOne(block.id);
+          }}
+          className={cn(
+            "flex h-6 w-5 items-center justify-center rounded hover:bg-accent",
+            sel.isSelected(block.id) ? "text-brand" : "text-muted-foreground",
+          )}
+          aria-label="Select block"
+          title="Select · Shift-click range · ⌘-click toggle"
+        >
+          {sel.isSelected(block.id)
+            ? <CheckSquare className="h-3.5 w-3.5" />
+            : <Square className="h-3.5 w-3.5" />}
+        </button>
+      )}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button

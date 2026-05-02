@@ -55,12 +55,14 @@ export function SelectionKeyboard({ pageId }: Props) {
 
     const onPointerDown = (e: PointerEvent) => {
       const target = e.target as HTMLElement;
-      // Toolbar / dropdown clicks don't clear.
+      // Selection UI itself never clears.
       if (target.closest("[data-block-selection-toolbar]")) return;
+      if (target.closest("[data-block-select-button]")) return;
       if (target.closest("[data-radix-popper-content-wrapper]")) return;
-      // Clicking the grip is handled by BlockControls (modifier-aware).
+      // Grip click (drag/menu) doesn't auto-clear; the modifier-click path
+      // is handled by BlockSelectionProvider.
       if (target.closest("[data-block-grip]")) return;
-      // Clicking inside editable text means user wants caret → clear selection.
+      // Clicking inside editable text → clear (user wants caret).
       if (isEditable(target) || target.closest("[contenteditable='true']")) {
         clear();
       }
