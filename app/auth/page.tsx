@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { AuthForm } from "./AuthForm";
 import { AuthClient } from "./AuthClient";
 
@@ -12,9 +13,11 @@ export default function AuthPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="w-full max-w-sm p-8 space-y-6 border rounded-xl shadow-sm">
-        <AuthClient>
-          <AuthForm />
-        </AuthClient>
+        <Suspense fallback={<AuthForm />}>
+          <AuthClient>
+            <AuthForm />
+          </AuthClient>
+        </Suspense>
       </div>
     </div>
   );
