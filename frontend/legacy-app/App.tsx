@@ -59,7 +59,7 @@ const App = () => (
       <Sonner />
       <AuthGuard>
         <StoreProvider>
-          <BrowserRouter>
+          <BrowserRouter basename="/dashboard">
             <Suspense fallback={null}>
               <CommandPalette />
             </Suspense>
