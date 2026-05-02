@@ -570,7 +570,7 @@
 
 - [x] Create empty database
 - [ ] Create from template
-- [x] Default views: Table / Board / List / Calendar / Gallery / Timeline
+- [x] Default views: Table / Board / List / Gallery / Calendar / Timeline / Chart / Dashboard / Feed / Map / Form
 - [x] Inline / full-page placement
 - [ ] Add sample rows option
 
@@ -649,15 +649,15 @@
 - [x] Group by select / status
 - [x] Drag card across groups (updates group property)
 - [x] Add card inside group
-- [ ] Hide empty groups
-- [ ] Customize card preview
+- [x] Hide empty groups (`boardHideEmptyGroups`)
+- [x] Customize card preview (`boardCardSize` · `boardCardProps` · `boardColorByProp`)
 - [ ] Board virtualization
 
 ## 15.3 List View — P1
 
 - [x] Render compact row list
 - [x] Show selected properties
-- [ ] Add row inline
+- [x] Add row inline (QuickCreateDialog)
 - [x] Open row
 - [x] Sort / filter
 
@@ -676,7 +676,7 @@
 - [x] Card grid
 - [x] Cover image from page / property
 - [x] Show selected properties
-- [ ] Card size setting
+- [x] Card size setting (`gallerySize` · cover source · aspect)
 - [x] Open card as page
 
 ## 15.6 Timeline View — P2
@@ -693,7 +693,7 @@
 - [x] Duplicate view (active-tab kabab → Duplicate)
 - [x] Set active view
 - [x] Per-view filters / sorts / grouping / property visibility
-- [ ] Per-view layout settings
+- [x] Per-view layout settings (board card size/props/color, gallery size/cover, list density, calendar mode/weekend/overdue, timeline zoom/color, chart kind/legend/grid/topN/sort/palette/decimals/title/labels/height, dashboard KPIs/breakdowns, feed density, map color/list, form title/description)
 
 ---
 
