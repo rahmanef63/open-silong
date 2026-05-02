@@ -110,6 +110,16 @@ export function CalendarView({ db, view, rows, onOpenRow }: Props) {
           {!dateProp && (
             <span className="text-xs text-muted-foreground">(add a Date property)</span>
           )}
+          <button
+            onClick={async () => {
+              const init = dateProp ? { rowProps: { [dateProp.id]: { date: ymd(now) } } } : {};
+              const r = await addRow(db.id, init);
+              onOpenRow(r.id);
+            }}
+            className="ml-1 flex items-center gap-1 rounded-md border border-border bg-card px-2 py-1 text-xs hover:bg-accent text-muted-foreground"
+          >
+            <Plus className="h-3 w-3" /> New
+          </button>
         </div>
       </div>
 
@@ -131,10 +141,27 @@ export function CalendarView({ db, view, rows, onOpenRow }: Props) {
           const key = d ? ymd(d) : `e${i}`;
           const items = d ? (rowsByDate.get(key) ?? []) : [];
           const isToday = key === todayStr;
+          const onAddOnDay = async () => {
+            if (!dateProp || !d) return;
+            const nr = await addRow(db.id, { rowProps: { [dateProp.id]: { date: key } } });
+            onOpenRow(nr.id);
+          };
           return (
-            <div key={key} className={cn("bg-card min-h-20 p-1.5 group relative", isToday && "bg-brand/5")}>
+            <div
+              key={key}
+              onClick={(e) => {
+                if (!d || !dateProp) return;
+                if (e.target !== e.currentTarget) return;
+                void onAddOnDay();
+              }}
+              className={cn(
+                "bg-card min-h-20 sm:min-h-24 p-1.5 group relative",
+                isToday && "bg-brand/5",
+                d && dateProp && "cursor-copy hover:bg-accent/30",
+              )}
+            >
               {d && (
-                <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center justify-between mb-1 pointer-events-none">
                   <div className={cn(
                     "text-[10px] w-5 h-5 flex items-center justify-center rounded-full",
                     isToday ? "bg-brand text-white font-bold" : "text-muted-foreground"
@@ -143,13 +170,9 @@ export function CalendarView({ db, view, rows, onOpenRow }: Props) {
                   </div>
                   {dateProp && (
                     <button
-                      onClick={async (e) => {
-                        e.stopPropagation();
-                        const nr = await addRow(db.id, { rowProps: { [dateProp.id]: { date: key } } });
-                        onOpenRow(nr.id);
-                      }}
+                      onClick={(e) => { e.stopPropagation(); void onAddOnDay(); }}
                       title="Add row on this date"
-                      className="opacity-0 group-hover:opacity-100 rounded p-0.5 hover:bg-accent text-muted-foreground"
+                      className="pointer-events-auto rounded p-0.5 text-muted-foreground/40 hover:text-foreground hover:bg-accent transition opacity-0 group-hover:opacity-100"
                     >
                       <Plus className="h-3 w-3" />
                     </button>
