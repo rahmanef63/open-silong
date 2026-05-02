@@ -1,10 +1,16 @@
-import { useMemo, useState } from "react";
-import { Database, DatabaseViewConfig, Page } from "@/shared/types/domain";
+import { useMemo, useState, useRef } from "react";
+import { Database, DatabaseViewConfig, Page, Property } from "@/shared/types/domain";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { focusSiblingBySelector } from "@/shared/lib/keyboard";
 import { colorClass } from "@/shared/lib/format";
 import { QuickCreateDialog } from "../components/QuickCreateDialog";
+import { useStore } from "@/shared/lib/store";
+
+function msToYMD(ms: number): string {
+  const d = new Date(ms);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
 
 interface Props { db: Database; view: DatabaseViewConfig; rows: Page[]; onOpenRow: (id: string) => void }
 
@@ -15,6 +21,7 @@ function toMs(dateStr: string): number {
 }
 
 export function TimelineView({ db, view, rows, onOpenRow }: Props) {
+  const { setRowValue } = useStore();
   const [quickOpen, setQuickOpen] = useState(false);
   const dateProp =
     db.properties.find(p => p.id === view.timelineStartProp && p.type === "date")
@@ -179,34 +186,27 @@ export function TimelineView({ db, view, rows, onOpenRow }: Props) {
                   />
                 ))}
                 {/* Bar */}
-                {bar && inView && (() => {
-                  const colorOpt = colorProp
-                    ? colorProp.options?.find((o: any) => o.id === row.rowProps?.[colorProp.id])
-                    : null;
-                  const tone = colorOpt?.color
-                    ? colorClass(colorOpt.color)
-                    : "bg-brand/70 hover:bg-brand text-white";
-                  return (
-                    <button
-                      onClick={() => onOpenRow(row.id)}
-                      onKeyDown={(e) => {
-                        if (e.key === "ArrowDown" || e.key === "ArrowUp") {
-                          e.preventDefault();
-                          focusSiblingBySelector(e.currentTarget, "[data-db-nav-item]", e.key === "ArrowDown" ? 1 : -1);
-                        }
-                      }}
-                      data-db-nav-item
-                      title={colorOpt?.name ?? undefined}
-                      className={cn(
-                        "absolute top-1 h-6 rounded-full text-[10px] font-medium px-2 truncate flex items-center transition z-10 border",
-                        tone,
-                      )}
-                      style={{ left: bar.left, width: bar.width }}
-                    >
-                      {bar.width > 40 && (row.title || "Untitled")}
-                    </button>
-                  );
-                })()}
+                {bar && inView && item && (
+                  <TimelineBar
+                    row={row}
+                    item={item}
+                    bar={bar}
+                    cellW={CELL_W}
+                    colorProp={colorProp}
+                    onOpenRow={onOpenRow}
+                    onShift={(deltaDays, mode) => {
+                      if (!dateProp || deltaDays === 0) return;
+                      if (mode === "move" || mode === "start") {
+                        const next = msToYMD(item.startMs + deltaDays * DAY_MS);
+                        setRowValue(db.id, row.id, dateProp.id, { date: next });
+                      }
+                      if ((mode === "move" || mode === "end") && endProp) {
+                        const next = msToYMD(item.endMs + deltaDays * DAY_MS);
+                        setRowValue(db.id, row.id, endProp.id, { date: next });
+                      }
+                    }}
+                  />
+                )}
                 {/* No-date indicator */}
                 {!item && (
                   <div className="absolute inset-y-0 flex items-center px-2">
@@ -229,6 +229,94 @@ export function TimelineView({ db, view, rows, onOpenRow }: Props) {
         onOpenChange={setQuickOpen}
         prefill={dateProp ? { [dateProp.id]: { date: new Date().toISOString().slice(0, 10) } } : undefined}
         onCreated={onOpenRow}
+      />
+    </div>
+  );
+}
+
+function TimelineBar({
+  row, item, bar, cellW, colorProp, onOpenRow, onShift,
+}: {
+  row: Page;
+  item: { startMs: number; endMs: number };
+  bar: { left: number; width: number };
+  cellW: number;
+  colorProp: Property | undefined;
+  onOpenRow: (id: string) => void;
+  onShift: (deltaDays: number, mode: "move" | "start" | "end") => void;
+}) {
+  const draggingRef = useRef<{ mode: "move" | "start" | "end"; startX: number; lastDelta: number } | null>(null);
+  const movedRef = useRef(false);
+
+  const colorOpt = colorProp
+    ? colorProp.options?.find((o: any) => o.id === row.rowProps?.[colorProp.id])
+    : null;
+  const tone = colorOpt?.color
+    ? colorClass(colorOpt.color)
+    : "bg-brand/70 hover:bg-brand text-white";
+
+  const beginDrag = (e: React.PointerEvent<HTMLElement>, mode: "move" | "start" | "end") => {
+    e.stopPropagation();
+    e.preventDefault();
+    (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+    draggingRef.current = { mode, startX: e.clientX, lastDelta: 0 };
+    movedRef.current = false;
+  };
+  const onPointerMove = (e: React.PointerEvent<HTMLElement>) => {
+    const st = draggingRef.current;
+    if (!st) return;
+    const delta = Math.round((e.clientX - st.startX) / cellW);
+    if (delta !== st.lastDelta) {
+      movedRef.current = true;
+      st.lastDelta = delta;
+    }
+  };
+  const onPointerUp = (e: React.PointerEvent<HTMLElement>) => {
+    const st = draggingRef.current;
+    draggingRef.current = null;
+    (e.currentTarget as HTMLElement).releasePointerCapture?.(e.pointerId);
+    if (!st) return;
+    if (st.lastDelta !== 0) onShift(st.lastDelta, st.mode);
+    setTimeout(() => { movedRef.current = false; }, 0);
+  };
+
+  return (
+    <div
+      className={cn(
+        "absolute top-1 h-6 rounded-full text-[10px] font-medium truncate flex items-center transition z-10 border select-none",
+        "cursor-grab active:cursor-grabbing",
+        tone,
+      )}
+      style={{ left: bar.left, width: bar.width }}
+      onPointerDown={(e) => beginDrag(e, "move")}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onClick={() => { if (!movedRef.current) onOpenRow(row.id); }}
+      onKeyDown={(e) => {
+        if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+          e.preventDefault();
+          focusSiblingBySelector(e.currentTarget, "[data-db-nav-item]", e.key === "ArrowDown" ? 1 : -1);
+        }
+      }}
+      tabIndex={0}
+      role="button"
+      data-db-nav-item
+      title={colorOpt?.name ?? "Drag to move · Drag edges to resize"}
+    >
+      <div
+        className="absolute left-0 top-0 bottom-0 w-1.5 cursor-ew-resize hover:bg-black/20 rounded-l-full"
+        onPointerDown={(e) => beginDrag(e, "start")}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+      />
+      <span className="px-2 truncate flex-1 pointer-events-none">
+        {bar.width > 40 && (row.title || "Untitled")}
+      </span>
+      <div
+        className="absolute right-0 top-0 bottom-0 w-1.5 cursor-ew-resize hover:bg-black/20 rounded-r-full"
+        onPointerDown={(e) => beginDrag(e, "end")}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
       />
     </div>
   );

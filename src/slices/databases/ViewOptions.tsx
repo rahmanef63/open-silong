@@ -382,6 +382,21 @@ function CalendarOptions({ db, view }: Props) {
         </Row>
       </Section>
       <Section title="Display">
+        <Row label="View">
+          <Segmented
+            value={view.calendarMode ?? "month"}
+            onChange={v => set({ calendarMode: v })}
+            options={[
+              { value: "month", label: "Month" },
+              { value: "week", label: "Week" },
+            ]}
+          />
+        </Row>
+        <Toggle
+          label="Show overdue / no-date panel"
+          checked={view.calendarShowOverdue ?? true}
+          onChange={v => set({ calendarShowOverdue: v })}
+        />
         <Row label="Color events by">
           <PropPicker
             value={view.calendarColorByProp}

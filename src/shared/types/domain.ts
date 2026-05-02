@@ -250,6 +250,8 @@ export interface DatabaseViewConfig {
   calendarColorByProp?: string;
   calendarWeekStart?: 0 | 1; // Sunday | Monday
   calendarShowWeekends?: boolean;
+  calendarMode?: "month" | "week";
+  calendarShowOverdue?: boolean;
 
   // ─── Timeline view ───────────────────────────────────
   timelineStartProp?: string;
