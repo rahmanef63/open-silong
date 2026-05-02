@@ -18,6 +18,10 @@ export function MarqueeOverlay({ containerRef }: Props) {
       onSelect={(ids) => setIds(ids)}
       onDragStart={(additive) => { if (!additive) clear(); }}
       getBaseline={() => [...state.ids]}
+      // Database blocks own their own drag (kanban cards, table rows, etc.).
+      // Bailing on pointerdown inside their root prevents accidental
+      // block-marquee while reordering kanban cards.
+      skipSelector="[data-database-block-root]"
     />
   );
 }

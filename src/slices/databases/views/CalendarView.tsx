@@ -1,10 +1,13 @@
 import { useMemo, useState } from "react";
 import { Database, DatabaseViewConfig, Page, Property } from "@/shared/types/domain";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, MoreHorizontal, Trash2 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { focusSiblingBySelector } from "@/shared/lib/keyboard";
 import { colorClass } from "@/shared/lib/format";
 import { useStore } from "@/shared/lib/store";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from "@/shared/ui/dropdown-menu";
 
 interface Props { db: Database; view: DatabaseViewConfig; rows: Page[]; onOpenRow: (id: string) => void }
 
@@ -19,7 +22,7 @@ function parseYMD(s: string): Date | null {
 }
 
 export function CalendarView({ db, view, rows, onOpenRow }: Props) {
-  const { addRow } = useStore();
+  const { addRow, deleteRow } = useStore();
   const dateProp = useMemo(
     () => db.properties.find(p => p.id === view.calendarDateProp && p.type === "date")
       ?? db.properties.find(p => p.type === "date"),
@@ -188,25 +191,47 @@ export function CalendarView({ db, view, rows, onOpenRow }: Props) {
                     ? colorClass(colorOpt.color)
                     : "bg-brand/15 text-brand hover:bg-brand/25";
                   return (
-                    <button
-                      key={r.id}
-                      onClick={() => onOpenRow(r.id)}
-                      onKeyDown={(e) => {
-                        if (e.key === "ArrowDown" || e.key === "ArrowUp" || e.key === "ArrowLeft" || e.key === "ArrowRight") {
+                    <div key={r.id} className="relative group/event">
+                      <button
+                        onClick={() => onOpenRow(r.id)}
+                        onKeyDown={(e) => {
+                          if (e.key === "ArrowDown" || e.key === "ArrowUp" || e.key === "ArrowLeft" || e.key === "ArrowRight") {
+                            e.preventDefault();
+                            const delta = e.key === "ArrowUp" || e.key === "ArrowLeft" ? -1 : 1;
+                            focusSiblingBySelector(e.currentTarget, "[data-db-nav-item]", delta as 1 | -1);
+                          }
+                        }}
+                        onContextMenu={(e) => {
                           e.preventDefault();
-                          const delta = e.key === "ArrowUp" || e.key === "ArrowLeft" ? -1 : 1;
-                          focusSiblingBySelector(e.currentTarget, "[data-db-nav-item]", delta as 1 | -1);
-                        }
-                      }}
-                      data-db-nav-item
-                      title={colorOpt?.name ?? undefined}
-                      className={cn(
-                        "w-full text-left truncate rounded px-1 py-0.5 text-[11px] border",
-                        tone,
-                      )}
-                    >
-                      {r.icon} {r.title || "Untitled"}
-                    </button>
+                          if (window.confirm(`Delete "${r.title || "Untitled"}"?`)) deleteRow(db.id, r.id);
+                        }}
+                        data-db-nav-item
+                        title={colorOpt?.name ?? "Click to open · Right-click to delete"}
+                        className={cn(
+                          "w-full text-left truncate rounded px-1 py-0.5 text-[11px] border pr-5",
+                          tone,
+                        )}
+                      >
+                        {r.icon} {r.title || "Untitled"}
+                      </button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button
+                            onClick={(e) => e.stopPropagation()}
+                            className="absolute top-0.5 right-0.5 opacity-0 group-hover/event:opacity-100 rounded p-0.5 hover:bg-background/60 text-current"
+                            aria-label="Event actions"
+                          >
+                            <MoreHorizontal className="h-3 w-3" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => onOpenRow(r.id)}>Open</DropdownMenuItem>
+                          <DropdownMenuItem className="text-destructive" onClick={() => deleteRow(db.id, r.id)}>
+                            <Trash2 className="mr-2 h-3.5 w-3.5" /> Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   );
                 })}
               </div>
