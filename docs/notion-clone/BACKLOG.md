@@ -180,7 +180,7 @@
 
 - [x] Editable surface (contentEditable)
 - [x] Cursor & selection handling
-- [x] Multi-block selection (dedicated select button in BlockControls + Shift-click range + ⌘-click toggle; floating toolbar with Delete / Duplicate / Color / Bg / Convert; Esc + click-to-clear; Backspace and ⌘D shortcuts; top-level blocks only)
+- [x] Multi-block selection (drag-marquee rubber-band in editor surface; ⌘/Shift-click on grip as power-user shortcut; floating toolbar with Delete / Duplicate / Color / Bg / Convert; Esc + click-to-clear; Backspace and ⌘D shortcuts; top-level blocks only)
 - [x] Enter / Shift+Enter / Backspace behaviors
 - [x] Slash command
 - [x] Drag handle + dnd-kit sortable
@@ -618,7 +618,8 @@
 
 - [x] Cell editor per property type (PropertyCell with 18-type dispatcher)
 - [x] Keyboard navigation in table
-- [ ] Bulk edit selected rows
+- [x] Bulk delete selected rows (drag-marquee in TableView selects rows; bottom toolbar deletes; Esc clears; Backspace shortcut)
+- [ ] Bulk edit (color / property values) selected rows
 - [x] Drag-fill (vertical, Excel-style fill handle)
 - [x] Cell selection ring + click-to-select
 - [x] Copy / paste cell (browser default)
