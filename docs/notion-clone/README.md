@@ -37,10 +37,10 @@ Cross-links inside the repo:
 
 ## Completion stats (2026-05-02)
 
-| Doc | Done | Total | % |
-| --- | ---: | ---: | ---: |
-| `BACKLOG.md` | 414 | 851 | **48.6%** |
-| `ROADMAP.md` | 28 | 53 | **52.8%** |
+| Doc | Done | Remaining | Total | % |
+| --- | ---: | ---: | ---: | ---: |
+| `BACKLOG.md` | 419 | 432 | 851 | **49.2%** |
+| `ROADMAP.md` | 28 | 25 | 53 | **52.8%** |
 
 Recompute with: `cd docs/notion-clone && grep -cE '^- \[x\]\|^  - \[x\]\|^    - \[x\]' BACKLOG.md`.
 
@@ -92,7 +92,20 @@ The codebase already covers a usable single-user MVP plus most of the V1 surface
 - Stable callbacks (`focusByOffset`), Map-based O(1) lookups, memoized derived collections
 - ErrorBoundary recovers from view crashes without nuking the page
 
-**Latest additions (current session)**
+**Audit hardening (current session, post-feature)**
+- **#1 Bulk-select toolbar lifted** — `RowSelectionProvider` / `RowSelectionToolbar` / `RowSelectionKeyboard` moved from TableView up to DatabaseBlock; toolbar now persists across all 11 views (was Table-only)
+- **#2 Calendar drag preserves duration** — drop on a new day shifts both `calendarDateProp` and `calendarEndProp` by the same delta; multi-day events stay multi-day
+- **#3 Duplicate view is independent** — `structuredClone` on the source so editing one view's filters/sorts/hidden/role-prop arrays no longer leaks into the duplicate
+- **#4 CSV relation skips trashed pages** — `valueFromString` filters `!p.trashed` before title→id matching
+- **#5 CSV mapping disables computed types** — existing rollup/formula/created_*/last_edited_*/unique_id and person/files options render `disabled` so they can't be selected (silent no-ops removed)
+- **#6 Bulk ops respect page lock** — `RowSelectionToolbar` skips `page.locked` rows for both bulk delete and bulk edit; toolbar shows "N locked" amber badge
+- **#7 Timeline edge resize clamps** — drag end before start (or start past end) is clamped, dates can't flip
+- **#8 Person/files CSV import returns null** — no fake-id strings written; both types removed from "+ Create new" submenu (real ids needed)
+- **#9 deleteProperty cascades** — strips propId from every view's `hiddenPropIds`, `sorts`, `filters`, all role-prop arrays (`boardCardProps` / `galleryCardProps` / `listSummaryProps` / `feedSummaryProps` / `formRequiredProps` / `formShownProps` / `dashboardKPIs` / `dashboardBreakdowns`) and clears all `*Prop` singletons that pointed at it (`groupBy`, `boardColorByProp`, `galleryCoverProp`, `calendarDateProp`, `calendarEndProp`, `calendarColorByProp`, `timelineStartProp`, `timelineEndProp`, `timelineColorByProp`, `chartXProp`, `chartYProp`, `mapLatProp`, `mapLngProp`, `mapPinColorProp`)
+- **CSV new-property race fixed** — earlier loop of `addProperty(...)` calls each read the same stale `databaseMap` snapshot → last-write-wins → only one prop survived. Now batched into a single `updateDatabase({ properties: [...db.properties, ...newProps] })` call so every "+ Create new" mapping lands, even when its CSV cells were empty
+- **CSV option dedupe is case-insensitive** — `"High"` and `"high"` collapse to one option (first-seen casing preserved)
+
+**Feature additions (current session)**
 - **5 missing views shipped** — Chart (recharts: bar/line/area/pie/donut + legend/grid/topN/sort/palette/decimals/title/labels), Dashboard (KPI tiles + breakdown bars + recent rows), Feed (chronological timeline), Map (mock geo plot via lat/lng props with pin colour), Form (public-facing input form with required/shown props + success message)
 - **Per-view column visibility** — `DatabaseViewConfig.hiddenPropIds`; hiding a column in one view never affects another
 - **Reusable QuickCreateDialog** — Title input + Accordion (primary "Properties" + "Hidden in this view"); shared by Calendar/List/Gallery/Feed/Map/Timeline/Board "+ create row" actions; backed by `PropertyFormInput` (also used by FormView)
