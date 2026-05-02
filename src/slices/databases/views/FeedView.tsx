@@ -9,6 +9,8 @@ import { getVisibleProps } from "../lib/visibility";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
+import { QuickCreateDialog } from "../components/QuickCreateDialog";
+import { useState } from "react";
 
 interface Props { db: Database; view: DatabaseViewConfig; rows: Page[]; onOpenRow: (id: string) => void }
 
@@ -32,7 +34,8 @@ function timeLabel(ts: number): string {
 }
 
 export function FeedView({ db, view, rows, onOpenRow }: Props) {
-  const { updateView, addRow, deleteRow } = useStore();
+  const { updateView, deleteRow } = useStore();
+  const [quickOpen, setQuickOpen] = useState(false);
   const source = view.feedTimestamp ?? "updatedAt";
 
   const grouped = useMemo(() => {
@@ -67,10 +70,7 @@ export function FeedView({ db, view, rows, onOpenRow }: Props) {
     <div className="p-3">
       <div className="flex items-center justify-between gap-1 text-xs mb-2">
         <button
-          onClick={async () => {
-            const r = await addRow(db.id);
-            onOpenRow(r.id);
-          }}
+          onClick={() => setQuickOpen(true)}
           className="flex items-center gap-1 rounded-md border border-border bg-card px-2 py-1 hover:bg-accent text-muted-foreground"
         >
           <Plus className="h-3 w-3" /> New row
@@ -161,6 +161,7 @@ export function FeedView({ db, view, rows, onOpenRow }: Props) {
           </div>
         ))}
       </div>
+      <QuickCreateDialog db={db} view={view} open={quickOpen} onOpenChange={setQuickOpen} onCreated={onOpenRow} />
     </div>
   );
 }

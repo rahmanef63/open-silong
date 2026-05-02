@@ -8,11 +8,14 @@ import { Plus, MoreHorizontal, Trash2 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
+import { QuickCreateDialog } from "../components/QuickCreateDialog";
+import { useState } from "react";
 
 interface Props { db: Database; view: DatabaseViewConfig; rows: Page[]; onOpenRow: (id: string) => void }
 
 export function ListView({ db, view, rows, onOpenRow }: Props) {
-  const { addRow, deleteRow } = useStore();
+  const { deleteRow } = useStore();
+  const [quickOpen, setQuickOpen] = useState(false);
   const viewVisible = getVisibleProps(db, view);
   const visibleSet = new Set(viewVisible.map(p => p.id));
   const summaries: Property[] = view.listSummaryProps?.length
@@ -74,14 +77,12 @@ export function ListView({ db, view, rows, onOpenRow }: Props) {
         </div>
       ))}
       <button
-        onClick={async () => {
-          const r = await addRow(db.id);
-          onOpenRow(r.id);
-        }}
+        onClick={() => setQuickOpen(true)}
         className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-muted-foreground hover:bg-accent"
       >
         <Plus className="h-3.5 w-3.5" /> New row
       </button>
+      <QuickCreateDialog db={db} view={view} open={quickOpen} onOpenChange={setQuickOpen} onCreated={onOpenRow} />
     </div>
   );
 }

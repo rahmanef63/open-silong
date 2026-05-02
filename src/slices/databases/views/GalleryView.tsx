@@ -8,6 +8,8 @@ import { Plus, MoreHorizontal, Trash2 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
+import { QuickCreateDialog } from "../components/QuickCreateDialog";
+import { useState } from "react";
 
 interface Props { db: Database; view: DatabaseViewConfig; rows: Page[]; onOpenRow: (id: string) => void }
 
@@ -30,7 +32,8 @@ function pickCover(view: DatabaseViewConfig, db: Database, r: Page): string | un
 }
 
 export function GalleryView({ db, view, rows, onOpenRow }: Props) {
-  const { addRow, deleteRow } = useStore();
+  const { deleteRow } = useStore();
+  const [quickOpen, setQuickOpen] = useState(false);
   const size = view.gallerySize ?? "medium";
   const aspect = view.galleryAspect ?? "video";
   const fit = view.galleryCoverFit ?? "cover";
@@ -121,14 +124,12 @@ export function GalleryView({ db, view, rows, onOpenRow }: Props) {
         );
       })}
       <button
-        onClick={async () => {
-          const r = await addRow(db.id);
-          onOpenRow(r.id);
-        }}
+        onClick={() => setQuickOpen(true)}
         className="rounded-lg border border-dashed border-border p-3 text-sm text-muted-foreground hover:bg-accent hover:border-border-strong transition flex items-center justify-center min-h-[120px]"
       >
         <Plus className="mr-1 h-4 w-4" /> New
       </button>
+      <QuickCreateDialog db={db} view={view} open={quickOpen} onOpenChange={setQuickOpen} onCreated={onOpenRow} />
     </div>
   );
 }

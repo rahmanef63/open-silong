@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { focusSiblingBySelector } from "@/shared/lib/keyboard";
 import { colorClass } from "@/shared/lib/format";
-import { useStore } from "@/shared/lib/store";
+import { QuickCreateDialog } from "../components/QuickCreateDialog";
 
 interface Props { db: Database; view: DatabaseViewConfig; rows: Page[]; onOpenRow: (id: string) => void }
 
@@ -15,7 +15,7 @@ function toMs(dateStr: string): number {
 }
 
 export function TimelineView({ db, view, rows, onOpenRow }: Props) {
-  const { addRow } = useStore();
+  const [quickOpen, setQuickOpen] = useState(false);
   const dateProp =
     db.properties.find(p => p.id === view.timelineStartProp && p.type === "date")
     ?? db.properties.find(p => p.type === "date");
@@ -98,13 +98,7 @@ export function TimelineView({ db, view, rows, onOpenRow }: Props) {
           <span className="text-xs text-muted-foreground ml-2">(add a Date property to see bars)</span>
         )}
         <button
-          onClick={async () => {
-            const today = new Date();
-            const ymd = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-            const init = dateProp ? { rowProps: { [dateProp.id]: { date: ymd } } } : {};
-            const nr = await addRow(db.id, init);
-            onOpenRow(nr.id);
-          }}
+          onClick={() => setQuickOpen(true)}
           className="ml-auto flex items-center gap-1 rounded-md border border-border bg-card px-2 py-1 text-xs hover:bg-accent text-muted-foreground"
         >
           <Plus className="h-3 w-3" /> New row
@@ -228,6 +222,14 @@ export function TimelineView({ db, view, rows, onOpenRow }: Props) {
           <div className="p-4 text-sm text-muted-foreground text-center">No rows.</div>
         )}
       </div>
+      <QuickCreateDialog
+        db={db}
+        view={view}
+        open={quickOpen}
+        onOpenChange={setQuickOpen}
+        prefill={dateProp ? { [dateProp.id]: { date: new Date().toISOString().slice(0, 10) } } : undefined}
+        onCreated={onOpenRow}
+      />
     </div>
   );
 }

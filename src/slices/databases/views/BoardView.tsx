@@ -11,12 +11,17 @@ import { colorClass } from "@/shared/lib/format";
 import { PropertyCell } from "../PropertyCell";
 import { Plus } from "lucide-react";
 import { getVisibleProps } from "../lib/visibility";
+import { QuickCreateDialog } from "../components/QuickCreateDialog";
+import { useState } from "react";
+import type { PropertyValue } from "@/shared/types/domain";
 
 interface Props { db: Database; view: DatabaseViewConfig; rows: Page[]; onOpenRow: (id: string) => void }
 
 export function BoardView({ db, view, rows, onOpenRow }: Props) {
-  const { setRowValue, updateView, addRow } = useStore();
+  const { setRowValue, updateView } = useStore();
   void updateView;
+  const [quickOpen, setQuickOpen] = useState(false);
+  const [quickPrefill, setQuickPrefill] = useState<Record<string, PropertyValue>>({});
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
 
   const groupProp: Property | undefined = useMemo(() => {
@@ -64,14 +69,23 @@ export function BoardView({ db, view, rows, onOpenRow }: Props) {
   return (
     <DndContext sensors={sensors} onDragEnd={onDragEnd}>
       <div className="flex gap-3 overflow-x-auto p-3 min-h-[280px]">
+        <QuickCreateDialog
+          db={db}
+          view={view}
+          open={quickOpen}
+          onOpenChange={setQuickOpen}
+          prefill={quickPrefill}
+          onCreated={onOpenRow}
+          title="Add to board"
+        />
         {columns.map(col => (
           <BoardColumn key={col.id ?? "none"} db={db} col={col} groupProp={groupProp}
             cardPadding={cardPadding} cardSpacing={cardSpacing}
             colorByProp={colorByProp} cardPropIds={cardPropIds}
             viewVisible={viewVisible}
-            onAdd={async () => {
-              const r = await addRow(db.id, { rowProps: { [groupProp.id]: col.id ?? null } });
-              onOpenRow(r.id);
+            onAdd={() => {
+              setQuickPrefill({ [groupProp.id]: col.id ?? null });
+              setQuickOpen(true);
             }} onOpen={onOpenRow} />
         ))}
       </div>

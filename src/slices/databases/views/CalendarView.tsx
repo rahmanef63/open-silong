@@ -8,6 +8,8 @@ import { useStore } from "@/shared/lib/store";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
+import { QuickCreateDialog } from "../components/QuickCreateDialog";
+import type { PropertyValue } from "@/shared/types/domain";
 
 interface Props { db: Database; view: DatabaseViewConfig; rows: Page[]; onOpenRow: (id: string) => void }
 
@@ -22,7 +24,9 @@ function parseYMD(s: string): Date | null {
 }
 
 export function CalendarView({ db, view, rows, onOpenRow }: Props) {
-  const { addRow, deleteRow } = useStore();
+  const { deleteRow } = useStore();
+  const [quickOpen, setQuickOpen] = useState(false);
+  const [quickPrefill, setQuickPrefill] = useState<Record<string, PropertyValue>>({});
   const dateProp = useMemo(
     () => db.properties.find(p => p.id === view.calendarDateProp && p.type === "date")
       ?? db.properties.find(p => p.type === "date"),
@@ -114,10 +118,9 @@ export function CalendarView({ db, view, rows, onOpenRow }: Props) {
             <span className="text-xs text-muted-foreground">(add a Date property)</span>
           )}
           <button
-            onClick={async () => {
-              const init = dateProp ? { rowProps: { [dateProp.id]: { date: ymd(now) } } } : {};
-              const r = await addRow(db.id, init);
-              onOpenRow(r.id);
+            onClick={() => {
+              setQuickPrefill(dateProp ? { [dateProp.id]: { date: ymd(now) } } : {});
+              setQuickOpen(true);
             }}
             className="ml-1 flex items-center gap-1 rounded-md border border-border bg-card px-2 py-1 text-xs hover:bg-accent text-muted-foreground"
           >
@@ -144,10 +147,10 @@ export function CalendarView({ db, view, rows, onOpenRow }: Props) {
           const key = d ? ymd(d) : `e${i}`;
           const items = d ? (rowsByDate.get(key) ?? []) : [];
           const isToday = key === todayStr;
-          const onAddOnDay = async () => {
+          const onAddOnDay = () => {
             if (!dateProp || !d) return;
-            const nr = await addRow(db.id, { rowProps: { [dateProp.id]: { date: key } } });
-            onOpenRow(nr.id);
+            setQuickPrefill({ [dateProp.id]: { date: key } });
+            setQuickOpen(true);
           };
           return (
             <div
@@ -155,7 +158,7 @@ export function CalendarView({ db, view, rows, onOpenRow }: Props) {
               onClick={(e) => {
                 if (!d || !dateProp) return;
                 if (e.target !== e.currentTarget) return;
-                void onAddOnDay();
+                onAddOnDay();
               }}
               className={cn(
                 "bg-card min-h-20 sm:min-h-24 p-1.5 group relative",
@@ -173,9 +176,9 @@ export function CalendarView({ db, view, rows, onOpenRow }: Props) {
                   </div>
                   {dateProp && (
                     <button
-                      onClick={(e) => { e.stopPropagation(); void onAddOnDay(); }}
+                      onClick={(e) => { e.stopPropagation(); onAddOnDay(); }}
                       title="Add row on this date"
-                      className="pointer-events-auto rounded p-0.5 text-muted-foreground/40 hover:text-foreground hover:bg-accent transition opacity-0 group-hover:opacity-100"
+                      className="pointer-events-auto rounded p-0.5 text-muted-foreground/30 hover:text-foreground hover:bg-accent transition opacity-60 group-hover:opacity-100"
                     >
                       <Plus className="h-3 w-3" />
                     </button>
@@ -243,6 +246,16 @@ export function CalendarView({ db, view, rows, onOpenRow }: Props) {
       {colorProp && (
         <Legend prop={colorProp} />
       )}
+
+      <QuickCreateDialog
+        db={db}
+        view={view}
+        open={quickOpen}
+        onOpenChange={setQuickOpen}
+        prefill={quickPrefill}
+        title="Add to calendar"
+        onCreated={(id) => onOpenRow(id)}
+      />
     </div>
   );
 }
