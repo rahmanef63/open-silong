@@ -11,7 +11,7 @@ const MIN_COL = 10;
 
 /** One column pane */
 function ColumnPane({
-  colIndex, blocks, columnBlockId, widthPct, depth,
+  colIndex, blocks, columnBlockId, widthPct, depth, pageId,
   onColumnsChange,
 }: {
   colIndex: number;
@@ -19,6 +19,7 @@ function ColumnPane({
   columnBlockId: string;
   widthPct: number;
   depth: number;
+  pageId?: string;
   onColumnsChange: (colIndex: number, newBlocks: Block[]) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: `col:${columnBlockId}:${colIndex}` });
@@ -63,6 +64,7 @@ function ColumnPane({
               key={b.id}
               block={b}
               depth={depth}
+              pageId={pageId}
               onUpdate={(patch) => onUpdate(b.id, patch)}
               onAddAfter={(type) => onAdd(i, type)}
               onDelete={() => onDelete(b.id)}
@@ -143,11 +145,12 @@ function ColumnDivider({
  * usage = parent depth + 1. The NestedBlock itself enforces the MAX-NEST cap.
  */
 export function ColumnBlockEditor({
-  block, onUpdate, depth = 1,
+  block, onUpdate, depth = 1, pageId,
 }: {
   block: Block;
   onUpdate: (patch: Partial<Block>) => void;
   depth?: number;
+  pageId?: string;
 }) {
   const n = block.type === "columns3" ? 3 : 2;
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -188,6 +191,7 @@ export function ColumnBlockEditor({
             columnBlockId={block.id}
             widthPct={widths[i]}
             depth={depth}
+            pageId={pageId}
             onColumnsChange={handleColumnsChange}
           />
         </Fragment>

@@ -18,11 +18,12 @@ const uid = () => Math.random().toString(36).slice(2, 10);
  * NestedBlocks; top-level = 1, nested = parent depth + 1.
  */
 export function ToggleContent({
-  block, onUpdate, depth = 1,
+  block, onUpdate, depth = 1, pageId,
 }: {
   block: Block;
   onUpdate: (patch: Partial<Block>) => void;
   depth?: number;
+  pageId?: string;
 }) {
   const collapsed = block.collapsed !== false;
   const children: Block[] = block.children ?? [];
@@ -88,6 +89,7 @@ export function ToggleContent({
                 key={child.id}
                 block={child}
                 depth={depth}
+                pageId={pageId}
                 onUpdate={(patch) => {
                   setChildren(children.map((c, j) => (j === ci ? { ...c, ...patch } : c)));
                 }}
@@ -153,6 +155,7 @@ export function ToggleBlock({
         block={block}
         onUpdate={(patch) => updateBlock(pageId, block.id, patch)}
         depth={1}
+        pageId={pageId}
       />
     </BlockShell>
   );

@@ -271,7 +271,7 @@ function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerR
         attributes={attributes} listeners={listeners}
         controls={<BlockControls pageId={pageId} block={block} index={index} listeners={listeners} convertTo={convertTo} />}
       >
-        <ColumnBlockEditor block={block} onUpdate={(p) => updateBlock(pageId, block.id, p)} depth={1} />
+        <ColumnBlockEditor block={block} onUpdate={(p) => updateBlock(pageId, block.id, p)} depth={1} pageId={pageId} />
       </BlockShell>
     );
   }

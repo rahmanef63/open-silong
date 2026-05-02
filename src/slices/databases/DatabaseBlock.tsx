@@ -146,16 +146,16 @@ export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block 
   return (
     <div data-keyboard-scope className="rounded-lg border border-border bg-card overflow-hidden">
       {/* Top bar: db name + view tabs */}
-      <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2">
-        <div className="flex items-center gap-2 min-w-0">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-3 py-2">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
           <span className="text-base">{db.icon}</span>
           <input
             value={db.name}
             onChange={e => updateDatabase(db.id, { name: e.target.value })}
-            className="bg-transparent text-sm font-semibold outline-none w-48"
+            className="bg-transparent text-sm font-semibold outline-none flex-1 min-w-0 max-w-xs"
           />
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 max-w-full overflow-x-auto scrollbar-thin">
           {db.views.map(v => (
             <ViewTab
               key={v.id}
@@ -200,8 +200,8 @@ export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block 
       </div>
 
       {/* Toolbar: search + filter/sort/group/properties + new row */}
-      <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-1.5 bg-muted/30">
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-1 min-w-0">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-3 py-1.5 bg-muted/30">
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-1 min-w-[180px]">
           <Search className="h-3.5 w-3.5 shrink-0" />
           <Input
             value={view.search ?? ""}
@@ -210,7 +210,7 @@ export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block 
             className="h-7 text-xs border-0 bg-transparent shadow-none px-1 focus-visible:ring-0 max-w-48"
           />
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex flex-wrap items-center gap-1">
           {/* Filter button */}
           <Popover>
             <PopoverTrigger asChild>

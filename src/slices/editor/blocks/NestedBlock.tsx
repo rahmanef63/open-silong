@@ -14,6 +14,7 @@ import { getBlockRenderer } from "./registry";
 import { bgColorClass, colorClass } from "../lib/colors";
 import { ColumnBlockEditor } from "../ColumnBlockEditor";
 import { ToggleContent } from "./ToggleBlock";
+import { DatabaseBlock } from "@/slices/databases/DatabaseBlock";
 
 interface Props {
   block: Block;
@@ -25,6 +26,9 @@ interface Props {
   registerRef?: (id: string, el: HTMLElement | null) => void;
   /** Nesting depth — 1 means direct child of a top-level container. */
   depth?: number;
+  /** Owning page id — needed by leaf blocks (e.g. database) that call store
+   *  actions scoped to a page. */
+  pageId?: string;
 }
 
 /** Maximum nesting depth for containers (toggle / columns) inside another container.
@@ -48,7 +52,7 @@ const PLACEHOLDERS: Partial<Record<BlockType, string>> = {
 };
 
 export function NestedBlock({
-  block, onUpdate, onAddAfter, onDelete, onFocusNext, onFocusPrev, registerRef, depth = 1,
+  block, onUpdate, onAddAfter, onDelete, onFocusNext, onFocusPrev, registerRef, depth = 1, pageId,
 }: Props) {
   const ref = useRef<HTMLElement | null>(null);
   const navigate = useNavigate();
@@ -254,11 +258,14 @@ export function NestedBlock({
     }
     case "toggle":
       if (depth > MAX_NEST) return wrap(<NestingCap type="Toggle" />);
-      return wrap(<ToggleContent block={block} onUpdate={onUpdate} depth={depth + 1} />);
+      return wrap(<ToggleContent block={block} onUpdate={onUpdate} depth={depth + 1} pageId={pageId} />);
     case "columns2":
     case "columns3":
       if (depth > MAX_NEST) return wrap(<NestingCap type="Columns" />);
-      return wrap(<ColumnBlockEditor block={block} onUpdate={onUpdate} depth={depth + 1} />);
+      return wrap(<ColumnBlockEditor block={block} onUpdate={onUpdate} depth={depth + 1} pageId={pageId} />);
+    case "database":
+      if (!pageId) return wrap(<NestingCap type="Database (no page)" />);
+      return wrap(<DatabaseBlock pageId={pageId} block={block} />);
     default:
       return (
         <div className="rounded-md border border-dashed border-border bg-muted/30 p-2 text-xs text-muted-foreground">

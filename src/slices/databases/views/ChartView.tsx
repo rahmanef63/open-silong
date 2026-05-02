@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import {
   BarChart, Bar, LineChart, Line, AreaChart, Area, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, LabelList, Label,
 } from "recharts";
 import { ChartAggregate, ChartKind, Database, DatabaseViewConfig, Page, Property } from "@/shared/types/domain";
 import { useStore } from "@/shared/lib/store";
@@ -83,9 +83,14 @@ export function ChartView({ db, view, rows }: Props) {
   const decimals = Math.max(0, Math.min(4, view.chartDecimals ?? 0));
   const showGrid = view.chartShowGrid ?? true;
   const showLegend = view.chartShowLegend ?? true;
+  const showValues = view.chartShowValues ?? false;
   const sortBy = view.chartSortBy ?? "value";
   const sortDir = view.chartSortDir ?? "desc";
   const topN = view.chartTopN ?? 0;
+  const xLabel = view.chartXLabel?.trim() || xProp?.name || "";
+  const yLabel = view.chartYLabel?.trim() || (agg === "count" ? "Count" : (yProp?.name ?? "Value"));
+  const chartTitle = view.chartTitle?.trim();
+  const heightPx = view.chartHeight === "small" ? 240 : view.chartHeight === "large" ? 520 : 360;
 
   const data = useMemo(() => {
     if (!xProp) return [] as { name: string; value: number; key: string }[];
@@ -140,7 +145,7 @@ export function ChartView({ db, view, rows }: Props) {
           <PieChart>
             <Tooltip />
             {showLegend && <Legend />}
-            <Pie data={data} dataKey="value" nameKey="name" outerRadius={100} innerRadius={inner} label>
+            <Pie data={data} dataKey="value" nameKey="name" outerRadius="75%" innerRadius={inner} label={showValues}>
               {data.map((_, i) => <Cell key={i} fill={palette[i % palette.length]} />)}
             </Pie>
           </PieChart>
@@ -148,17 +153,35 @@ export function ChartView({ db, view, rows }: Props) {
       );
     }
     const Wrapper = kind === "line" ? LineChart : kind === "area" ? AreaChart : BarChart;
+    const bottomMargin = xLabel ? 28 : 12;
+    const leftMargin = yLabel ? 18 : 0;
     return (
       <ResponsiveContainer width="100%" height="100%">
-        <Wrapper data={data} margin={{ top: 12, right: 12, left: 0, bottom: 12 }}>
+        <Wrapper data={data} margin={{ top: 12, right: 12, left: leftMargin, bottom: bottomMargin }}>
           {showGrid && <CartesianGrid strokeDasharray="3 3" className="stroke-border" />}
-          <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-          <YAxis tick={{ fontSize: 11 }} allowDecimals={decimals > 0} />
+          <XAxis dataKey="name" tick={{ fontSize: 11 }} interval={0} angle={data.length > 8 ? -25 : 0} textAnchor={data.length > 8 ? "end" : "middle"} height={data.length > 8 ? 60 : 30}>
+            {xLabel && <Label value={xLabel} position="insideBottom" offset={-12} className="fill-muted-foreground" style={{ fontSize: 11 }} />}
+          </XAxis>
+          <YAxis tick={{ fontSize: 11 }} allowDecimals={decimals > 0}>
+            {yLabel && <Label value={yLabel} position="insideLeft" angle={-90} className="fill-muted-foreground" style={{ fontSize: 11, textAnchor: "middle" }} />}
+          </YAxis>
           <Tooltip />
           {showLegend && <Legend />}
-          {kind === "bar" && <Bar dataKey="value" fill={palette[0]} radius={[4, 4, 0, 0]} />}
-          {kind === "line" && <Line type="monotone" dataKey="value" stroke={palette[0]} strokeWidth={2} dot />}
-          {kind === "area" && <Area type="monotone" dataKey="value" stroke={palette[0]} fill={palette[0]} fillOpacity={0.25} />}
+          {kind === "bar" && (
+            <Bar dataKey="value" fill={palette[0]} radius={[4, 4, 0, 0]}>
+              {showValues && <LabelList dataKey="value" position="top" style={{ fontSize: 10 }} />}
+            </Bar>
+          )}
+          {kind === "line" && (
+            <Line type="monotone" dataKey="value" stroke={palette[0]} strokeWidth={2} dot>
+              {showValues && <LabelList dataKey="value" position="top" style={{ fontSize: 10 }} />}
+            </Line>
+          )}
+          {kind === "area" && (
+            <Area type="monotone" dataKey="value" stroke={palette[0]} fill={palette[0]} fillOpacity={0.25}>
+              {showValues && <LabelList dataKey="value" position="top" style={{ fontSize: 10 }} />}
+            </Area>
+          )}
         </Wrapper>
       </ResponsiveContainer>
     );
@@ -200,7 +223,10 @@ export function ChartView({ db, view, rows }: Props) {
           />
         )}
       </div>
-      <div className="h-[360px] rounded-lg border border-border bg-card p-2">
+      {chartTitle && (
+        <h3 className="text-sm font-semibold text-foreground">{chartTitle}</h3>
+      )}
+      <div className="rounded-lg border border-border bg-card p-2" style={{ height: heightPx }}>
         {renderChart()}
       </div>
     </div>

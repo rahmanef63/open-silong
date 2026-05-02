@@ -265,6 +265,11 @@ export interface DatabaseViewConfig {
   chartSortDir?: "asc" | "desc";
   chartPalette?: "warm" | "cool" | "rainbow" | "mono";
   chartDecimals?: number;   // 0..4
+  chartTitle?: string;
+  chartXLabel?: string;
+  chartYLabel?: string;
+  chartShowValues?: boolean;
+  chartHeight?: "small" | "medium" | "large";
 
   // ─── Dashboard view ──────────────────────────────────
   dashboardKPIs?: string[];     // numeric / checkbox prop ids
