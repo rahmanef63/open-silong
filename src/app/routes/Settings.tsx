@@ -2,6 +2,7 @@ import { AppShell } from "@/app/AppShell";
 import { useStore } from "@/shared/lib/store";
 import { LandingView, PageSort, SidebarDensity, ThemePref, EditorBehavior } from "@/shared/types/domain";
 import { Settings as SettingsIcon } from "lucide-react";
+import { ThemePicker } from "@/slices/theme-presets";
 
 const ICONS = ["🪐","🚀","🌱","🛰️","🎨","🧠","🪄","🌙","☕","🔥","🌊","✨"];
 
@@ -36,6 +37,9 @@ const SettingsPage = () => {
             <Field label="Theme">
               <Choice value={preferences.theme} onChange={(v) => updatePreferences({ theme: v as ThemePref })}
                 options={[["light","Light"],["dark","Dark"],["system","System"]]} />
+            </Field>
+            <Field label="Color preset">
+              <ThemePicker />
             </Field>
             <Field label="Sidebar density">
               <Choice value={preferences.sidebarDensity} onChange={(v) => updatePreferences({ sidebarDensity: v as SidebarDensity })}

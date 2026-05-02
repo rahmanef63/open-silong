@@ -64,6 +64,7 @@
 
     --shadow-soft: 0 1px 2px hsl(220 13% 13% / 0.04), 0 4px 12px hsl(220 13% 13% / 0.04);
     --shadow-pop: 0 8px 28px hsl(220 13% 13% / 0.12);
+    --shadow-float: 0 1px 1px hsl(220 13% 13% / 0.04), 0 12px 36px hsl(220 13% 13% / 0.10);
   }
 
   .dark {
@@ -110,8 +111,27 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "cv11", "ss01", "ss03";
+    /* CSS variable transitions on theme swap so preset switches glide. */
+    transition: background-color 220ms ease, color 220ms ease;
   }
   ::selection { background: hsl(var(--brand) / 0.25); }
+
+  /* Consistent focus-visible across all interactive surfaces.
+   * Don't show on plain mouse clicks, only keyboard / a11y focus. */
+  :focus { outline: none; }
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring) / 0.65);
+    outline-offset: 2px;
+    border-radius: var(--radius);
+  }
+
+  /* Smooth small interactives by default (buttons, links, [role=button]). */
+  button, a, [role="button"] {
+    transition-property: background-color, border-color, color, opacity, transform, box-shadow;
+    transition-duration: 140ms;
+    transition-timing-function: ease;
+  }
+  button:active, [role="button"]:active { transform: translateY(0.5px); }
 }
 
 @layer components {
@@ -129,5 +149,30 @@
   .prose-editor blockquote { @apply border-l-4 border-foreground/30 pl-4 italic text-foreground/80; }
   .prose-editor code.inline { @apply px-1.5 py-0.5 rounded bg-muted text-[0.9em] font-mono; }
   .scrollbar-thin::-webkit-scrollbar { width: 8px; height: 8px; }
-  .scrollbar-thin::-webkit-scrollbar-thumb { background: hsl(var(--border-strong)); border-radius: 8px; }
+  .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: hsl(var(--border-strong) / 0.7);
+    border-radius: 8px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: hsl(var(--border-strong)); background-clip: padding-box; }
+
+  /* Subtle backdrop blur for Radix overlay surfaces — degrades cleanly
+   * on browsers without backdrop-filter. */
+  [data-radix-popper-content-wrapper] > *,
+  [role="dialog"] {
+    backdrop-filter: saturate(140%);
+  }
+}
+
+/* Theme preset transitions — every CSS-var-driven colour eases when the
+ * preset / dark mode flips. Excludes layout-impacting properties. */
+@layer utilities {
+  .theme-transition,
+  .theme-transition * {
+    transition-property: background-color, color, border-color, fill, stroke, box-shadow;
+    transition-duration: 220ms;
+    transition-timing-function: ease;
+  }
 }
