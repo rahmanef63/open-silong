@@ -5,6 +5,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
 import { ChevronDown, MapPin, Plus, MoreHorizontal, Trash2 } from "lucide-react";
+import { QuickCreateDialog } from "../components/QuickCreateDialog";
 
 const COLOR_HEX: Record<string, string> = {
   gray: "#6b7280",
@@ -51,7 +52,8 @@ const CONTINENTS = [
 ];
 
 export function MapView({ db, view, rows, onOpenRow }: Props) {
-  const { updateView, addRow, deleteRow } = useStore();
+  const { updateView, deleteRow } = useStore();
+  const [quickOpen, setQuickOpen] = useState(false);
   const numProps = useMemo(() => db.properties.filter(p => p.type === "number"), [db.properties]);
 
   const latProp = useMemo(
@@ -110,10 +112,7 @@ export function MapView({ db, view, rows, onOpenRow }: Props) {
           {pins.length} of {rows.length} pinned
         </span>
         <button
-          onClick={async () => {
-            const r = await addRow(db.id);
-            onOpenRow(r.id);
-          }}
+          onClick={() => setQuickOpen(true)}
           className="flex items-center gap-1 rounded-md border border-border bg-card px-2 py-1 hover:bg-accent text-muted-foreground"
         >
           <Plus className="h-3 w-3" /> New row
@@ -226,6 +225,7 @@ export function MapView({ db, view, rows, onOpenRow }: Props) {
           ))}
         </div>
       )}
+      <QuickCreateDialog db={db} view={view} open={quickOpen} onOpenChange={setQuickOpen} onCreated={onOpenRow} />
     </div>
   );
 }
