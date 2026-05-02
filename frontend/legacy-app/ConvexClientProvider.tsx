@@ -3,7 +3,7 @@ import { ConvexHttpClient } from "convex/browser";
 import { ConvexAuthProvider } from "@convex-dev/auth/react";
 import { type ReactNode, useState } from "react";
 
-const CONVEX_URL = import.meta.env.VITE_CONVEX_URL as string;
+const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL as string;
 
 export function ConvexClientProvider({ children }: { children: ReactNode }) {
   const [convex] = useState(() => {

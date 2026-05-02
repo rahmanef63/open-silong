@@ -1,4 +1,4 @@
-import { AppShell } from "@/app/AppShell";
+import { AppShell } from "@/legacy-app/AppShell";
 import { TrashView } from "@/slices/trash/views/TrashView";
 
 const Trash = () => (

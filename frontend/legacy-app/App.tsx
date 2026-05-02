@@ -10,15 +10,15 @@ import { ErrorBoundary } from "@/shared/components/ErrorBoundary";
 import { RouteSkeleton } from "@/shared/components/RouteSkeleton";
 import { CommandPalette } from "@/slices/command-palette";
 
-const Index = lazy(() => import("./routes/Index.tsx"));
-const PageView = lazy(() => import("./routes/PageView.tsx"));
-const Trash = lazy(() => import("./routes/Trash.tsx"));
-const NotFound = lazy(() => import("./routes/NotFound.tsx"));
-const Settings = lazy(() => import("./routes/Settings.tsx"));
-const Profile = lazy(() => import("./routes/Profile.tsx"));
-const Shared = lazy(() => import("./routes/Shared.tsx"));
-const Inbox = lazy(() => import("./routes/Inbox.tsx"));
-const AuthPage = lazy(() => import("./routes/AuthPage.tsx"));
+const Index = lazy(() => import("./routes/Index"));
+const PageView = lazy(() => import("./routes/PageView"));
+const Trash = lazy(() => import("./routes/Trash"));
+const NotFound = lazy(() => import("./routes/NotFound"));
+const Settings = lazy(() => import("./routes/Settings"));
+const Profile = lazy(() => import("./routes/Profile"));
+const Shared = lazy(() => import("./routes/Shared"));
+const Inbox = lazy(() => import("./routes/Inbox"));
+const AuthPage = lazy(() => import("./routes/AuthPage"));
 
 function LandingRedirect() {
   const { preferences, pages, recents, getPage } = useStore();
