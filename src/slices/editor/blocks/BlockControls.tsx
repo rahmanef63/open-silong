@@ -1,4 +1,4 @@
-import { CheckSquare, Copy, GripVertical, MessageSquare, Plus, Trash2 } from "lucide-react";
+import { CheckSquare, Copy, GripVertical, MessageSquare, MoreHorizontal, Plus, Trash2 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
@@ -58,13 +58,11 @@ export function BlockControls({ pageId, block, index, listeners, convertTo }: Pr
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button
-            {...listeners}
-            data-block-grip
-            title="Drag · Shift-click range · ⌘-click toggle"
-            className="flex h-6 w-5 items-center justify-center rounded text-muted-foreground hover:bg-accent cursor-grab active:cursor-grabbing"
-            aria-label="Drag or open block menu"
+            title="Block menu"
+            aria-label="Block menu"
+            className="flex h-6 w-5 items-center justify-center rounded text-muted-foreground hover:bg-accent"
           >
-            <GripVertical className="h-3.5 w-3.5" />
+            <MoreHorizontal className="h-3.5 w-3.5" />
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" side="right" className="w-56">
@@ -108,6 +106,15 @@ export function BlockControls({ pageId, block, index, listeners, convertTo }: Pr
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+      <button
+        {...listeners}
+        data-block-grip
+        title="Drag to move · Shift-click range · ⌘-click toggle"
+        aria-label="Drag block"
+        className="flex h-6 w-5 items-center justify-center rounded text-muted-foreground hover:bg-accent cursor-grab active:cursor-grabbing"
+      >
+        <GripVertical className="h-3.5 w-3.5" />
+      </button>
     </div>
   );
 }
