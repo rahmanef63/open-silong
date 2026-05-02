@@ -1,4 +1,4 @@
-import { AppShell } from "@/app/AppShell";
+import { AppShell } from "@/legacy-app/AppShell";
 import { useStore } from "@/shared/lib/store";
 import { LandingView, PageSort, SidebarDensity, ThemePref, EditorBehavior } from "@/shared/types/domain";
 import { Settings as SettingsIcon } from "lucide-react";

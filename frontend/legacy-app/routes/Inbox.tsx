@@ -1,4 +1,4 @@
-import { AppShell } from "@/app/AppShell";
+import { AppShell } from "@/legacy-app/AppShell";
 import { InboxPage } from "@/slices/inbox";
 
 const Inbox = () => (

@@ -1,4 +1,4 @@
-import { AppShell } from "@/app/AppShell";
+import { AppShell } from "@/legacy-app/AppShell";
 import { PageEditor } from "@/slices/editor/PageEditor";
 
 const PageView = () => (

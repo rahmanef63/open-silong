@@ -1,4 +1,4 @@
-import { AppShell } from "@/app/AppShell";
+import { AppShell } from "@/legacy-app/AppShell";
 import { Dashboard } from "@/slices/dashboard/views/Dashboard";
 
 const Index = () => (
