@@ -7,8 +7,10 @@ import { StoreProvider, useStore } from "@/shared/lib/store";
 import { useConvexAuth } from "convex/react";
 import { ErrorBoundary } from "@/shared/components/ErrorBoundary";
 import { RouteSkeleton } from "@/shared/components/RouteSkeleton";
-import { CommandPalette } from "@/slices/command-palette";
 
+const CommandPalette = lazy(() =>
+  import("@/slices/command-palette").then((m) => ({ default: m.CommandPalette })),
+);
 const Index = lazy(() => import("./routes/Index"));
 const PageView = lazy(() => import("./routes/PageView"));
 const Trash = lazy(() => import("./routes/Trash"));
@@ -58,7 +60,9 @@ const App = () => (
       <AuthGuard>
         <StoreProvider>
           <BrowserRouter>
-            <CommandPalette />
+            <Suspense fallback={null}>
+              <CommandPalette />
+            </Suspense>
             <ErrorBoundary>
               <Suspense fallback={<RouteSkeleton />}>
                 <Routes>
