@@ -5,7 +5,7 @@ import { cn } from "@/shared/lib/utils";
 import {
   Table2, LayoutGrid, List as ListIcon, Image, Calendar as CalendarIcon, Clock,
   Plus, Search, MoreHorizontal, Trash2, Eye, EyeOff, ArrowUpDown, Filter, Settings2,
-  Check, Pencil,
+  Check, Pencil, BarChart3, LayoutDashboard, Rss, Map as MapIcon, ClipboardList,
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
@@ -20,6 +20,11 @@ const ListView = lazy(() => import("./views/ListView").then((m) => ({ default: m
 const GalleryView = lazy(() => import("./views/GalleryView").then((m) => ({ default: m.GalleryView })));
 const CalendarView = lazy(() => import("./views/CalendarView").then((m) => ({ default: m.CalendarView })));
 const TimelineView = lazy(() => import("./views/TimelineView").then((m) => ({ default: m.TimelineView })));
+const ChartView = lazy(() => import("./views/ChartView").then((m) => ({ default: m.ChartView })));
+const DashboardView = lazy(() => import("./views/DashboardView").then((m) => ({ default: m.DashboardView })));
+const FeedView = lazy(() => import("./views/FeedView").then((m) => ({ default: m.FeedView })));
+const MapView = lazy(() => import("./views/MapView").then((m) => ({ default: m.MapView })));
+const FormView = lazy(() => import("./views/FormView").then((m) => ({ default: m.FormView })));
 import { FilterBuilder } from "./FilterBuilder";
 import { SortBuilder } from "./SortBuilder";
 import { Input } from "@/shared/ui/input";
@@ -36,6 +41,11 @@ const VIEW_META: Record<DbView, { icon: any; label: string }> = {
   gallery: { icon: Image, label: "Gallery" },
   calendar: { icon: CalendarIcon, label: "Calendar" },
   timeline: { icon: Clock, label: "Timeline" },
+  chart: { icon: BarChart3, label: "Chart" },
+  dashboard: { icon: LayoutDashboard, label: "Dashboard" },
+  feed: { icon: Rss, label: "Feed" },
+  map: { icon: MapIcon, label: "Map" },
+  form: { icon: ClipboardList, label: "Form" },
 };
 
 export const PROPERTY_TYPE_LABELS: Record<PropertyType, string> = {
@@ -125,6 +135,8 @@ export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block 
     {
       table: TableView, board: BoardView, list: ListView, gallery: GalleryView,
       calendar: CalendarView, timeline: TimelineView,
+      chart: ChartView, dashboard: DashboardView, feed: FeedView,
+      map: MapView, form: FormView,
     } as Record<DbView, any>
   )[view.type];
 

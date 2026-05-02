@@ -167,7 +167,12 @@ export type PropertyValue =
   | string[] // multi_select option ids, person ids, relation ids, or mock files
   | { date?: string };
 
-export type DbView = "table" | "board" | "list" | "gallery" | "calendar" | "timeline";
+export type DbView =
+  | "table" | "board" | "list" | "gallery" | "calendar" | "timeline"
+  | "chart" | "dashboard" | "feed" | "map" | "form";
+
+export type ChartKind = "bar" | "line" | "area" | "pie" | "donut";
+export type ChartAggregate = "count" | "sum" | "avg" | "min" | "max";
 
 export interface DatabaseFilter {
   propertyId: string;
@@ -188,6 +193,26 @@ export interface DatabaseViewConfig {
   sorts: DatabaseSort[];
   filters: DatabaseFilter[];
   search: string;
+  /** Chart view: kind of plot */
+  chartKind?: ChartKind;
+  /** Chart view: category / X axis property id */
+  chartXProp?: string;
+  /** Chart view: numeric Y property id (omit when aggregate=count) */
+  chartYProp?: string;
+  /** Chart view: aggregate function */
+  chartAggregate?: ChartAggregate;
+  /** Map view: numeric latitude property id */
+  mapLatProp?: string;
+  /** Map view: numeric longitude property id */
+  mapLngProp?: string;
+  /** Form view: required-field property ids (defaults: all visible) */
+  formRequiredProps?: string[];
+  /** Form view: shown-field property ids (defaults: all non-hidden) */
+  formShownProps?: string[];
+  /** Form view: success message after submit */
+  formSuccessMessage?: string;
+  /** Feed view: secondary timestamp source */
+  feedTimestamp?: "createdAt" | "updatedAt";
 }
 
 export interface Database {

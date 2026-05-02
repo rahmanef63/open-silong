@@ -1,0 +1,128 @@
+import { useMemo } from "react";
+import { Database, DatabaseViewConfig, Page, Property } from "@/shared/types/domain";
+import { PropertyCell } from "../PropertyCell";
+import { useStore } from "@/shared/lib/store";
+import { Clock } from "lucide-react";
+import { cn } from "@/shared/lib/utils";
+import { focusSiblingBySelector } from "@/shared/lib/keyboard";
+
+interface Props { db: Database; view: DatabaseViewConfig; rows: Page[]; onOpenRow: (id: string) => void }
+
+function dayKey(ts: number): string {
+  const d = new Date(ts);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function dayLabel(ts: number): string {
+  const d = new Date(ts);
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const yest = new Date(today); yest.setDate(yest.getDate() - 1);
+  const dd = new Date(d); dd.setHours(0, 0, 0, 0);
+  if (dd.getTime() === today.getTime()) return "Today";
+  if (dd.getTime() === yest.getTime()) return "Yesterday";
+  return d.toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" });
+}
+
+function timeLabel(ts: number): string {
+  return new Date(ts).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+}
+
+export function FeedView({ db, view, rows, onOpenRow }: Props) {
+  const { updateView } = useStore();
+  const source = view.feedTimestamp ?? "updatedAt";
+
+  const grouped = useMemo(() => {
+    const sorted = [...rows].sort((a, b) =>
+      (b[source] ?? b.updatedAt ?? 0) - (a[source] ?? a.updatedAt ?? 0)
+    );
+    const buckets = new Map<string, Page[]>();
+    for (const r of sorted) {
+      const ts = (r[source] ?? r.updatedAt ?? Date.now()) as number;
+      const k = dayKey(ts);
+      const arr = buckets.get(k) ?? [];
+      arr.push(r);
+      buckets.set(k, arr);
+    }
+    return [...buckets.entries()].map(([key, items]) => {
+      const ts = (items[0][source] ?? items[0].updatedAt ?? Date.now()) as number;
+      return { key, label: dayLabel(ts), items };
+    });
+  }, [rows, source]);
+
+  const summaryProps: Property[] = db.properties
+    .filter(p => !p.hidden && p.type !== "text")
+    .slice(0, 3);
+
+  return (
+    <div className="p-3">
+      <div className="flex items-center justify-end gap-1 text-xs mb-2">
+        <span className="text-muted-foreground">Sort by:</span>
+        <button
+          onClick={() => updateView(db.id, view.id, { feedTimestamp: "updatedAt" })}
+          className={cn("rounded px-2 py-0.5 hover:bg-accent",
+            source === "updatedAt" ? "bg-accent font-medium" : "text-muted-foreground")}
+        >Last edited</button>
+        <button
+          onClick={() => updateView(db.id, view.id, { feedTimestamp: "createdAt" })}
+          className={cn("rounded px-2 py-0.5 hover:bg-accent",
+            source === "createdAt" ? "bg-accent font-medium" : "text-muted-foreground")}
+        >Created</button>
+      </div>
+
+      {grouped.length === 0 && (
+        <div className="py-10 text-center text-sm text-muted-foreground">No rows</div>
+      )}
+
+      <div className="relative">
+        {/* Timeline rail */}
+        <div className="absolute left-3 top-0 bottom-0 w-px bg-border" aria-hidden />
+        {grouped.map(g => (
+          <div key={g.key} className="relative pl-9 pb-4">
+            <div className="absolute left-0 top-0 flex items-center gap-2">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full border border-border bg-card text-muted-foreground">
+                <Clock className="h-3 w-3" />
+              </span>
+              <span className="text-xs font-semibold">{g.label}</span>
+            </div>
+            <div className="mt-7 space-y-2">
+              {g.items.map(r => {
+                const ts = (r[source] ?? r.updatedAt ?? Date.now()) as number;
+                return (
+                  <button
+                    key={r.id}
+                    onClick={() => onOpenRow(r.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+                        e.preventDefault();
+                        focusSiblingBySelector(e.currentTarget, "[data-db-nav-item]", e.key === "ArrowDown" ? 1 : -1);
+                      }
+                    }}
+                    data-db-nav-item
+                    className="block w-full text-left rounded-lg border border-border bg-card p-3 hover:border-border-strong hover:bg-accent/40 transition"
+                  >
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <span className="flex items-center gap-1.5 text-sm font-medium min-w-0">
+                        <span>{r.icon}</span>
+                        <span className="truncate">{r.title || "Untitled"}</span>
+                      </span>
+                      <span className="text-[10px] text-muted-foreground shrink-0">{timeLabel(ts)}</span>
+                    </div>
+                    {summaryProps.length > 0 && (
+                      <div className="flex flex-wrap gap-1 -mx-1">
+                        {summaryProps.map(p => (
+                          <div key={p.id} onClick={e => e.stopPropagation()} className="text-xs">
+                            <PropertyCell db={db} prop={p} row={r} compact />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
