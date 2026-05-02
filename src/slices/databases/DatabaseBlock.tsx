@@ -144,7 +144,7 @@ export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block 
   const activeSorts = (view.sorts ?? []).length;
 
   return (
-    <div data-keyboard-scope className="rounded-lg border border-border bg-card overflow-hidden">
+    <div data-keyboard-scope data-database-block-root className="rounded-lg border border-border bg-card overflow-hidden">
       {/* Top bar: db name + view tabs */}
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-3 py-2">
         <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -174,7 +174,7 @@ export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block 
           ))}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="rounded p-1 hover:bg-accent text-muted-foreground" aria-label="Add view">
+              <button className="rounded p-1 hover:bg-accent text-muted-foreground" aria-label="Add view" title="Add view">
                 <Plus className="h-3.5 w-3.5" />
               </button>
             </DropdownMenuTrigger>
@@ -196,6 +196,7 @@ export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block 
               })}
             </DropdownMenuContent>
           </DropdownMenu>
+          <DatabaseMenu db={db} view={view} rows={filtered} />
         </div>
       </div>
 
@@ -250,12 +251,6 @@ export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block 
             <GroupByButton db={db} view={view} />
           )}
 
-          <ViewOptions db={db} view={view} />
-
-          <PropertiesMenu db={db} view={view} />
-
-          <CsvActions db={db} rows={filtered} />
-
           <NewRowMenu db={db} onCreated={() => { /* row appears inline; user clicks Open to peek */ }} />
         </div>
       </div>
@@ -299,29 +294,41 @@ function ViewTab({ db, v, active, onActivate, onRename, onDelete }: {
   }
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button
-          onPointerDown={e => { if (e.button === 0) onActivate(); }}
-          onDoubleClick={e => { e.preventDefault(); setEditing(true); }}
-          className={cn(
-            "flex items-center gap-1 rounded-md px-2 py-1 text-xs hover:bg-accent transition select-none",
-            active && "bg-accent text-foreground font-medium"
-          )}
-        >
-          <Meta.icon className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">{v.name}</span>
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start">
-        <DropdownMenuItem onClick={() => { setDraft(v.name); setEditing(true); }}>
-          <Pencil className="mr-2 h-3.5 w-3.5" /> Rename
-        </DropdownMenuItem>
-        <DropdownMenuItem className="text-destructive" onClick={onDelete}>
-          <Trash2 className="mr-2 h-3.5 w-3.5" /> Delete view
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <div className={cn(
+      "group/tab flex items-center rounded-md text-xs transition select-none",
+      active ? "bg-accent text-foreground font-medium" : "hover:bg-accent",
+    )}>
+      <button
+        onClick={onActivate}
+        onDoubleClick={e => { e.preventDefault(); setEditing(true); }}
+        title="Click to activate · Double-click to rename"
+        className="flex items-center gap-1 px-2 py-1"
+      >
+        <Meta.icon className="h-3.5 w-3.5" />
+        <span className="hidden sm:inline">{v.name}</span>
+      </button>
+      {active && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              aria-label="View actions"
+              title="View actions"
+              className="flex h-6 w-5 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-background"
+            >
+              <MoreHorizontal className="h-3.5 w-3.5" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            <DropdownMenuItem onClick={() => { setDraft(v.name); setEditing(true); }}>
+              <Pencil className="mr-2 h-3.5 w-3.5" /> Rename
+            </DropdownMenuItem>
+            <DropdownMenuItem className="text-destructive" onClick={onDelete}>
+              <Trash2 className="mr-2 h-3.5 w-3.5" /> Delete view
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+    </div>
   );
 }
 
@@ -350,6 +357,66 @@ function GroupByButton({ db, view }: { db: Database; view: DatabaseViewConfig })
         ))}
       </DropdownMenuContent>
     </DropdownMenu>
+  );
+}
+
+function DatabaseMenu({ db, view, rows }: { db: Database; view: DatabaseViewConfig; rows: Page[] }) {
+  const { updateDatabase, trashDatabase } = useStore();
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          className="rounded p-1 hover:bg-accent text-muted-foreground"
+          title="Database menu"
+          aria-label="Database menu"
+        >
+          <MoreHorizontal className="h-3.5 w-3.5" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-64 p-1">
+        <div className="px-2 py-1 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Database</div>
+        <button
+          onClick={() => {
+            const next = window.prompt("Database name", db.name);
+            if (next != null && next.trim()) updateDatabase(db.id, { name: next.trim() });
+          }}
+          className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs hover:bg-accent"
+        >
+          <Pencil className="h-3.5 w-3.5" /> Rename
+        </button>
+        <button
+          onClick={() => {
+            const next = window.prompt("Database icon (emoji)", db.icon);
+            if (next != null && next.trim()) updateDatabase(db.id, { icon: next.trim().slice(0, 4) });
+          }}
+          className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs hover:bg-accent"
+        >
+          <span className="h-3.5 w-3.5 inline-flex items-center justify-center text-base leading-none">{db.icon}</span>
+          Change icon
+        </button>
+        <button
+          onClick={() => {
+            if (window.confirm(`Move "${db.name}" to Trash? Rows are kept and can be restored.`)) {
+              trashDatabase(db.id);
+            }
+          }}
+          className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs hover:bg-destructive/10 text-destructive"
+        >
+          <Trash2 className="h-3.5 w-3.5" /> Delete database
+        </button>
+        <div className="my-1 border-t border-border" />
+        <div className="px-2 py-1 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">This view</div>
+        <div className="px-1 flex flex-col gap-0.5">
+          <ViewOptions db={db} view={view} />
+          <PropertiesMenu db={db} view={view} />
+        </div>
+        <div className="my-1 border-t border-border" />
+        <div className="px-2 py-1 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Data</div>
+        <div className="px-1 flex flex-col gap-0.5">
+          <CsvActions db={db} rows={rows} />
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
 
