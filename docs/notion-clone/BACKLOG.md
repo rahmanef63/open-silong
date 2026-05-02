@@ -774,23 +774,23 @@
 - [x] Relation picker UI
 - [x] Search target rows
 - [x] Add / remove related row
-- [ ] Create new related row from picker
+- [x] Create new related row from picker (inline "+ Create" button)
 - [x] Show as chips
 - [ ] Permission-aware results
-- [ ] Handle target DB deleted
-- [ ] Handle related row deleted
+- [x] Handle target DB deleted ("Database removed" warning + replacement select)
+- [x] Handle related row deleted (stale-link chip + bulk strip)
 
 ## 18.2 Rollups
 
 - [x] Create rollup property
 - [x] Select relation + target property
 - [x] Aggregations: count / sum / average / min / max / earliest / latest / percent-checked
-- [ ] Count unique
-- [ ] Show original values mode
+- [x] Count unique
+- [x] Show original values mode (`values` aggregate)
 - [ ] Recalculate on related-row update (currently re-renders on subscription)
 - [ ] Cache rollup result
 - [ ] Loop guard
-- [ ] Error state if dependency removed
+- [x] Error state if dependency removed (relation/target prop missing → "Property removed" + amber pill)
 
 ---
 
