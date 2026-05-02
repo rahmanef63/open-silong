@@ -1,21 +1,22 @@
 import { useEffect } from "react";
 import { useStore } from "@/shared/lib/store";
 import { useBlockSelection } from "./BlockSelectionProvider";
+import { moveTopLevelGroup } from "../lib/multiMove";
 
 interface Props {
   pageId: string;
 }
 
-/**
- * Document-level keyboard + click handlers for the active selection.
- * - Esc clears
- * - Backspace / Delete deletes selection (when not focused in editable text)
- * - Cmd/Ctrl+D duplicates
- * - Click in any contentEditable clears (user wants to type)
+/** Document-level keyboard + click handlers driving the active selection.
+ *
+ * - Esc / click outside the selection UI / click in editable text → clear
+ * - Backspace / Delete (when not typing) → batch delete
+ * - ⌘/Ctrl + D → batch duplicate
+ * - ⌘/Ctrl + Shift + ↑ / ↓ → move selected group up / down (top-level only)
  */
 export function SelectionKeyboard({ pageId }: Props) {
   const { state, count, clear } = useBlockSelection();
-  const { deleteBlock, duplicateBlock } = useStore();
+  const { deleteBlock, duplicateBlock, getPage, updatePage } = useStore();
 
   useEffect(() => {
     if (count === 0) return;
@@ -30,12 +31,24 @@ export function SelectionKeyboard({ pageId }: Props) {
     };
 
     const onKey = (e: KeyboardEvent) => {
-      // Esc always clears.
       if (e.key === "Escape") {
         e.preventDefault();
         clear();
         return;
       }
+
+      // Move selected group up/down — works regardless of focus.
+      const meta = e.metaKey || e.ctrlKey;
+      if (meta && e.shiftKey && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
+        const page = getPage(pageId);
+        if (!page) return;
+        e.preventDefault();
+        const dir: -1 | 1 = e.key === "ArrowUp" ? -1 : 1;
+        const next = moveTopLevelGroup(page.blocks, ids, dir);
+        if (next !== page.blocks) updatePage(pageId, { blocks: next });
+        return;
+      }
+
       // Other shortcuts only when NOT typing in an editable surface.
       if (isEditable(e.target)) return;
 
@@ -45,7 +58,7 @@ export function SelectionKeyboard({ pageId }: Props) {
         clear();
         return;
       }
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "d") {
+      if (meta && e.key.toLowerCase() === "d") {
         e.preventDefault();
         ids.forEach((id) => duplicateBlock(pageId, id));
         clear();
@@ -54,18 +67,19 @@ export function SelectionKeyboard({ pageId }: Props) {
     };
 
     const onPointerDown = (e: PointerEvent) => {
-      const target = e.target as HTMLElement;
+      const t = e.target as HTMLElement;
       // Selection UI itself never clears.
-      if (target.closest("[data-block-selection-toolbar]")) return;
-      if (target.closest("[data-block-select-button]")) return;
-      if (target.closest("[data-radix-popper-content-wrapper]")) return;
-      // Grip click (drag/menu) doesn't auto-clear; the modifier-click path
-      // is handled by BlockSelectionProvider.
-      if (target.closest("[data-block-grip]")) return;
-      // Clicking inside editable text → clear (user wants caret).
-      if (isEditable(target) || target.closest("[contenteditable='true']")) {
-        clear();
-      }
+      if (t.closest("[data-block-selection-toolbar]")) return;
+      if (t.closest("[data-row-selection-toolbar]")) return;
+      if (t.closest("[data-block-select-button]")) return;
+      if (t.closest("[data-radix-popper-content-wrapper]")) return;
+      if (t.closest("[data-radix-portal]")) return;
+      // Grip click is drag/menu; modifier-click on grip is provider's job.
+      if (t.closest("[data-block-grip]")) return;
+      // Modifier held: marquee may be starting in additive mode — leave it.
+      if (e.shiftKey || e.metaKey || e.ctrlKey) return;
+      // Otherwise this is "click outside the active selection" → clear.
+      clear();
     };
 
     document.addEventListener("keydown", onKey);
@@ -74,7 +88,7 @@ export function SelectionKeyboard({ pageId }: Props) {
       document.removeEventListener("keydown", onKey);
       document.removeEventListener("pointerdown", onPointerDown, true);
     };
-  }, [count, state.ids, clear, deleteBlock, duplicateBlock, pageId]);
+  }, [count, state.ids, clear, deleteBlock, duplicateBlock, getPage, updatePage, pageId]);
 
   return null;
 }

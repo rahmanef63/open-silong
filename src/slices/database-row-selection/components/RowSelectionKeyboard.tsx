@@ -40,9 +40,11 @@ export function RowSelectionKeyboard({ databaseId }: Props) {
     const onPointerDown = (e: PointerEvent) => {
       const t = e.target as HTMLElement;
       if (t.closest("[data-row-selection-toolbar]")) return;
+      if (t.closest("[data-block-selection-toolbar]")) return;
       if (t.closest("[data-radix-popper-content-wrapper]")) return;
-      // Click in editable text → user wants caret → clear.
-      if (isEditable(t) || t.closest("[contenteditable='true']")) clear();
+      if (t.closest("[data-radix-portal]")) return;
+      if (e.shiftKey || e.metaKey || e.ctrlKey) return;
+      clear();
     };
 
     document.addEventListener("keydown", onKey);
