@@ -1,9 +1,19 @@
 /** @type {import('next').NextConfig} */
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://nosion.rahmanef.com";
+
 const nextConfig = {
   output: "standalone",
   reactStrictMode: true,
+  deploymentId: process.env.NEXT_PUBLIC_DEPLOYMENT_ID,
+  // Pre-existing legacy slice TS drift; tightened to strictNullChecks=false
+  // tsconfig. TODO(s6+): tsc --noEmit in CI, fix tree, drop this flag.
   typescript: { ignoreBuildErrors: true },
   experimental: {
+    // cacheComponents enabled in S5 once routes promoted out of catch-all
+    serverActions: {
+      allowedOrigins: [new URL(siteUrl).host],
+      bodySizeLimit: "5mb",
+    },
     optimizePackageImports: [
       "lucide-react",
       "date-fns",
@@ -20,8 +30,6 @@ const nextConfig = {
       "@dnd-kit/utilities",
       "cmdk",
       "sonner",
-      "convex",
-      "convex/react",
     ],
   },
   turbopack: {},
@@ -32,6 +40,15 @@ const nextConfig = {
         headers: [
           { key: "Content-Type", value: "application/manifest+json" },
           { key: "Cache-Control", value: "no-cache" },
+        ],
+      },
+      {
+        source: "/(.*)",
+        headers: [
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
         ],
       },
     ];

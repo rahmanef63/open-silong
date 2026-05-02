@@ -3,11 +3,14 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import type { Comment } from "../types";
 
+// String-indexed api access is opaque to FilterApi when slash-keyed nested
+// modules are involved; type as callable refs and let runtime resolve.
+type Mut = (args: any) => Promise<any>;
 interface CommentMutations {
-  create: ReturnType<typeof useMutation<typeof api["features/comments/mutations"]["create"]>>;
-  update: ReturnType<typeof useMutation<typeof api["features/comments/mutations"]["update"]>>;
-  resolve: ReturnType<typeof useMutation<typeof api["features/comments/mutations"]["resolve"]>>;
-  remove: ReturnType<typeof useMutation<typeof api["features/comments/mutations"]["remove"]>>;
+  create: Mut;
+  update: Mut;
+  resolve: Mut;
+  remove: Mut;
 }
 
 interface PageCommentsValue extends CommentMutations {
