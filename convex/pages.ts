@@ -10,7 +10,37 @@ function emptyBlock() {
   return { id: uid(), type: "paragraph", text: "" };
 }
 
+/**
+ * Anonymous-readable public share. Returns a DTO (no userId, searchText,
+ * rowProps, rowOfDatabaseId) only when isPublic && !trashed. Returns null
+ * otherwise — caller renders not-found.
+ */
+export const getPublicShare = query({
+  args: { id: v.string() },
+  handler: async (ctx, { id }) => {
+    let doc;
+    try {
+      doc = await ctx.db.get(id as Id<"pages">);
+    } catch {
+      return null;
+    }
+    if (!doc || doc.trashed || !doc.isPublic) return null;
+    return {
+      _id: doc._id,
+      title: doc.title,
+      icon: doc.icon,
+      cover: doc.cover,
+      blocks: doc.blocks,
+      font: doc.font,
+      smallText: doc.smallText,
+      fullWidth: doc.fullWidth,
+      updatedAt: doc.updatedAt,
+    };
+  },
+});
+
 export const list = query({
+  args: {},
   handler: async (ctx) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) return [];
