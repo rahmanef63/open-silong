@@ -4,48 +4,40 @@ import { createPortal } from "react-dom";
 type Rect = { x: number; y: number; w: number; h: number };
 
 interface Props {
-  /** Scroll container that hosts the selectable items. Marquee positions itself
-   * relative to this element (which must be `position: relative`). */
   containerRef: RefObject<HTMLElement | null>;
-  /** CSS selector matching items within the container that can be selected. */
   itemSelector: string;
-  /** Extracts the id for an item element (typically from a data-* attribute). */
   getItemId: (el: HTMLElement) => string | undefined;
-  /** Called whenever the marquee rect changes during drag.
-   * `ids` are the items currently inside the rect (PLUS the additive baseline,
-   * if Shift/Cmd was held at drag start). `additive` is whether the drag began
-   * with a modifier key. */
   onSelect: (ids: string[], additive: boolean) => void;
-  /** Optional callback fired once when a real drag starts (after threshold). */
   onDragStart?: (additive: boolean) => void;
-  /** Optional callback fired on pointerup (or cancel/escape), regardless of drag. */
   onDragEnd?: () => void;
-  /** Optional baseline ids to preserve when starting a non-additive drag.
-   * Defaults to []. For additive (Shift/Cmd) drags, the existing selection is
-   * read from `getBaseline()` if provided. */
   getBaseline?: () => string[];
-  /** Pixels to drag before the marquee activates. Default 4. */
   threshold?: number;
-  /** Extra "interactive target" selectors to skip on pointerdown
-   * (anything else inside content-editable / inputs / radix popovers / grips
-   * is already excluded). */
   skipSelector?: string;
 }
 
 /** Generic rubber-band drag-to-select overlay.
  *
- * Press pointer down in non-text, non-UI space inside `containerRef` → drag →
- * each item element matching `itemSelector` whose bounding rect overlaps the
- * rubber-band gets reported via `onSelect`. The overlay is a translucent rect
- * portal'd into the container.
+ * The effect attaches once per mount; all live props are read through refs so
+ * frequent re-renders (e.g. selection state changing on every pointermove) do
+ * NOT tear down and re-attach the listeners — that would wipe the in-flight
+ * `armed` / `startX` / `additive` state mid-drag and was the root cause of
+ * "the marquee just shows a tiny rect and never expands."
  */
 export function Marquee({
   containerRef, itemSelector, getItemId, onSelect, onDragStart, onDragEnd,
   getBaseline, threshold = 4, skipSelector,
 }: Props) {
   const [rect, setRect] = useState<Rect | null>(null);
-  const callbacksRef = useRef({ onSelect, onDragStart, onDragEnd, getBaseline });
-  callbacksRef.current = { onSelect, onDragStart, onDragEnd, getBaseline };
+
+  // Single ref bundle, refreshed every render. Effect reads through it.
+  const propsRef = useRef({
+    itemSelector, getItemId, onSelect, onDragStart, onDragEnd, getBaseline,
+    threshold, skipSelector,
+  });
+  propsRef.current = {
+    itemSelector, getItemId, onSelect, onDragStart, onDragEnd, getBaseline,
+    threshold, skipSelector,
+  };
 
   useEffect(() => {
     const container = containerRef.current;
@@ -68,7 +60,8 @@ export function Marquee({
       if (t.closest("[data-radix-popper-content-wrapper]")) return true;
       if (t.closest("[data-radix-portal]")) return true;
       if (t.closest("[data-cell-editing='true']")) return true;
-      if (skipSelector && t.closest(skipSelector)) return true;
+      const skip = propsRef.current.skipSelector;
+      if (skip && t.closest(skip)) return true;
       return false;
     };
 
@@ -89,8 +82,8 @@ export function Marquee({
       const o = containerOrigin();
       startX = e.clientX - o.left + container.scrollLeft;
       startY = e.clientY - o.top + container.scrollTop;
-      baseSnapshot = additive && callbacksRef.current.getBaseline
-        ? callbacksRef.current.getBaseline()
+      baseSnapshot = additive && propsRef.current.getBaseline
+        ? propsRef.current.getBaseline()
         : [];
     };
 
@@ -101,19 +94,19 @@ export function Marquee({
       const curY = e.clientY - o.top + container.scrollTop;
       const totalDx = Math.abs(curX - startX);
       const totalDy = Math.abs(curY - startY);
-      if (totalDx < threshold && totalDy < threshold) return false;
+      if (totalDx < propsRef.current.threshold! && totalDy < propsRef.current.threshold!) return false;
       active = true;
       document.body.style.userSelect = "none";
-      callbacksRef.current.onDragStart?.(additive);
+      propsRef.current.onDragStart?.(additive);
       return true;
     };
 
     const collectHits = (mx: Rect): string[] => {
-      const items = container.querySelectorAll<HTMLElement>(itemSelector);
+      const items = container.querySelectorAll<HTMLElement>(propsRef.current.itemSelector);
       const o = containerOrigin();
       const hits = new Set(baseSnapshot);
       items.forEach((el) => {
-        const id = getItemId(el);
+        const id = propsRef.current.getItemId(el);
         if (!id) return;
         const r = el.getBoundingClientRect();
         const ix = r.left - o.left + container.scrollLeft;
@@ -140,7 +133,7 @@ export function Marquee({
       const h = Math.abs(curY - startY);
       const mx: Rect = { x, y, w, h };
       setRect(mx);
-      callbacksRef.current.onSelect(collectHits(mx), additive);
+      propsRef.current.onSelect(collectHits(mx), additive);
     };
 
     const finish = () => {
@@ -149,7 +142,7 @@ export function Marquee({
       active = false;
       setRect(null);
       document.body.style.userSelect = "";
-      if (wasActive) callbacksRef.current.onDragEnd?.();
+      if (wasActive) propsRef.current.onDragEnd?.();
     };
 
     const onKey = (e: KeyboardEvent) => {
@@ -169,7 +162,9 @@ export function Marquee({
       document.removeEventListener("keydown", onKey);
       document.body.style.userSelect = "";
     };
-  }, [containerRef, itemSelector, getItemId, threshold, skipSelector]);
+    // Run once per mount — all props are read through propsRef.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [containerRef]);
 
   if (!rect || !containerRef.current) return null;
   return createPortal(
