@@ -152,7 +152,18 @@ export interface Property {
   /** Mock rollup configuration. */
   rollupRelationPropertyId?: string | null;
   rollupTargetPropertyId?: string | null;
-  rollupAggregate?: "count" | "values" | "sum" | "checked" | "latest";
+  rollupAggregate?:
+    | "count"
+    | "count_unique"
+    | "values"
+    | "sum"
+    | "avg"
+    | "min"
+    | "max"
+    | "earliest"
+    | "latest"
+    | "checked"
+    | "percent_checked";
   /** Mock formula expression. Supports {{title}}, {{Property}}, and simple =math. */
   formulaExpression?: string;
   /** Unique-ID config */
