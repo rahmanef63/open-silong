@@ -30,22 +30,26 @@ mutation coordination.
 
 ---
 
-## Sprint 2 — Formula engine
+## Sprint 2 — Formula engine ✅ shipped 2026-05-02
 
 **Scope:** finish §17 BACKLOG. Sprint 2 depends on stable rollups (list ops
 over rollup outputs).
 
-| # | Item | BACKLOG | LOC est. | Notes |
-| - | --- | --- | -: | --- |
-| S2.1 | Typed eval (number / string / boolean / date / null / list) | 17.1 | 200 | Refactor `evaluateFormula` to return `FormulaValue`; coerce only at display |
-| S2.2 | Dependency graph (per-formula referenced prop ids) | 17.1 | 60 | Static analysis of expression at save time |
-| S2.3 | Circular-dependency guard | 17.1 | 30 | Visited set on eval |
-| S2.4 | Result cache (per row + prop, invalidated on dep change) | 17.1 | 50 | `WeakMap<row, Map<propId, value>>` |
-| S2.5 | `substring(s, start, len)` | 17.2 | 5 | |
-| S2.6 | Date: `dateAdd` / `dateSubtract` / `dateBetween` / `formatDate` | 17.2 | 50 | day-precision; ISO output |
-| S2.7 | List: `map` / `filter` / `join` / `sum` / `count` | 17.2 | 80 | Operates on rollup outputs once typed |
-| S2.8 | Error position highlight in editor | 17.3 | 60 | Track token offsets in tokenizer |
-| S2.9 | Property / function autocomplete | 17.3 | 100 | cmdk-style popover at cursor |
+| # | Item | BACKLOG | Status |
+| - | --- | --- | --- |
+| S2.1 | Typed eval (number / string / boolean / date / null / list) | 17.1 | ✅ `FormulaValue` |
+| S2.2 | Dependency graph (per-formula referenced prop ids) | 17.1 | ✅ `collectDeps()` |
+| S2.3 | Circular-dependency guard | 17.1 | ✅ visited set keyed `rowId:propId` |
+| S2.4 | Result cache (per row + prop) | 17.1 | ✅ `Map<key, FormulaValue>` |
+| S2.5 | `substring(s, start, len)` | 17.2 | ✅ |
+| S2.6 | Date: `dateAdd` / `dateSubtract` / `dateBetween` / `formatDate` | 17.2 | ✅ |
+| S2.7 | List: `count` / `sum` / `join` | 17.2 | ✅ (map/filter need lambdas — deferred) |
+| S2.8 | Error position highlight in editor | 17.3 | ✅ click-to-jump banner |
+| S2.9 | Property / function autocomplete | 17.3 | ⏸ deferred (UI-heavy) |
+
+Engine lives at `src/slices/databases/lib/formulaEngine.ts` (recursive-descent
+parser → AST → typed eval). 21 unit tests cover template/math/call/date/list/
+circular/error-position cases.
 
 ---
 

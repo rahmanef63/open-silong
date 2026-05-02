@@ -733,23 +733,23 @@
 - [x] Property type wired
 - [x] Tokenizer / arg-splitter (basic)
 - [x] Evaluator (substitution + functions + arithmetic)
-- [ ] Type system (string / number / boolean / date / list / null) — currently string-coerced
+- [x] Type system (string / number / boolean / date / list / null) — typed `FormulaValue` end-to-end
 - [x] Property reference resolution (`{{title}}`, `{{Property name}}`)
-- [ ] Dependency graph
+- [x] Dependency graph (`collectDeps(node)` walker)
 - [x] Recalculate on property change (Convex reactivity, not graph-based)
-- [ ] Circular-dependency guard
-- [ ] Cache result
-- [x] Error state UI (`Invalid formula` fallback)
+- [x] Circular-dependency guard (visited set keyed on `rowId:propId`)
+- [x] Cache result (per-eval `Map<key, FormulaValue>` memoization)
+- [x] Error state UI (`Invalid formula` fallback + amber pill in cell)
 
 ## 17.2 Formula Functions — P1
 
 - [x] String: concat / contains / replace / lower / upper / length
-- [ ] String: substring
+- [x] String: substring
 - [x] Number: arithmetic (`= a+b`) / round / floor / ceil / abs / min / max
 - [x] Date: now / today
-- [ ] Date: dateAdd / dateSubtract / dateBetween / formatDate
+- [x] Date: dateAdd / dateSubtract / dateBetween / formatDate
 - [x] Logic: if / and / or / not / empty
-- [ ] List: map / filter / join / sum / count
+- [~] List: count / sum / join (map / filter need lambdas — deferred)
 
 ## 17.3 Formula UI
 
@@ -758,7 +758,7 @@
 - [ ] Property / function autocomplete
 - [x] Inline docs (function list shown in editor footer)
 - [x] Preview result (live render under expression)
-- [ ] Error message with line/position
+- [x] Error message with line/position (click-to-jump banner under input)
 - [x] Save & recompute (Convex reactivity re-renders on prop change)
 
 ---
