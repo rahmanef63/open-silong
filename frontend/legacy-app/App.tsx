@@ -4,7 +4,6 @@ import { Toaster as Sonner } from "@/shared/ui/sonner";
 import { Toaster } from "@/shared/ui/toaster";
 import { TooltipProvider } from "@/shared/ui/tooltip";
 import { StoreProvider, useStore } from "@/shared/lib/store";
-import { ConvexClientProvider } from "./ConvexClientProvider";
 import { useConvexAuth } from "convex/react";
 import { ErrorBoundary } from "@/shared/components/ErrorBoundary";
 import { RouteSkeleton } from "@/shared/components/RouteSkeleton";
@@ -16,9 +15,7 @@ const Trash = lazy(() => import("./routes/Trash"));
 const NotFound = lazy(() => import("./routes/NotFound"));
 const Settings = lazy(() => import("./routes/Settings"));
 const Profile = lazy(() => import("./routes/Profile"));
-const Shared = lazy(() => import("./routes/Shared"));
 const Inbox = lazy(() => import("./routes/Inbox"));
-const AuthPage = lazy(() => import("./routes/AuthPage"));
 
 function LandingRedirect() {
   const { preferences, pages, recents, getPage } = useStore();
@@ -45,44 +42,40 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useConvexAuth();
   if (isLoading) return <RouteSkeleton />;
   if (!isAuthenticated) {
-    return (
-      <Suspense fallback={<RouteSkeleton />}>
-        <AuthPage />
-      </Suspense>
-    );
+    // proxy.ts already redirects unauthed → /auth at the edge.
+    // This is a fallback if proxy is bypassed (cached client nav).
+    if (typeof window !== "undefined") window.location.replace("/auth");
+    return <RouteSkeleton />;
   }
   return <>{children}</>;
 }
 
 const App = () => (
   <ErrorBoundary>
-    <ConvexClientProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <AuthGuard>
-          <StoreProvider>
-            <BrowserRouter>
-              <CommandPalette />
-              <ErrorBoundary>
-                <Suspense fallback={<RouteSkeleton />}>
-                  <Routes>
-                    <Route path="/" element={<LandingRedirect />} />
-                    <Route path="/p/:id" element={<PageView />} />
-                    <Route path="/share/:id" element={<Shared />} />
-                    <Route path="/inbox" element={<Inbox />} />
-                    <Route path="/trash" element={<Trash />} />
-                    <Route path="/settings" element={<Settings />} />
-                    <Route path="/profile" element={<Profile />} />
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </Suspense>
-              </ErrorBoundary>
-            </BrowserRouter>
-          </StoreProvider>
-        </AuthGuard>
-      </TooltipProvider>
-    </ConvexClientProvider>
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <AuthGuard>
+        <StoreProvider>
+          <BrowserRouter>
+            <CommandPalette />
+            <ErrorBoundary>
+              <Suspense fallback={<RouteSkeleton />}>
+                <Routes>
+                  <Route path="/" element={<LandingRedirect />} />
+                  <Route path="/p/:id" element={<PageView />} />
+                  <Route path="/inbox" element={<Inbox />} />
+                  <Route path="/trash" element={<Trash />} />
+                  <Route path="/settings" element={<Settings />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </Suspense>
+            </ErrorBoundary>
+          </BrowserRouter>
+        </StoreProvider>
+      </AuthGuard>
+    </TooltipProvider>
   </ErrorBoundary>
 );
 
