@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
-  Inbox, Plus, Search, Settings, Sparkles, Trash2, User,
+  Inbox, Plus, Search, Settings, Sparkles, Trash2, User, ShieldAlert, FileBox,
 } from "lucide-react";
+import { useAdminRole } from "@/slices/admin-panel";
+import { TemplateGalleryDialog } from "@/slices/templates";
 import { DndContext, DragOverlay } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useStore } from "@/shared/lib/store";
@@ -46,6 +48,8 @@ export function WorkspaceSidebar({ onOpenSearch, onClose }: Props) {
   const location = useLocation();
   const density = DENSITY[preferences.sidebarDensity];
   const { setOpenMobile, isMobile } = useSidebar();
+  const { isAdmin } = useAdminRole();
+  const [templatesOpen, setTemplatesOpen] = useState(false);
   const [openIds, setOpenIds] = useState<Set<string>>(new Set());
   const [treeInitialized, setTreeInitialized] = useState(false);
 
@@ -101,9 +105,18 @@ export function WorkspaceSidebar({ onOpenSearch, onClose }: Props) {
     { icon: Search, label: "Search", onClick: onOpenSearch, active: false, shortcut: "⌘K" },
     { icon: Sparkles, label: "Dashboard", onClick: () => go("/"), active: location.pathname === "/" },
     { icon: Inbox, label: "Inbox", onClick: () => go("/inbox"), active: location.pathname === "/inbox", badge: <InboxBadge /> },
+    { icon: FileBox, label: "Templates", onClick: () => setTemplatesOpen(true), active: false },
     { icon: User, label: "Profile", onClick: () => go("/profile"), active: location.pathname === "/profile" },
     { icon: Settings, label: "Settings", onClick: () => go("/settings"), active: location.pathname === "/settings" },
   ];
+  if (isAdmin) {
+    navItems.push({
+      icon: ShieldAlert,
+      label: "Admin",
+      onClick: () => { window.location.href = "/admin"; },
+      active: false,
+    });
+  }
 
   return (
     <Sidebar collapsible="icon" data-keyboard-scope>
@@ -315,6 +328,11 @@ export function WorkspaceSidebar({ onOpenSearch, onClose }: Props) {
         <NavUser />
       </SidebarFooter>
       <SidebarRail />
+      <TemplateGalleryDialog
+        open={templatesOpen}
+        onOpenChange={setTemplatesOpen}
+        onInstantiated={(rootPageId) => go(`/p/${rootPageId}`)}
+      />
     </Sidebar>
   );
 }
