@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
-  Inbox, Plus, Search, Settings, Sparkles, Trash2, User, ShieldAlert, FileBox,
+  Inbox, Plus, Search, Settings, Sparkles, Trash2, User, ShieldAlert, FileBox, Bot,
 } from "lucide-react";
 import { useAdminRole } from "@/slices/admin-panel";
 import { TemplateGalleryDialog } from "@/slices/templates";
+import { AIAgentConsole } from "@/slices/ai-agent";
 import { DndContext, DragOverlay } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useStore } from "@/shared/lib/store";
@@ -50,6 +51,7 @@ export function WorkspaceSidebar({ onOpenSearch, onClose }: Props) {
   const { setOpenMobile, isMobile } = useSidebar();
   const { isAdmin } = useAdminRole();
   const [templatesOpen, setTemplatesOpen] = useState(false);
+  const [aiOpen, setAiOpen] = useState(false);
   const [openIds, setOpenIds] = useState<Set<string>>(new Set());
   const [treeInitialized, setTreeInitialized] = useState(false);
 
@@ -104,6 +106,7 @@ export function WorkspaceSidebar({ onOpenSearch, onClose }: Props) {
   const navItems: Array<{ icon: typeof Search; label: string; onClick: () => void; active: boolean; shortcut?: string; badge?: React.ReactNode }> = [
     { icon: Search, label: "Search", onClick: onOpenSearch, active: false, shortcut: "⌘K" },
     { icon: Sparkles, label: "Dashboard", onClick: () => go("/"), active: location.pathname === "/" },
+    { icon: Bot, label: "AI", onClick: () => setAiOpen(true), active: false },
     { icon: Inbox, label: "Inbox", onClick: () => go("/inbox"), active: location.pathname === "/inbox", badge: <InboxBadge /> },
     { icon: FileBox, label: "Templates", onClick: () => setTemplatesOpen(true), active: false },
     { icon: User, label: "Profile", onClick: () => go("/profile"), active: location.pathname === "/profile" },
@@ -333,6 +336,7 @@ export function WorkspaceSidebar({ onOpenSearch, onClose }: Props) {
         onOpenChange={setTemplatesOpen}
         onInstantiated={(rootPageId) => go(`/p/${rootPageId}`)}
       />
+      <AIAgentConsole open={aiOpen} onOpenChange={setAiOpen} />
     </Sidebar>
   );
 }
