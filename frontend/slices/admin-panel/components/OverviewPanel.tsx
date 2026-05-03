@@ -20,12 +20,18 @@ function Sparkline({ data }: { data: { date: string; count: number }[] }) {
   const pad = 12;
   const max = Math.max(1, ...data.map((d) => d.count));
   const stepX = (w - pad * 2) / Math.max(1, data.length - 1);
-  const points = data.map((d, i) => {
-    const x = pad + i * stepX;
-    const y = h - pad - (d.count / max) * (h - pad * 2);
-    return `${x},${y}`;
-  }).join(" ");
-  const area = `M ${pad},${h - pad} L ${points.replaceAll(",", " ").replaceAll("  ", " L ")} L ${w - pad},${h - pad} Z`;
+  const pts = data.map((d, i) => ({
+    x: pad + i * stepX,
+    y: h - pad - (d.count / max) * (h - pad * 2),
+    date: d.date,
+    count: d.count,
+  }));
+  const polyPoints = pts.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
+  const areaPath =
+    `M ${pad},${h - pad} ` +
+    pts.map((p) => `L ${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ") +
+    ` L ${w - pad},${h - pad} Z`;
+  const labelEvery = Math.max(1, Math.ceil(pts.length / 7));
   return (
     <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-full" preserveAspectRatio="none">
       <defs>
@@ -34,22 +40,18 @@ function Sparkline({ data }: { data: { date: string; count: number }[] }) {
           <stop offset="100%" stopColor="hsl(var(--brand, 24 90% 56%))" stopOpacity="0" />
         </linearGradient>
       </defs>
-      <path d={area} fill="url(#spark-fill)" />
-      <polyline points={points} fill="none" stroke="hsl(var(--brand, 24 90% 56%))" strokeWidth={2} />
-      {data.map((d, i) => {
-        const x = pad + i * stepX;
-        const y = h - pad - (d.count / max) * (h - pad * 2);
-        return (
-          <g key={d.date}>
-            <circle cx={x} cy={y} r={2.5} fill="hsl(var(--brand, 24 90% 56%))" />
-            {i % Math.ceil(data.length / 7) === 0 && (
-              <text x={x} y={h - 2} fontSize={9} textAnchor="middle" fill="hsl(var(--muted-foreground))">
-                {d.date.slice(5)}
-              </text>
-            )}
-          </g>
-        );
-      })}
+      <path d={areaPath} fill="url(#spark-fill)" />
+      <polyline points={polyPoints} fill="none" stroke="hsl(var(--brand, 24 90% 56%))" strokeWidth={2} />
+      {pts.map((p, i) => (
+        <g key={p.date}>
+          <circle cx={p.x} cy={p.y} r={2.5} fill="hsl(var(--brand, 24 90% 56%))" />
+          {i % labelEvery === 0 && (
+            <text x={p.x} y={h - 2} fontSize={9} textAnchor="middle" fill="hsl(var(--muted-foreground))">
+              {p.date.slice(5)}
+            </text>
+          )}
+        </g>
+      ))}
       <text x={pad} y={pad + 8} fontSize={10} fill="hsl(var(--muted-foreground))">max {max}</text>
     </svg>
   );

@@ -11,6 +11,7 @@
 import type * as _shared_auth from "../_shared/auth.js";
 import type * as admin_mutations from "../admin/mutations.js";
 import type * as admin_queries from "../admin/queries.js";
+import type * as ai_chat from "../ai/chat.js";
 import type * as auth from "../auth.js";
 import type * as databases from "../databases.js";
 import type * as features_comments_mutations from "../features/comments/mutations.js";
@@ -51,6 +52,7 @@ declare const fullApi: ApiFromModules<{
   "_shared/auth": typeof _shared_auth;
   "admin/mutations": typeof admin_mutations;
   "admin/queries": typeof admin_queries;
+  "ai/chat": typeof ai_chat;
   auth: typeof auth;
   databases: typeof databases;
   "features/comments/mutations": typeof features_comments_mutations;
