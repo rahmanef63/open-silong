@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "@/shared/lib/router-compat";
 import { Check, Trash2 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import type { Notification } from "../types";

@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "@/shared/lib/router-compat";
 import { useStore } from "@/shared/lib/store";
 import { Plus, Star, Clock, FileText, Table2 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";

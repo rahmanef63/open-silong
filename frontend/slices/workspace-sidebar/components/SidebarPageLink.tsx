@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link } from "@/shared/lib/router-compat";
 import type { Page } from "@/shared/types/domain";
 import { cn } from "@/shared/lib/utils";
 import { DENSITY, type DensityConfig } from "../lib/density";

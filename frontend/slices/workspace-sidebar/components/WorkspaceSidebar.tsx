@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "@/shared/lib/router-compat";
 import { useRouter } from "next/navigation";
 import {
   Inbox, Plus, Search, Settings, Sparkles, Trash2, User, ShieldAlert, FileBox, Bot,
@@ -24,7 +24,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarRail,
   SidebarSeparator,
   useSidebar,
 } from "@/shared/ui/sidebar";
@@ -332,7 +331,6 @@ export function WorkspaceSidebar({ onOpenSearch, onClose }: Props) {
         </SidebarMenu>
         <NavUser />
       </SidebarFooter>
-      <SidebarRail />
       <TemplateGalleryDialog
         open={templatesOpen}
         onOpenChange={setTemplatesOpen}

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "@/shared/lib/router-compat";
 import { useAuthActions } from "@convex-dev/auth/react";
 import {
   ChevronsUpDown,
