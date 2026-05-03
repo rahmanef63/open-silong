@@ -45,17 +45,15 @@ export function ThreeColumnLayout({
   const [leftCollapsed, setLeftCollapsed] = React.useState(defaultLeftCollapsed);
   const [rightCollapsed, setRightCollapsed] = React.useState(defaultRightCollapsed);
 
-  // Cmd/Ctrl + B → toggle left
+  // Cmd/Ctrl + \ → toggle left pages panel
+  // Cmd/Ctrl + Shift + \ → toggle right inspector
+  // (Cmd+B reserved for shadcn Sidebar icon-rail toggle.)
   React.useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "b") {
-        e.preventDefault();
-        setLeftCollapsed((v) => !v);
-      }
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === "b") {
-        e.preventDefault();
-        setRightCollapsed((v) => !v);
-      }
+      if (!(e.metaKey || e.ctrlKey) || e.key !== "\\") return;
+      e.preventDefault();
+      if (e.shiftKey) setRightCollapsed((v) => !v);
+      else setLeftCollapsed((v) => !v);
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);

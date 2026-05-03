@@ -2,7 +2,7 @@ import { Skeleton } from "@/shared/ui/skeleton";
 
 export function RouteSkeleton() {
   return (
-    <div className="min-h-screen p-8 max-w-3xl mx-auto">
+    <div className="p-8 max-w-3xl mx-auto">
       <Skeleton className="h-9 w-2/3 mb-4" />
       <Skeleton className="h-4 w-1/3 mb-8" />
       <div className="space-y-2">

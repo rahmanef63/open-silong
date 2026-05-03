@@ -36,7 +36,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
 function DefaultFallback({ error, reset }: { error: Error; reset: () => void }) {
   return (
-    <div className="min-h-screen flex items-center justify-center p-6">
+    <div className="h-full min-h-[60vh] flex items-center justify-center p-6">
       <div className="max-w-md w-full rounded-lg border border-destructive/30 bg-destructive/5 p-6 text-center">
         <div className="flex justify-center mb-3">
           <div className="rounded-full bg-destructive/10 p-3">
