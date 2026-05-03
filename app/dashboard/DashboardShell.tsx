@@ -3,7 +3,7 @@
 import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
 import { useConvexAuth } from "convex/react";
 import { ErrorBoundary } from "@/shared/components/ErrorBoundary";
-import { RouteSkeleton } from "@/shared/components/RouteSkeleton";
+import { RouteSkeleton, PageBodySkeleton } from "@/shared/components/RouteSkeleton";
 import { TooltipProvider } from "@/shared/ui/tooltip";
 import { Toaster } from "@/shared/ui/toaster";
 import { Toaster as Sonner } from "@/shared/ui/sonner";
@@ -104,7 +104,7 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
                         style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
                       >
                         <ErrorBoundary>
-                          <Suspense fallback={<RouteSkeleton />}>{children}</Suspense>
+                          <Suspense fallback={<PageBodySkeleton />}>{children}</Suspense>
                         </ErrorBoundary>
                       </div>
                       <div className="md:hidden h-14 shrink-0" aria-hidden="true" />

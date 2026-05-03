@@ -2,24 +2,14 @@ import { Skeleton } from "@/shared/ui/skeleton";
 
 export function RouteSkeleton() {
   return (
-    <div className="min-h-screen flex">
-      <aside className="hidden md:block w-60 border-r border-border p-3 space-y-2">
-        <Skeleton className="h-6 w-32" />
-        <div className="mt-4 space-y-1.5">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-7 w-full" />
-          ))}
-        </div>
-      </aside>
-      <main className="flex-1 p-8">
-        <Skeleton className="h-9 w-2/3 mb-4" />
-        <Skeleton className="h-4 w-1/3 mb-8" />
-        <div className="space-y-2">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <Skeleton key={i} className="h-5 w-full" />
-          ))}
-        </div>
-      </main>
+    <div className="min-h-screen p-8 max-w-3xl mx-auto">
+      <Skeleton className="h-9 w-2/3 mb-4" />
+      <Skeleton className="h-4 w-1/3 mb-8" />
+      <div className="space-y-2">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <Skeleton key={i} className="h-5 w-full" />
+        ))}
+      </div>
     </div>
   );
 }
