@@ -20,7 +20,7 @@ export const listForPage = query({
     return await ctx.db
       .query("comments")
       .withIndex("by_page", (q) => q.eq("pageId", args.pageId))
-      .collect();
+      .take(500);
   },
 });
 
@@ -42,6 +42,6 @@ export const listForBlock = query({
     return await ctx.db
       .query("comments")
       .withIndex("by_block", (q) => q.eq("blockId", args.blockId))
-      .collect();
+      .take(500);
   },
 });

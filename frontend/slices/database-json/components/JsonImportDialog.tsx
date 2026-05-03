@@ -1,3 +1,4 @@
+import { getErrorMessage } from "@/shared/lib/error";
 import { useState } from "react";
 import { Upload, AlertCircle, Check } from "lucide-react";
 import {
@@ -28,8 +29,8 @@ export function JsonImportDialog({ open, onOpenChange, onImported }: Props) {
     try {
       const text = await file.text();
       setParsed(parseExport(text));
-    } catch (e: any) {
-      setError(e?.message ?? "Failed to parse JSON.");
+    } catch (e: unknown) {
+      setError(getErrorMessage(e, "Failed to parse JSON."));
     }
   };
 
@@ -47,8 +48,8 @@ export function JsonImportDialog({ open, onOpenChange, onImported }: Props) {
       });
       setImportedDbId(dbId);
       onImported?.(dbId);
-    } catch (e: any) {
-      setError(e?.message ?? "Import failed.");
+    } catch (e: unknown) {
+      setError(getErrorMessage(e, "Import failed."));
     } finally {
       setImporting(false);
     }

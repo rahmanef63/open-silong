@@ -50,8 +50,8 @@ export const markAllRead = mutation({
     const items = await ctx.db
       .query("notifications")
       .withIndex("by_user_unread", (q) => q.eq("userId", userId).eq("read", false))
-      .collect();
-    for (const n of items) await ctx.db.patch(n._id, { read: true });
+      .take(500);
+    await Promise.all(items.map((n) => ctx.db.patch(n._id, { read: true })));
   },
 });
 

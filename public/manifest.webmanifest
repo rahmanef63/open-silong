@@ -1,14 +1,27 @@
 {
+  "id": "/?source=pwa",
   "name": "Nosion",
   "short_name": "Nosion",
   "description": "A calm block-based workspace for notes, pages and databases.",
-  "start_url": "/",
+  "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
   "background_color": "#ffffff",
   "theme_color": "#f08a40",
   "orientation": "any",
+  "lang": "en",
+  "dir": "ltr",
   "categories": ["productivity", "utilities"],
+  "shortcuts": [
+    { "name": "Inbox", "short_name": "Inbox", "url": "/dashboard/inbox", "description": "Open your inbox" },
+    { "name": "New page", "short_name": "New", "url": "/dashboard/?new=1", "description": "Create a new page" }
+  ],
+  "share_target": {
+    "action": "/dashboard/?share=1",
+    "method": "GET",
+    "params": { "title": "title", "text": "text", "url": "url" }
+  },
   "icons": [
     { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
     { "src": "/icon-192.webp", "sizes": "192x192", "type": "image/webp", "purpose": "any" },

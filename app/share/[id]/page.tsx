@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { fetchQuery } from "convex/nextjs";
@@ -8,9 +9,11 @@ interface PageProps {
   params: Promise<{ id: string }>;
 }
 
-async function loadShare(id: string) {
+// React.cache dedupes the same id within a single request — generateMetadata
+// + the page handler hit Convex once instead of twice.
+const loadShare = cache(async (id: string) => {
   return fetchQuery(api.pages.getPublicShare, { id });
-}
+});
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params;

@@ -43,10 +43,14 @@ export const permanentlyDelete = mutation({
     if (!userId) throw new Error("Not authenticated");
     const db = await ctx.db.get(args.dbId as Id<"databases">);
     if (!db || db.userId !== userId) throw new Error("Not found");
-    for (const rowId of db.rowIds) {
-      const row = await ctx.db.get(rowId as Id<"pages">);
-      if (row && row.userId === userId) await ctx.db.delete(rowId as Id<"pages">);
-    }
+    const rows = await Promise.all(
+      db.rowIds.map((rowId) => ctx.db.get(rowId as Id<"pages">)),
+    );
+    await Promise.all(
+      rows
+        .filter((r): r is NonNullable<typeof r> => !!r && r.userId === userId)
+        .map((r) => ctx.db.delete(r._id)),
+    );
     await ctx.db.delete(args.dbId as Id<"databases">);
   },
 });
