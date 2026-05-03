@@ -14,9 +14,14 @@ import {
 } from "@/slices/workspace-sidebar";
 
 interface Props {
+  /** Called after navigation/creation — used by mobile sheet to close itself. */
   onClose?: () => void;
 }
 
+/**
+ * Pages tree (Favorites, Recent, Workspace, Databases) as flat sections.
+ * Renders no outer wrapper / scroller / footer — host (AppSidebar) owns those.
+ */
 export function PagesPanel({ onClose }: Props) {
   const {
     pages, recents, childrenOf, createPage, preferences,
@@ -78,154 +83,139 @@ export function PagesPanel({ onClose }: Props) {
   }
 
   return (
-    <div
-      data-keyboard-scope
-      className="flex h-full w-full flex-col bg-sidebar text-sidebar-foreground"
-    >
-      <div className="flex-1 min-h-0 overflow-y-auto px-2 py-2 space-y-3 scrollbar-thin">
-        {favorites.length > 0 && (
-          <PanelGroup label="Favorites">
-            {favorites.map((page) => (
-              <SidebarPageLink
-                key={page.id}
-                page={page}
-                density={density}
-                onClose={onClose}
-                active={location.pathname === `/p/${page.id}`}
-              />
-            ))}
-          </PanelGroup>
-        )}
+    <div data-keyboard-scope className="space-y-3 px-2">
+      {favorites.length > 0 && (
+        <PanelGroup label="Favorites">
+          {favorites.map((page) => (
+            <SidebarPageLink
+              key={page.id}
+              page={page}
+              density={density}
+              onClose={onClose}
+              active={location.pathname === `/p/${page.id}`}
+            />
+          ))}
+        </PanelGroup>
+      )}
 
-        {recentPages.length > 0 && (
-          <PanelGroup label="Recent">
-            {recentPages.map((page) => (
-              <SidebarPageLink
-                key={page.id}
-                page={page}
-                density={density}
-                onClose={onClose}
-                active={location.pathname === `/p/${page.id}`}
-              />
-            ))}
-          </PanelGroup>
-        )}
+      {recentPages.length > 0 && (
+        <PanelGroup label="Recent">
+          {recentPages.map((page) => (
+            <SidebarPageLink
+              key={page.id}
+              page={page}
+              density={density}
+              onClose={onClose}
+              active={location.pathname === `/p/${page.id}`}
+            />
+          ))}
+        </PanelGroup>
+      )}
 
+      <PanelGroup
+        label="Workspace"
+        action={
+          <button
+            type="button"
+            onClick={() => handleNew(null)}
+            aria-label="New page"
+            title="New page"
+            className="grid place-items-center size-5 rounded text-muted-foreground hover:bg-sidebar-accent"
+          >
+            <Plus className="h-3.5 w-3.5" />
+          </button>
+        }
+        onDragOver={(e) => {
+          if (e.dataTransfer.types.includes("application/x-page-id")) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = "move";
+          }
+        }}
+        onDrop={(e) => dnd.handleNativeDropOnPage(null, e)}
+      >
+        <DndContext
+          sensors={dnd.sensors}
+          collisionDetection={dnd.collisionDetection}
+          modifiers={dnd.modifiers}
+          onDragStart={dnd.onDragStart}
+          onDragMove={dnd.onDragMove}
+          onDragEnd={dnd.onDragEnd}
+          onDragCancel={dnd.onDragCancel}
+        >
+          <div
+            className="overflow-x-hidden"
+            onDragOver={(e) => {
+              if (e.dataTransfer.types.includes("application/x-page-id")) {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = "move";
+              }
+            }}
+          >
+            <SortableContext items={dnd.treeIds} strategy={verticalListSortingStrategy}>
+              {treeItems.map((item) => (
+                <SortablePageRow
+                  key={item.page.id}
+                  item={item}
+                  density={density}
+                  isOpen={openIds.has(item.page.id)}
+                  setOpen={(open) => setPageOpen(item.page.id, open)}
+                  onClose={onClose}
+                  isOverSibling={dnd.overId === item.page.id && !dnd.nestIntent && dnd.activeId !== null}
+                  isOverNesting={dnd.overId === item.page.id && dnd.nestIntent && dnd.activeId !== null}
+                  isExternalOver={dnd.externalOverId === item.page.id}
+                  onExternalEnter={() => dnd.setExternalOverId(item.page.id)}
+                  onExternalLeave={() => dnd.setExternalOverId((cur) => (cur === item.page.id ? null : cur))}
+                  onExternalDrop={(e) => dnd.handleNativeDropOnPage(item.page.id, e)}
+                />
+              ))}
+            </SortableContext>
+          </div>
+          <DragOverlay dropAnimation={{ duration: 150, easing: "cubic-bezier(0.18, 0.67, 0.6, 1.22)" }}>
+            {dnd.activeDraggedItem ? <DragGhost item={dnd.activeDraggedItem} density={density} /> : null}
+          </DragOverlay>
+        </DndContext>
+        {rootPages.length === 0 && (
+          <button
+            type="button"
+            onClick={() => handleNew(null)}
+            className={cn(
+              "flex w-full items-center gap-2 rounded-md px-2 text-muted-foreground hover:bg-sidebar-accent",
+              density.pageLink,
+            )}
+          >
+            <Plus className="h-3.5 w-3.5" /> New page
+          </button>
+        )}
+      </PanelGroup>
+
+      {databases.length > 0 && (
         <PanelGroup
-          label="Workspace"
+          label="Databases"
           action={
             <button
               type="button"
-              onClick={() => handleNew(null)}
-              aria-label="New page"
-              title="New page"
+              onClick={async () => {
+                const [p, db] = await Promise.all([
+                  createPage(null, { title: "Untitled database", icon: "🗂️" }),
+                  createDatabase("Untitled database"),
+                ]);
+                const blockId = await addBlock(p.id, 0, "database");
+                updateBlock(p.id, blockId, { databaseId: db.id });
+                go(`/p/${p.id}`);
+              }}
+              aria-label="New database"
+              title="New database"
               className="grid place-items-center size-5 rounded text-muted-foreground hover:bg-sidebar-accent"
             >
               <Plus className="h-3.5 w-3.5" />
             </button>
           }
-          onDragOver={(e) => {
-            if (e.dataTransfer.types.includes("application/x-page-id")) {
-              e.preventDefault();
-              e.dataTransfer.dropEffect = "move";
-            }
-          }}
-          onDrop={(e) => dnd.handleNativeDropOnPage(null, e)}
         >
-          <DndContext
-            sensors={dnd.sensors}
-            collisionDetection={dnd.collisionDetection}
-            modifiers={dnd.modifiers}
-            onDragStart={dnd.onDragStart}
-            onDragMove={dnd.onDragMove}
-            onDragEnd={dnd.onDragEnd}
-            onDragCancel={dnd.onDragCancel}
-          >
-            <div
-              className="overflow-x-hidden"
-              onDragOver={(e) => {
-                if (e.dataTransfer.types.includes("application/x-page-id")) {
-                  e.preventDefault();
-                  e.dataTransfer.dropEffect = "move";
-                }
-              }}
-            >
-              <SortableContext items={dnd.treeIds} strategy={verticalListSortingStrategy}>
-                {treeItems.map((item) => (
-                  <SortablePageRow
-                    key={item.page.id}
-                    item={item}
-                    density={density}
-                    isOpen={openIds.has(item.page.id)}
-                    setOpen={(open) => setPageOpen(item.page.id, open)}
-                    onClose={onClose}
-                    isOverSibling={dnd.overId === item.page.id && !dnd.nestIntent && dnd.activeId !== null}
-                    isOverNesting={dnd.overId === item.page.id && dnd.nestIntent && dnd.activeId !== null}
-                    isExternalOver={dnd.externalOverId === item.page.id}
-                    onExternalEnter={() => dnd.setExternalOverId(item.page.id)}
-                    onExternalLeave={() => dnd.setExternalOverId((cur) => (cur === item.page.id ? null : cur))}
-                    onExternalDrop={(e) => dnd.handleNativeDropOnPage(item.page.id, e)}
-                  />
-                ))}
-              </SortableContext>
-            </div>
-            <DragOverlay dropAnimation={{ duration: 150, easing: "cubic-bezier(0.18, 0.67, 0.6, 1.22)" }}>
-              {dnd.activeDraggedItem ? <DragGhost item={dnd.activeDraggedItem} density={density} /> : null}
-            </DragOverlay>
-          </DndContext>
-          {rootPages.length === 0 && (
-            <button
-              type="button"
-              onClick={() => handleNew(null)}
-              className={cn(
-                "flex w-full items-center gap-2 rounded-md px-2 text-muted-foreground hover:bg-sidebar-accent",
-                density.pageLink,
-              )}
-            >
-              <Plus className="h-3.5 w-3.5" /> New page
-            </button>
-          )}
+          {databases.map((db) => (
+            <DatabaseSidebarRow key={db.id} db={db} density={density} />
+          ))}
         </PanelGroup>
-
-        {databases.length > 0 && (
-          <PanelGroup
-            label="Databases"
-            action={
-              <button
-                type="button"
-                onClick={async () => {
-                  const [p, db] = await Promise.all([
-                    createPage(null, { title: "Untitled database", icon: "🗂️" }),
-                    createDatabase("Untitled database"),
-                  ]);
-                  const blockId = await addBlock(p.id, 0, "database");
-                  updateBlock(p.id, blockId, { databaseId: db.id });
-                  go(`/p/${p.id}`);
-                }}
-                aria-label="New database"
-                title="New database"
-                className="grid place-items-center size-5 rounded text-muted-foreground hover:bg-sidebar-accent"
-              >
-                <Plus className="h-3.5 w-3.5" />
-              </button>
-            }
-          >
-            {databases.map((db) => (
-              <DatabaseSidebarRow key={db.id} db={db} density={density} />
-            ))}
-          </PanelGroup>
-        )}
-      </div>
-
-      <div className="border-t border-sidebar-border p-2">
-        <button
-          type="button"
-          onClick={() => handleNew(null)}
-          className="flex w-full items-center gap-2 rounded-md bg-foreground px-2.5 py-1.5 text-sm font-medium text-background hover:opacity-90"
-        >
-          <Plus className="h-4 w-4" /> New page
-        </button>
-      </div>
+      )}
     </div>
   );
 }
@@ -241,7 +231,7 @@ interface PanelGroupProps {
 function PanelGroup({ label, action, children, onDragOver, onDrop }: PanelGroupProps) {
   return (
     <section onDragOver={onDragOver} onDrop={onDrop}>
-      <header className="flex h-7 items-center justify-between px-2">
+      <header className="flex h-7 items-center justify-between px-1">
         <span className="text-[11px] font-medium uppercase tracking-wider text-sidebar-foreground/60">
           {label}
         </span>
