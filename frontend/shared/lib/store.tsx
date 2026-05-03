@@ -146,7 +146,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     emoji: rawWorkspace?.emoji ?? "🏠",
   }), [rawWorkspace]);
 
+  const me = useQuery(api.users.getMe);
   const [user, setUser] = useState<UserProfile>(seedUser);
+  // Hydrate from real authed user; fall back to email local-part for name.
+  useEffect(() => {
+    if (!me) return;
+    setUser((prev) => ({
+      ...prev,
+      id: String(me._id),
+      name: me.displayName,
+      email: me.email ?? prev.email,
+    }));
+  }, [me]);
 
   // Theme
   useEffect(() => {

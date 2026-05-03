@@ -10,6 +10,15 @@ export const bootstrapMyProfile = mutation({
   handler: async (ctx) => {
     const userId = await requireAuth(ctx);
     const profile = await ensureUserProfile(ctx, userId);
+    // Seed user.name from email local-part when name missing — user can edit later.
+    const user = await ctx.db.get(userId);
+    if (user) {
+      const name = (user.name as string | undefined)?.trim();
+      const email = (user.email as string | undefined)?.trim();
+      if (!name && email) {
+        await ctx.db.patch(userId, { name: email.split("@")[0] });
+      }
+    }
     return { role: profile.role, signedIn: true };
   },
 });
