@@ -135,7 +135,7 @@ export default defineSchema({
   // === admin: per-user role + bootstrap ===
   userProfiles: defineTable({
     userId: v.id("users"),
-    role: v.union(v.literal("admin"), v.literal("user")),
+    role: v.union(v.literal("superadmin"), v.literal("admin"), v.literal("user")),
     createdAt: v.number(),
   }).index("by_user", ["userId"]),
 

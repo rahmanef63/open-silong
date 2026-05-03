@@ -29,46 +29,70 @@ async function readProfile(ctx: QueryCtx | MutationCtx, userId: Id<"users">) {
     .unique();
 }
 
-/** Mutation-only. Idempotent: creates profile if missing. Auto-promotes when
- *  user's email matches ADMIN_BOOTSTRAP_EMAILS. Returns the profile doc. */
+/** Mutation-only. Idempotent: creates profile if missing. Auto-promotes to
+ *  "superadmin" if email matches SUPER_ADMIN_EMAIL, else "admin" if in
+ *  ADMIN_BOOTSTRAP_EMAILS, else "user". Re-promotes existing profiles whose
+ *  email later matches SUPER_ADMIN_EMAIL. */
 export async function ensureUserProfile(ctx: MutationCtx, userId: Id<"users">) {
-  const existing = await readProfile(ctx, userId);
-  if (existing) return existing;
   const user = await ctx.db.get(userId);
   const email = (user?.email as string | undefined)?.trim().toLowerCase();
-  const role = email && bootstrapEmails().has(email) ? "admin" : "user";
+  const superTarget = superAdminEmail();
+  const isSuper = !!email && !!superTarget && email === superTarget;
+  const isAdmin = !!email && bootstrapEmails().has(email);
+  const desired: "superadmin" | "admin" | "user" = isSuper
+    ? "superadmin"
+    : isAdmin
+      ? "admin"
+      : "user";
+
+  const existing = await readProfile(ctx, userId);
+  if (existing) {
+    // Idempotent re-promotion only — never demote here.
+    if (
+      (desired === "superadmin" && existing.role !== "superadmin") ||
+      (desired === "admin" && existing.role === "user")
+    ) {
+      await ctx.db.patch(existing._id, { role: desired });
+      return { ...existing, role: desired };
+    }
+    return existing;
+  }
   const id = await ctx.db.insert("userProfiles", {
     userId,
-    role,
+    role: desired,
     createdAt: Date.now(),
   });
   return (await ctx.db.get(id))!;
 }
 
-/** Mutation-only — bootstraps profile on demand, then enforces admin role. */
+/** Mutation-only — bootstraps profile on demand, then enforces admin or
+ *  superadmin role. */
 export async function requireAdmin(ctx: MutationCtx): Promise<Id<"users">> {
   const userId = await requireAuth(ctx);
   const profile = await ensureUserProfile(ctx, userId);
-  if (profile.role !== "admin") throw new Error(FORBIDDEN);
+  if (profile.role !== "admin" && profile.role !== "superadmin") {
+    throw new Error(FORBIDDEN);
+  }
   return userId;
 }
 
-/** Query-only — read-only check; does NOT bootstrap. Throws if absent or not admin. */
+/** Query-only — read-only check; does NOT bootstrap. Throws if absent or
+ *  not admin/superadmin. */
 export async function requireAdminQuery(ctx: QueryCtx): Promise<Id<"users">> {
   const userId = await requireAuth(ctx);
   const profile = await readProfile(ctx, userId);
-  if (!profile || profile.role !== "admin") throw new Error(FORBIDDEN);
+  if (!profile || (profile.role !== "admin" && profile.role !== "superadmin")) {
+    throw new Error(FORBIDDEN);
+  }
   return userId;
 }
 
-/** Stricter: matches SUPER_ADMIN_EMAIL env exactly. Works in queries + mutations. */
+/** Stricter: requires `userProfiles.role === "superadmin"`. Works in
+ *  queries + mutations. Auth keyed on user id, not email. */
 export async function requireSuperAdmin(ctx: QueryCtx | MutationCtx): Promise<Id<"users">> {
   const userId = await requireAuth(ctx);
-  const target = superAdminEmail();
-  if (!target) throw new Error(FORBIDDEN);
-  const user = await ctx.db.get(userId);
-  const email = (user?.email as string | undefined)?.trim().toLowerCase();
-  if (email !== target) throw new Error(FORBIDDEN);
+  const profile = await readProfile(ctx, userId);
+  if (!profile || profile.role !== "superadmin") throw new Error(FORBIDDEN);
   return userId;
 }
 

@@ -20,7 +20,7 @@ export const create = mutation({
     } catch {
       throw new Error("Not found");
     }
-    if (!page || (page.userId !== userId && !page.isPublic)) {
+    if (!page || page.userId !== userId) {
       throw new Error("Not authorized");
     }
     const now = Date.now();
