@@ -7,7 +7,9 @@ import {
   Settings as SettingsIcon,
   User as UserIcon,
   Palette,
+  MessageSquarePlus,
 } from "lucide-react";
+import { FeedbackDialog } from "@/slices/feedback";
 import { useStore } from "@/shared/lib/store";
 import {
   SidebarMenu,
@@ -32,6 +34,7 @@ export function NavUser() {
   const { signOut } = useAuthActions();
   const navigate = useNavigate();
   const [signingOut, setSigningOut] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   const fallback = (user.name?.trim().charAt(0) || user.email?.charAt(0) || "?").toUpperCase();
 
@@ -111,6 +114,10 @@ export function NavUser() {
                 <Palette className="mr-2 size-4" />
                 Theme presets
               </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => setFeedbackOpen(true)}>
+                <MessageSquarePlus className="mr-2 size-4" />
+                Send feedback
+              </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem
@@ -124,6 +131,7 @@ export function NavUser() {
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>
+      <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
     </SidebarMenu>
   );
 }

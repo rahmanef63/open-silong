@@ -131,4 +131,53 @@ export default defineSchema({
     .index("by_user", ["userId"])
     .index("by_page", ["pageId"])
     .index("by_block", ["blockId"]),
+
+  // === admin: per-user role + bootstrap ===
+  userProfiles: defineTable({
+    userId: v.id("users"),
+    role: v.union(v.literal("admin"), v.literal("user")),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  // === admin: audit log ===
+  auditLog: defineTable({
+    actorId: v.id("users"),
+    actorEmail: v.optional(v.string()),
+    kind: v.string(),                       // "role.set" | "feedback.resolve" | "template.upsert" | ...
+    target: v.optional(v.string()),         // free-form id of affected entity
+    meta: v.optional(v.any()),
+    createdAt: v.number(),
+  })
+    .index("by_created", ["createdAt"])
+    .index("by_actor", ["actorId"]),
+
+  // === feedback inbox ===
+  feedbackEntries: defineTable({
+    userId: v.id("users"),
+    userEmail: v.optional(v.string()),
+    kind: v.union(v.literal("bug"), v.literal("idea"), v.literal("praise"), v.literal("other")),
+    message: v.string(),
+    status: v.union(v.literal("open"), v.literal("resolved")),
+    createdAt: v.number(),
+    resolvedAt: v.optional(v.number()),
+  })
+    .index("by_status", ["status"])
+    .index("by_user", ["userId"]),
+
+  // === page templates (admin-managed JSON blueprints) ===
+  pageTemplates: defineTable({
+    name: v.string(),
+    icon: v.string(),
+    category: v.string(),
+    description: v.optional(v.string()),
+    json: v.any(),                          // TemplateJson — validated server-side on upsert
+    createdBy: v.id("users"),
+    isPublished: v.boolean(),
+    isSeed: v.boolean(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_published", ["isPublished"])
+    .index("by_category", ["category"])
+    .index("by_seed_name", ["isSeed", "name"]),
 });

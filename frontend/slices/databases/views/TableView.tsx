@@ -10,7 +10,12 @@ import {
   SortableContext, horizontalListSortingStrategy, verticalListSortingStrategy, useSortable, sortableKeyboardCoordinates,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, MoreHorizontal, Trash2, Check, Minus } from "lucide-react";
+import {
+  GripVertical, MoreHorizontal, Trash2, Check, Minus,
+  Type, Hash, ChevronDown, Tags, Circle, Calendar, User, CheckSquare,
+  Link2, Mail, Phone, Paperclip, ArrowUpRight, Sigma, Calculator, Clock,
+  UserCheck, Fingerprint,
+} from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { focusSiblingBySelector, isTextInputTarget } from "@/shared/lib/keyboard";
 import {
@@ -23,6 +28,14 @@ import {
   RowMarqueeOverlay, useRowSelection, useRowSelectionOptional,
 } from "@/slices/database-row-selection";
 import { getVisibleProps } from "../lib/visibility";
+
+const PROP_TYPE_ICON: Record<PropertyType, React.ElementType> = {
+  text: Type, number: Hash, select: ChevronDown, multi_select: Tags,
+  status: Circle, date: Calendar, person: User, checkbox: CheckSquare,
+  url: Link2, email: Mail, phone: Phone, files: Paperclip, relation: ArrowUpRight,
+  rollup: Sigma, formula: Calculator, created_time: Clock, last_edited_time: Clock,
+  created_by: UserCheck, last_edited_by: UserCheck, unique_id: Fingerprint,
+};
 
 interface ViewProps { db: Database; view: DatabaseViewConfig; rows: Page[]; onOpenRow: (id: string) => void }
 
@@ -178,6 +191,7 @@ function SortableHeader({ prop, db }: { prop: Property; db: Database }) {
   const { updateProperty, deleteProperty } = useStore();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(prop.name);
+  const TypeIcon = PROP_TYPE_ICON[prop.type];
 
   const commit = () => {
     setEditing(false);
@@ -194,6 +208,7 @@ function SortableHeader({ prop, db }: { prop: Property; db: Database }) {
       <button {...attributes} {...listeners} className="cursor-grab text-muted-foreground/40 hover:text-foreground shrink-0">
         <GripVertical className="h-3 w-3" />
       </button>
+      <TypeIcon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-label={PROPERTY_TYPE_LABELS[prop.type]} />
       {editing ? (
         <input
           autoFocus
@@ -209,6 +224,7 @@ function SortableHeader({ prop, db }: { prop: Property; db: Database }) {
             <button
               onDoubleClick={() => { setDraft(prop.name); setEditing(true); }}
               className="flex-1 text-left truncate text-xs hover:text-foreground min-w-0"
+              title={PROPERTY_TYPE_LABELS[prop.type]}
             >
               {prop.name}
             </button>
