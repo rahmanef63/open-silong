@@ -120,6 +120,7 @@
   --shadow-soft: 0 1px 2px hsl(220 13% 13% / 0.04), 0 4px 12px hsl(220 13% 13% / 0.04);
   --shadow-pop: 0 8px 28px hsl(220 13% 13% / 0.12);
   --shadow-float: 0 1px 1px hsl(220 13% 13% / 0.04), 0 12px 36px hsl(220 13% 13% / 0.10);
+  --sidebar: hsl(0 0% 98%);
 }
 
 .dark {
@@ -157,6 +158,7 @@
   --sidebar-border: 220 10% 20%;
   --sidebar-ring: 24 90% 60%;
   --block-hover: 220 14% 15%;
+  --sidebar: hsl(240 5.9% 10%);
 }
 
 @layer base {
