@@ -124,7 +124,7 @@ export function WorkspaceSidebar({ onOpenSearch, onClose }: Props) {
   }
 
   return (
-    <Sidebar collapsible="icon" data-keyboard-scope>
+    <Sidebar collapsible="none" data-keyboard-scope className="h-full w-full">
       <SidebarHeader>
         <WorkspaceSwitcher />
       </SidebarHeader>
