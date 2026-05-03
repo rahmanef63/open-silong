@@ -10,6 +10,7 @@ import { Toaster } from "@/shared/ui/toaster";
 import { Toaster as Sonner } from "@/shared/ui/sonner";
 import { StoreProvider } from "@/shared/lib/store";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/shared/ui/sidebar";
+import { Separator } from "@/shared/ui/separator";
 import { AppSidebar } from "@/slices/workspace-sidebar";
 import { SearchModal } from "@/slices/command-palette/components/SearchModal";
 import { useThemePreset } from "@/slices/theme-presets";
@@ -89,22 +90,32 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
 
             <SidebarProvider defaultOpen style={SIDEBAR_STYLE}>
               <AppSidebar onOpenSearch={() => setSearchOpen(true)} />
+              {/* h-svh + overflow-hidden deviate from shadcn canonical:
+                  PageEditor uses an internal-scroll model (`h-full overflow-hidden`
+                  + inner `overflow-y-auto`), so SidebarInset needs a definite
+                  viewport-bound height instead of free flow. */}
               <SidebarInset className="h-svh overflow-hidden">
-                <header className="flex h-12 shrink-0 items-center gap-2 border-b border-border bg-card/95 px-3 backdrop-blur supports-[backdrop-filter]:bg-card/80 z-10">
-                  <SidebarTrigger className="size-8 -ml-1" />
-                  <button
-                    type="button"
-                    onClick={() => setSearchOpen(true)}
-                    className="flex-1 flex items-center gap-2 text-sm text-muted-foreground rounded-md border border-border bg-background/40 px-3 py-1 hover:bg-accent hover:text-foreground transition-colors max-w-md"
-                  >
-                    <Search className="h-3.5 w-3.5" />
-                    <span className="flex-1 text-left">Search…</span>
-                    <kbd className="hidden sm:inline-flex text-[10px] tracking-wider text-muted-foreground border border-border rounded px-1.5 py-0.5">⌘K</kbd>
-                  </button>
+                <header className="flex h-12 shrink-0 items-center gap-2 border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-10">
+                  <div className="flex w-full items-center gap-2 px-3">
+                    <SidebarTrigger className="-ml-1" />
+                    <Separator
+                      orientation="vertical"
+                      className="mr-1 data-[orientation=vertical]:h-4"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setSearchOpen(true)}
+                      className="flex-1 flex items-center gap-2 text-sm text-muted-foreground rounded-md border border-border bg-background/40 px-3 py-1 hover:bg-accent hover:text-foreground transition-colors max-w-md"
+                    >
+                      <Search className="h-3.5 w-3.5" />
+                      <span className="flex-1 text-left">Search…</span>
+                      <kbd className="hidden sm:inline-flex text-[10px] tracking-wider text-muted-foreground border border-border rounded px-1.5 py-0.5">⌘K</kbd>
+                    </button>
+                  </div>
                 </header>
 
                 <div
-                  className="flex-1 min-h-0 min-w-0 overflow-hidden"
+                  className="flex flex-1 flex-col min-h-0 overflow-hidden"
                   style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
                 >
                   <ErrorBoundary>
