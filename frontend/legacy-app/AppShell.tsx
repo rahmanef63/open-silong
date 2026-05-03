@@ -3,6 +3,7 @@ import { WorkspaceSidebar } from "@/slices/workspace-sidebar/components/Workspac
 import { SearchModal } from "@/slices/command-palette/components/SearchModal";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/shared/ui/sidebar";
 import { useThemePreset } from "@/slices/theme-presets";
+import { MobileBottomNav } from "@/slices/mobile-nav";
 
 export function AppShell({ children }: { children: ReactNode }) {
   useThemePreset();
@@ -53,9 +54,17 @@ export function AppShell({ children }: { children: ReactNode }) {
             Search…
           </button>
         </div>
-        <div className="flex-1 min-h-0">{children}</div>
+        <div
+          className="flex-1 min-h-0"
+          style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+        >
+          {children}
+        </div>
+        {/* Mobile-only bottom tab bar — pads its own safe-area */}
+        <div className="md:hidden h-14" aria-hidden="true" />
       </SidebarInset>
       <SearchModal open={searchOpen} onOpenChange={setSearchOpen} />
+      <MobileBottomNav onOpenSearch={() => setSearchOpen(true)} />
     </SidebarProvider>
   );
 }

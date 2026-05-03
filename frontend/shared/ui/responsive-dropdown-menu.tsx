@@ -145,7 +145,7 @@ export function ResponsiveDropdownMenuItem({
         "[&>svg]:size-4 [&>svg]:shrink-0",
         className,
       )}
-      {...(props as React.ButtonHTMLAttributes<HTMLButtonElement>)}
+      {...(props as unknown as React.ButtonHTMLAttributes<HTMLButtonElement>)}
     >
       {children}
     </button>

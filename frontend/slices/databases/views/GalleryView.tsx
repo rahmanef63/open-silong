@@ -1,4 +1,5 @@
 import { Database, DatabaseViewConfig, Page, Property } from "@/shared/types/domain";
+import Image from "next/image";
 import { PropertyCell } from "../PropertyCell";
 import { focusSiblingBySelector } from "@/shared/lib/keyboard";
 import { cn } from "@/shared/lib/utils";
@@ -97,7 +98,15 @@ export function GalleryView({ db, view, rows, onOpenRow }: Props) {
               <div className={cn("w-full rounded-md mb-2 bg-muted overflow-hidden flex items-center justify-center", aspectClass)}>
                 {cover ? (
                   cover.startsWith("http") || cover.startsWith("data:") ? (
-                    <img src={cover} alt="" className={cn("w-full h-full", fit === "cover" ? "object-cover" : "object-contain")} />
+                    <Image
+                      src={cover}
+                      alt=""
+                      width={600}
+                      height={400}
+                      unoptimized
+                      sizes="(max-width: 768px) 50vw, 300px"
+                      className={cn("w-full h-full", fit === "cover" ? "object-cover" : "object-contain")}
+                    />
                   ) : (
                     <div className="w-full h-full" style={{ background: cover }} />
                   )
