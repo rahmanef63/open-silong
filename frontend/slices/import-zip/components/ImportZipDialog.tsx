@@ -8,6 +8,7 @@ import { Button } from "@/shared/ui/button";
 import { Upload, Loader2, FileArchive, CheckCircle2, AlertTriangle } from "lucide-react";
 import { useFileUpload } from "@/slices/files/hooks/useFileUpload";
 import { parseFileRef } from "@/slices/files/lib/parse";
+import { cn } from "@/shared/lib/utils";
 
 interface Props {
   open: boolean;
@@ -22,6 +23,12 @@ interface Summary {
   files: number;
   skipped: number;
   errors: { path: string; reason: string }[];
+  diagnostics?: {
+    blobBytes: number;
+    firstBytesHex: string;
+    wasGzipWrapped: boolean;
+    entryCount: number;
+  };
 }
 
 export function ImportZipDialog({ open, onOpenChange, parentId = null }: Props) {
@@ -100,7 +107,11 @@ export function ImportZipDialog({ open, onOpenChange, parentId = null }: Props) 
 
         {summary && (
           <div className="space-y-2 py-2 text-sm">
-            <div className="flex items-center gap-2 text-emerald-600">
+            <div className={cn(
+              "flex items-center gap-2",
+              summary.pages + summary.databases + summary.files > 0
+                ? "text-emerald-600" : "text-amber-600",
+            )}>
               <CheckCircle2 className="h-4 w-4" /> Import selesai
             </div>
             <ul className="text-xs text-muted-foreground space-y-0.5">
@@ -109,19 +120,24 @@ export function ImportZipDialog({ open, onOpenChange, parentId = null }: Props) 
               <li>Files: <strong className="text-foreground">{summary.files}</strong></li>
               <li>Skipped: {summary.skipped}</li>
             </ul>
+            {summary.diagnostics && (
+              <div className="text-[10px] text-muted-foreground font-mono">
+                {summary.diagnostics.blobBytes}b · entries={summary.diagnostics.entryCount}
+                {summary.diagnostics.wasGzipWrapped && " · gunzipped"}
+                {" · head="}{summary.diagnostics.firstBytesHex}
+              </div>
+            )}
             {summary.errors.length > 0 && (
-              <details className="text-xs">
-                <summary className="cursor-pointer text-amber-600">
-                  {summary.errors.length} entry error
-                </summary>
-                <ul className="mt-1 space-y-0.5 max-h-40 overflow-auto">
+              <div className="rounded border border-amber-500/40 bg-amber-500/10 px-2 py-1.5 text-xs text-amber-700 dark:text-amber-300">
+                <div className="font-medium mb-1">{summary.errors.length} entry error</div>
+                <ul className="space-y-0.5 max-h-48 overflow-auto">
                   {summary.errors.slice(0, 50).map((er, i) => (
-                    <li key={i} className="text-muted-foreground">
-                      <code>{er.path}</code> — {er.reason}
+                    <li key={i} className="break-all">
+                      <code className="text-[10px]">{er.path}</code> — {er.reason}
                     </li>
                   ))}
                 </ul>
-              </details>
+              </div>
             )}
           </div>
         )}

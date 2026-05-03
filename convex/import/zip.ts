@@ -5,6 +5,7 @@ import { internal } from "../_generated/api";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import JSZip from "jszip";
+import { gunzipSync } from "zlib";
 import { markdownToBlocks, htmlToBlocks, parseCsv } from "./markdown";
 
 const MAX_ZIP_BYTES = 50 * 1024 * 1024;
@@ -20,12 +21,23 @@ interface ImportSummary {
   files: number;
   skipped: number;
   errors: { path: string; reason: string }[];
+  diagnostics?: {
+    blobBytes: number;
+    firstBytesHex: string;
+    wasGzipWrapped: boolean;
+    entryCount: number;
+  };
 }
+
+const HEX = (n: number) => n.toString(16).padStart(2, "0");
+const headHex = (u8: Uint8Array, n = 8) =>
+  Array.from(u8.slice(0, n), HEX).join(" ");
 
 /**
  * Import a Notion-export-style ZIP. Accepts md / csv / html / pdf entries.
  * - Markdown / HTML  → page with parsed blocks
- * - CSV              → database (header row → text props, body rows → rows)
+ * - CSV              → database + host page containing a `database` block,
+ *                      so it shows up in the sidebar tree
  * - PDF / images     → uploaded to Convex storage; appended as blocks under
  *                      a single "Imported files" page
  *
@@ -47,13 +59,44 @@ export const importZip = action({
       throw new Error(`ZIP terlalu besar (${blob.size} > ${MAX_ZIP_BYTES} bytes)`);
     }
 
-    const ab = await blob.arrayBuffer();
-    const u8 = new Uint8Array(ab);
+    let u8 = new Uint8Array(await blob.arrayBuffer());
+    const blobBytes = u8.byteLength;
+    const firstBytesHex = headHex(u8);
+
+    // Self-hosted Convex behind Traefik: response can be served with
+    // Content-Encoding: gzip. The SDK *usually* decompresses, but in some
+    // proxy configurations the bytes arrive still gzipped. Auto-unwrap so
+    // the user doesn't have to debug the proxy chain.
+    let wasGzipWrapped = false;
+    if (u8.length >= 2 && u8[0] === 0x1f && u8[1] === 0x8b) {
+      try {
+        const inflated = gunzipSync(u8);
+        u8 = new Uint8Array(inflated.buffer, inflated.byteOffset, inflated.byteLength);
+        wasGzipWrapped = true;
+      } catch (e) {
+        throw new Error(`Gagal gunzip wrapper: ${(e as Error).message.slice(0, 120)}`);
+      }
+    }
+
+    // ZIP central-directory magic = `PK\x03\x04` (local file header) or
+    // `PK\x05\x06` (empty zip). Reject early so the user doesn't get a
+    // cryptic JSZip stack trace deep in entry parsing.
+    const isZipMagic =
+      u8.length >= 4 && u8[0] === 0x50 && u8[1] === 0x4b &&
+      ((u8[2] === 0x03 && u8[3] === 0x04) ||
+        (u8[2] === 0x05 && u8[3] === 0x06));
+    if (!isZipMagic) {
+      throw new Error(
+        `File bukan ZIP. ${blobBytes} bytes, head=${firstBytesHex}` +
+          (wasGzipWrapped ? " (sudah di-gunzip)" : ""),
+      );
+    }
+
     let zip: JSZip;
     try {
       zip = await JSZip.loadAsync(u8);
     } catch (e) {
-      throw new Error(`Bukan ZIP yang valid: ${(e as Error).message.slice(0, 120)}`);
+      throw new Error(`JSZip load gagal: ${(e as Error).message.slice(0, 200)}`);
     }
 
     // Notion's "Export workspace" sometimes ships an outer zip that contains
@@ -67,7 +110,10 @@ export const importZip = action({
           const inner = await JSZip.loadAsync(await f.async("uint8array"));
           for (const innerFile of Object.values(inner.files)) {
             if (innerFile.dir) continue;
-            flat.push({ name: `${f.name.replace(/\.zip$/i, "")}/${innerFile.name}`, entry: innerFile });
+            flat.push({
+              name: `${f.name.replace(/\.zip$/i, "")}/${innerFile.name}`,
+              entry: innerFile,
+            });
           }
         } catch {
           flat.push({ name: f.name, entry: f });
@@ -80,23 +126,35 @@ export const importZip = action({
       throw new Error(`Terlalu banyak entry (${flat.length} > ${MAX_ENTRIES})`);
     }
 
+    console.log(
+      `[importZip] storage=${storageId} bytes=${blobBytes} head=${firstBytesHex}` +
+        ` gunzipped=${wasGzipWrapped} entries=${flat.length}`,
+    );
+
     const summary: ImportSummary = {
       pages: 0,
       databases: 0,
       files: 0,
       skipped: 0,
       errors: [],
+      diagnostics: {
+        blobBytes,
+        firstBytesHex,
+        wasGzipWrapped,
+        entryCount: flat.length,
+      },
     };
 
-    const fileBlocks: Array<{ id: string; type: "image" | "paragraph"; text: string; url?: string; caption?: string }> = [];
+    const fileBlocks: Array<{
+      id: string; type: "image" | "paragraph"; text: string;
+      url?: string; caption?: string;
+    }> = [];
 
-    // Sort entries so root files import first; nested files later. Stable.
     flat.sort((a, b) => a.name.localeCompare(b.name));
 
     for (const item of flat) {
       const path = item.name;
       const entry = item.entry;
-      // Skip macOS metadata + hidden + obvious junk.
       if (
         path.includes("__MACOSX/") ||
         path.split("/").some((s) => s.startsWith("._") || s === ".DS_Store")
@@ -142,13 +200,16 @@ export const importZip = action({
           }
           const headers = rows[0];
           const body = rows.slice(1);
-          await ctx.runMutation(internal.import.internal.createDatabaseFromCsv, {
-            userId,
-            name: titleFromName || "Imported database",
-            headers,
-            rows: body,
-          });
+          const dbName = titleFromName || "Imported database";
+          // Wrap db in a host page so it appears in the sidebar tree and
+          // is navigable. Without the wrapper page the database is orphan
+          // and only reachable by direct URL.
+          await ctx.runMutation(
+            internal.import.internal.createDatabaseFromCsvWithHost,
+            { userId, parentId, name: dbName, headers, rows: body },
+          );
           summary.databases++;
+          summary.pages++;
         } else if (lower.endsWith(".pdf")) {
           const stored = await storeBinary(ctx, entry, summary, path);
           if (!stored) continue;
@@ -180,6 +241,7 @@ export const importZip = action({
         }
       } catch (e) {
         summary.errors.push({ path, reason: (e as Error).message.slice(0, 200) });
+        console.error(`[importZip] entry=${path} failed:`, e);
       }
     }
 
@@ -198,6 +260,7 @@ export const importZip = action({
       summary.pages++;
     }
 
+    console.log(`[importZip] done`, summary);
     return summary;
   },
 });
@@ -207,16 +270,16 @@ async function readText(
   summary: ImportSummary,
   path: string,
 ): Promise<string | null> {
-  // Pull as Uint8Array first so we can sniff binary masquerading as text and
-  // strip the UTF-8 BOM. Letting JSZip decompress as "string" sometimes hands
-  // back the raw deflated bytes if the entry's compression flag is unusual.
   const u8 = await entry.async("uint8array");
   if (u8.length > MAX_TEXT_BYTES) {
     summary.errors.push({ path, reason: `text > ${MAX_TEXT_BYTES} bytes` });
     return null;
   }
   if (looksBinary(u8)) {
-    summary.errors.push({ path, reason: "isi tampak binary, bukan teks" });
+    summary.errors.push({
+      path,
+      reason: `tampak binary (${u8.length}b, head=${headHex(u8)})`,
+    });
     return null;
   }
   // Strip UTF-8 BOM if present.
@@ -235,24 +298,35 @@ async function storeBinary(
     summary.errors.push({ path, reason: `binary > ${MAX_BINARY_BYTES} bytes` });
     return null;
   }
-  return await ctx.storage.store(new Blob([u8.buffer.slice(u8.byteOffset, u8.byteOffset + u8.byteLength) as ArrayBuffer]));
+  const ab = u8.buffer.slice(u8.byteOffset, u8.byteOffset + u8.byteLength) as ArrayBuffer;
+  return await ctx.storage.store(new Blob([ab]));
 }
 
-/** Heuristic: a text file in practice has < 1% NUL bytes and decodes cleanly.
- *  We scan a 4 KB head sample; cheap and good enough to reject zip-of-zip
- *  artifacts (raw deflate streams) accidentally given a `.md` extension. */
+/** Heuristic: text files have < 1% NUL bytes, < 5% C0 control chars, and
+ *  decode without producing a flood of replacement characters. Sample 4 KB
+ *  to keep cost cheap. Catches both raw deflate streams (lots of control
+ *  chars) and stored binary that happens to be mostly high-bit (lots of
+ *  decode failures). */
 function looksBinary(u8: Uint8Array): boolean {
   const n = Math.min(u8.length, 4096);
   if (n === 0) return false;
   let nul = 0;
-  let nonPrint = 0;
+  let ctrl = 0;
   for (let i = 0; i < n; i++) {
     const c = u8[i];
     if (c === 0) nul++;
-    else if (c < 0x09 || (c > 0x0d && c < 0x20)) nonPrint++;
+    else if (c < 0x09 || (c > 0x0d && c < 0x20)) ctrl++;
   }
   if (nul / n > 0.01) return true;
-  if (nonPrint / n > 0.05) return true;
+  if (ctrl / n > 0.05) return true;
+
+  // Last-ditch: decode the head in strict mode. If it throws, the bytes
+  // aren't valid UTF-8 — treat as binary.
+  try {
+    new TextDecoder("utf-8", { fatal: true }).decode(u8.subarray(0, n));
+  } catch {
+    return true;
+  }
   return false;
 }
 
