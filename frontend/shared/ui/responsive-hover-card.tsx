@@ -76,7 +76,7 @@ export function ResponsiveHoverCardTrigger(
   if (mode === "hover-card") return <HoverCardTrigger {...props} />;
   return (
     <PopoverTrigger
-      {...(props as React.ComponentProps<typeof PopoverTrigger>)}
+      {...(props as unknown as React.ComponentProps<typeof PopoverTrigger>)}
     />
   );
 }

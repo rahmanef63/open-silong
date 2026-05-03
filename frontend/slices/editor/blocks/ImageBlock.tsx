@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import Image from "next/image";
 import { AlignLeft, AlignCenter, AlignRight } from "lucide-react";
 import type { Block } from "@/shared/types/domain";
 import { cn } from "@/shared/lib/utils";
@@ -87,10 +88,14 @@ export function ImageBlock({ block, onUpdate }: Props) {
       style={{ width: `${widthPct}%` }}
       className={cn("group/img relative", ALIGN_WRAPPER[align])}
     >
-      <img
+      <Image
         src={block.url}
         alt={block.caption ?? ""}
-        className="block w-full rounded-md border border-border object-contain"
+        width={1600}
+        height={1200}
+        unoptimized
+        sizes="(max-width: 768px) 100vw, 768px"
+        className="block w-full h-auto rounded-md border border-border object-contain"
         onError={(e) => (e.currentTarget.style.opacity = "0.3")}
       />
       <div

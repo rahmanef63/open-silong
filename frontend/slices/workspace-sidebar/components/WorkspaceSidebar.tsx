@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import {
   Inbox, Plus, Search, Settings, Sparkles, Trash2, User, ShieldAlert, FileBox, Bot,
 } from "lucide-react";
@@ -46,6 +47,7 @@ export function WorkspaceSidebar({ onOpenSearch, onClose }: Props) {
     databases, createDatabase, addBlock, updateBlock,
   } = useStore();
   const navigate = useNavigate();
+  const nextRouter = useRouter();
   const location = useLocation();
   const density = DENSITY[preferences.sidebarDensity];
   const { setOpenMobile, isMobile } = useSidebar();
@@ -116,7 +118,7 @@ export function WorkspaceSidebar({ onOpenSearch, onClose }: Props) {
     navItems.push({
       icon: ShieldAlert,
       label: "Admin",
-      onClick: () => { window.location.href = "/admin"; },
+      onClick: () => nextRouter.push("/admin"),
       active: false,
     });
   }
