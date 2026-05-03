@@ -1,3 +1,4 @@
+import { getErrorMessage } from "@/shared/lib/error";
 import { useState } from "react";
 import { Upload, AlertCircle, Check, Plus } from "lucide-react";
 import {
@@ -67,8 +68,8 @@ export function CsvImportDialog({ db, open, onOpenChange }: Props) {
         initial[i] = matched ? matched.id : SKIP;
       });
       setMapping(initial);
-    } catch (e: any) {
-      setError(e?.message ?? "Failed to parse CSV");
+    } catch (e: unknown) {
+      setError(getErrorMessage(e, "Failed to parse CSV"));
     }
   };
 
@@ -237,8 +238,8 @@ export function CsvImportDialog({ db, open, onOpenChange }: Props) {
                   count++;
                 }
                 setImported(count);
-              } catch (e: any) {
-                setError(e?.message ?? "Import failed mid-way");
+              } catch (e: unknown) {
+                setError(getErrorMessage(e, "Import failed mid-way"));
               } finally {
                 setImporting(false);
               }

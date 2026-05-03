@@ -1,3 +1,4 @@
+import { getErrorMessage } from "@/shared/lib/error";
 import { useState } from "react";
 import { AlertCircle, Check, Key, Sparkles } from "lucide-react";
 import {
@@ -58,8 +59,8 @@ export function AIAssistDialog({ db, open, onOpenChange, onImported }: Props) {
         const rows = await generateRows(prompt, db, apiKey, count);
         setGenRows(rows);
       }
-    } catch (e: any) {
-      setError(e?.message ?? "AI request failed.");
+    } catch (e: unknown) {
+      setError(getErrorMessage(e, "AI request failed."));
     } finally {
       setBusy(false);
     }
@@ -77,8 +78,8 @@ export function AIAssistDialog({ db, open, onOpenChange, onImported }: Props) {
         const { count: c } = await applyAIRows(genRows, db, { addRow, setRowValue });
         setDone({ kind: "rows", count: c });
       }
-    } catch (e: any) {
-      setError(e?.message ?? "Apply failed.");
+    } catch (e: unknown) {
+      setError(getErrorMessage(e, "Apply failed."));
     } finally {
       setBusy(false);
     }
