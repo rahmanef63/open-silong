@@ -12,6 +12,9 @@ import {
   DENSITY, SidebarPageLink, DatabaseSidebarRow,
   SortablePageRow, DragGhost, useSidebarDnd, type TreeItem,
 } from "@/slices/workspace-sidebar";
+import {
+  SidebarGroup, SidebarGroupAction, SidebarGroupContent, SidebarGroupLabel,
+} from "@/shared/ui/sidebar";
 import { usePageCRUD } from "../hooks/usePageCRUD";
 import { useDatabaseCRUD } from "../hooks/useDatabaseCRUD";
 import { CreatePageDialog } from "./dialogs/CreatePageDialog";
@@ -90,48 +93,42 @@ export function PagesPanel({ onClose }: Props) {
   }
 
   return (
-    <div data-keyboard-scope className="space-y-3 px-2">
+    <div data-keyboard-scope>
       {favorites.length > 0 && (
-        <PanelGroup label="Favorites">
-          {favorites.map((page) => (
-            <SidebarPageLink
-              key={page.id}
-              page={page}
-              density={density}
-              onClose={onClose}
-              active={pathname === path(`/p/${page.id}`)}
-            />
-          ))}
-        </PanelGroup>
+        <SidebarGroup>
+          <SidebarGroupLabel>Favorites</SidebarGroupLabel>
+          <SidebarGroupContent>
+            {favorites.map((page) => (
+              <SidebarPageLink
+                key={page.id}
+                page={page}
+                density={density}
+                onClose={onClose}
+                active={pathname === path(`/p/${page.id}`)}
+              />
+            ))}
+          </SidebarGroupContent>
+        </SidebarGroup>
       )}
 
       {recentPages.length > 0 && (
-        <PanelGroup label="Recent">
-          {recentPages.map((page) => (
-            <SidebarPageLink
-              key={page.id}
-              page={page}
-              density={density}
-              onClose={onClose}
-              active={pathname === path(`/p/${page.id}`)}
-            />
-          ))}
-        </PanelGroup>
+        <SidebarGroup>
+          <SidebarGroupLabel>Recent</SidebarGroupLabel>
+          <SidebarGroupContent>
+            {recentPages.map((page) => (
+              <SidebarPageLink
+                key={page.id}
+                page={page}
+                density={density}
+                onClose={onClose}
+                active={pathname === path(`/p/${page.id}`)}
+              />
+            ))}
+          </SidebarGroupContent>
+        </SidebarGroup>
       )}
 
-      <PanelGroup
-        label="Workspace"
-        action={
-          <button
-            type="button"
-            onClick={() => openNewPage(null)}
-            aria-label="New page"
-            title="New page"
-            className="grid place-items-center size-5 rounded text-muted-foreground hover:bg-sidebar-accent"
-          >
-            <Plus className="h-3.5 w-3.5" />
-          </button>
-        }
+      <SidebarGroup
         onDragOver={(e) => {
           if (e.dataTransfer.types.includes("application/x-page-id")) {
             e.preventDefault();
@@ -140,6 +137,15 @@ export function PagesPanel({ onClose }: Props) {
         }}
         onDrop={(e) => dnd.handleNativeDropOnPage(null, e)}
       >
+        <SidebarGroupLabel>Workspace</SidebarGroupLabel>
+        <SidebarGroupAction
+          onClick={() => openNewPage(null)}
+          aria-label="New page"
+          title="New page"
+        >
+          <Plus />
+        </SidebarGroupAction>
+        <SidebarGroupContent>
         <DndContext
           sensors={dnd.sensors}
           collisionDetection={dnd.collisionDetection}
@@ -182,39 +188,37 @@ export function PagesPanel({ onClose }: Props) {
             {dnd.activeDraggedItem ? <DragGhost item={dnd.activeDraggedItem} density={density} /> : null}
           </DragOverlay>
         </DndContext>
-        {rootPages.length === 0 && (
-          <button
-            type="button"
-            onClick={() => openNewPage(null)}
-            className={cn(
-              "flex w-full items-center gap-2 rounded-md px-2 text-muted-foreground hover:bg-sidebar-accent",
-              density.pageLink,
-            )}
-          >
-            <Plus className="h-3.5 w-3.5" /> New page
-          </button>
-        )}
-      </PanelGroup>
-
-      {databases.length > 0 && (
-        <PanelGroup
-          label="Databases"
-          action={
+          {rootPages.length === 0 && (
             <button
               type="button"
-              onClick={() => dbCRUD.openCreate()}
-              aria-label="New database"
-              title="New database"
-              className="grid place-items-center size-5 rounded text-muted-foreground hover:bg-sidebar-accent"
+              onClick={() => openNewPage(null)}
+              className={cn(
+                "flex w-full items-center gap-2 rounded-md px-2 text-muted-foreground hover:bg-sidebar-accent",
+                density.pageLink,
+              )}
             >
-              <Plus className="h-3.5 w-3.5" />
+              <Plus className="h-3.5 w-3.5" /> New page
             </button>
-          }
-        >
-          {databases.map((db) => (
-            <DatabaseSidebarRow key={db.id} db={db} density={density} />
-          ))}
-        </PanelGroup>
+          )}
+        </SidebarGroupContent>
+      </SidebarGroup>
+
+      {databases.length > 0 && (
+        <SidebarGroup>
+          <SidebarGroupLabel>Databases</SidebarGroupLabel>
+          <SidebarGroupAction
+            onClick={() => dbCRUD.openCreate()}
+            aria-label="New database"
+            title="New database"
+          >
+            <Plus />
+          </SidebarGroupAction>
+          <SidebarGroupContent>
+            {databases.map((db) => (
+              <DatabaseSidebarRow key={db.id} db={db} density={density} />
+            ))}
+          </SidebarGroupContent>
+        </SidebarGroup>
       )}
 
       <CreatePageDialog
@@ -245,24 +249,3 @@ export function PagesPanel({ onClose }: Props) {
   );
 }
 
-interface PanelGroupProps {
-  label: string;
-  action?: React.ReactNode;
-  children: React.ReactNode;
-  onDragOver?: React.DragEventHandler<HTMLDivElement>;
-  onDrop?: React.DragEventHandler<HTMLDivElement>;
-}
-
-function PanelGroup({ label, action, children, onDragOver, onDrop }: PanelGroupProps) {
-  return (
-    <section onDragOver={onDragOver} onDrop={onDrop}>
-      <header className="flex h-7 items-center justify-between px-1">
-        <span className="text-[11px] font-medium uppercase tracking-wider text-sidebar-foreground/60">
-          {label}
-        </span>
-        {action}
-      </header>
-      <div>{children}</div>
-    </section>
-  );
-}
