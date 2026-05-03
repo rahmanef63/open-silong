@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import {
-  Inbox, Search, Settings, Sparkles, Trash2, User, ShieldAlert, FileBox, Bot,
+  Inbox, Search, Settings, Sparkles, Trash2, User, ShieldAlert, FileBox, Bot, Plus,
 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import {
@@ -16,14 +16,17 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarSeparator,
   useSidebar,
 } from "@/shared/ui/sidebar";
+import { useStore } from "@/shared/lib/store";
 import { useAdminRole } from "@/slices/admin-panel";
 import { TemplateGalleryDialog } from "@/slices/templates";
 import { AIAgentConsole } from "@/slices/ai-agent";
 import { InboxBadge } from "@/slices/inbox";
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
 import { NavUser } from "./NavUser";
+import { PagesPanel } from "./PagesPanel";
 
 interface Props {
   onOpenSearch: () => void;
@@ -37,12 +40,20 @@ export function AppSidebar({ onOpenSearch }: Props) {
   const pathname = usePathname();
   const { setOpenMobile, isMobile } = useSidebar();
   const { isAdmin } = useAdminRole();
+  const { createPage } = useStore();
   const [templatesOpen, setTemplatesOpen] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
 
+  const closeMobile = () => { if (isMobile) setOpenMobile(false); };
+
   function go(p: string) {
     router.push(path(p));
-    if (isMobile) setOpenMobile(false);
+    closeMobile();
+  }
+
+  async function handleNewPage() {
+    const page = await createPage(null);
+    go(`/p/${page.id}`);
   }
 
   type NavItem = {
@@ -54,7 +65,7 @@ export function AppSidebar({ onOpenSearch }: Props) {
     badge?: React.ReactNode;
   };
 
-  const items: NavItem[] = [
+  const navItems: NavItem[] = [
     { icon: Search, label: "Search", onClick: onOpenSearch, active: false, shortcut: "⌘K" },
     { icon: Sparkles, label: "Dashboard", onClick: () => go("/"), active: pathname === BASE },
     { icon: Bot, label: "AI", onClick: () => setAiOpen(true), active: false },
@@ -74,40 +85,51 @@ export function AppSidebar({ onOpenSearch }: Props) {
     accountItems.push({
       icon: ShieldAlert,
       label: "Admin",
-      onClick: () => router.push("/admin"),
+      onClick: () => { router.push("/admin"); closeMobile(); },
       active: pathname.startsWith("/admin"),
     });
   }
 
   return (
-    <Sidebar collapsible="icon" data-keyboard-scope>
+    <Sidebar collapsible="offcanvas" data-keyboard-scope>
       <SidebarHeader>
         <WorkspaceSwitcher />
       </SidebarHeader>
 
-      <SidebarContent>
-        <SidebarGroup>
+      <SidebarContent className="gap-0">
+        <SidebarGroup className="py-1">
           <SidebarGroupContent>
             <SidebarMenu>
-              {items.map((it) => (
-                <NavRow key={it.label} item={it} />
-              ))}
+              {navItems.map((it) => <NavRow key={it.label} item={it} />)}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarGroup className="mt-auto">
+        <SidebarSeparator />
+
+        <SidebarGroup className="py-2">
+          <SidebarGroupContent>
+            <PagesPanel onClose={closeMobile} />
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup className="mt-auto py-1">
           <SidebarGroupContent>
             <SidebarMenu>
-              {accountItems.map((it) => (
-                <NavRow key={it.label} item={it} />
-              ))}
+              {accountItems.map((it) => <NavRow key={it.label} item={it} />)}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter>
+      <SidebarFooter className="gap-2">
+        <button
+          type="button"
+          onClick={handleNewPage}
+          className="flex w-full items-center gap-2 rounded-md bg-foreground px-2.5 py-1.5 text-sm font-medium text-background hover:opacity-90"
+        >
+          <Plus className="h-4 w-4" /> New page
+        </button>
         <NavUser />
       </SidebarFooter>
 
