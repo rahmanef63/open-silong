@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "@/shared/lib/router-compat";
+import { useRouter } from "next/navigation";
 import { useAuthActions } from "@convex-dev/auth/react";
 import {
   ChevronsUpDown,
@@ -28,11 +28,14 @@ import {
   DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
 
+const BASE = "/dashboard";
+
 export function NavUser() {
   const { user } = useStore();
   const { isMobile } = useSidebar();
   const { signOut } = useAuthActions();
-  const navigate = useNavigate();
+  const router = useRouter();
+  const go = (p: string) => router.push(`${BASE}${p}`);
   const [signingOut, setSigningOut] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
 
@@ -102,15 +105,15 @@ export function NavUser() {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem onSelect={() => navigate("/profile")}>
+              <DropdownMenuItem onSelect={() => go("/profile")}>
                 <UserIcon className="mr-2 size-4" />
                 Profile
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => navigate("/settings")}>
+              <DropdownMenuItem onSelect={() => go("/settings")}>
                 <SettingsIcon className="mr-2 size-4" />
                 Settings
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => navigate("/settings#theme")}>
+              <DropdownMenuItem onSelect={() => go("/settings#theme")}>
                 <Palette className="mr-2 size-4" />
                 Theme presets
               </DropdownMenuItem>
