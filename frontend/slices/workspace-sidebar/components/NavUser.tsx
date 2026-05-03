@@ -70,13 +70,13 @@ export function NavUser() {
                   {user.icon || fallback}
                 </AvatarFallback>
               </Avatar>
-              <div className="grid flex-1 text-left text-sm leading-tight">
+              <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
                 <span className="truncate font-medium">{user.name || "You"}</span>
                 <span className="truncate text-xs text-muted-foreground">
                   {user.email || "no-email"}
                 </span>
               </div>
-              <ChevronsUpDown className="ml-auto size-4 opacity-60" />
+              <ChevronsUpDown className="ml-auto size-4 opacity-60 group-data-[collapsible=icon]:hidden" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent

@@ -59,11 +59,11 @@ export function WorkspaceSwitcher() {
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-brand/15 text-base">
                   {workspace.emoji}
                 </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
+                <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
                   <span className="truncate font-semibold">{workspace.name}</span>
                   <span className="truncate text-xs text-muted-foreground">Personal · Free</span>
                 </div>
-                <ChevronsUpDown className="ml-auto size-4 opacity-60" />
+                <ChevronsUpDown className="ml-auto size-4 opacity-60 group-data-[collapsible=icon]:hidden" />
               </SidebarMenuButton>
             </DropdownMenuTrigger>
             <DropdownMenuContent
