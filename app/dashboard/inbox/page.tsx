@@ -1,6 +1,4 @@
-"use client";
-
-import { InboxPage } from "@/slices/inbox";
+import { InboxPage } from "@/slices/inbox/views/InboxPage";
 
 export default function Page() {
   return <InboxPage />;
