@@ -12,6 +12,11 @@ import {
   DENSITY, SidebarPageLink, DatabaseSidebarRow,
   SortablePageRow, DragGhost, useSidebarDnd, type TreeItem,
 } from "@/slices/workspace-sidebar";
+import { usePageCRUD } from "../hooks/usePageCRUD";
+import { useDatabaseCRUD } from "../hooks/useDatabaseCRUD";
+import { CreatePageDialog } from "./dialogs/CreatePageDialog";
+import { DeletePageDialog } from "./dialogs/DeletePageDialog";
+import { CreateDatabaseDialog } from "./dialogs/CreateDatabaseDialog";
 
 interface Props {
   /** Called after navigation/creation — used by mobile sheet to close itself. */
@@ -27,11 +32,12 @@ const path = (p: string) => (p === "/" ? BASE : `${BASE}${p}`);
  */
 export function PagesPanel({ onClose }: Props) {
   const {
-    pages, recents, childrenOf, createPage, preferences,
-    databases, createDatabase, addBlock, updateBlock,
+    pages, recents, childrenOf, preferences, databases,
   } = useStore();
   const router = useRouter();
   const pathname = usePathname() ?? BASE;
+  const pageCRUD = usePageCRUD();
+  const dbCRUD = useDatabaseCRUD();
   const density = DENSITY[preferences.sidebarDensity];
   const [openIds, setOpenIds] = useState<Set<string>>(new Set());
   const [treeInitialized, setTreeInitialized] = useState(false);
@@ -79,10 +85,8 @@ export function PagesPanel({ onClose }: Props) {
     onClose?.();
   }
 
-  async function handleNew(parentId: string | null = null) {
-    const page = await createPage(parentId);
-    if (parentId) setPageOpen(parentId, true);
-    go(`/p/${page.id}`);
+  function openNewPage(parentId: string | null = null) {
+    pageCRUD.openCreate(parentId);
   }
 
   return (
@@ -120,7 +124,7 @@ export function PagesPanel({ onClose }: Props) {
         action={
           <button
             type="button"
-            onClick={() => handleNew(null)}
+            onClick={() => openNewPage(null)}
             aria-label="New page"
             title="New page"
             className="grid place-items-center size-5 rounded text-muted-foreground hover:bg-sidebar-accent"
@@ -163,6 +167,7 @@ export function PagesPanel({ onClose }: Props) {
                   isOpen={openIds.has(item.page.id)}
                   setOpen={(open) => setPageOpen(item.page.id, open)}
                   onClose={onClose}
+                  onRequestDelete={(p) => pageCRUD.openDelete(p.id)}
                   isOverSibling={dnd.overId === item.page.id && !dnd.nestIntent && dnd.activeId !== null}
                   isOverNesting={dnd.overId === item.page.id && dnd.nestIntent && dnd.activeId !== null}
                   isExternalOver={dnd.externalOverId === item.page.id}
@@ -180,7 +185,7 @@ export function PagesPanel({ onClose }: Props) {
         {rootPages.length === 0 && (
           <button
             type="button"
-            onClick={() => handleNew(null)}
+            onClick={() => openNewPage(null)}
             className={cn(
               "flex w-full items-center gap-2 rounded-md px-2 text-muted-foreground hover:bg-sidebar-accent",
               density.pageLink,
@@ -197,15 +202,7 @@ export function PagesPanel({ onClose }: Props) {
           action={
             <button
               type="button"
-              onClick={async () => {
-                const [p, db] = await Promise.all([
-                  createPage(null, { title: "Untitled database", icon: "🗂️" }),
-                  createDatabase("Untitled database"),
-                ]);
-                const blockId = await addBlock(p.id, 0, "database");
-                updateBlock(p.id, blockId, { databaseId: db.id });
-                go(`/p/${p.id}`);
-              }}
+              onClick={() => dbCRUD.openCreate()}
               aria-label="New database"
               title="New database"
               className="grid place-items-center size-5 rounded text-muted-foreground hover:bg-sidebar-accent"
@@ -219,6 +216,31 @@ export function PagesPanel({ onClose }: Props) {
           ))}
         </PanelGroup>
       )}
+
+      <CreatePageDialog
+        open={pageCRUD.createOpen}
+        onOpenChange={pageCRUD.setCreateOpen}
+        parentId={pageCRUD.createParentId}
+        onSubmit={async (data) => {
+          await pageCRUD.handleCreateSubmit(data);
+          if (data.parentId) setPageOpen(data.parentId, true);
+          onClose?.();
+        }}
+      />
+      <DeletePageDialog
+        open={pageCRUD.deleteOpen}
+        onOpenChange={pageCRUD.setDeleteOpen}
+        page={pageCRUD.deleteTarget}
+        onConfirm={pageCRUD.handleDeleteConfirm}
+      />
+      <CreateDatabaseDialog
+        open={dbCRUD.createOpen}
+        onOpenChange={dbCRUD.setCreateOpen}
+        onSubmit={async (data) => {
+          await dbCRUD.handleCreateSubmit(data);
+          onClose?.();
+        }}
+      />
     </div>
   );
 }

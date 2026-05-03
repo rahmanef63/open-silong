@@ -17,6 +17,9 @@ interface Props {
   isOpen: boolean;
   setOpen: (open: boolean) => void;
   onClose?: () => void;
+  /** When provided, the trash action delegates to host (typically PagesPanel
+   *  rendering a confirm dialog). Falls back to direct soft-delete. */
+  onRequestDelete?: (page: { id: string; title: string; icon: string }) => void;
   isOverSibling?: boolean;
   isOverNesting?: boolean;
   isExternalOver?: boolean;
@@ -26,7 +29,7 @@ interface Props {
 }
 
 export function SortablePageRow({
-  item, density, isOpen, setOpen, onClose,
+  item, density, isOpen, setOpen, onClose, onRequestDelete,
   isOverSibling = false, isOverNesting = false, isExternalOver = false,
   onExternalEnter, onExternalLeave, onExternalDrop,
 }: Props) {
