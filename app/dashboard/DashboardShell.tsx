@@ -82,13 +82,14 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
 
             <SidebarProvider defaultOpen={false}>
               <AppSidebar onOpenSearch={() => setSearchOpen(true)} />
-              <SidebarInset>
+              <SidebarInset className="!min-h-0 h-svh overflow-hidden">
                 <ThreeColumnLayout
                   leftWidth={280}
                   left={<PagesPanel />}
+                  className="h-full"
                   center={
                     <>
-                      <div className="md:hidden flex items-center gap-2 border-b border-border px-3 h-12 bg-card/95 backdrop-blur sticky top-0 z-10">
+                      <div className="md:hidden flex items-center gap-2 border-b border-border px-3 h-12 bg-card/95 backdrop-blur z-10 shrink-0">
                         <SidebarTrigger className="size-8" />
                         <button
                           type="button"
@@ -99,14 +100,14 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
                         </button>
                       </div>
                       <div
-                        className="flex-1 min-h-0 bg-surface-elevated md:m-2 md:rounded-xl md:border md:border-border md:shadow-soft min-w-0"
+                        className="flex-1 min-h-0 min-w-0 overflow-hidden"
                         style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
                       >
                         <ErrorBoundary>
                           <Suspense fallback={<RouteSkeleton />}>{children}</Suspense>
                         </ErrorBoundary>
                       </div>
-                      <div className="md:hidden h-14" aria-hidden="true" />
+                      <div className="md:hidden h-14 shrink-0" aria-hidden="true" />
                     </>
                   }
                 />

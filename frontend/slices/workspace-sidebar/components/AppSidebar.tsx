@@ -16,7 +16,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarRail,
   useSidebar,
 } from "@/shared/ui/sidebar";
 import { useAdminRole } from "@/slices/admin-panel";
@@ -111,8 +110,6 @@ export function AppSidebar({ onOpenSearch }: Props) {
       <SidebarFooter>
         <NavUser />
       </SidebarFooter>
-
-      <SidebarRail />
 
       <TemplateGalleryDialog
         open={templatesOpen}
