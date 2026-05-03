@@ -5,7 +5,13 @@ import { Id } from "../../_generated/dataModel";
 
 export const create = mutation({
   args: {
-    kind: v.string(),
+    kind: v.union(
+      v.literal("mention"),
+      v.literal("comment"),
+      v.literal("share"),
+      v.literal("system"),
+      v.literal("update"),
+    ),
     title: v.string(),
     body: v.optional(v.string()),
     pageId: v.optional(v.string()),

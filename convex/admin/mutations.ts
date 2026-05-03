@@ -37,6 +37,9 @@ export const setUserRole = mutation({
       .query("userProfiles")
       .withIndex("by_user", (q) => q.eq("userId", targetUserId))
       .unique();
+    if (profile?.role === "superadmin") {
+      throw new Error("Tidak bisa mengubah role superadmin");
+    }
     const now = Date.now();
     if (profile) {
       await ctx.db.patch(profile._id, { role });
@@ -65,19 +68,5 @@ async function logAuditEventInternal(
     createdAt: Date.now(),
   });
 }
-
-/** Generic audit logger callable from other mutations. Not exposed to client. */
-export const logAuditEvent = mutation({
-  args: {
-    kind: v.string(),
-    target: v.optional(v.string()),
-    meta: v.optional(v.any()),
-  },
-  handler: async (ctx, { kind, target, meta }) => {
-    const actorId = await requireAdmin(ctx);
-    await logAuditEventInternal(ctx, actorId, kind, target, meta);
-    return { ok: true };
-  },
-});
 
 export { logAuditEventInternal };
