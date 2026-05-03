@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as _shared_auth from "../_shared/auth.js";
 import type * as admin_mutations from "../admin/mutations.js";
 import type * as admin_queries from "../admin/queries.js";
 import type * as auth from "../auth.js";
@@ -37,6 +38,7 @@ import type * as templates_seed_expenseTracker from "../templates/seed/expenseTr
 import type * as templates_seed_habitTracker from "../templates/seed/habitTracker.js";
 import type * as templates_seed_index from "../templates/seed/index.js";
 import type * as templates_seed_readingList from "../templates/seed/readingList.js";
+import type * as users from "../users.js";
 import type * as workspaces from "../workspaces.js";
 
 import type {
@@ -46,6 +48,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  "_shared/auth": typeof _shared_auth;
   "admin/mutations": typeof admin_mutations;
   "admin/queries": typeof admin_queries;
   auth: typeof auth;
@@ -75,6 +78,7 @@ declare const fullApi: ApiFromModules<{
   "templates/seed/habitTracker": typeof templates_seed_habitTracker;
   "templates/seed/index": typeof templates_seed_index;
   "templates/seed/readingList": typeof templates_seed_readingList;
+  users: typeof users;
   workspaces: typeof workspaces;
 }>;
 
