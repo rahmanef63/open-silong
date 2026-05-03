@@ -1,3 +1,5 @@
+"use client";
+
 import { useStore } from "@/shared/lib/store";
 import { Trash2, RotateCcw, X, Table2, FileText } from "lucide-react";
 

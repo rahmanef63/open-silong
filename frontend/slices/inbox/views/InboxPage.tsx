@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 import { Inbox as InboxIcon, CheckCheck, Filter } from "lucide-react";
 import { useInbox } from "../hooks/useInbox";
