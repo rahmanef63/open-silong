@@ -5,7 +5,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar,
 } from "@/shared/ui/sidebar";
 import {
   DropdownMenu,
@@ -30,7 +29,6 @@ const COMMON_EMOJI = ["📓", "🚀", "🎨", "💼", "📚", "🧪", "🌱", "�
 
 export function WorkspaceSwitcher() {
   const { workspace, updateWorkspace } = useStore();
-  const { isMobile } = useSidebar();
   const [editOpen, setEditOpen] = useState(false);
   const [draftName, setDraftName] = useState(workspace.name);
   const [draftEmoji, setDraftEmoji] = useState(workspace.emoji);
@@ -71,7 +69,7 @@ export function WorkspaceSwitcher() {
             <DropdownMenuContent
               className="w-(--radix-dropdown-menu-trigger-width) min-w-60 rounded-lg"
               align="start"
-              side={isMobile ? "bottom" : "right"}
+              side="bottom"
               sideOffset={4}
             >
               <DropdownMenuLabel className="text-xs text-muted-foreground">Workspaces</DropdownMenuLabel>

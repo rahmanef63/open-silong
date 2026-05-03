@@ -16,6 +16,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarRail,
   SidebarSeparator,
   useSidebar,
 } from "@/shared/ui/sidebar";
@@ -107,11 +108,7 @@ export function AppSidebar({ onOpenSearch }: Props) {
 
         <SidebarSeparator />
 
-        <SidebarGroup className="py-2">
-          <SidebarGroupContent>
-            <PagesPanel onClose={closeMobile} />
-          </SidebarGroupContent>
-        </SidebarGroup>
+        <PagesPanel onClose={closeMobile} />
 
         <SidebarGroup className="mt-auto py-1">
           <SidebarGroupContent>
@@ -132,6 +129,8 @@ export function AppSidebar({ onOpenSearch }: Props) {
         </button>
         <NavUser />
       </SidebarFooter>
+
+      <SidebarRail />
 
       <TemplateGalleryDialog
         open={templatesOpen}
