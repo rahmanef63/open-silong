@@ -15,7 +15,7 @@ export default function DashboardError({
   }, [error]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-background">
+    <div className="h-full min-h-0 flex items-center justify-center p-6 bg-background">
       <div className="max-w-md w-full rounded-lg border border-destructive/30 bg-destructive/5 p-6 text-center">
         <AlertTriangle className="h-6 w-6 text-destructive mx-auto mb-3" />
         <h2 className="text-base font-semibold mb-1">Workspace error</h2>
