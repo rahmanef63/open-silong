@@ -92,7 +92,7 @@ export function AppSidebar({ onOpenSearch }: Props) {
   }
 
   return (
-    <Sidebar collapsible="offcanvas" data-keyboard-scope>
+    <Sidebar collapsible="icon" data-keyboard-scope>
       <SidebarHeader>
         <WorkspaceSwitcher />
       </SidebarHeader>
@@ -106,9 +106,11 @@ export function AppSidebar({ onOpenSearch }: Props) {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarSeparator />
+        <SidebarSeparator className="group-data-[collapsible=icon]:hidden" />
 
-        <PagesPanel onClose={closeMobile} />
+        <div className="group-data-[collapsible=icon]:hidden">
+          <PagesPanel onClose={closeMobile} />
+        </div>
 
         <SidebarGroup className="mt-auto py-1">
           <SidebarGroupContent>
@@ -123,9 +125,12 @@ export function AppSidebar({ onOpenSearch }: Props) {
         <button
           type="button"
           onClick={handleNewPage}
-          className="flex w-full items-center gap-2 rounded-md bg-foreground px-2.5 py-1.5 text-sm font-medium text-background hover:opacity-90"
+          aria-label="New page"
+          title="New page"
+          className="flex w-full items-center gap-2 rounded-md bg-foreground px-2.5 py-1.5 text-sm font-medium text-background hover:opacity-90 group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:!p-0 group-data-[collapsible=icon]:justify-center"
         >
-          <Plus className="h-4 w-4" /> New page
+          <Plus className="h-4 w-4 shrink-0" />
+          <span className="group-data-[collapsible=icon]:hidden">New page</span>
         </button>
         <NavUser />
       </SidebarFooter>
@@ -155,10 +160,12 @@ function NavRow({ item }: { item: {
         tooltip={item.label}
       >
         <item.icon />
-        <span>{item.label}</span>
-        {item.badge ? <span className="ml-auto">{item.badge}</span> : null}
+        <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
+        {item.badge ? (
+          <span className="ml-auto group-data-[collapsible=icon]:hidden">{item.badge}</span>
+        ) : null}
         {item.shortcut ? (
-          <span className={cn("ml-auto text-[10px] tracking-wider text-muted-foreground")}>
+          <span className={cn("ml-auto text-[10px] tracking-wider text-muted-foreground group-data-[collapsible=icon]:hidden")}>
             {item.shortcut}
           </span>
         ) : null}

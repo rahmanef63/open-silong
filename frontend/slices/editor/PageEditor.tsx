@@ -27,6 +27,7 @@ import { BlockSelectionProvider, SelectionToolbar, SelectionKeyboard, MarqueeOve
 import {
   placeTopLevelGroupAtBlock, appendTopLevelGroupToContainer, topLevelIdsInOrder,
 } from "@/slices/block-selection/lib/multiMove";
+import { PageHeaderSlot } from "@/shared/components/PageHeaderSlot";
 
 const ICONS = ["📄", "📝", "📚", "🚀", "🌱", "🛰️", "🎨", "🧠", "🪄", "🌙", "☕", "🔥", "🌊", "✨", "🪐", "🛠️"];
 const COVERS = [
@@ -188,7 +189,17 @@ export function PageEditor() {
     <PageCommentsProvider pageId={page.id}>
     <BlockSelectionProvider blockOrder={page.blocks.map((b) => b.id)}>
     <div className="flex h-full flex-col overflow-hidden">
-      <Header page={page} onShare={() => setShareOpen(true)} onHistory={() => setHistoryOpen(o => !o)} historyOpen={historyOpen} />
+      <PageHeaderSlot
+        left={<HeaderBreadcrumbs page={page} />}
+        right={
+          <HeaderActions
+            page={page}
+            onShare={() => setShareOpen(true)}
+            onHistory={() => setHistoryOpen((o) => !o)}
+            historyOpen={historyOpen}
+          />
+        }
+      />
 
       <div className="flex flex-1 min-h-0">
         <div ref={scrollRef} className="relative flex-1 overflow-y-auto scrollbar-thin">
@@ -373,8 +384,8 @@ function Subpages({ page, subpages }: { page: Page; subpages: Page[] }) {
   );
 }
 
-function Header({ page, onShare, onHistory, historyOpen }: { page: Page; onShare: () => void; onHistory: () => void; historyOpen: boolean }) {
-  const { getPage, toggleFavorite, saving, pages } = useStore();
+function HeaderBreadcrumbs({ page }: { page: Page }) {
+  const { getPage, pages } = useStore();
   const navigate = useNavigate();
   const crumbs: Page[] = [];
   let cur: Page | undefined = page;
@@ -383,7 +394,6 @@ function Header({ page, onShare, onHistory, historyOpen }: { page: Page; onShare
     cur = cur.parentId ? getPage(cur.parentId) : undefined;
   }
 
-  // For database row pages, find the page that hosts the database block and prepend it as a breadcrumb
   const dbHostPage =
     page.rowOfDatabaseId
       ? pages.find(
@@ -395,56 +405,57 @@ function Header({ page, onShare, onHistory, historyOpen }: { page: Page; onShare
         )
       : undefined;
 
-  // Prepend dbHostPage if it's not already in the crumbs trail
   const finalCrumbs =
     dbHostPage && !crumbs.some((c) => c.id === dbHostPage.id)
       ? [dbHostPage, ...crumbs]
       : crumbs;
 
   return (
-    <header className="flex items-center justify-between gap-3 border-b border-border bg-background/80 backdrop-blur px-3 md:px-4 h-12 shrink-0">
-      <div className="flex items-center gap-2 min-w-0 flex-1">
-      <nav className="flex items-center gap-1 text-sm min-w-0 overflow-hidden">
-        {finalCrumbs.map((c, i) => (
-          <div key={c.id} className="flex items-center gap-1 min-w-0">
-            {i > 0 && <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />}
-            <button
-              onClick={() => navigate(`/p/${c.id}`)}
-              className={cn(
-                "flex items-center gap-1.5 rounded px-1.5 py-1 hover:bg-accent min-w-0",
-                i === finalCrumbs.length - 1 ? "text-foreground" : "text-muted-foreground"
-              )}
-            >
-              <span>{c.icon}</span>
-              <span className="truncate max-w-[160px]">{c.title || "Untitled"}</span>
-            </button>
-          </div>
-        ))}
-      </nav>
-      </div>
-      <div className="flex items-center gap-1 shrink-0">
-        <span className={cn("text-xs text-muted-foreground mr-2", saving && "animate-pulse-soft")}>
-          {saving ? "Saving…" : "Saved"}
-        </span>
-        <button onClick={onShare} className="flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1 text-xs hover:bg-accent">
-          <Share2 className="h-3.5 w-3.5" /> Share
-        </button>
-        <button
-          onClick={onHistory}
-          className={cn("flex h-8 w-8 items-center justify-center rounded hover:bg-accent text-muted-foreground", historyOpen && "bg-accent text-foreground")}
-          aria-label="Version history"
-        >
-          <History className="h-4 w-4" />
-        </button>
-        <button
-          onClick={() => toggleFavorite(page.id)}
-          className="flex h-8 w-8 items-center justify-center rounded hover:bg-accent text-muted-foreground"
-          aria-label="Favorite"
-        >
-          <Star className={cn("h-4 w-4", page.favorite && "fill-brand text-brand")} />
-        </button>
-        <PageActionsMenu page={page} onShowHistory={onHistory} />
-      </div>
-    </header>
+    <nav className="flex items-center gap-1 text-sm min-w-0 overflow-hidden">
+      {finalCrumbs.map((c, i) => (
+        <div key={c.id} className="flex items-center gap-1 min-w-0">
+          {i > 0 && <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />}
+          <button
+            onClick={() => navigate(`/p/${c.id}`)}
+            className={cn(
+              "flex items-center gap-1.5 rounded px-1.5 py-1 hover:bg-accent min-w-0",
+              i === finalCrumbs.length - 1 ? "text-foreground" : "text-muted-foreground"
+            )}
+          >
+            <span>{c.icon}</span>
+            <span className="truncate max-w-[160px]">{c.title || "Untitled"}</span>
+          </button>
+        </div>
+      ))}
+    </nav>
+  );
+}
+
+function HeaderActions({ page, onShare, onHistory, historyOpen }: { page: Page; onShare: () => void; onHistory: () => void; historyOpen: boolean }) {
+  const { toggleFavorite, saving } = useStore();
+  return (
+    <div className="flex items-center gap-1 shrink-0">
+      <span className={cn("text-xs text-muted-foreground mr-1 hidden sm:inline", saving && "animate-pulse-soft")}>
+        {saving ? "Saving…" : "Saved"}
+      </span>
+      <button onClick={onShare} className="flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1 text-xs hover:bg-accent">
+        <Share2 className="h-3.5 w-3.5" /> Share
+      </button>
+      <button
+        onClick={onHistory}
+        className={cn("flex h-8 w-8 items-center justify-center rounded hover:bg-accent text-muted-foreground", historyOpen && "bg-accent text-foreground")}
+        aria-label="Version history"
+      >
+        <History className="h-4 w-4" />
+      </button>
+      <button
+        onClick={() => toggleFavorite(page.id)}
+        className="flex h-8 w-8 items-center justify-center rounded hover:bg-accent text-muted-foreground"
+        aria-label="Favorite"
+      >
+        <Star className={cn("h-4 w-4", page.favorite && "fill-brand text-brand")} />
+      </button>
+      <PageActionsMenu page={page} onShowHistory={onHistory} />
+    </div>
   );
 }
