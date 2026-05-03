@@ -65,7 +65,7 @@ export function ThreeColumnLayout({
   const showRight = !!right;
 
   return (
-    <div className={cn("flex min-h-svh w-full bg-background", className)}>
+    <div className={cn("flex h-full min-h-0 w-full bg-background", className)}>
       {/* LEFT */}
       {showLeft && (
         <aside
@@ -76,7 +76,7 @@ export function ThreeColumnLayout({
           )}
           style={{ width: leftCollapsed ? 0 : leftWidth }}
         >
-          <div className="h-svh w-full overflow-y-auto" style={{ minWidth: leftWidth }}>
+          <div className="h-full w-full overflow-y-auto" style={{ minWidth: leftWidth }}>
             {left}
           </div>
         </aside>
@@ -107,7 +107,7 @@ export function ThreeColumnLayout({
           )}
           style={{ width: rightCollapsed ? 0 : rightWidth }}
         >
-          <div className="h-svh w-full overflow-y-auto" style={{ minWidth: rightWidth }}>
+          <div className="h-full w-full overflow-y-auto" style={{ minWidth: rightWidth }}>
             {right}
           </div>
         </aside>
