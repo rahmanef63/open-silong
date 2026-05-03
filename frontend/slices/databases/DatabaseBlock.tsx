@@ -1,5 +1,5 @@
 import { lazy, Suspense, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "@/shared/lib/router-compat";
 import { Block, Database, DatabaseViewConfig, DbView, Page, Property, PropertyType } from "@/shared/types/domain";
 import { useStore } from "@/shared/lib/store";
 import { cn } from "@/shared/lib/utils";

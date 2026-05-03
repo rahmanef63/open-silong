@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "@/shared/lib/router-compat";
 import { useStore } from "@/shared/lib/store";
 import { Page, PageFont } from "@/shared/types/domain";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";

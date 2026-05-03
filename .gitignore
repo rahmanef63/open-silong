@@ -29,3 +29,4 @@ out/
 *.sln
 *.sw?
 .claude/scheduled_tasks.lock
+tsconfig.tsbuildinfo

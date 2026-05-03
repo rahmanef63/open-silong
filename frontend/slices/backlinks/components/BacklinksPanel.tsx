@@ -1,5 +1,5 @@
 import { Link2, ChevronDown, ChevronRight } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "@/shared/lib/router-compat";
 import { useState } from "react";
 import { cn } from "@/shared/lib/utils";
 import { useBacklinks } from "../hooks/useBacklinks";

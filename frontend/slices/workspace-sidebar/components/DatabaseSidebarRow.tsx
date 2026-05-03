@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "@/shared/lib/router-compat";
 import { MoreHorizontal, Table2, Trash2 } from "lucide-react";
 import { useStore } from "@/shared/lib/store";
 import type { Database } from "@/shared/types/domain";

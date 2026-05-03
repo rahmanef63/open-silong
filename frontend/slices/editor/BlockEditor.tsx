@@ -6,7 +6,7 @@ import { SlashMenu } from "./SlashMenu";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useBlockHistory } from "@/shared/hooks/useBlockHistory";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "@/shared/lib/router-compat";
 import { DatabaseBlock } from "@/slices/databases/DatabaseBlock";
 import { ColumnBlockEditor } from "./ColumnBlockEditor";
 import { BlockShell } from "./blocks/BlockShell";
