@@ -62,7 +62,7 @@ export function ShareDialog({ open, onOpenChange, page }: { open: boolean; onOpe
           </div>
 
           {page.isPublic && (
-            <a href={url} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-xs text-brand hover:underline">
+            <a href={url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-brand hover:underline">
               <ExternalLink className="h-3 w-3" /> Open shared view
             </a>
           )}

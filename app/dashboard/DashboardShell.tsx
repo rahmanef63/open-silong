@@ -20,11 +20,13 @@ const CommandPalette = lazy(() =>
 
 function AuthGuard({ children }: { children: ReactNode }) {
   const { isAuthenticated, isLoading } = useConvexAuth();
-  if (isLoading) return <RouteSkeleton />;
-  if (!isAuthenticated) {
-    if (typeof window !== "undefined") window.location.replace("/auth");
-    return <RouteSkeleton />;
-  }
+  // proxy.ts is the primary redirect path; this effect covers client-side
+  // auth-state changes (sign-out, token expiry) where the proxy already let
+  // the request through.
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) window.location.replace("/auth");
+  }, [isLoading, isAuthenticated]);
+  if (isLoading || !isAuthenticated) return <RouteSkeleton />;
   return <>{children}</>;
 }
 
@@ -49,7 +51,10 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  // Radix aria-hidden focus warning suppression — see git history.
+  // Radix focus-scope sets aria-hidden on direct body children siblings of
+  // the open portal. Watching body's *direct* children (subtree:false) is
+  // enough — full subtree fires on every nested aria-hidden mutation in the
+  // tree, which is hot during dnd/editor work.
   useEffect(() => {
     const observer = new MutationObserver((records) => {
       for (const r of records) {
@@ -64,7 +69,7 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
     });
     observer.observe(document.body, {
       attributes: true,
-      subtree: true,
+      subtree: false,
       attributeFilter: ["aria-hidden"],
     });
     return () => observer.disconnect();

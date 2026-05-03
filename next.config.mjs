@@ -1,18 +1,35 @@
 /** @type {import('next').NextConfig} */
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://nosion.rahmanef.com";
+const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL ?? "https://api-notion-page-clone.rahmanef.com";
+const convexHost = (() => {
+  try { return new URL(convexUrl).hostname; } catch { return "api-notion-page-clone.rahmanef.com"; }
+})();
 
 const nextConfig = {
   output: "standalone",
   reactStrictMode: true,
+  images: {
+    // Convex storage URLs (ctx.storage.getUrl) live on the Convex API host —
+    // allowlisting lets us drop `unoptimized` on Image components that
+    // render storage blobs. User-pasted external URLs (ImageBlock,
+    // GalleryView) still use `unoptimized` because the URL space is open.
+    remotePatterns: [
+      { protocol: "https", hostname: convexHost, pathname: "/api/storage/**" },
+      // Common cover/avatar hosts users paste — kept narrow on purpose.
+      { protocol: "https", hostname: "images.unsplash.com" },
+      { protocol: "https", hostname: "avatars.githubusercontent.com" },
+    ],
+  },
   // cacheComponents: requires every route under a Suspense boundary OR
   // explicit "use cache" — the ConvexAuthNextjsServerProvider in layout
   // reads cookies dynamically, currently blocking layout-level enablement.
-  // Re-enable once auth provider is moved behind a per-route Suspense and
-  // /share/[id] gets a "use cache" + cacheTag annotation.
+  // Tracking deferral + exit criteria in docs/audit/cache-components.md.
   // cacheComponents: true,
   deploymentId: process.env.NEXT_PUBLIC_DEPLOYMENT_ID,
-  // Pre-existing legacy slice TS drift; tightened to strictNullChecks=false
-  // tsconfig. TODO(s6+): tsc --noEmit in CI, fix tree, drop this flag.
+  // Pre-existing legacy slice TS drift (formulaEngine, dnd-kit attrs, zod
+  // recursive schemas). CI gates correctness via `npx tsc --noEmit` in
+  // .github/workflows/frontend-ci.yml — this flag only prevents the gate
+  // from blocking next build while the legacy tree is being paid down.
   typescript: { ignoreBuildErrors: true },
   experimental: {
     serverActions: {

@@ -2,6 +2,13 @@ version: "3.8"
 
 # Self-hosted Convex backend stack — companion to the Next frontend.
 # Frontend is built+deployed separately via Dockerfile (Next standalone).
+#
+# Network model: ports bind to 127.0.0.1 only. A reverse proxy (Dokploy /
+# Traefik / nginx) on the host fronts :3210/:3211/:6791 with TLS. Running
+# this compose on bare Docker without a proxy will leave the ports
+# unreachable from the public internet — that's the point. To expose
+# directly during development, override with `-p 0.0.0.0:3210:3210`.
+#
 # Required env (set in Dokploy / .env, never committed):
 #   INSTANCE_NAME, INSTANCE_SECRET, CONVEX_ADMIN_KEY, JWT_PRIVATE_KEY, JWKS
 #   POSTGRES_URL (postgresql://user:pass@host:5432/db) — REQUIRED for prod
@@ -34,8 +41,8 @@ services:
     volumes:
       - convex_data:/convex/data
     ports:
-      - "3210:3210"
-      - "3211:3211"
+      - "127.0.0.1:3210:3210"
+      - "127.0.0.1:3211:3211"
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:3210/version"]
       interval: 30s
@@ -49,7 +56,7 @@ services:
     environment:
       - PORT=6791
     ports:
-      - "6791:6791"
+      - "127.0.0.1:6791:6791"
 
 volumes:
   convex_data:

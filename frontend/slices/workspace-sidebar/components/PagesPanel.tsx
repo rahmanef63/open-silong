@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useLocation } from "@/shared/lib/router-compat";
+import { useRouter, usePathname } from "next/navigation";
 import { Plus } from "lucide-react";
 import { DndContext, DragOverlay } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
@@ -18,6 +18,9 @@ interface Props {
   onClose?: () => void;
 }
 
+const BASE = "/dashboard";
+const path = (p: string) => (p === "/" ? BASE : `${BASE}${p}`);
+
 /**
  * Pages tree (Favorites, Recent, Workspace, Databases) as flat sections.
  * Renders no outer wrapper / scroller / footer — host (AppSidebar) owns those.
@@ -27,8 +30,8 @@ export function PagesPanel({ onClose }: Props) {
     pages, recents, childrenOf, createPage, preferences,
     databases, createDatabase, addBlock, updateBlock,
   } = useStore();
-  const navigate = useNavigate();
-  const location = useLocation();
+  const router = useRouter();
+  const pathname = usePathname() ?? BASE;
   const density = DENSITY[preferences.sidebarDensity];
   const [openIds, setOpenIds] = useState<Set<string>>(new Set());
   const [treeInitialized, setTreeInitialized] = useState(false);
@@ -72,7 +75,7 @@ export function PagesPanel({ onClose }: Props) {
   const dnd = useSidebarDnd({ treeItems, pageMap, itemById, setPageOpen });
 
   function go(p: string) {
-    navigate(p);
+    router.push(path(p));
     onClose?.();
   }
 
@@ -92,7 +95,7 @@ export function PagesPanel({ onClose }: Props) {
               page={page}
               density={density}
               onClose={onClose}
-              active={location.pathname === `/p/${page.id}`}
+              active={pathname === path(`/p/${page.id}`)}
             />
           ))}
         </PanelGroup>
@@ -106,7 +109,7 @@ export function PagesPanel({ onClose }: Props) {
               page={page}
               density={density}
               onClose={onClose}
-              active={location.pathname === `/p/${page.id}`}
+              active={pathname === path(`/p/${page.id}`)}
             />
           ))}
         </PanelGroup>

@@ -21,7 +21,7 @@ export function FileChip({ fileRef, onRemove }: Props) {
         <a
           href={href}
           target="_blank"
-          rel="noreferrer"
+          rel="noopener noreferrer"
           download={parsed.filename}
           className="min-w-0 flex-1 truncate text-brand hover:underline"
         >
@@ -33,7 +33,7 @@ export function FileChip({ fileRef, onRemove }: Props) {
         </span>
       )}
       {href && (
-        <a href={href} target="_blank" rel="noreferrer" download={parsed.filename} className="text-muted-foreground hover:text-foreground" aria-label="Download">
+        <a href={href} target="_blank" rel="noopener noreferrer" download={parsed.filename} className="text-muted-foreground hover:text-foreground" aria-label="Download">
           {parsed.kind === "url" ? <ExternalLink className="h-3 w-3" /> : <Download className="h-3 w-3" />}
         </a>
       )}

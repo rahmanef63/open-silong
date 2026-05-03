@@ -53,15 +53,15 @@ function Nav() {
           </span>
         </Link>
         <nav className="flex items-center gap-1 text-sm">
-          <a href="#features" className="hidden rounded-md px-3 py-1.5 text-muted-foreground hover:bg-accent hover:text-foreground sm:inline">
+          <Link href="#features" className="hidden rounded-md px-3 py-1.5 text-muted-foreground hover:bg-accent hover:text-foreground sm:inline">
             Features
-          </a>
-          <a href="#how" className="hidden rounded-md px-3 py-1.5 text-muted-foreground hover:bg-accent hover:text-foreground sm:inline">
+          </Link>
+          <Link href="#how" className="hidden rounded-md px-3 py-1.5 text-muted-foreground hover:bg-accent hover:text-foreground sm:inline">
             How it&apos;s made
-          </a>
-          <a href="#faq" className="hidden rounded-md px-3 py-1.5 text-muted-foreground hover:bg-accent hover:text-foreground sm:inline">
+          </Link>
+          <Link href="#faq" className="hidden rounded-md px-3 py-1.5 text-muted-foreground hover:bg-accent hover:text-foreground sm:inline">
             FAQ
-          </a>
+          </Link>
           <Link href="/auth" className="rounded-md px-3 py-1.5 text-muted-foreground hover:bg-accent hover:text-foreground">
             Sign in
           </Link>
