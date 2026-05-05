@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useState } from "react";
 import { Link, useLocation, useNavigate } from "@/shared/lib/router-compat";
 import { ChevronRight, Copy, GripVertical, MoreHorizontal, Pencil, Plus, Star, Trash2 } from "lucide-react";
 import { useSortable } from "@dnd-kit/sortable";
@@ -21,6 +21,8 @@ interface Props {
   /** When provided, the trash action delegates to host (typically PagesPanel
    *  rendering a confirm dialog). Falls back to direct soft-delete. */
   onRequestDelete?: (page: { id: string; title: string; icon: string }) => void;
+  /** Precomputed in PagesPanel — avoids per-row .filter scans. */
+  kidsCount: number;
   isOverSibling?: boolean;
   isOverNesting?: boolean;
   isExternalOver?: boolean;
@@ -29,17 +31,16 @@ interface Props {
   onExternalDrop?: (e: React.DragEvent) => void;
 }
 
-export function SortablePageRow({
-  item, density, isOpen, setOpen, onClose, onRequestDelete,
+function SortablePageRowImpl({
+  item, density, isOpen, setOpen, onClose, onRequestDelete, kidsCount,
   isOverSibling = false, isOverNesting = false, isExternalOver = false,
   onExternalEnter, onExternalLeave, onExternalDrop,
 }: Props) {
-  const { childrenOf, createPage, duplicatePage, deletePage, toggleFavorite, updatePage } = useStore();
+  const { createPage, duplicatePage, deletePage, toggleFavorite, updatePage } = useStore();
   const navigate = useNavigate();
   const location = useLocation();
   const [renaming, setRenaming] = useState(false);
   const [name, setName] = useState(item.page.title);
-  const kids = childrenOf(item.page.id);
   const active = location.pathname === `/p/${item.page.id}`;
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.page.id });
 
@@ -88,7 +89,7 @@ export function SortablePageRow({
           className={cn("flex items-center justify-center rounded hover:bg-background/60 text-muted-foreground", density.toggle)}
           aria-label="Toggle"
         >
-          <ChevronRight className={cn("h-3.5 w-3.5 transition-transform", isOpen && "rotate-90", kids.length === 0 && "opacity-30")} />
+          <ChevronRight className={cn("h-3.5 w-3.5 transition-transform", isOpen && "rotate-90", kidsCount === 0 && "opacity-30")} />
         </button>
         <Link
           to={`/p/${item.page.id}`}
@@ -97,7 +98,7 @@ export function SortablePageRow({
           data-sidebar-tree-item
           data-sidebar-page-id={item.page.id}
           data-sidebar-parent-id={item.parentId ?? ""}
-          onKeyDown={(e) => handleTreeKey(e, item, kids, isOpen, setOpen)}
+          onKeyDown={(e) => handleTreeKey(e, item, kidsCount, isOpen, setOpen)}
           className={cn("flex min-w-0 flex-1 items-center", density.pageLink)}
         >
           <DynamicIcon
@@ -177,3 +178,19 @@ export function SortablePageRow({
     </div>
   );
 }
+
+/** Memoized: row only re-renders when its own props change. Prevents the
+ *  whole sidebar tree from re-rendering when an unrelated page block is
+ *  edited (which still re-broadcasts the full pages list). */
+export const SortablePageRow = memo(SortablePageRowImpl, (prev, next) => {
+  return (
+    prev.item.page === next.item.page &&
+    prev.item.depth === next.item.depth &&
+    prev.density === next.density &&
+    prev.isOpen === next.isOpen &&
+    prev.kidsCount === next.kidsCount &&
+    prev.isOverSibling === next.isOverSibling &&
+    prev.isOverNesting === next.isOverNesting &&
+    prev.isExternalOver === next.isExternalOver
+  );
+});

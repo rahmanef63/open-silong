@@ -18,12 +18,7 @@ export function DatabaseSidebarRow({ db, density }: Props) {
   const { trashDatabase, pages } = useStore();
   const navigate = useNavigate();
   const host = useMemo(
-    () =>
-      pages.find(
-        (p) =>
-          !p.trashed &&
-          p.blocks.some((b) => b.type === "database" && b.databaseId === db.id),
-      ),
+    () => pages.find((p) => !p.trashed && p.databaseHostFor?.includes(db.id)),
     [pages, db.id],
   );
   return (

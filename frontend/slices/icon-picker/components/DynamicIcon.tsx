@@ -28,9 +28,10 @@ interface Props {
  *   - lucide:Name      → SVG component, color from `?c=hex`
  *   - emoji (twemoji)  → <img> from jsDelivr CDN, fallback to native
  *   - emoji (native)   → OS font glyph in a span
- *  Backwards-compat with all existing emoji-only icon strings. */
-export function DynamicIcon({ value, className, fallback = "📄", title, forceNative }: Props) {
-  const parsed = parseIconValue(value);
+ *  Backwards-compat with all existing emoji-only icon strings.
+ *  Memoized: re-renders only when `value` or styling-affecting props change. */
+function DynamicIconImpl({ value, className, fallback = "📄", title, forceNative }: Props) {
+  const parsed = React.useMemo(() => parseIconValue(value), [value]);
   const [style] = useIconStyle();
   const useTwemoji = style === "twemoji" && !forceNative;
 
@@ -52,11 +53,9 @@ export function DynamicIcon({ value, className, fallback = "📄", title, forceN
   }
 
   const glyph = parsed.kind === "emoji" ? parsed.emoji : fallback;
+  const url = React.useMemo(() => (useTwemoji ? twemojiUrl(glyph) : null), [useTwemoji, glyph]);
 
-  if (useTwemoji) {
-    const url = twemojiUrl(glyph);
-    if (url) return <TwemojiImg url={url} glyph={glyph} className={className} title={title} />;
-  }
+  if (url) return <TwemojiImg url={url} glyph={glyph} className={className} title={title} />;
 
   return (
     <span className={cn("inline-flex items-center justify-center leading-none", className)} title={title}>
@@ -64,6 +63,8 @@ export function DynamicIcon({ value, className, fallback = "📄", title, forceN
     </span>
   );
 }
+
+export const DynamicIcon = React.memo(DynamicIconImpl);
 
 function TwemojiImg({ url, glyph, className, title }: { url: string; glyph: string; className?: string; title?: string }) {
   const [failed, setFailed] = React.useState(false);

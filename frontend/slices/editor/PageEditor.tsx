@@ -29,6 +29,7 @@ import {
 } from "@/slices/block-selection/lib/multiMove";
 import { PageHeaderSlot } from "@/shared/components/PageHeaderSlot";
 import { IconPickerPopover, DynamicIcon } from "@/slices/icon-picker";
+import { useFullPage } from "./hooks/useFullPage";
 
 const COVERS = [
   "linear-gradient(135deg, hsl(24 90% 70%), hsl(340 80% 70%))",
@@ -40,10 +41,12 @@ const COVERS = [
 
 export function PageEditor() {
   const { id } = useParams<{ id: string }>();
-  const { getPage, updatePage, pushRecent, addBlock, reorderBlocks, childrenOf, createPage, getDatabase, updateDatabase } = useStore();
+  const { updatePage, pushRecent, addBlock, reorderBlocks, childrenOf, createPage, getDatabase, updateDatabase } = useStore();
   void createPage;
   const navigate = useNavigate();
-  const page = id ? getPage(id) : undefined;
+  // Subscribe directly to this page so unrelated edits don't re-render here.
+  const fullPage = useFullPage(id ?? null);
+  const page = fullPage ?? undefined;
   const [iconPick, setIconPick] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -57,6 +60,10 @@ export function PageEditor() {
   );
 
   useEffect(() => { if (id && page) pushRecent(id); }, [id]);
+
+  if (fullPage === undefined) {
+    return <PageEditorSkeleton />;
+  }
 
   if (!page || page.trashed) {
     return (
@@ -341,6 +348,25 @@ export function PageEditor() {
   );
 }
 
+function PageEditorSkeleton() {
+  return (
+    <div className="flex h-full flex-col">
+      <div className="border-b border-border h-10 px-4 flex items-center" />
+      <div className="flex-1 overflow-hidden px-4 sm:px-6 md:px-12 pt-16">
+        <div className="mx-auto max-w-3xl space-y-4">
+          <div className="h-12 w-12 rounded-md bg-muted animate-pulse" />
+          <div className="h-12 w-3/4 rounded-md bg-muted animate-pulse" />
+          <div className="space-y-2 pt-4">
+            <div className="h-4 w-5/6 rounded bg-muted animate-pulse" />
+            <div className="h-4 w-4/6 rounded bg-muted animate-pulse" />
+            <div className="h-4 w-3/6 rounded bg-muted animate-pulse" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Subpages({ page, subpages }: { page: Page; subpages: Page[] }) {
   const navigate = useNavigate();
   const { createPage } = useStore();
@@ -395,13 +421,7 @@ function HeaderBreadcrumbs({ page }: { page: Page }) {
 
   const dbHostPage =
     page.rowOfDatabaseId
-      ? pages.find(
-          (p) =>
-            !p.trashed &&
-            p.blocks.some(
-              (b) => b.type === "database" && b.databaseId === page.rowOfDatabaseId
-            )
-        )
+      ? pages.find((p) => !p.trashed && p.databaseHostFor?.includes(page.rowOfDatabaseId!))
       : undefined;
 
   const finalCrumbs =

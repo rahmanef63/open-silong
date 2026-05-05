@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Link } from "@/shared/lib/router-compat";
 import type { Page } from "@/shared/types/domain";
 import { cn } from "@/shared/lib/utils";
@@ -12,7 +13,7 @@ interface Props {
   density: DensityConfig;
 }
 
-export function SidebarPageLink({ page, active = false, onClose, density }: Props) {
+function SidebarPageLinkImpl({ page, active = false, onClose, density }: Props) {
   return (
     <Link
       to={`/p/${page.id}`}
@@ -33,3 +34,9 @@ export function SidebarPageLink({ page, active = false, onClose, density }: Prop
     </Link>
   );
 }
+
+export const SidebarPageLink = memo(SidebarPageLinkImpl, (prev, next) =>
+  prev.page === next.page &&
+  prev.active === next.active &&
+  prev.density === next.density,
+);

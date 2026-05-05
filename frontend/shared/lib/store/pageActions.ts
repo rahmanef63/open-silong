@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import type { Block, BlockType, Page, Preferences } from "@/shared/types/domain";
@@ -170,11 +170,55 @@ export function usePageActions({ pages, pageMap, preferences, snapshotIfNeeded, 
     [mutAddBlock],
   );
 
+  // Debounced text-only block writes — typing produces ~6 mutations/sec
+  // otherwise. Structural changes (type swap, checkbox toggle, code lang)
+  // flush immediately. Pending patches are coalesced per block (last write
+  // wins for text). Flushed on blur/unmount via flushPendingBlocks.
+  const pendingBlockWrites = useRef<Map<string, { pageId: string; blockId: string; patch: Partial<Block>; timer: number }>>(new Map());
+  const TEXT_ONLY_KEYS = new Set(["text", "caption"]);
+  const isTextOnlyPatch = (patch: Partial<Block>) =>
+    Object.keys(patch).length > 0 && Object.keys(patch).every((k) => TEXT_ONLY_KEYS.has(k));
+
+  const flushBlockKey = useCallback((key: string) => {
+    const entry = pendingBlockWrites.current.get(key);
+    if (!entry) return;
+    window.clearTimeout(entry.timer);
+    pendingBlockWrites.current.delete(key);
+    mutUpdateBlock({ pageId: entry.pageId, blockId: entry.blockId, patch: entry.patch });
+  }, [mutUpdateBlock]);
+
+  const flushAllPendingBlocks = useCallback(() => {
+    for (const key of Array.from(pendingBlockWrites.current.keys())) flushBlockKey(key);
+  }, [flushBlockKey]);
+
+  // Flush on tab close / route change so pending text isn't lost.
+  useEffect(() => {
+    const onHide = () => flushAllPendingBlocks();
+    window.addEventListener("beforeunload", onHide);
+    window.addEventListener("pagehide", onHide);
+    return () => {
+      flushAllPendingBlocks();
+      window.removeEventListener("beforeunload", onHide);
+      window.removeEventListener("pagehide", onHide);
+    };
+  }, [flushAllPendingBlocks]);
+
   const updateBlock = useCallback(
     (pageId: string, blockId: string, patch: Partial<Block>) => {
-      mutUpdateBlock({ pageId, blockId, patch });
+      const key = `${pageId}:${blockId}`;
+      if (!isTextOnlyPatch(patch)) {
+        // Structural change — flush any queued text first, then write.
+        flushBlockKey(key);
+        mutUpdateBlock({ pageId, blockId, patch });
+        return;
+      }
+      const existing = pendingBlockWrites.current.get(key);
+      const merged = { ...(existing?.patch ?? {}), ...patch };
+      if (existing) window.clearTimeout(existing.timer);
+      const timer = window.setTimeout(() => flushBlockKey(key), 250);
+      pendingBlockWrites.current.set(key, { pageId, blockId, patch: merged, timer });
     },
-    [mutUpdateBlock],
+    [flushBlockKey, mutUpdateBlock],
   );
 
   const deleteBlock = useCallback(

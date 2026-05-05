@@ -126,7 +126,7 @@ export function Dashboard() {
                     <DynamicIcon value={p.icon} className="text-lg" />
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-sm font-medium">{p.title || "Untitled"}</div>
-                      <div className="truncate text-xs text-muted-foreground">{p.blocks.find(b => b.text)?.text || "Empty page"}</div>
+                      <div className="truncate text-xs text-muted-foreground">{p.previewText || "Empty page"}</div>
                     </div>
                     <span className="text-xs text-muted-foreground shrink-0">{relTime(p.updatedAt)}</span>
                   </button>
@@ -178,7 +178,7 @@ function ActionCard({ icon: Icon, title, subtitle, onClick, primary }: any) {
 }
 
 function PageCard({ page, onClick }: any) {
-  const preview = page.blocks.find((b: any) => b.text)?.text || "Empty page";
+  const preview = page.previewText || "Empty page";
   return (
     <button
       onClick={onClick}

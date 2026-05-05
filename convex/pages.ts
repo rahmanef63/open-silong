@@ -48,6 +48,75 @@ export const list = query({
   },
 });
 
+/** Slim DTO for sidebar/dashboard/list views. Excludes `blocks`,
+ *  `searchText`, `rowProps` — those are 95% of the payload and only the
+ *  active page editor needs them. Use `pages.getById(id)` for the full doc.
+ *  Cuts websocket payload per keystroke from O(all-pages × blocks) to O(meta). */
+export const listMeta = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
+    const docs = await ctx.db
+      .query("pages")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .collect();
+    return docs.map((d) => ({
+      _id: d._id,
+      _creationTime: d._creationTime,
+      userId: d.userId,
+      parentId: d.parentId,
+      title: d.title,
+      icon: d.icon,
+      cover: d.cover,
+      favorite: d.favorite,
+      trashed: d.trashed,
+      isPublic: d.isPublic,
+      rowOfDatabaseId: d.rowOfDatabaseId,
+      font: d.font,
+      smallText: d.smallText,
+      fullWidth: d.fullWidth,
+      locked: d.locked,
+      createdAt: d.createdAt,
+      updatedAt: d.updatedAt,
+      /** Cheap derived signal: does this page host any database block?
+       *  Used by callers that need to find a database's host page without
+       *  scanning all blocks of all pages. */
+      databaseHostFor: (d.blocks as any[])
+        .filter((b) => b?.type === "database" && b?.databaseId)
+        .map((b) => b.databaseId as string),
+      /** Block count for cheap previews. */
+      blockCount: (d.blocks as any[]).length,
+      /** First text-bearing block, truncated. Lets dashboard show snippets
+       *  without shipping the full blocks array. */
+      previewText: (() => {
+        for (const b of d.blocks as any[]) {
+          if (typeof b?.text === "string" && b.text.trim()) return b.text.slice(0, 120);
+        }
+        return "";
+      })(),
+    }));
+  },
+});
+
+/** Full page doc for the editor. Subscribe to a single page so block edits
+ *  on this page don't re-broadcast all other pages. */
+export const getById = query({
+  args: { id: v.string() },
+  handler: async (ctx, { id }) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+    let doc;
+    try {
+      doc = await ctx.db.get(id as Id<"pages">);
+    } catch {
+      return null;
+    }
+    if (!doc || doc.userId !== userId) return null;
+    return doc;
+  },
+});
+
 export const create = mutation({
   args: {
     parentId: v.union(v.string(), v.null()),
@@ -267,9 +336,13 @@ export const updateBlock = mutation({
     const blocks = page.blocks.map((b: any) =>
       b.id === args.blockId ? { ...b, ...args.patch } : b
     );
+    // Only rebuild searchText when the patch touches text-bearing fields.
+    // Toggle/reorder/style-only patches skip the O(blocks) string build.
+    const TEXT_FIELDS = ["text", "type", "lang", "caption"];
+    const touchesText = Object.keys(args.patch ?? {}).some((k) => TEXT_FIELDS.includes(k));
     await ctx.db.patch(args.pageId as Id<"pages">, {
       blocks,
-      searchText: buildSearchText(page.title, blocks),
+      ...(touchesText ? { searchText: buildSearchText(page.title, blocks) } : {}),
       updatedAt: Date.now(),
     });
   },
