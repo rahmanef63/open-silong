@@ -5,9 +5,22 @@ const convexHost = (() => {
   try { return new URL(convexUrl).hostname; } catch { return "api-notion-page-clone.rahmanef.com"; }
 })();
 
+// Stable per-deploy build id. CI sets GITHUB_SHA / DOKPLOY_COMMIT_SHA;
+// fallback timestamp keeps dev unique. Exposed to the client as
+// NEXT_PUBLIC_BUILD_ID so VersionWatcher can compare and prompt reload.
+const BUILD_ID =
+  process.env.NEXT_PUBLIC_BUILD_ID ||
+  process.env.GITHUB_SHA ||
+  process.env.VERCEL_GIT_COMMIT_SHA ||
+  process.env.DOKPLOY_COMMIT_SHA ||
+  process.env.COMMIT_SHA ||
+  `dev-${Date.now()}`;
+process.env.NEXT_PUBLIC_BUILD_ID = BUILD_ID;
+
 const nextConfig = {
   output: "standalone",
   reactStrictMode: true,
+  generateBuildId: () => BUILD_ID,
   images: {
     // Convex storage URLs (ctx.storage.getUrl) live on the Convex API host —
     // allowlisting lets us drop `unoptimized` on Image components that

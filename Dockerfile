@@ -10,8 +10,17 @@ COPY . .
 
 ARG NEXT_PUBLIC_CONVEX_URL=https://api-notion-page-clone.rahmanef.com
 ARG NEXT_PUBLIC_DEPLOYMENT_ID
+# Build id powers the version-watcher reload prompt + chunk-error recovery.
+# Dokploy passes the commit SHA via DOKPLOY_COMMIT_SHA; fall back to a
+# build-time timestamp when missing so production never ships an empty id.
+ARG DOKPLOY_COMMIT_SHA
+ARG GITHUB_SHA
+ARG NEXT_PUBLIC_BUILD_ID
 ENV NEXT_PUBLIC_CONVEX_URL=$NEXT_PUBLIC_CONVEX_URL
 ENV NEXT_PUBLIC_DEPLOYMENT_ID=$NEXT_PUBLIC_DEPLOYMENT_ID
+ENV DOKPLOY_COMMIT_SHA=$DOKPLOY_COMMIT_SHA
+ENV GITHUB_SHA=$GITHUB_SHA
+ENV NEXT_PUBLIC_BUILD_ID=$NEXT_PUBLIC_BUILD_ID
 ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN npm run build
