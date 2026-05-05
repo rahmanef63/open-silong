@@ -91,7 +91,7 @@ export function CommandPalette() {
           <CommandGroup heading="Databases">
             {databases.slice(0, MAX_PAGES).map((d) => (
               <CommandItem key={d.id} value={`db:${d.name}:${d.id}`} onSelect={run(() => {
-                const host = pages.find((p) => p.blocks.some((b) => b.type === "database" && b.databaseId === d.id) && !p.trashed);
+                const host = pages.find((p) => !p.trashed && p.databaseHostFor?.includes(d.id));
                 if (host) navigate(`/p/${host.id}`);
               })}>
                 <DbIcon className="mr-2 h-3.5 w-3.5 text-muted-foreground" />

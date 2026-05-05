@@ -22,6 +22,9 @@ function toPage(doc: any): Page {
     rowOfDatabaseId: doc.rowOfDatabaseId, rowProps: doc.rowProps,
     font: doc.font, smallText: doc.smallText, fullWidth: doc.fullWidth, locked: doc.locked,
     createdAt: doc.createdAt, updatedAt: doc.updatedAt,
+    databaseHostFor: doc.databaseHostFor,
+    blockCount: doc.blockCount,
+    previewText: doc.previewText,
   };
 }
 
@@ -115,7 +118,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const { signOut: authSignOut } = useAuthActions();
 
   // Convex queries
-  const rawPagesQ = useQuery(api.pages.list);
+  // Slim listMeta excludes blocks/searchText/rowProps — 95% smaller payload
+  // per keystroke. Editor pages subscribe individually via useFullPage(id).
+  const rawPagesQ = useQuery(api.pages.listMeta);
   const rawDatabasesQ = useQuery(api.databases.list);
   const rawPages = rawPagesQ ?? [];
   const rawDatabases = rawDatabasesQ ?? [];

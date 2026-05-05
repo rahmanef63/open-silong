@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
+import dynamic from "next/dynamic";
 import { useNavigate } from "@/shared/lib/router-compat";
 import { FileText, GripVertical } from "lucide-react";
 import { useSortable } from "@dnd-kit/sortable";
@@ -7,7 +8,11 @@ import { Checkbox } from "@/shared/ui/checkbox";
 import { useStore } from "@/shared/lib/store";
 import type { Block, BlockType } from "@/shared/types/domain";
 import { cn } from "@/shared/lib/utils";
-import { CodeBlock } from "@/slices/code-block";
+
+const CodeBlock = dynamic(
+  () => import("@/slices/code-block").then((m) => ({ default: m.CodeBlock })),
+  { ssr: false, loading: () => <div className="h-12 rounded bg-muted animate-pulse" /> },
+);
 import { DynamicIcon } from "@/slices/icon-picker";
 import { MARKDOWN_TRIGGERS } from "../lib/markdownTriggers";
 import { SlashMenu } from "../SlashMenu";

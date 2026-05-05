@@ -79,6 +79,15 @@ export interface Page {
   fullWidth?: boolean;
   /** Lock prevents editing */
   locked?: boolean;
+  /** Denormalized list of database IDs hosted by `database` blocks on this
+   *  page. Populated from the slim `pages.listMeta` query so consumers can
+   *  find a database's host page without scanning blocks. Empty for the
+   *  full per-page query (use `blocks` directly there). */
+  databaseHostFor?: string[];
+  /** Block count on this page — slim signal for previews / sort. */
+  blockCount?: number;
+  /** First text-bearing block (truncated 120 chars). From slim listMeta. */
+  previewText?: string;
 }
 
 export interface Workspace {

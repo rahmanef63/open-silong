@@ -15,6 +15,7 @@ import { BlockEditor } from "@/slices/editor/BlockEditor";
 import { RowPropertiesPanel } from "@/slices/editor/RowPropertiesPanel";
 import { PageCommentsProvider } from "@/slices/comments";
 import { DynamicIcon, IconPickerPopover } from "@/slices/icon-picker";
+import { useFullPage } from "@/slices/editor/hooks/useFullPage";
 import type { Block } from "@/shared/types/domain";
 
 interface Props {
@@ -23,9 +24,10 @@ interface Props {
 }
 
 export function RowDetailSheet({ pageId, onOpenChange }: Props) {
-  const { getPage, updatePage, addBlock, reorderBlocks } = useStore();
+  const { updatePage, addBlock, reorderBlocks } = useStore();
   const navigate = useNavigate();
-  const page = pageId ? getPage(pageId) : undefined;
+  const fullPage = useFullPage(pageId ?? null);
+  const page = fullPage ?? undefined;
   const refs = useRef<Map<string, HTMLElement | null>>(new Map());
   const blocksRef = useRef<Block[] | undefined>(page?.blocks);
   blocksRef.current = page?.blocks;

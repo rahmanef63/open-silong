@@ -14,7 +14,7 @@ export function handleSidebarTraversal(e: React.KeyboardEvent<HTMLElement>, sele
 export function handleTreeKey(
   e: React.KeyboardEvent<HTMLElement>,
   item: TreeItem,
-  kids: Page[],
+  kidsCount: number,
   isOpen: boolean,
   setOpen: (open: boolean) => void,
 ) {
@@ -26,7 +26,7 @@ export function handleTreeKey(
     return;
   }
 
-  if (e.key === "ArrowRight" && kids.length > 0) {
+  if (e.key === "ArrowRight" && kidsCount > 0) {
     e.preventDefault();
     if (!isOpen) {
       setOpen(true);
@@ -40,7 +40,7 @@ export function handleTreeKey(
 
   if (e.key === "ArrowLeft") {
     e.preventDefault();
-    if (isOpen && kids.length > 0) {
+    if (isOpen && kidsCount > 0) {
       setOpen(false);
       return;
     }

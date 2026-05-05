@@ -114,11 +114,7 @@ export function RowPropertiesPanel({ page }: { page: Page }) {
 
   // Find parent database page for breadcrumb navigation
   const dbPage = pages.find(
-    (p) =>
-      !p.trashed &&
-      p.blocks.some(
-        (b) => b.type === "database" && b.databaseId === page.rowOfDatabaseId
-      )
+    (p) => !p.trashed && p.databaseHostFor?.includes(page.rowOfDatabaseId!),
   );
 
   return (

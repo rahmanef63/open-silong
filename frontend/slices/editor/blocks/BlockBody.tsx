@@ -1,9 +1,15 @@
 import type { KeyboardEvent } from "react";
+import dynamic from "next/dynamic";
 import type { Block, BlockType } from "@/shared/types/domain";
 import { Checkbox } from "@/shared/ui/checkbox";
 import { cn } from "@/shared/lib/utils";
-import { CodeBlock } from "@/slices/code-block";
 import { bgColorClass, colorClass } from "../lib/colors";
+
+// hljs (~90KB) only loaded when a code block actually renders.
+const CodeBlock = dynamic(
+  () => import("@/slices/code-block").then((m) => ({ default: m.CodeBlock })),
+  { ssr: false, loading: () => <div className="h-12 rounded bg-muted animate-pulse" /> },
+);
 
 interface Props {
   block: Block;

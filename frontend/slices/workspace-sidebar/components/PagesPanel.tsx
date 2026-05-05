@@ -61,6 +61,18 @@ export function PagesPanel({ onClose }: Props) {
 
   const pageMap = useMemo(() => new Map(pages.map((p) => [p.id, p])), [pages]);
 
+  /** parentId → children count. Computed once per pages change instead of
+   *  per-row .filter() in SortablePageRow. */
+  const childrenCounts = useMemo(() => {
+    const m = new Map<string | null, number>();
+    for (const p of pages) {
+      if (p.trashed || p.rowOfDatabaseId) continue;
+      const k = p.parentId;
+      m.set(k, (m.get(k) ?? 0) + 1);
+    }
+    return m;
+  }, [pages]);
+
   const treeItems = useMemo(() => {
     const walk = (parentId: string | null, depth: number): TreeItem[] =>
       childrenOf(parentId).flatMap((page) => {
@@ -187,6 +199,7 @@ export function PagesPanel({ onClose }: Props) {
                   setOpen={(open) => setPageOpen(item.page.id, open)}
                   onClose={onClose}
                   onRequestDelete={(p) => pageCRUD.openDelete(p.id)}
+                  kidsCount={childrenCounts.get(item.page.id) ?? 0}
                   isOverSibling={dnd.overId === item.page.id && !dnd.nestIntent && dnd.activeId !== null}
                   isOverNesting={dnd.overId === item.page.id && dnd.nestIntent && dnd.activeId !== null}
                   isExternalOver={dnd.externalOverId === item.page.id}
