@@ -35,6 +35,15 @@ function DynamicIconImpl({ value, className, fallback = "📄", title, forceNati
   const [style] = useIconStyle();
   const useTwemoji = style === "twemoji" && !forceNative;
 
+  // Hooks MUST run in the same order every render. Compute these unconditionally
+  // even when the lucide branch will be taken — toggling between lucide and
+  // emoji icons must not change hook count (was React error #300).
+  const glyph = parsed.kind === "emoji" ? parsed.emoji : fallback;
+  const url = React.useMemo(
+    () => (useTwemoji && parsed.kind !== "lucide" ? twemojiUrl(glyph) : null),
+    [useTwemoji, glyph, parsed.kind],
+  );
+
   if (parsed.kind === "lucide") {
     const Cmp = (LucideIcons as unknown as IconMap)[parsed.name];
     if (!Cmp && process.env.NODE_ENV !== "production") {
@@ -51,9 +60,6 @@ function DynamicIconImpl({ value, className, fallback = "📄", title, forceNati
       </span>
     );
   }
-
-  const glyph = parsed.kind === "emoji" ? parsed.emoji : fallback;
-  const url = React.useMemo(() => (useTwemoji ? twemojiUrl(glyph) : null), [useTwemoji, glyph]);
 
   if (url) return <TwemojiImg url={url} glyph={glyph} className={className} title={title} />;
 
