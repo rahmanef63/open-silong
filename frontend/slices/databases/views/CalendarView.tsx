@@ -9,6 +9,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
 import { QuickCreateDialog } from "../components/QuickCreateDialog";
+import { DynamicIcon } from "@/slices/icon-picker";
 import type { PropertyValue } from "@/shared/types/domain";
 import {
   DndContext, useDraggable, useDroppable, PointerSensor, useSensor, useSensors, DragEndEvent,
@@ -437,7 +438,7 @@ function DraggableEvent({
           tone,
         )}
       >
-        {row.icon} {row.title || "Untitled"}
+        <DynamicIcon value={row.icon} className="text-[11px] mr-1 inline-flex" />{row.title || "Untitled"}
       </button>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -482,7 +483,7 @@ function OverflowPanel({
         {rows.map(r => (
           <div key={r.id} className="flex items-center gap-2 px-3 py-1.5 text-xs hover:bg-accent/40 group">
             <button onClick={() => onOpenRow(r.id)} className="flex-1 text-left truncate">
-              {r.icon} {r.title || "Untitled"}
+<DynamicIcon value={r.icon} className="text-xs mr-1 inline-flex" />{r.title || "Untitled"}
             </button>
             <button
               onClick={() => onDeleteRow(r.id)}

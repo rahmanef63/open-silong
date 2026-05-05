@@ -1,6 +1,7 @@
 import { Link } from "@/shared/lib/router-compat";
 import type { Page } from "@/shared/types/domain";
 import { cn } from "@/shared/lib/utils";
+import { DynamicIcon } from "@/slices/icon-picker";
 import { DENSITY, type DensityConfig } from "../lib/density";
 import { handleSidebarTraversal } from "../lib/keyboard";
 
@@ -19,12 +20,15 @@ export function SidebarPageLink({ page, active = false, onClose, density }: Prop
       data-sidebar-nav-item
       onKeyDown={(e) => handleSidebarTraversal(e, "[data-sidebar-nav-item]")}
       className={cn(
-        "flex items-center rounded-md px-2 hover:bg-sidebar-accent text-sidebar-foreground",
+        "flex items-center gap-1.5 rounded-md px-2 hover:bg-sidebar-accent text-sidebar-foreground",
         density.pageLink,
         active && "bg-sidebar-accent",
       )}
     >
-      <span className={cn("leading-none", density === DENSITY.compact ? "text-sm" : "text-base")}>{page.icon}</span>
+      <DynamicIcon
+        value={page.icon}
+        className={cn("shrink-0", density === DENSITY.compact ? "text-sm" : "text-base")}
+      />
       <span className="truncate">{page.title || "Untitled"}</span>
     </Link>
   );

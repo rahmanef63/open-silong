@@ -6,6 +6,7 @@ import {
 } from "@/shared/ui/dropdown-menu";
 import { ChevronDown, MapPin, Plus, MoreHorizontal, Trash2 } from "lucide-react";
 import { QuickCreateDialog } from "../components/QuickCreateDialog";
+import { DynamicIcon } from "@/slices/icon-picker";
 
 const COLOR_HEX: Record<string, string> = {
   gray: "#6b7280",
@@ -176,7 +177,7 @@ export function MapView({ db, view, rows, onOpenRow }: Props) {
             return (
               <div className="px-3 py-2 border-t border-border bg-card text-xs flex items-center gap-2">
                 <MapPin className="h-3.5 w-3.5 text-brand" />
-                <span className="font-medium">{p.row.icon} {p.row.title || "Untitled"}</span>
+                <span className="font-medium"><DynamicIcon value={p.row.icon} className="text-sm mr-1 inline-flex" />{p.row.title || "Untitled"}</span>
                 <span className="text-muted-foreground tabular-nums">
                   {p.lat.toFixed(3)}, {p.lng.toFixed(3)}
                 </span>
@@ -193,7 +194,7 @@ export function MapView({ db, view, rows, onOpenRow }: Props) {
             <div key={p.row.id} className="flex items-center gap-2 px-3 py-1.5 hover:bg-accent/50 text-xs group">
               <button onClick={() => onOpenRow(p.row.id)} className="flex flex-1 items-center gap-2 text-left min-w-0">
                 <MapPin className="h-3 w-3 shrink-0" style={{ color: p.color }} />
-                <span className="flex-1 truncate">{p.row.icon} {p.row.title || "Untitled"}</span>
+                <span className="flex-1 truncate"><DynamicIcon value={p.row.icon} className="text-sm mr-1 inline-flex" />{p.row.title || "Untitled"}</span>
                 <span className="text-muted-foreground tabular-nums">{p.lat.toFixed(2)}, {p.lng.toFixed(2)}</span>
               </button>
               <DropdownMenu>

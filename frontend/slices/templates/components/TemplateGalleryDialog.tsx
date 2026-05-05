@@ -6,6 +6,7 @@ import { api } from "@convex/_generated/api";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/shared/ui/dialog";
 import { Button } from "@/shared/ui/button";
 import { useInstantiateTemplate } from "../hooks/useInstantiateTemplate";
+import { DynamicIcon } from "@/slices/icon-picker";
 
 interface Props {
   open: boolean;
@@ -64,7 +65,7 @@ export function TemplateGalleryDialog({ open, onOpenChange, parentPageId, onInst
                       }
                     }}
                   >
-                    <div className="text-2xl shrink-0">{tpl.icon}</div>
+                    <DynamicIcon value={tpl.icon} className="text-2xl shrink-0" />
                     <div className="min-w-0">
                       <div className="text-sm font-medium truncate">{tpl.name}</div>
                       {tpl.description && (
