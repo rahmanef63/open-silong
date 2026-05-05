@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Search, Smile, Shapes, Trash2, Shuffle } from "lucide-react";
+import { Search, Smile, Shapes, Trash2, Shuffle, Image as ImageIcon } from "lucide-react";
 import { Input } from "@/shared/ui/input";
 import { Button } from "@/shared/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/shared/ui/tabs";
@@ -10,30 +10,31 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
 import { cn } from "@/shared/lib/utils";
 import { EMOJI_GROUPS, ALL_EMOJIS } from "../lib/emoji-catalog";
 import { LUCIDE_GROUPS, ALL_LUCIDE } from "../lib/lucide-catalog";
-import { lucideValue, parseIconValue } from "../lib/parse";
+import { ICON_COLORS } from "../lib/colors";
+import { lucideValue, parseIconValue, withColor } from "../lib/parse";
+import { useIconStyle } from "../lib/style-pref";
 import { DynamicIcon } from "./DynamicIcon";
 
 interface IconPickerInlineProps {
   value: string | null | undefined;
-  /** Receives the full stored form: raw emoji or `lucide:Name`. */
   onChange: (next: string) => void;
-  /** Optional clear handler; renders a Clear button when provided. */
   onClear?: () => void;
   className?: string;
 }
 
-/** Inline picker — emoji + lucide tabs with search. Use embedded inside
- *  dialogs/sheets. For a triggered popover, see `IconPickerPopover`. */
+/** Inline picker — emoji + lucide tabs, search, color row, twemoji toggle. */
 export function IconPickerInline({ value, onChange, onClear, className }: IconPickerInlineProps) {
   const parsed = parseIconValue(value);
   const initialTab = parsed.kind === "lucide" ? "lucide" : "emoji";
   const [tab, setTab] = React.useState<string>(initialTab);
   const [query, setQuery] = React.useState("");
+  const [iconStyle, setIconStyle] = useIconStyle();
+
+  const currentColor = parsed.kind !== "empty" ? parsed.color : undefined;
 
   const filteredEmoji = React.useMemo(() => {
     if (!query) return null;
     const q = query.toLowerCase();
-    // Loose contains; emoji catalog has no labels so match by exact glyph too.
     return ALL_EMOJIS.filter((e) => e.includes(q));
   }, [query]);
 
@@ -43,13 +44,24 @@ export function IconPickerInline({ value, onChange, onClear, className }: IconPi
     return ALL_LUCIDE.filter((n) => n.toLowerCase().includes(q));
   }, [query]);
 
+  function pickEmoji(e: string) {
+    onChange(withColor(e, currentColor));
+  }
+  function pickLucide(n: string) {
+    onChange(lucideValue(n, currentColor));
+  }
+  function pickColor(hex: string) {
+    if (parsed.kind === "empty") return;
+    const base = parsed.kind === "lucide" ? `lucide:${parsed.name}` : parsed.emoji;
+    onChange(withColor(base, hex || undefined));
+  }
   function pickRandom() {
     if (tab === "lucide") {
       const n = ALL_LUCIDE[Math.floor(Math.random() * ALL_LUCIDE.length)];
-      onChange(lucideValue(n));
+      onChange(lucideValue(n, currentColor));
     } else {
       const e = ALL_EMOJIS[Math.floor(Math.random() * ALL_EMOJIS.length)];
-      onChange(e);
+      onChange(withColor(e, currentColor));
     }
   }
 
@@ -66,6 +78,17 @@ export function IconPickerInline({ value, onChange, onClear, className }: IconPi
             </TabsTrigger>
           </TabsList>
           <div className="ml-auto flex items-center gap-1">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs"
+              onClick={() => setIconStyle(iconStyle === "twemoji" ? "native" : "twemoji")}
+              title={iconStyle === "twemoji" ? "Switch to native emoji" : "Switch to Twemoji (Notion-style)"}
+            >
+              <ImageIcon className="h-3.5 w-3.5" />
+              <span className="ml-1 hidden sm:inline">{iconStyle === "twemoji" ? "Twemoji" : "Native"}</span>
+            </Button>
             <Button
               type="button"
               variant="ghost"
@@ -91,6 +114,35 @@ export function IconPickerInline({ value, onChange, onClear, className }: IconPi
           </div>
         </div>
 
+        {/* Color row */}
+        <div className="mt-2 flex items-center gap-1.5">
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground mr-1">Color</span>
+          {ICON_COLORS.map((c) => {
+            const isSelected =
+              (c.hex === "" && !currentColor) ||
+              (c.hex !== "" && currentColor?.toLowerCase() === c.hex.toLowerCase());
+            return (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => pickColor(c.hex)}
+                className={cn(
+                  "h-5 w-5 rounded-full border transition",
+                  isSelected ? "ring-2 ring-foreground/60 ring-offset-1 ring-offset-background" : "hover:scale-110",
+                )}
+                style={{
+                  backgroundColor: c.hex || "transparent",
+                  borderColor: c.hex ? c.hex : "var(--border)",
+                }}
+                title={c.label}
+                aria-label={`Color: ${c.label}`}
+              >
+                {!c.hex && <span className="block text-[10px] leading-none">∅</span>}
+              </button>
+            );
+          })}
+        </div>
+
         <div className="relative mt-2">
           <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <Input
@@ -106,7 +158,7 @@ export function IconPickerInline({ value, onChange, onClear, className }: IconPi
             {filteredEmoji ? (
               <Grid>
                 {filteredEmoji.map((e, i) => (
-                  <EmojiCell key={`${e}-${i}`} emoji={e} active={value === e} onClick={() => onChange(e)} />
+                  <EmojiCell key={`${e}-${i}`} emoji={e} active={parsed.kind === "emoji" && parsed.emoji === e} onClick={() => pickEmoji(e)} />
                 ))}
                 {filteredEmoji.length === 0 && <Empty />}
               </Grid>
@@ -119,7 +171,7 @@ export function IconPickerInline({ value, onChange, onClear, className }: IconPi
                     </h4>
                     <Grid>
                       {g.items.map((e, i) => (
-                        <EmojiCell key={`${g.id}-${e}-${i}`} emoji={e} active={value === e} onClick={() => onChange(e)} />
+                        <EmojiCell key={`${g.id}-${e}-${i}`} emoji={e} active={parsed.kind === "emoji" && parsed.emoji === e} onClick={() => pickEmoji(e)} />
                       ))}
                     </Grid>
                   </section>
@@ -134,7 +186,7 @@ export function IconPickerInline({ value, onChange, onClear, className }: IconPi
             {filteredLucide ? (
               <Grid>
                 {filteredLucide.map((n) => (
-                  <LucideCell key={n} name={n} active={value === lucideValue(n)} onClick={() => onChange(lucideValue(n))} />
+                  <LucideCell key={n} name={n} color={currentColor} active={parsed.kind === "lucide" && parsed.name === n} onClick={() => pickLucide(n)} />
                 ))}
                 {filteredLucide.length === 0 && <Empty />}
               </Grid>
@@ -147,7 +199,7 @@ export function IconPickerInline({ value, onChange, onClear, className }: IconPi
                     </h4>
                     <Grid>
                       {g.items.map((n) => (
-                        <LucideCell key={`${g.id}-${n}`} name={n} active={value === lucideValue(n)} onClick={() => onChange(lucideValue(n))} />
+                        <LucideCell key={`${g.id}-${n}`} name={n} color={currentColor} active={parsed.kind === "lucide" && parsed.name === n} onClick={() => pickLucide(n)} />
                       ))}
                     </Grid>
                   </section>
@@ -157,12 +209,15 @@ export function IconPickerInline({ value, onChange, onClear, className }: IconPi
           </ScrollArea>
         </TabsContent>
       </Tabs>
+
+      <p className="text-[10px] text-muted-foreground">
+        Emoji rendered via Twemoji (CC-BY 4.0) for consistent look across devices.
+      </p>
     </div>
   );
 }
 
 interface IconPickerPopoverProps extends IconPickerInlineProps {
-  /** Trigger element. When omitted, renders a 40px button showing current icon. */
   children?: React.ReactNode;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -170,7 +225,6 @@ interface IconPickerPopoverProps extends IconPickerInlineProps {
   side?: "top" | "right" | "bottom" | "left";
 }
 
-/** Popover-wrapped picker. Click trigger → 320px popover with full picker. */
 export function IconPickerPopover({
   value,
   onChange,
@@ -194,7 +248,7 @@ export function IconPickerPopover({
           </button>
         )}
       </PopoverTrigger>
-      <PopoverContent align={align} side={side} className="w-[340px] p-3">
+      <PopoverContent align={align} side={side} className="w-[360px] p-3">
         <IconPickerInline value={value} onChange={onChange} onClear={onClear} />
       </PopoverContent>
     </Popover>
@@ -216,12 +270,12 @@ function EmojiCell({ emoji, active, onClick }: { emoji: string; active: boolean;
       )}
       title={emoji}
     >
-      {emoji}
+      <DynamicIcon value={emoji} className="text-lg" />
     </button>
   );
 }
 
-function LucideCell({ name, active, onClick }: { name: string; active: boolean; onClick: () => void }) {
+function LucideCell({ name, color, active, onClick }: { name: string; color: string | undefined; active: boolean; onClick: () => void }) {
   return (
     <button
       type="button"
@@ -232,7 +286,7 @@ function LucideCell({ name, active, onClick }: { name: string; active: boolean; 
       )}
       title={name}
     >
-      <DynamicIcon value={lucideValue(name)} className="text-base" />
+      <DynamicIcon value={lucideValue(name, color)} className="text-base" />
     </button>
   );
 }

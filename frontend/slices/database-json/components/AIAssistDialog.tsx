@@ -7,6 +7,7 @@ import {
 import { Button } from "@/shared/ui/button";
 import { useStore } from "@/shared/lib/store";
 import type { Database } from "@/shared/types/domain";
+import { DynamicIcon } from "@/slices/icon-picker";
 import {
   generateDatabase, generateRows, getApiKey, setApiKey, getModel, setModel,
 } from "../lib/ai";
@@ -186,7 +187,9 @@ export function AIAssistDialog({ db, open, onOpenChange, onImported }: Props) {
         {/* Preview */}
         {genDb && !done && (
           <div className="max-h-64 overflow-y-auto rounded-md bg-muted/50 p-3 text-xs">
-            <div className="mb-1 text-sm font-medium">{genDb.database.icon} {genDb.database.name}</div>
+            <div className="mb-1 flex items-center gap-1 text-sm font-medium">
+              <DynamicIcon value={genDb.database.icon} className="text-base" fallback="🗂️" /> {genDb.database.name}
+            </div>
             <div className="text-muted-foreground">
               {genDb.database.properties.length} properties · {genDb.database.views.length} views · {genDb.rows.length} rows
             </div>
@@ -202,7 +205,7 @@ export function AIAssistDialog({ db, open, onOpenChange, onImported }: Props) {
             <div className="mb-1 text-sm font-medium">{genRows.length} rows generated</div>
             <ul className="space-y-0.5 text-[11px] text-muted-foreground">
               {genRows.slice(0, 8).map((r, i) => (
-                <li key={i}>· {r.icon ?? "📄"} {r.title}</li>
+                <li key={i} className="flex items-center gap-1">· <DynamicIcon value={r.icon} className="text-sm" /> {r.title}</li>
               ))}
               {genRows.length > 8 && <li className="opacity-60">… +{genRows.length - 8} more</li>}
             </ul>
