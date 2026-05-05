@@ -10,7 +10,7 @@ import { Page } from "@/shared/types/domain";
 import { cn } from "@/shared/lib/utils";
 import {
   DENSITY, SidebarPageLink, DatabaseSidebarRow,
-  SortablePageRow, DragGhost, useSidebarDnd, type TreeItem,
+  SortablePageRow, DragGhost, PageRowSkeleton, useSidebarDnd, type TreeItem,
 } from "@/slices/workspace-sidebar";
 import {
   SidebarGroup, SidebarGroupAction, SidebarGroupContent, SidebarGroupLabel,
@@ -35,7 +35,7 @@ const path = (p: string) => (p === "/" ? BASE : `${BASE}${p}`);
  */
 export function PagesPanel({ onClose }: Props) {
   const {
-    pages, recents, childrenOf, preferences, databases,
+    pages, recents, childrenOf, preferences, databases, isInitialLoading,
   } = useStore();
   const router = useRouter();
   const pathname = usePathname() ?? BASE;
@@ -90,6 +90,19 @@ export function PagesPanel({ onClose }: Props) {
 
   function openNewPage(parentId: string | null = null) {
     pageCRUD.openCreate(parentId);
+  }
+
+  if (isInitialLoading) {
+    return (
+      <div data-keyboard-scope>
+        <SidebarGroup>
+          <SidebarGroupLabel>Workspace</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <PageRowSkeleton count={6} />
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </div>
+    );
   }
 
   return (

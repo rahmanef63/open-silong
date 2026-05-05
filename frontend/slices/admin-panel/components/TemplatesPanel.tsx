@@ -6,6 +6,7 @@ import { api } from "@convex/_generated/api";
 import { Button } from "@/shared/ui/button";
 import { TemplateEditor } from "./TemplateEditor";
 import type { Id } from "@convex/_generated/dataModel";
+import { DynamicIcon } from "@/slices/icon-picker";
 
 export function TemplatesPanel() {
   const list = useQuery(api.templates.queries.listAll);
@@ -51,7 +52,7 @@ export function TemplatesPanel() {
         )}
         {list.map((tpl) => (
           <div key={String(tpl._id)} className="px-4 py-3 flex items-center gap-3">
-            <div className="text-2xl">{tpl.icon}</div>
+            <DynamicIcon value={tpl.icon} className="text-2xl" />
             <div className="flex-1 min-w-0">
               <div className="text-sm font-medium truncate">
                 {tpl.name}

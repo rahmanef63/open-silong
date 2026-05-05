@@ -7,6 +7,7 @@ import {
   Popover, PopoverContent, PopoverTrigger,
 } from "@/shared/ui/popover";
 import type { CellProps } from "./types";
+import { DynamicIcon } from "@/slices/icon-picker";
 
 export function RelationCell({ db, prop, row, value, onSet, cellClass }: CellProps) {
   const { pages, databases, updateProperty, addRow } = useStore();
@@ -64,7 +65,7 @@ export function RelationCell({ db, prop, row, value, onSet, cellClass }: CellPro
             <span className="flex min-w-0 flex-wrap gap-1">
               {linkedExisting.slice(0, 2).map((p) => (
                 <span key={p.id} className="inline-flex max-w-28 items-center gap-1 rounded border border-border bg-muted/60 px-1.5 py-0.5 text-xs">
-                  <span>{p.icon}</span>
+                  <DynamicIcon value={p.icon} className="text-xs" />
                   <span className="truncate">{p.title || "Untitled"}</span>
                 </span>
               ))}
@@ -106,7 +107,9 @@ export function RelationCell({ db, prop, row, value, onSet, cellClass }: CellPro
           >
             <option value="">All database rows</option>
             {databases.map((d) => (
-              <option key={d.id} value={d.id}>{d.icon} {d.name}</option>
+              <option key={d.id} value={d.id}>
+                {d.icon?.startsWith("lucide:") ? "🗂️" : (d.icon || "🗂️")} {d.name}
+              </option>
             ))}
           </select>
           <input
@@ -125,7 +128,7 @@ export function RelationCell({ db, prop, row, value, onSet, cellClass }: CellPro
                   className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm hover:bg-accent"
                 >
                   {selected ? <Check className="h-3.5 w-3.5 text-brand" /> : <span className="w-3.5" />}
-                  <span>{p.icon}</span>
+                  <DynamicIcon value={p.icon} className="text-sm" />
                   <span className="min-w-0 flex-1 truncate">{p.title || "Untitled"}</span>
                 </button>
               );

@@ -35,14 +35,18 @@ export function DynamicIcon({ value, className, fallback = "📄", title, forceN
   const useTwemoji = style === "twemoji" && !forceNative;
 
   if (parsed.kind === "lucide") {
-    const Cmp = (LucideIcons as unknown as IconMap)[parsed.name] ?? FileText;
+    const Cmp = (LucideIcons as unknown as IconMap)[parsed.name];
+    if (!Cmp && process.env.NODE_ENV !== "production") {
+      console.warn(`[DynamicIcon] Unknown lucide icon: "${parsed.name}". Falling back to FileText.`);
+    }
+    const Resolved = Cmp ?? FileText;
     return (
       <span
         className={cn("inline-flex items-center justify-center leading-none", className)}
         title={title}
         style={parsed.color ? { color: parsed.color } : undefined}
       >
-        <Cmp className="h-[1em] w-[1em]" />
+        <Resolved className="h-[1em] w-[1em]" />
       </span>
     );
   }

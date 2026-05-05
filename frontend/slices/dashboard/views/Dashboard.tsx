@@ -2,11 +2,14 @@ import { useNavigate } from "@/shared/lib/router-compat";
 import { useStore } from "@/shared/lib/store";
 import { Plus, Star, Clock, FileText, Table2 } from "lucide-react";
 import { DynamicIcon } from "@/slices/icon-picker";
+import { Skeleton } from "@/shared/ui/skeleton";
 import { cn } from "@/shared/lib/utils";
 
 export function Dashboard() {
-  const { pages, recents, childrenOf, createPage, createDatabase, databases, workspace, addBlock, updateBlock } = useStore();
+  const { pages, recents, childrenOf, createPage, createDatabase, databases, workspace, addBlock, updateBlock, isInitialLoading } = useStore();
   const navigate = useNavigate();
+
+  if (isInitialLoading) return <DashboardSkeleton />;
 
   const regularPages = pages.filter(p => !p.trashed && !p.rowOfDatabaseId);
   const favorites = regularPages.filter(p => p.favorite);
@@ -186,7 +189,7 @@ function PageCard({ page, onClick }: any) {
         style={{ background: page.cover || "linear-gradient(135deg, hsl(var(--accent)), hsl(var(--secondary)))" }}
       />
       <div className="flex items-center gap-2">
-        <span className="text-lg">{page.icon}</span>
+        <DynamicIcon value={page.icon} className="text-lg" />
         <div className="font-medium text-sm truncate">{page.title || "Untitled"}</div>
       </div>
       <div className="text-xs text-muted-foreground line-clamp-2">{preview}</div>
@@ -201,6 +204,37 @@ function EmptyState({ onCreate }: { onCreate: () => void }) {
       <div className="font-medium">No pages yet</div>
       <p className="text-sm text-muted-foreground mt-1 mb-4">Create your first page to get started.</p>
       <button onClick={onCreate} className="rounded-md bg-foreground text-background px-4 py-2 text-sm hover:opacity-90">Create page</button>
+    </div>
+  );
+}
+
+function DashboardSkeleton() {
+  return (
+    <div className="h-full overflow-y-auto scrollbar-thin">
+      <div className="mx-auto max-w-5xl px-6 md:px-12 py-12 space-y-6">
+        <div className="space-y-3">
+          <Skeleton className="h-4 w-48" />
+          <Skeleton className="h-10 w-72" />
+          <Skeleton className="h-3 w-40" />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-lg" />)}
+        </div>
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-32" />
+          <div className="rounded-lg border border-border divide-y divide-border bg-card">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-3 px-4 py-3">
+                <Skeleton className="h-5 w-5 rounded" />
+                <div className="flex-1 space-y-1.5">
+                  <Skeleton className="h-3.5" style={{ width: `${40 + ((i * 17) % 40)}%` }} />
+                  <Skeleton className="h-3 w-1/3" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

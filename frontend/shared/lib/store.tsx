@@ -73,6 +73,9 @@ interface StoreCtx {
   trash: Page[];
   search: (q: string) => Page[];
   saving: boolean;
+  /** True while initial pages/databases queries haven't resolved. Use for
+   *  skeleton placeholders in sidebar/dashboard. */
+  isInitialLoading: boolean;
   databases: Database[];
   trashedDatabases: Database[];
   getDatabase: (id: string) => Database | undefined;
@@ -112,11 +115,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const { signOut: authSignOut } = useAuthActions();
 
   // Convex queries
-  const rawPages = useQuery(api.pages.list) ?? [];
-  const rawDatabases = useQuery(api.databases.list) ?? [];
+  const rawPagesQ = useQuery(api.pages.list);
+  const rawDatabasesQ = useQuery(api.databases.list);
+  const rawPages = rawPagesQ ?? [];
+  const rawDatabases = rawDatabasesQ ?? [];
   const rawPrefs = useQuery(api.preferences.get);
   const rawWorkspace = useQuery(api.workspaces.get);
   const rawRecents = useQuery(api.recents.get) ?? [];
+  const isInitialLoading = rawPagesQ === undefined || rawDatabasesQ === undefined;
 
   // Cross-cutting mutations (kept here because used in user/workspace updates)
   const mutUpsertWorkspace = useMutation(api.workspaces.upsert);
@@ -217,6 +223,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       pages, recents,
       ...pageActions,
       saving: false,
+      isInitialLoading,
       databases, trashedDatabases,
       ...databaseActions,
       snapshots: snapshotsApi.snapshots,
@@ -230,7 +237,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }),
     [
       user, updateUser, preferences, updatePreferences, workspace, updateWorkspace,
-      pages, recents, pageActions,
+      pages, recents, pageActions, isInitialLoading,
       databases, trashedDatabases, databaseActions,
       snapshotsApi, history, signOut,
     ],

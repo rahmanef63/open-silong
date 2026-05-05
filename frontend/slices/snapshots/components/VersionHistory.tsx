@@ -8,6 +8,7 @@ import {
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/shared/ui/alert-dialog";
 import { Block, PageSnapshot } from "@/shared/types/domain";
+import { DynamicIcon } from "@/slices/icon-picker";
 
 export function VersionHistory({ pageId, onClose }: { pageId: string; onClose: () => void }) {
   const { snapshotsForPage, restoreSnapshot, getPage } = useStore();
@@ -67,7 +68,10 @@ function PreviewPanel({ snapshot, onClose, onRestore }: { snapshot: PageSnapshot
         <button onClick={onClose} className="text-xs text-muted-foreground hover:text-foreground">Close</button>
       </div>
       <div className="text-xs text-muted-foreground mb-2">{formatDateTime(snapshot.takenAt)}</div>
-      <div className="font-serif text-base font-bold mb-2">{snapshot.icon} {snapshot.title || "Untitled"}</div>
+      <div className="font-serif text-base font-bold mb-2 flex items-center gap-1.5">
+        <DynamicIcon value={snapshot.icon} className="text-base" />
+        <span>{snapshot.title || "Untitled"}</span>
+      </div>
       <div className="space-y-1 text-xs text-foreground/80 max-h-40 overflow-y-auto">
         {snapshot.blocks.slice(0, 10).map((b: Block) => (
           <div key={b.id} className="truncate">{renderPreview(b)}</div>

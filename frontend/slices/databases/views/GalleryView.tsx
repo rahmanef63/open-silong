@@ -10,6 +10,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
 import { QuickCreateDialog } from "../components/QuickCreateDialog";
+import { DynamicIcon } from "@/slices/icon-picker";
 import { useState } from "react";
 
 interface Props { db: Database; view: DatabaseViewConfig; rows: Page[]; onOpenRow: (id: string) => void }
@@ -116,7 +117,7 @@ export function GalleryView({ db, view, rows, onOpenRow }: Props) {
               </div>
             )}
             <div className="flex items-center gap-1 text-sm font-medium mb-1">
-              <span>{r.icon}</span>
+              <DynamicIcon value={r.icon} className="text-sm" />
               <span className="truncate">{r.title || "Untitled"}</span>
             </div>
             {visible.length > 0 && (

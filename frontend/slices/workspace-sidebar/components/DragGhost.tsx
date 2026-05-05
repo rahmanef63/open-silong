@@ -1,4 +1,5 @@
 import { cn } from "@/shared/lib/utils";
+import { DynamicIcon } from "@/slices/icon-picker";
 import { DENSITY, type DensityConfig } from "../lib/density";
 import type { TreeItem } from "../lib/keyboard";
 
@@ -16,9 +17,10 @@ export function DragGhost({ item, density }: Props) {
       )}
       style={{ paddingLeft: `${item.depth * density.indent + 8}px` }}
     >
-      <span className={cn("leading-none", density === DENSITY.compact ? "text-sm" : "text-base")}>
-        {item.page.icon}
-      </span>
+      <DynamicIcon
+        value={item.page.icon}
+        className={cn("shrink-0", density === DENSITY.compact ? "text-sm" : "text-base")}
+      />
       <span className="truncate text-sm">{item.page.title || "Untitled"}</span>
     </div>
   );
