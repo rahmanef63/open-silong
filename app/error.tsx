@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 import { isChunkLoadError } from "@/shared/components/ChunkErrorBoundary";
 import { hardReload } from "@/shared/components/VersionWatcher";
+import { sanitizeError, logError } from "@/shared/lib/error";
 
 export default function Error({
   error,
@@ -16,9 +17,10 @@ export default function Error({
   // ChunkErrorBoundary in Providers handles most cases, but route-level
   // errors land here directly so we mirror the recovery.
   const isStaleChunk = isChunkLoadError(error);
+  const safe = sanitizeError(error);
 
   useEffect(() => {
-    if (process.env.NODE_ENV !== "production") console.error("RouteError:", error);
+    logError("RouteError", error, { digest: error.digest });
     if (isStaleChunk) {
       const FLAG = "nosion:chunk-reloaded-at";
       try {
@@ -60,7 +62,7 @@ export default function Error({
           </div>
         </div>
         <h2 className="text-lg font-semibold text-foreground mb-1">Something went wrong</h2>
-        <p className="text-sm text-muted-foreground mb-4">{error.message || "Unknown error"}</p>
+        <p className="text-sm text-muted-foreground mb-4">{safe.message}</p>
         {error.digest && (
           <p className="text-xs text-muted-foreground/70 mb-4 font-mono">id: {error.digest}</p>
         )}

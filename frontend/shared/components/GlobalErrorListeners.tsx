@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { isChunkLoadError } from "./ChunkErrorBoundary";
 import { hardReload } from "./VersionWatcher";
+import { logError } from "@/shared/lib/error";
 
 const RELOAD_FLAG = "nosion:chunk-reloaded-at";
 const RELOAD_COOLDOWN_MS = 60_000;
@@ -16,7 +17,12 @@ const RELOAD_COOLDOWN_MS = 60_000;
 export function GlobalErrorListeners() {
   useEffect(() => {
     function maybeReload(err: unknown) {
-      if (!isChunkLoadError(err)) return;
+      if (!isChunkLoadError(err)) {
+        // Surface unexpected unhandled errors to the dev console only —
+        // production users see nothing here.
+        logError("GlobalError", err);
+        return;
+      }
       try {
         const last = Number(sessionStorage.getItem(RELOAD_FLAG) ?? "0");
         if (Date.now() - last <= RELOAD_COOLDOWN_MS) return; // cooldown

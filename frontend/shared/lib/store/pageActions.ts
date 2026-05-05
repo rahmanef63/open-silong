@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import type { Block, BlockType, Page, Preferences } from "@/shared/types/domain";
+import { guardMut, guardMutVoid } from "./mutationGuard";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
@@ -58,12 +59,12 @@ export function usePageActions({ pages, pageMap, preferences, snapshotIfNeeded, 
 
   const createPage = useCallback(
     async (parentId: string | null = null, opts: Partial<Page> = {}): Promise<Page> => {
-      const id = await mutCreatePage({
+      const id = await guardMut("createPage", mutCreatePage({
         parentId,
         title: opts.title,
         icon: opts.icon,
         rowOfDatabaseId: opts.rowOfDatabaseId,
-      });
+      }));
       const now = Date.now();
       return {
         id, parentId,
@@ -83,7 +84,7 @@ export function usePageActions({ pages, pageMap, preferences, snapshotIfNeeded, 
     (id: string, patch: Partial<Page>) => {
       const page = pageMap.get(id);
       if (page) snapshotIfNeeded(id, page);
-      mutUpdatePage({ pageId: id, patch });
+      guardMutVoid("updatePage", mutUpdatePage({ pageId: id, patch }));
     },
     [pageMap, mutUpdatePage, snapshotIfNeeded],
   );
@@ -133,13 +134,13 @@ export function usePageActions({ pages, pageMap, preferences, snapshotIfNeeded, 
     [reorderPages],
   );
 
-  const deletePage = useCallback((id: string) => { mutTrashPage({ pageId: id }); }, [mutTrashPage]);
-  const restorePage = useCallback((id: string) => { mutRestorePage({ pageId: id }); }, [mutRestorePage]);
-  const permanentlyDelete = useCallback((id: string) => { mutPermanentlyDelete({ pageId: id }); }, [mutPermanentlyDelete]);
+  const deletePage = useCallback((id: string) => { guardMutVoid("trashPage", mutTrashPage({ pageId: id })); }, [mutTrashPage]);
+  const restorePage = useCallback((id: string) => { guardMutVoid("restorePage", mutRestorePage({ pageId: id })); }, [mutRestorePage]);
+  const permanentlyDelete = useCallback((id: string) => { guardMutVoid("permanentlyDelete", mutPermanentlyDelete({ pageId: id })); }, [mutPermanentlyDelete]);
 
   const duplicatePage = useCallback(
     async (id: string): Promise<Page | undefined> => {
-      const newId = await mutDuplicatePage({ pageId: id });
+      const newId = await guardMut("duplicatePage", mutDuplicatePage({ pageId: id }));
       if (!newId) return undefined;
       const now = Date.now();
       return { id: newId, parentId: null, title: "", icon: "📄", cover: null, blocks: [], favorite: false, trashed: false, createdAt: now, updatedAt: now };
@@ -165,7 +166,7 @@ export function usePageActions({ pages, pageMap, preferences, snapshotIfNeeded, 
 
   const addBlock = useCallback(
     async (pageId: string, afterIndex: number, type: BlockType = "paragraph", init: Partial<Block> = {}): Promise<string> => {
-      return await mutAddBlock({ pageId, afterIndex, type, init });
+      return await guardMut("addBlock", mutAddBlock({ pageId, afterIndex, type, init }));
     },
     [mutAddBlock],
   );
@@ -184,7 +185,7 @@ export function usePageActions({ pages, pageMap, preferences, snapshotIfNeeded, 
     if (!entry) return;
     window.clearTimeout(entry.timer);
     pendingBlockWrites.current.delete(key);
-    mutUpdateBlock({ pageId: entry.pageId, blockId: entry.blockId, patch: entry.patch });
+    guardMutVoid("updateBlock", mutUpdateBlock({ pageId: entry.pageId, blockId: entry.blockId, patch: entry.patch }));
   }, [mutUpdateBlock]);
 
   const flushAllPendingBlocks = useCallback(() => {
@@ -209,7 +210,7 @@ export function usePageActions({ pages, pageMap, preferences, snapshotIfNeeded, 
       if (!isTextOnlyPatch(patch)) {
         // Structural change — flush any queued text first, then write.
         flushBlockKey(key);
-        mutUpdateBlock({ pageId, blockId, patch });
+        guardMutVoid("updateBlock", mutUpdateBlock({ pageId, blockId, patch }));
         return;
       }
       const existing = pendingBlockWrites.current.get(key);
@@ -222,7 +223,7 @@ export function usePageActions({ pages, pageMap, preferences, snapshotIfNeeded, 
   );
 
   const deleteBlock = useCallback(
-    (pageId: string, blockId: string) => { mutDeleteBlock({ pageId, blockId }); },
+    (pageId: string, blockId: string) => { guardMutVoid("deleteBlock", mutDeleteBlock({ pageId, blockId })); },
     [mutDeleteBlock],
   );
 
@@ -296,8 +297,8 @@ export function usePageActions({ pages, pageMap, preferences, snapshotIfNeeded, 
 
   const pushRecent = useCallback(
     (id: string) => {
-      mutPushRecent({ pageId: id });
-      mutUpsertPrefs({ patch: { lastOpenedPageId: id } });
+      guardMutVoid("pushRecent", mutPushRecent({ pageId: id }));
+      guardMutVoid("upsertPrefs", mutUpsertPrefs({ patch: { lastOpenedPageId: id } }));
     },
     [mutPushRecent, mutUpsertPrefs],
   );
