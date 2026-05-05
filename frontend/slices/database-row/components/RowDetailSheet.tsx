@@ -14,6 +14,7 @@ import { useStore } from "@/shared/lib/store";
 import { BlockEditor } from "@/slices/editor/BlockEditor";
 import { RowPropertiesPanel } from "@/slices/editor/RowPropertiesPanel";
 import { PageCommentsProvider } from "@/slices/comments";
+import { DynamicIcon, IconPickerPopover } from "@/slices/icon-picker";
 import type { Block } from "@/shared/types/domain";
 
 interface Props {
@@ -81,13 +82,19 @@ export function RowDetailSheet({ pageId, onOpenChange }: Props) {
           </header>
           <div className="flex-1 overflow-y-auto scrollbar-thin px-6 md:px-10 py-8">
             <div className="flex items-start gap-2">
-              <button
-                onClick={() => updatePage(page.id, { icon: nextEmoji(page.icon) })}
-                className="text-4xl leading-none hover:bg-accent rounded-md p-1"
-                aria-label="Cycle icon"
+              <IconPickerPopover
+                value={page.icon}
+                onChange={(next) => updatePage(page.id, { icon: next })}
+                onClear={() => updatePage(page.id, { icon: "📄" })}
               >
-                {page.icon}
-              </button>
+                <button
+                  type="button"
+                  className="text-4xl leading-none hover:bg-accent rounded-md p-1"
+                  aria-label="Change icon"
+                >
+                  <DynamicIcon value={page.icon} />
+                </button>
+              </IconPickerPopover>
             </div>
             <input
               value={page.title}
@@ -131,8 +138,3 @@ export function RowDetailSheet({ pageId, onOpenChange }: Props) {
   );
 }
 
-const ICONS = ["📄", "📝", "📚", "🚀", "🌱", "🛰️", "🎨", "🧠", "🪄", "🌙", "☕", "🔥", "🌊", "✨", "🪐", "🛠️"];
-function nextEmoji(cur: string): string {
-  const i = ICONS.indexOf(cur);
-  return ICONS[(i + 1) % ICONS.length] ?? ICONS[0];
-}

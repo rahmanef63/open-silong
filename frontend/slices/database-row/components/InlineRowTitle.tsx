@@ -3,6 +3,7 @@ import { Maximize2 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { useStore } from "@/shared/lib/store";
 import type { Page } from "@/shared/types/domain";
+import { DynamicIcon } from "@/slices/icon-picker";
 
 interface Props {
   row: Page;
@@ -41,7 +42,7 @@ export function InlineRowTitle({ row, onOpen, autoEdit, onAutoEditConsumed }: Pr
 
   return (
     <div className="flex w-full items-center gap-1 px-2 py-1 group/title">
-      <span className="text-sm leading-none">{row.icon}</span>
+      <DynamicIcon value={row.icon} className="text-sm" />
       {editing ? (
         <input
           ref={inputRef}

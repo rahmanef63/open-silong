@@ -10,6 +10,7 @@ import {
 } from "@/shared/ui/dropdown-menu";
 import { DENSITY, type DensityConfig } from "../lib/density";
 import { handleTreeKey, type TreeItem } from "../lib/keyboard";
+import { DynamicIcon } from "@/slices/icon-picker";
 
 interface Props {
   item: TreeItem;
@@ -99,7 +100,10 @@ export function SortablePageRow({
           onKeyDown={(e) => handleTreeKey(e, item, kids, isOpen, setOpen)}
           className={cn("flex min-w-0 flex-1 items-center", density.pageLink)}
         >
-          <span className={cn("leading-none", density === DENSITY.compact ? "text-sm" : "text-base")}>{item.page.icon}</span>
+          <DynamicIcon
+            value={item.page.icon}
+            className={cn("shrink-0", density === DENSITY.compact ? "text-sm" : "text-base")}
+          />
           {renaming ? (
             <input
               autoFocus

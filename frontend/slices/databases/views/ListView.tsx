@@ -5,6 +5,7 @@ import { cn } from "@/shared/lib/utils";
 import { getVisibleProps } from "../lib/visibility";
 import { useStore } from "@/shared/lib/store";
 import { Plus, MoreHorizontal, Trash2 } from "lucide-react";
+import { DynamicIcon } from "@/slices/icon-picker";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
@@ -53,7 +54,7 @@ export function ListView({ db, view, rows, onOpenRow }: Props) {
             data-db-nav-item
             className="flex-1 flex items-center gap-3 px-3 text-left min-w-0"
           >
-            <span className={cn(compact ? "text-sm" : "text-base")}>{r.icon}</span>
+            <DynamicIcon value={r.icon} className={cn(compact ? "text-sm" : "text-base")} />
             <span className={cn("flex-1 truncate", compact ? "text-xs" : "text-sm")}>{r.title || "Untitled"}</span>
           </button>
           {summaries.map(p => (

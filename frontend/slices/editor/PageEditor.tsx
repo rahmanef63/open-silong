@@ -28,8 +28,8 @@ import {
   placeTopLevelGroupAtBlock, appendTopLevelGroupToContainer, topLevelIdsInOrder,
 } from "@/slices/block-selection/lib/multiMove";
 import { PageHeaderSlot } from "@/shared/components/PageHeaderSlot";
+import { IconPickerPopover, DynamicIcon } from "@/slices/icon-picker";
 
-const ICONS = ["📄", "📝", "📚", "🚀", "🌱", "🛰️", "🎨", "🧠", "🪄", "🌙", "☕", "🔥", "🌊", "✨", "🪐", "🛠️"];
 const COVERS = [
   "linear-gradient(135deg, hsl(24 90% 70%), hsl(340 80% 70%))",
   "linear-gradient(135deg, hsl(200 80% 70%), hsl(260 70% 70%))",
@@ -215,22 +215,21 @@ export function PageEditor() {
               page.smallText && "text-[14px]",
             )}
           >
-            <div className="relative">
+            <IconPickerPopover
+              value={page.icon}
+              onChange={(next) => { updatePage(page.id, { icon: next }); setIconPick(false); }}
+              onClear={() => { updatePage(page.id, { icon: "📄" }); setIconPick(false); }}
+              open={iconPick}
+              onOpenChange={setIconPick}
+            >
               <button
-                onClick={() => setIconPick(v => !v)}
+                type="button"
                 className="text-6xl leading-none hover:bg-accent rounded-md p-1 transition"
                 aria-label="Change icon"
               >
-                {page.icon}
+                <DynamicIcon value={page.icon} />
               </button>
-              {iconPick && (
-                <div className="absolute z-20 mt-2 grid grid-cols-8 gap-1 rounded-lg border border-border bg-popover p-2 shadow-pop">
-                  {ICONS.map(i => (
-                    <button key={i} onClick={() => { updatePage(page.id, { icon: i }); setIconPick(false); }} className="text-xl rounded hover:bg-accent p-1.5">{i}</button>
-                  ))}
-                </div>
-              )}
-            </div>
+            </IconPickerPopover>
 
             <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
               {!page.cover && (
@@ -373,7 +372,7 @@ function Subpages({ page, subpages }: { page: Page; subpages: Page[] }) {
               title="Drag to sidebar to re-parent"
               className="flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-left hover:border-border-strong transition cursor-grab active:cursor-grabbing"
             >
-              <span>{sp.icon}</span>
+              <DynamicIcon value={sp.icon} className="text-base" />
               <span className="flex-1 truncate text-sm">{sp.title || "Untitled"}</span>
               <FileText className="h-3.5 w-3.5 text-muted-foreground" />
             </button>
@@ -422,7 +421,7 @@ function HeaderBreadcrumbs({ page }: { page: Page }) {
               i === finalCrumbs.length - 1 ? "text-foreground" : "text-muted-foreground"
             )}
           >
-            <span>{c.icon}</span>
+            <DynamicIcon value={c.icon} className="text-sm" />
             <span className="truncate max-w-[160px]">{c.title || "Untitled"}</span>
           </button>
         </div>

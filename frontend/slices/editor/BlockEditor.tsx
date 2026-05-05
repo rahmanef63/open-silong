@@ -8,6 +8,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { useBlockHistory } from "@/shared/hooks/useBlockHistory";
 import { useNavigate } from "@/shared/lib/router-compat";
 import { DatabaseBlock } from "@/slices/databases/DatabaseBlock";
+import { DynamicIcon } from "@/slices/icon-picker";
 import { ColumnBlockEditor } from "./ColumnBlockEditor";
 import { BlockShell } from "./blocks/BlockShell";
 import { BlockControls } from "./blocks/BlockControls";
@@ -240,7 +241,7 @@ function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerR
           title={target ? "Drag to sidebar to re-parent" : undefined}
           className="flex w-full items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-left hover:bg-accent transition cursor-grab active:cursor-grabbing"
         >
-          <span className="text-base leading-none">{target?.icon ?? "📄"}</span>
+          <DynamicIcon value={target?.icon} className="text-base shrink-0" />
           <span className="flex-1 text-sm font-medium underline-offset-2 hover:underline">
             {target?.title || target ? (target?.title || "Untitled") : "Missing page"}
           </span>

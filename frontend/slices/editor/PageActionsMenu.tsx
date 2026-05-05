@@ -14,6 +14,7 @@ import { AnalyticsPopover } from "@/slices/analytics";
 import { NotifyMePopover } from "@/slices/notifications";
 import { MentionsPopover } from "@/slices/mentions";
 import { WikiToggleAction } from "@/slices/wiki";
+import { DynamicIcon } from "@/slices/icon-picker";
 import {
   MoreHorizontal, Search, Type, Ruler, MoveHorizontal,
   Link2, ClipboardCopy, Files, ArrowRight, Trash2,
@@ -267,7 +268,7 @@ export function PageActionsMenu({ page, onShowHistory }: Props) {
                       >
                         {page.parentId === p.id && <Check className="h-3 w-3" />}
                         {page.parentId !== p.id && <span className="w-3" />}
-                        <span>{p.icon}</span>
+                        <DynamicIcon value={p.icon} className="text-sm" />
                         <span className="flex-1 truncate">{p.title || "Untitled"}</span>
                       </button>
                     ))}

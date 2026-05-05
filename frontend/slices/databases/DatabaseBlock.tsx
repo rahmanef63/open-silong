@@ -33,6 +33,7 @@ import { Input } from "@/shared/ui/input";
 import { RowDetailSheet } from "@/slices/database-row";
 import { NewRowMenu } from "@/slices/database-templates";
 import { DataMenu } from "@/slices/database-json";
+import { DynamicIcon, IconPickerPopover } from "@/slices/icon-picker";
 import { DatabaseSkeleton } from "@/shared/components/RouteSkeleton";
 import { ErrorBoundary } from "@/shared/components/ErrorBoundary";
 import {
@@ -152,7 +153,15 @@ export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block 
       {/* Top bar: db name + view tabs */}
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-3 py-2">
         <div className="flex items-center gap-2 min-w-0 flex-1">
-          <span className="text-base">{db.icon}</span>
+          <IconPickerPopover
+            value={db.icon}
+            onChange={(next) => updateDatabase(db.id, { icon: next })}
+            onClear={() => updateDatabase(db.id, { icon: "🗂️" })}
+          >
+            <button type="button" className="rounded hover:bg-accent p-0.5 text-base leading-none" aria-label="Change database icon">
+              <DynamicIcon value={db.icon} fallback="🗂️" />
+            </button>
+          </IconPickerPopover>
           <input
             value={db.name}
             onChange={e => updateDatabase(db.id, { name: e.target.value })}
@@ -402,16 +411,19 @@ function DatabaseMenu({ db, view, rows }: { db: Database; view: DatabaseViewConf
         >
           <Pencil className="h-3.5 w-3.5" /> Rename
         </button>
-        <button
-          onClick={() => {
-            const next = window.prompt("Database icon (emoji)", db.icon);
-            if (next != null && next.trim()) updateDatabase(db.id, { icon: next.trim().slice(0, 4) });
-          }}
-          className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs hover:bg-accent"
+        <IconPickerPopover
+          value={db.icon}
+          onChange={(next) => updateDatabase(db.id, { icon: next })}
+          onClear={() => updateDatabase(db.id, { icon: "🗂️" })}
         >
-          <span className="h-3.5 w-3.5 inline-flex items-center justify-center text-base leading-none">{db.icon}</span>
-          Change icon
-        </button>
+          <button
+            type="button"
+            className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs hover:bg-accent"
+          >
+            <DynamicIcon value={db.icon} className="text-base h-3.5 w-3.5" fallback="🗂️" />
+            Change icon
+          </button>
+        </IconPickerPopover>
         <button
           onClick={() => {
             if (window.confirm(`Move "${db.name}" to Trash? Rows are kept and can be restored.`)) {

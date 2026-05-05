@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/shared/ui/dialog";
 import { useStore } from "@/shared/lib/store";
 import { useSearch } from "@/slices/search";
 import { Search, FileText, Clock, Database as DatabaseIcon, Loader2 } from "lucide-react";
+import { DynamicIcon } from "@/slices/icon-picker";
 
 interface Props {
   open: boolean;
@@ -98,7 +99,7 @@ function Row({ icon, title, subtitle, onClick, kind = "page" }: { icon: string; 
   const Icon = kind === "db" ? DatabaseIcon : FileText;
   return (
     <button onClick={onClick} className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left hover:bg-accent transition">
-      <span className="text-lg leading-none">{icon}</span>
+      <DynamicIcon value={icon} className="text-lg" />
       <div className="min-w-0 flex-1">
         <div className="truncate text-sm font-medium">{title}</div>
         {subtitle && <div className="truncate text-xs text-muted-foreground">{subtitle}</div>}

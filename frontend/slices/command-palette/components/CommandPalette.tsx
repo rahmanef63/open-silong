@@ -9,6 +9,7 @@ import {
   Sun, Moon, Database as DbIcon, Share2, History, Sparkles,
 } from "lucide-react";
 import { DATABASE_PRESETS } from "@/slices/database-presets";
+import { DynamicIcon } from "@/slices/icon-picker";
 
 const MAX_PAGES = 12;
 
@@ -56,7 +57,7 @@ export function CommandPalette() {
           <CommandGroup heading="Pages">
             {matched.slice(0, MAX_PAGES).map((p) => (
               <CommandItem key={p.id} value={`page:${p.title}:${p.id}`} onSelect={run(() => navigate(`/p/${p.id}`))}>
-                <span className="mr-2 text-base leading-none">{p.icon}</span>
+                <DynamicIcon value={p.icon} className="mr-2 text-base" />
                 <span className="flex-1 truncate">{p.title || "Untitled"}</span>
                 <FileText className="h-3.5 w-3.5 text-muted-foreground" />
               </CommandItem>
@@ -79,7 +80,7 @@ export function CommandPalette() {
           <CommandGroup heading="Recent">
             {recentPages.map((p) => (
               <CommandItem key={p.id} value={`recent:${p.title}:${p.id}`} onSelect={run(() => navigate(`/p/${p.id}`))}>
-                <span className="mr-2 text-base leading-none">{p.icon}</span>
+                <DynamicIcon value={p.icon} className="mr-2 text-base" />
                 <span className="flex-1 truncate">{p.title || "Untitled"}</span>
               </CommandItem>
             ))}
@@ -156,7 +157,7 @@ export function CommandPalette() {
               })}
             >
               <Sparkles className="mr-2 h-3.5 w-3.5 text-brand" />
-              <span className="mr-2">{preset.icon}</span>
+              <DynamicIcon value={preset.icon} className="mr-2 text-base" />
               <span className="flex-1 truncate">{preset.name} database</span>
               <span className="text-[10px] text-muted-foreground">{preset.description.split(" ").slice(0, 4).join(" ")}…</span>
             </CommandItem>

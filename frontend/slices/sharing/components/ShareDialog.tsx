@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Switch } from "@/shared/ui/switch";
 import { Page } from "@/shared/types/domain";
 import { useStore } from "@/shared/lib/store";
+import { DynamicIcon } from "@/slices/icon-picker";
 import { Copy, Globe, Lock, ExternalLink } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { toast } from "sonner";
@@ -29,7 +30,7 @@ export function ShareDialog({ open, onOpenChange, page }: { open: boolean; onOpe
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <span className="text-lg">{page.icon}</span> Share "{page.title || "Untitled"}"
+            <DynamicIcon value={page.icon} className="text-lg" /> Share "{page.title || "Untitled"}"
           </DialogTitle>
           <DialogDescription>Share this page with anyone using a link.</DialogDescription>
         </DialogHeader>

@@ -8,6 +8,7 @@ import { useStore } from "@/shared/lib/store";
 import type { Block, BlockType } from "@/shared/types/domain";
 import { cn } from "@/shared/lib/utils";
 import { CodeBlock } from "@/slices/code-block";
+import { DynamicIcon } from "@/slices/icon-picker";
 import { MARKDOWN_TRIGGERS } from "../lib/markdownTriggers";
 import { SlashMenu } from "../SlashMenu";
 import { getBlockRenderer } from "./registry";
@@ -250,7 +251,7 @@ export function NestedBlock({
           onClick={() => target && navigate(`/p/${target.id}`)}
           className="flex w-full items-center gap-2 rounded-md border border-border bg-card px-2 py-1.5 text-left hover:bg-accent transition text-sm"
         >
-          <span className="leading-none">{target?.icon ?? "📄"}</span>
+          <DynamicIcon value={target?.icon} className="text-base shrink-0" />
           <span className="flex-1 truncate">{target?.title || "Untitled"}</span>
           <FileText className="h-3.5 w-3.5 text-muted-foreground" />
         </button>

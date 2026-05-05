@@ -10,6 +10,7 @@ import { focusSiblingBySelector, isTextInputTarget } from "@/shared/lib/keyboard
 import { colorClass } from "@/shared/lib/format";
 import { PropertyCell } from "../PropertyCell";
 import { Plus } from "lucide-react";
+import { DynamicIcon } from "@/slices/icon-picker";
 import { getVisibleProps } from "../lib/visibility";
 import { QuickCreateDialog } from "../components/QuickCreateDialog";
 import { useState } from "react";
@@ -164,7 +165,7 @@ function BoardCard({ row, db, onOpen, cardPadding, colorByProp, cardPropIds, vie
       className={cn("rounded-md bg-card border border-border shadow-soft cursor-grab active:cursor-grabbing hover:border-border-strong transition", cardPadding, accentBar, isDragging && "opacity-50")}
     >
       <div className="flex items-center gap-1.5 text-sm font-medium mb-1">
-        <span>{row.icon}</span>
+        <DynamicIcon value={row.icon} className="text-sm" />
         <span className="truncate">{row.title || "Untitled"}</span>
       </div>
       <div className="flex flex-wrap gap-1 -mx-1">
