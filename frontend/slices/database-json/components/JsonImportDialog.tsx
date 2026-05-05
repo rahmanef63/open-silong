@@ -7,6 +7,7 @@ import {
 import { Button } from "@/shared/ui/button";
 import { useStore } from "@/shared/lib/store";
 import { applyImport, parseExport, type DatabaseExportV1 } from "../lib/serialize";
+import { DynamicIcon } from "@/slices/icon-picker";
 
 interface Props {
   open: boolean;
@@ -81,7 +82,9 @@ export function JsonImportDialog({ open, onOpenChange, onImported }: Props) {
         {parsed && importedDbId === null && (
           <div className="space-y-2 max-h-[420px] overflow-y-auto">
             <div className="rounded-md bg-muted/50 p-3 text-xs">
-              <div className="font-medium text-sm mb-1">{parsed.database.icon} {parsed.database.name}</div>
+              <div className="font-medium text-sm mb-1 flex items-center gap-1">
+                <DynamicIcon value={parsed.database.icon} className="text-base" fallback="🗂️" /> {parsed.database.name}
+              </div>
               <div className="text-muted-foreground">
                 {parsed.database.properties.length} properties · {parsed.database.views.length} views · {parsed.rows.length} rows
               </div>

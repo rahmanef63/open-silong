@@ -162,19 +162,23 @@ export const importZip = action({
 
       const lower = path.toLowerCase();
       const base = path.split("/").pop() ?? path;
-      const titleFromName = stripNotionId(base.replace(/\.[^.]+$/, ""));
+      const cleanedName = stripNotionId(base.replace(/\.[^.]+$/, ""));
+      const fromName = extractLeadingIcon(cleanedName);
 
       try {
         if (lower.endsWith(".md") || lower.endsWith(".markdown")) {
           const text = await readText(entry, summary, path);
           if (text === null) continue;
-          const { title, body } = splitMarkdownTitle(text, titleFromName);
+          const { title: rawTitle, body } = splitMarkdownTitle(text, fromName.rest);
+          const fromTitle = extractLeadingIcon(rawTitle);
+          const icon = fromTitle.icon ?? fromName.icon ?? defaultIconFor("md");
+          const title = fromTitle.rest || fromName.rest || "Untitled";
           const blocks = markdownToBlocks(body);
           await ctx.runMutation(internal.import.internal.createPage, {
             userId,
             parentId,
             title,
-            icon: "📄",
+            icon,
             blocks,
           });
           summary.pages++;
@@ -182,11 +186,12 @@ export const importZip = action({
           const text = await readText(entry, summary, path);
           if (text === null) continue;
           const blocks = htmlToBlocks(text);
+          const icon = fromName.icon ?? defaultIconFor("html");
           await ctx.runMutation(internal.import.internal.createPage, {
             userId,
             parentId,
-            title: titleFromName,
-            icon: "🌐",
+            title: fromName.rest || "Untitled",
+            icon,
             blocks,
           });
           summary.pages++;
@@ -200,7 +205,7 @@ export const importZip = action({
           }
           const headers = rows[0];
           const body = rows.slice(1);
-          const dbName = titleFromName || "Imported database";
+          const dbName = fromName.rest || "Imported database";
           // Wrap db in a host page so it appears in the sidebar tree and
           // is navigable. Without the wrapper page the database is orphan
           // and only reachable by direct URL.
@@ -342,4 +347,31 @@ function splitMarkdownTitle(md: string, fallback: string): { title: string; body
   const m = md.match(/^\s*#\s+(.+)\s*\n+/);
   if (m) return { title: m[1].trim(), body: md.slice(m[0].length) };
   return { title: fallback, body: md };
+}
+
+/** Notion exports often prefix the title with the page emoji
+ *  (e.g. "🎯 Project goal abc123…"). Lift that emoji out so it becomes
+ *  the page icon and the title reads cleanly. Returns null icon if no
+ *  leading emoji found. */
+function extractLeadingIcon(s: string): { icon: string | null; rest: string } {
+  if (!s) return { icon: null, rest: s };
+  // Match leading Extended_Pictographic with optional ZWJ sequences and
+  // a trailing variation selector, followed by whitespace.
+  const m = s.match(
+    /^([\p{Extended_Pictographic}](?:‍[\p{Extended_Pictographic}])*️?)\s+(.+)$/u,
+  );
+  if (m) return { icon: m[1], rest: m[2].trim() };
+  return { icon: null, rest: s };
+}
+
+/** Default icon by file kind — used when no leading emoji is in the title. */
+function defaultIconFor(kind: "md" | "html" | "csv" | "pdf" | "img" | "files"): string {
+  switch (kind) {
+    case "md": return "📄";
+    case "html": return "🌐";
+    case "csv": return "🗂️";
+    case "pdf": return "📕";
+    case "img": return "🖼️";
+    case "files": return "📦";
+  }
 }
