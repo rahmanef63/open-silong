@@ -2,6 +2,8 @@
 
 import { useEffect } from "react";
 import { AlertTriangle, RefreshCw } from "lucide-react";
+import { isChunkLoadError } from "@/shared/components/ChunkErrorBoundary";
+import { hardReload } from "@/shared/components/VersionWatcher";
 
 export default function Error({
   error,
@@ -10,9 +12,44 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  // Stale-deploy chunk error → reload immediately with cache-bust.
+  // ChunkErrorBoundary in Providers handles most cases, but route-level
+  // errors land here directly so we mirror the recovery.
+  const isStaleChunk = isChunkLoadError(error);
+
   useEffect(() => {
     if (process.env.NODE_ENV !== "production") console.error("RouteError:", error);
-  }, [error]);
+    if (isStaleChunk) {
+      const FLAG = "nosion:chunk-reloaded-at";
+      try {
+        const last = Number(sessionStorage.getItem(FLAG) ?? "0");
+        if (Date.now() - last > 60_000) {
+          sessionStorage.setItem(FLAG, String(Date.now()));
+          hardReload();
+        }
+      } catch { hardReload(); }
+    }
+  }, [error, isStaleChunk]);
+
+  if (isStaleChunk) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6 bg-background">
+        <div className="max-w-md w-full rounded-lg border border-border bg-card p-6 text-center">
+          <div className="text-3xl mb-2">🔄</div>
+          <h2 className="text-base font-semibold mb-1">Update available</h2>
+          <p className="text-sm text-muted-foreground mb-4">
+            The app was updated while you were here. Reloading…
+          </p>
+          <button
+            onClick={hardReload}
+            className="rounded-md bg-foreground text-background px-3 py-1.5 text-sm hover:opacity-90"
+          >
+            Reload now
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-background">
@@ -33,6 +70,12 @@ export default function Error({
             className="flex items-center gap-1.5 rounded-md bg-foreground text-background px-3 py-1.5 text-sm hover:opacity-90"
           >
             <RefreshCw className="h-3.5 w-3.5" /> Try again
+          </button>
+          <button
+            onClick={hardReload}
+            className="rounded-md border border-border px-3 py-1.5 text-sm hover:bg-accent"
+          >
+            Hard reload
           </button>
         </div>
       </div>
