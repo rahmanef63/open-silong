@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useStore } from "@/shared/lib/store";
 import { Page, Property, PropertyType } from "@/shared/types/domain";
 import { PropertyCell } from "@/slices/databases/PropertyCell";
+import { DynamicIcon } from "@/slices/icon-picker";
 import { PROPERTY_TYPE_LABELS } from "@/slices/databases/DatabaseBlock";
 import { cn } from "@/shared/lib/utils";
 import {
@@ -129,7 +130,7 @@ export function RowPropertiesPanel({ page }: { page: Page }) {
             onClick={() => window.history.back()}
             className="flex items-center gap-1 hover:text-foreground transition-colors"
           >
-            <span>{dbPage.icon}</span>
+            <DynamicIcon value={dbPage.icon} className="text-sm" />
             <span>{dbPage.title || "Untitled"}</span>
           </button>
           <ChevronRight className="h-3 w-3 shrink-0" />

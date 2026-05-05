@@ -6,9 +6,10 @@ import {
 } from "@/shared/ui/dialog";
 import { Input } from "@/shared/ui/input";
 import { Button } from "@/shared/ui/button";
-import { cn } from "@/shared/lib/utils";
+import { DynamicIcon, IconPickerPopover } from "@/slices/icon-picker";
 
-const DB_ICONS = [
+const DB_DEFAULT_ICON = "🗂️";
+const DB_QUICK_PICKS = [
   "🗂️", "📊", "📋", "🗄️", "📒", "📔", "📕", "📗",
   "📘", "📙", "🗃️", "🧾", "🎯", "🧪", "🎚️", "🧮",
 ];
@@ -21,13 +22,13 @@ interface Props {
 
 export function CreateDatabaseDialog({ open, onOpenChange, onSubmit }: Props) {
   const [name, setName] = useState("");
-  const [icon, setIcon] = useState(DB_ICONS[0]);
+  const [icon, setIcon] = useState<string>(DB_DEFAULT_ICON);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (open) {
       setName("");
-      setIcon(DB_ICONS[Math.floor(Math.random() * DB_ICONS.length)]);
+      setIcon(DB_QUICK_PICKS[Math.floor(Math.random() * DB_QUICK_PICKS.length)] ?? DB_DEFAULT_ICON);
     }
   }, [open]);
 
@@ -55,22 +56,15 @@ export function CreateDatabaseDialog({ open, onOpenChange, onSubmit }: Props) {
         <div className="space-y-4">
           <div>
             <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Icon</label>
-            <div className="flex flex-wrap gap-1">
-              {DB_ICONS.map((i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => setIcon(i)}
-                  className={cn(
-                    "flex size-9 items-center justify-center rounded-md border text-lg transition",
-                    icon === i ? "border-brand bg-brand/10" : "border-border hover:bg-accent",
-                  )}
-                  aria-pressed={icon === i}
-                >
-                  {i}
-                </button>
-              ))}
-            </div>
+            <IconPickerPopover value={icon} onChange={setIcon} onClear={() => setIcon(DB_DEFAULT_ICON)}>
+              <button
+                type="button"
+                className="inline-flex h-12 w-12 items-center justify-center rounded-md border border-border text-2xl hover:bg-accent transition"
+                aria-label="Change icon"
+              >
+                <DynamicIcon value={icon} fallback={DB_DEFAULT_ICON} />
+              </button>
+            </IconPickerPopover>
           </div>
 
           <div>

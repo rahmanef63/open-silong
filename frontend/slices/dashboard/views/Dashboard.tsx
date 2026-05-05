@@ -1,6 +1,7 @@
 import { useNavigate } from "@/shared/lib/router-compat";
 import { useStore } from "@/shared/lib/store";
 import { Plus, Star, Clock, FileText, Table2 } from "lucide-react";
+import { DynamicIcon } from "@/slices/icon-picker";
 import { cn } from "@/shared/lib/utils";
 
 export function Dashboard() {
@@ -91,7 +92,7 @@ export function Dashboard() {
                     key={db.id}
                     className="flex items-center gap-3 px-4 py-3"
                   >
-                    <span className="text-lg">{db.icon}</span>
+                    <DynamicIcon value={db.icon} className="text-lg" fallback="🗂️" />
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-sm font-medium">{db.name}</div>
                       <div className="text-xs text-muted-foreground">
@@ -119,7 +120,7 @@ export function Dashboard() {
                     onClick={() => navigate(`/p/${p.id}`)}
                     className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-accent transition"
                   >
-                    <span className="text-lg">{p.icon}</span>
+                    <DynamicIcon value={p.icon} className="text-lg" />
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-sm font-medium">{p.title || "Untitled"}</div>
                       <div className="truncate text-xs text-muted-foreground">{p.blocks.find(b => b.text)?.text || "Empty page"}</div>

@@ -7,12 +7,9 @@ import {
 } from "@/shared/ui/dialog";
 import { Input } from "@/shared/ui/input";
 import { Button } from "@/shared/ui/button";
-import { cn } from "@/shared/lib/utils";
+import { ALL_EMOJIS, DynamicIcon, IconPickerPopover } from "@/slices/icon-picker";
 
-const PAGE_ICONS = [
-  "📄", "📝", "📚", "🚀", "🌱", "🛰️", "🎨", "🧠",
-  "🪄", "🌙", "☕", "🔥", "🌊", "✨", "🪐", "🛠️",
-];
+const DEFAULT_ICON = "📄";
 
 interface Props {
   open: boolean;
@@ -27,14 +24,14 @@ export function CreatePageDialog({ open, onOpenChange, parentId, onSubmit }: Pro
   const { getPage } = useStore();
   const parent = parentId ? getPage(parentId) : null;
   const [title, setTitle] = useState("");
-  const [icon, setIcon] = useState(PAGE_ICONS[0]);
+  const [icon, setIcon] = useState<string>(DEFAULT_ICON);
   const [submitting, setSubmitting] = useState(false);
 
   // Reset form on open
   useEffect(() => {
     if (open) {
       setTitle("");
-      setIcon(PAGE_ICONS[Math.floor(Math.random() * PAGE_ICONS.length)]);
+      setIcon(ALL_EMOJIS[Math.floor(Math.random() * ALL_EMOJIS.length)] ?? DEFAULT_ICON);
     }
   }, [open]);
 
@@ -62,22 +59,15 @@ export function CreatePageDialog({ open, onOpenChange, parentId, onSubmit }: Pro
         <div className="space-y-4">
           <div>
             <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Icon</label>
-            <div className="flex flex-wrap gap-1">
-              {PAGE_ICONS.map((i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => setIcon(i)}
-                  className={cn(
-                    "flex size-9 items-center justify-center rounded-md border text-lg transition",
-                    icon === i ? "border-brand bg-brand/10" : "border-border hover:bg-accent",
-                  )}
-                  aria-pressed={icon === i}
-                >
-                  {i}
-                </button>
-              ))}
-            </div>
+            <IconPickerPopover value={icon} onChange={setIcon} onClear={() => setIcon(DEFAULT_ICON)}>
+              <button
+                type="button"
+                className="inline-flex h-12 w-12 items-center justify-center rounded-md border border-border text-2xl hover:bg-accent transition"
+                aria-label="Change icon"
+              >
+                <DynamicIcon value={icon} />
+              </button>
+            </IconPickerPopover>
           </div>
 
           <div>

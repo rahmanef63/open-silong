@@ -4,6 +4,7 @@ import {
 } from "@/shared/ui/dropdown-menu";
 import { useStore } from "@/shared/lib/store";
 import { DATABASE_PRESETS } from "../lib/presets";
+import { DynamicIcon } from "@/slices/icon-picker";
 
 interface Props {
   onCreated: (databaseId: string) => void;
@@ -43,7 +44,7 @@ export function DatabasePresetPicker({ onCreated, trigger }: Props) {
         <DropdownMenuLabel className="text-xs">Database presets</DropdownMenuLabel>
         {DATABASE_PRESETS.map((p) => (
           <DropdownMenuItem key={p.id} onClick={() => apply(p.id)} className="flex items-start gap-2 py-2">
-            <span className="text-base mt-0.5 leading-none">{p.icon}</span>
+            <DynamicIcon value={p.icon} className="text-base mt-0.5" />
             <div className="flex-1 min-w-0">
               <div className="text-sm font-medium">{p.name}</div>
               <div className="text-[11px] text-muted-foreground line-clamp-2">{p.description}</div>
