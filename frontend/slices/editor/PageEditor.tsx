@@ -61,6 +61,20 @@ export function PageEditor() {
 
   useEffect(() => { if (id && page) pushRecent(id); }, [id]);
 
+  // Hooks MUST run on every render — keep above any early return below.
+  const registerRef = useCallback((id: string, el: HTMLElement | null) => {
+    refs.current.set(id, el);
+  }, []);
+  const focusByOffset = useCallback((blockId: string, delta: number) => {
+    const blocks = blocksRef.current;
+    if (!blocks) return;
+    const idx = blocks.findIndex((b) => b.id === blockId);
+    if (idx === -1) return;
+    const target = blocks[idx + delta];
+    if (!target) return;
+    refs.current.get(target.id)?.focus();
+  }, []);
+
   if (fullPage === undefined) {
     return <PageEditorSkeleton />;
   }
@@ -77,19 +91,6 @@ export function PageEditor() {
       </div>
     );
   }
-
-  const registerRef = useCallback((id: string, el: HTMLElement | null) => {
-    refs.current.set(id, el);
-  }, []);
-  const focusByOffset = useCallback((blockId: string, delta: number) => {
-    const blocks = blocksRef.current;
-    if (!blocks) return;
-    const idx = blocks.findIndex((b) => b.id === blockId);
-    if (idx === -1) return;
-    const target = blocks[idx + delta];
-    if (!target) return;
-    refs.current.get(target.id)?.focus();
-  }, []);
 
   // Collision detection priority:
   //  1. Leaf blocks under the pointer (precise drop on a child / sibling).
