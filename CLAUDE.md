@@ -49,10 +49,35 @@ new commits, never amend.
 - Server Actions: every `"use server"` performs authn + authz; never return
   raw DB rows; use DTOs.
 - Convex public fns: `args: { ... v.* }` validators are mandatory, plus a
-  permission check before any DB write.
+  permission check before any DB write. Prefer
+  `requireOwned(ctx, table, id)` from `convex/_shared/auth.ts` over the
+  raw `getAuthUserId + db.get + userId-compare` triplet.
+- Hot mutations gated through `rateLimit(ctx, userId, { scope, max,
+  windowMs })` from `convex/_shared/rateLimit.ts`. Daily prune cron in
+  `convex/maintenance.ts` keeps the backing table small.
+- User-visible errors flow through `frontend/shared/lib/error.ts`
+  (`sanitizeError` / `reportError`). Never show raw React or Convex
+  stacks. Mutation guards live in
+  `frontend/shared/lib/store/mutationGuard.ts`.
+- Inline rich-text uses the **Slack model**: `SelectionToolbar` wraps
+  selections with markdown markers (`**…**`, `_…_`, `~~…~~`,
+  `` `…` ``, `[label](url)`). The editor is plain-text source-of-truth;
+  read surfaces (public share, exports) parse via
+  `frontend/shared/lib/inlineMd.tsx`. Relative `/path` links are
+  permitted (used for `@page` mentions); other schemes rejected.
 - No raw `<a>` for internal routes; no raw `<img>` for hosted assets.
 - `ResponsiveDialog`, `DateField`, `<FileUpload>` primitives live in
   `frontend/shared/`.
+
+## Backup & restore
+
+`Settings → Backup` round-trips a JSON file. Export is client-side
+(`frontend/shared/lib/markdown.ts:downloadFile`). Import goes through
+`convex/import/workspace.ts:importFromJson` — zod-validated, four-phase
+id remap (insert pages → insert databases → patch pages with
+parent/rowOfDb/blocks-with-remapped-refs → patch databases with
+remapped rowIds). Additive; never carries `isPublic` or `trashed`
+across.
 
 ## Audit / review
 

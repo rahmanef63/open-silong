@@ -85,6 +85,7 @@ declare const fullApi: ApiFromModules<{
   "import/zip": typeof import_zip;
   maintenance: typeof maintenance;
   pages: typeof pages;
+
   preferences: typeof preferences;
   recents: typeof recents;
   snapshots: typeof snapshots;

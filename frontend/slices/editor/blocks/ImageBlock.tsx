@@ -85,6 +85,18 @@ export function ImageBlock({ block, onUpdate }: Props) {
           const f = e.dataTransfer.files?.[0];
           if (f) onUploadFile(f);
         }}
+        onPaste={(e) => {
+          for (const item of e.clipboardData.items) {
+            if (item.kind === "file" && item.type.startsWith("image/")) {
+              const f = item.getAsFile();
+              if (f) {
+                e.preventDefault();
+                onUploadFile(f);
+                return;
+              }
+            }
+          }
+        }}
         className={cn(
           "rounded-md border border-dashed p-4 text-center transition",
           dropTarget ? "border-brand bg-brand/5" : "border-border",
