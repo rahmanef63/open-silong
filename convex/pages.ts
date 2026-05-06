@@ -13,18 +13,24 @@ function emptyBlock() {
 }
 
 /**
- * Anonymous-readable public share. Returns a DTO (no userId, searchText,
- * rowProps, rowOfDatabaseId) only when isPublic && !trashed. Returns null
- * otherwise — caller renders not-found.
+ * Anonymous-readable public share. Accepts either the convex id OR a
+ * custom slug stored on `pages.shareSlug`. Returns a DTO (no userId,
+ * searchText, rowProps, rowOfDatabaseId) only when isPublic && !trashed.
  */
 export const getPublicShare = query({
   args: { id: v.string() },
   handler: async (ctx, { id }) => {
-    let doc;
-    try {
-      doc = await ctx.db.get(id as Id<"pages">);
-    } catch {
-      return null;
+    let doc = null;
+    // Try convex id form first — only if the string matches the
+    // standard convex id shape (no hyphens, mixed case-insensitive).
+    if (/^[a-z0-9]{20,}$/i.test(id)) {
+      try { doc = await ctx.db.get(id as Id<"pages">); } catch { /* fallthrough to slug */ }
+    }
+    if (!doc) {
+      doc = await ctx.db
+        .query("pages")
+        .withIndex("by_share_slug", (q) => q.eq("shareSlug", id))
+        .unique();
     }
     if (!doc || doc.trashed || !doc.isPublic) return null;
     return {
@@ -37,7 +43,38 @@ export const getPublicShare = query({
       smallText: doc.smallText,
       fullWidth: doc.fullWidth,
       updatedAt: doc.updatedAt,
+      shareSlug: doc.shareSlug,
     };
+  },
+});
+
+const SLUG_RE = /^[a-z0-9](?:[a-z0-9-]{1,58}[a-z0-9])?$/;
+
+/** Set or clear the custom share slug for a page. Slug must be 3–60
+ *  chars, lowercase + digits + hyphens, not starting/ending with hyphen.
+ *  Empty string clears the slug. Throws on collision with another page. */
+export const setShareSlug = mutation({
+  args: { pageId: v.string(), slug: v.string() },
+  handler: async (ctx, args) => {
+    await requireOwned(ctx, "pages", args.pageId as Id<"pages">);
+    const slug = args.slug.trim().toLowerCase();
+    if (!slug) {
+      await ctx.db.patch(args.pageId as Id<"pages">, { shareSlug: undefined, updatedAt: Date.now() });
+      return { slug: null };
+    }
+    if (!SLUG_RE.test(slug)) {
+      throw new Error("Slug must be 3–60 chars: lowercase letters, digits, hyphens (not at edges)");
+    }
+    if (slug.length < 3) throw new Error("Slug too short (min 3 chars)");
+    const existing = await ctx.db
+      .query("pages")
+      .withIndex("by_share_slug", (q) => q.eq("shareSlug", slug))
+      .unique();
+    if (existing && existing._id !== (args.pageId as Id<"pages">)) {
+      throw new Error("That slug is already taken — pick another.");
+    }
+    await ctx.db.patch(args.pageId as Id<"pages">, { shareSlug: slug, updatedAt: Date.now() });
+    return { slug };
   },
 });
 
@@ -74,6 +111,7 @@ export const listMeta = query({
       favorite: d.favorite,
       trashed: d.trashed,
       isPublic: d.isPublic,
+      shareSlug: d.shareSlug,
       rowOfDatabaseId: d.rowOfDatabaseId,
       font: d.font,
       smallText: d.smallText,
