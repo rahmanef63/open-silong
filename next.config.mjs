@@ -39,11 +39,7 @@ const nextConfig = {
   // Tracking deferral + exit criteria in docs/audit/cache-components.md.
   // cacheComponents: true,
   deploymentId: process.env.NEXT_PUBLIC_DEPLOYMENT_ID,
-  // Pre-existing legacy slice TS drift (formulaEngine, dnd-kit attrs, zod
-  // recursive schemas). CI gates correctness via `npx tsc --noEmit` in
-  // .github/workflows/frontend-ci.yml — this flag only prevents the gate
-  // from blocking next build while the legacy tree is being paid down.
-  typescript: { ignoreBuildErrors: true },
+  typescript: { ignoreBuildErrors: false },
   experimental: {
     serverActions: {
       allowedOrigins: [new URL(siteUrl).host],
@@ -79,6 +75,24 @@ const nextConfig = {
     ];
   },
   async headers() {
+    // CSP: 'unsafe-inline' is unavoidable until Next 16 wires per-request
+    // nonces through React 19 SSR — the framework still emits inline
+    // bootstrap scripts. Everything else is locked to known origins.
+    const csp = [
+      "default-src 'self'",
+      "base-uri 'self'",
+      "object-src 'none'",
+      "frame-ancestors 'none'",
+      "form-action 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://accounts.google.com",
+      "style-src 'self' 'unsafe-inline'",
+      `img-src 'self' data: blob: https://cdn.jsdelivr.net https://images.unsplash.com https://avatars.githubusercontent.com https://lh3.googleusercontent.com https://${convexHost}`,
+      "font-src 'self' data:",
+      `connect-src 'self' https://${convexHost} wss://${convexHost} https://www.google-analytics.com https://accounts.google.com`,
+      "frame-src 'self' https://accounts.google.com",
+      "manifest-src 'self'",
+      "worker-src 'self' blob:",
+    ].join("; ");
     return [
       {
         source: "/manifest.webmanifest",
@@ -94,6 +108,8 @@ const nextConfig = {
           { key: "X-Frame-Options", value: "DENY" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+          { key: "Content-Security-Policy", value: csp },
+          { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains; preload" },
         ],
       },
     ];

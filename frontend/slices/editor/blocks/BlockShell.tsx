@@ -1,4 +1,6 @@
 import type { ReactNode, CSSProperties } from "react";
+import type { DraggableAttributes } from "@dnd-kit/core";
+import type { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
 import { cn } from "@/shared/lib/utils";
 import { useBlockSelectionOptional } from "@/slices/block-selection";
 
@@ -9,8 +11,8 @@ interface Props {
   style?: CSSProperties;
   isDragging?: boolean;
   isOver?: boolean;
-  attributes?: Record<string, unknown>;
-  listeners?: Record<string, unknown>;
+  attributes?: DraggableAttributes;
+  listeners?: SyntheticListenerMap;
   /** Top-level block id — when present, the shell participates in multi-select. */
   blockId?: string;
 }

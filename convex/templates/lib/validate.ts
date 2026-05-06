@@ -82,7 +82,7 @@ const TplPageSchema: z.ZodType<TplPage> = z.lazy(() =>
     databases: z.array(TplDatabase).max(20).optional(),
     children: z.array(TplPageSchema).max(50).optional(),
   }),
-);
+) as z.ZodType<TplPage>;
 
 export const TemplateJsonSchema = z.object({
   version: z.literal(1),

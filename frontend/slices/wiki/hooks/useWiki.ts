@@ -1,22 +1,54 @@
+"use client";
+
+import { useMutation, useQuery } from "convex/react";
+import { api } from "@convex/_generated/api";
+import { useStore } from "@/shared/lib/store";
 import type { WikiMeta } from "../types";
 
-/**
- * Wiki bindings. Backend is not yet implemented; this hook returns an
- * inert shape so consumers can render the UI without conditionals.
- * Replace with Convex queries when the wiki feature is fully built.
- */
 export function useWiki(pageId: string | undefined): {
   isLoading: boolean;
   meta: WikiMeta | null;
   enable: () => Promise<void>;
   disable: () => Promise<void>;
-  verify: () => Promise<void>;
+  verify: (next?: boolean) => Promise<void>;
 } {
+  const { user } = useStore();
+  const page = useQuery(
+    api.pages.getById,
+    pageId ? { id: pageId } : "skip",
+  );
+  const enableMut = useMutation(api.features.wiki.mutations.enable);
+  const disableMut = useMutation(api.features.wiki.mutations.disable);
+  const verifyMut = useMutation(api.features.wiki.mutations.verify);
+
+  const meta: WikiMeta | null = page?.wiki
+    ? {
+        pageId: page._id as string,
+        verified: page.wiki.verified,
+        ownerName: page.wiki.ownerName,
+        ownerIcon: page.wiki.ownerIcon,
+        verifiedAt: page.wiki.verifiedAt ?? null,
+      }
+    : null;
+
   return {
-    isLoading: false,
-    meta: pageId ? null : null,
-    enable: async () => { /* TODO: convex mutation */ },
-    disable: async () => { /* TODO: convex mutation */ },
-    verify: async () => { /* TODO: convex mutation */ },
+    isLoading: pageId ? page === undefined : false,
+    meta,
+    enable: async () => {
+      if (!pageId) return;
+      await enableMut({
+        pageId,
+        ownerName: user?.name ?? "Anonymous",
+        ownerIcon: user?.icon ?? "📄",
+      });
+    },
+    disable: async () => {
+      if (!pageId) return;
+      await disableMut({ pageId });
+    },
+    verify: async (next = true) => {
+      if (!pageId) return;
+      await verifyMut({ pageId, verified: next });
+    },
   };
 }

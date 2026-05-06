@@ -135,8 +135,8 @@ interface Props {
   style?: CSSProperties;
   isDragging?: boolean;
   isOver?: boolean;
-  attributes?: Record<string, unknown>;
-  listeners?: Record<string, unknown>;
+  attributes?: import("@dnd-kit/core").DraggableAttributes;
+  listeners?: import("@dnd-kit/core/dist/hooks/utilities").SyntheticListenerMap;
   convertTo: (t: BlockType) => void;
 }
 

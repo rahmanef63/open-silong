@@ -63,11 +63,12 @@ interface LinkProps extends Omit<NextLinkProps, "href"> {
   children?: React.ReactNode;
   className?: string;
   onClick?: React.MouseEventHandler<HTMLAnchorElement>;
+  onKeyDown?: React.KeyboardEventHandler<HTMLAnchorElement>;
   target?: string;
   rel?: string;
   title?: string;
   "aria-label"?: string;
-  "data-sidebar-nav-item"?: string;
+  [dataAttr: `data-${string}`]: unknown;
 }
 
 export const Link = React.forwardRef<HTMLAnchorElement, LinkProps>(function Link(

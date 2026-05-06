@@ -1,6 +1,7 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { requireAuth, requireOwned } from "./_shared/auth";
 import { Id } from "./_generated/dataModel";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -17,10 +18,7 @@ export const list = query({
 export const trash = mutation({
   args: { dbId: v.string() },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
-    const db = await ctx.db.get(args.dbId as Id<"databases">);
-    if (!db || db.userId !== userId) throw new Error("Not found");
+    await requireOwned(ctx, "databases", args.dbId as Id<"databases">);
     await ctx.db.patch(args.dbId as Id<"databases">, { trashed: true, updatedAt: Date.now() });
   },
 });
@@ -28,10 +26,7 @@ export const trash = mutation({
 export const restore = mutation({
   args: { dbId: v.string() },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
-    const db = await ctx.db.get(args.dbId as Id<"databases">);
-    if (!db || db.userId !== userId) throw new Error("Not found");
+    await requireOwned(ctx, "databases", args.dbId as Id<"databases">);
     await ctx.db.patch(args.dbId as Id<"databases">, { trashed: false, updatedAt: Date.now() });
   },
 });
@@ -39,10 +34,7 @@ export const restore = mutation({
 export const permanentlyDelete = mutation({
   args: { dbId: v.string() },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
-    const db = await ctx.db.get(args.dbId as Id<"databases">);
-    if (!db || db.userId !== userId) throw new Error("Not found");
+    const { userId, doc: db } = await requireOwned(ctx, "databases", args.dbId as Id<"databases">);
     const rows = await Promise.all(
       db.rowIds.map((rowId) => ctx.db.get(rowId as Id<"pages">)),
     );
@@ -58,8 +50,7 @@ export const permanentlyDelete = mutation({
 export const create = mutation({
   args: { name: v.optional(v.string()) },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
+    const userId = await requireAuth(ctx);
     const now = Date.now();
     const titleProp = { id: uid(), name: "Name", type: "text" };
     const statusProp = {
@@ -88,10 +79,7 @@ export const create = mutation({
 export const update = mutation({
   args: { dbId: v.string(), patch: v.any() },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
-    const db = await ctx.db.get(args.dbId as Id<"databases">);
-    if (!db || db.userId !== userId) throw new Error("Not found");
+    await requireOwned(ctx, "databases", args.dbId as Id<"databases">);
     await ctx.db.patch(args.dbId as Id<"databases">, { ...args.patch, updatedAt: Date.now() });
   },
 });
@@ -99,11 +87,8 @@ export const update = mutation({
 export const addRow = mutation({
   args: { dbId: v.string(), init: v.optional(v.any()), templateId: v.optional(v.string()) },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
+    const { userId, doc: db } = await requireOwned(ctx, "databases", args.dbId as Id<"databases">);
     const now = Date.now();
-    const db = await ctx.db.get(args.dbId as Id<"databases">);
-    if (!db || db.userId !== userId) throw new Error("Database not found");
 
     const uniqueIdProps: { id: string; prefix?: string }[] = (db.properties ?? [])
       .filter((p: any) => p.type === "unique_id")
@@ -157,10 +142,8 @@ export const addRow = mutation({
 export const deleteRow = mutation({
   args: { dbId: v.string(), rowPageId: v.string() },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
-    const db = await ctx.db.get(args.dbId as Id<"databases">);
-    if (!db || db.userId !== userId) throw new Error("Not found");
+    const { doc: db } = await requireOwned(ctx, "databases", args.dbId as Id<"databases">);
+    await requireOwned(ctx, "pages", args.rowPageId as Id<"pages">);
     await ctx.db.patch(args.rowPageId as Id<"pages">, { trashed: true, updatedAt: Date.now() });
     await ctx.db.patch(args.dbId as Id<"databases">, {
       rowIds: db.rowIds.filter((r: string) => r !== args.rowPageId),
@@ -172,10 +155,7 @@ export const deleteRow = mutation({
 export const setRowValue = mutation({
   args: { dbId: v.string(), rowPageId: v.string(), propId: v.string(), value: v.any() },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
-    const page = await ctx.db.get(args.rowPageId as Id<"pages">);
-    if (!page || page.userId !== userId) throw new Error("Not found");
+    const { doc: page } = await requireOwned(ctx, "pages", args.rowPageId as Id<"pages">);
     const rowProps = { ...(page.rowProps ?? {}), [args.propId]: args.value };
     await ctx.db.patch(args.rowPageId as Id<"pages">, { rowProps, updatedAt: Date.now() });
   },

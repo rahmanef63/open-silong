@@ -272,11 +272,10 @@ export function parseFormula(src: string): { ast: Node; error?: FormulaError } |
 
 function shiftPositions(node: ExprNode, offset: number): ExprNode {
   const shift = (n: ExprNode): ExprNode => {
-    const base = { ...n, pos: n.pos + offset };
-    if (n.kind === "call") return { ...base, args: n.args.map(shift) };
-    if (n.kind === "binop") return { ...base, left: shift(n.left), right: shift(n.right) };
-    if (n.kind === "unary") return { ...base, arg: shift(n.arg) };
-    return base;
+    if (n.kind === "call") return { ...n, pos: n.pos + offset, args: n.args.map(shift) };
+    if (n.kind === "binop") return { ...n, pos: n.pos + offset, left: shift(n.left), right: shift(n.right) };
+    if (n.kind === "unary") return { ...n, pos: n.pos + offset, arg: shift(n.arg) };
+    return { ...n, pos: n.pos + offset };
   };
   return shift(node);
 }

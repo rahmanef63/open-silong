@@ -11,7 +11,9 @@
 import type * as _shared_auth from "../_shared/auth.js";
 import type * as admin_mutations from "../admin/mutations.js";
 import type * as admin_queries from "../admin/queries.js";
+import type * as _shared_rateLimit from "../_shared/rateLimit.js";
 import type * as ai_chat from "../ai/chat.js";
+import type * as ai_internal from "../ai/internal.js";
 import type * as auth from "../auth.js";
 import type * as databases from "../databases.js";
 import type * as features_comments_mutations from "../features/comments/mutations.js";
@@ -20,6 +22,7 @@ import type * as features_files_mutations from "../features/files/mutations.js";
 import type * as features_files_queries from "../features/files/queries.js";
 import type * as features_inbox_mutations from "../features/inbox/mutations.js";
 import type * as features_inbox_queries from "../features/inbox/queries.js";
+import type * as features_wiki_mutations from "../features/wiki/mutations.js";
 import type * as features_search_index from "../features/search/index.js";
 import type * as features_search_lib from "../features/search/lib.js";
 import type * as features_search_mutations from "../features/search/mutations.js";
@@ -55,7 +58,9 @@ declare const fullApi: ApiFromModules<{
   "_shared/auth": typeof _shared_auth;
   "admin/mutations": typeof admin_mutations;
   "admin/queries": typeof admin_queries;
+  "_shared/rateLimit": typeof _shared_rateLimit;
   "ai/chat": typeof ai_chat;
+  "ai/internal": typeof ai_internal;
   auth: typeof auth;
   databases: typeof databases;
   "features/comments/mutations": typeof features_comments_mutations;
@@ -64,6 +69,7 @@ declare const fullApi: ApiFromModules<{
   "features/files/queries": typeof features_files_queries;
   "features/inbox/mutations": typeof features_inbox_mutations;
   "features/inbox/queries": typeof features_inbox_queries;
+  "features/wiki/mutations": typeof features_wiki_mutations;
   "features/search/index": typeof features_search_index;
   "features/search/lib": typeof features_search_lib;
   "features/search/mutations": typeof features_search_mutations;

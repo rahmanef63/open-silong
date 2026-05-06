@@ -1,6 +1,7 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { requireAuth, requireOwned } from "./_shared/auth";
 import { Id } from "./_generated/dataModel";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -39,8 +40,7 @@ export const create = mutation({
     rowProps: v.optional(v.any()),
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
+    const { userId } = await requireOwned(ctx, "pages", args.pageId as Id<"pages">);
     return await ctx.db.insert("snapshots", {
       userId,
       pageId: args.pageId,
@@ -59,12 +59,8 @@ export const create = mutation({
 export const restore = mutation({
   args: { snapshotId: v.string() },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
-    const snap = await ctx.db.get(args.snapshotId as Id<"snapshots">);
-    if (!snap || snap.userId !== userId) throw new Error("Not found");
-    const page = await ctx.db.get(snap.pageId as Id<"pages">);
-    if (!page || page.userId !== userId) throw new Error("Not found");
+    const { doc: snap } = await requireOwned(ctx, "snapshots", args.snapshotId as Id<"snapshots">);
+    const { doc: page } = await requireOwned(ctx, "pages", snap.pageId as Id<"pages">);
     await ctx.db.patch(snap.pageId as Id<"pages">, {
       title: snap.title,
       icon: snap.icon,
