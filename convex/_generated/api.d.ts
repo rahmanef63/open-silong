@@ -32,6 +32,7 @@ import type * as feedback_queries from "../feedback/queries.js";
 import type * as http from "../http.js";
 import type * as import_internal from "../import/internal.js";
 import type * as import_markdown from "../import/markdown.js";
+import type * as import_workspace from "../import/workspace.js";
 import type * as import_zip from "../import/zip.js";
 import type * as maintenance from "../maintenance.js";
 import type * as pages from "../pages.js";
@@ -80,6 +81,7 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   "import/internal": typeof import_internal;
   "import/markdown": typeof import_markdown;
+  "import/workspace": typeof import_workspace;
   "import/zip": typeof import_zip;
   maintenance: typeof maintenance;
   pages: typeof pages;
