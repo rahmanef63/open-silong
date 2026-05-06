@@ -30,15 +30,24 @@ export function PageCommentsPanel({ pageId }: Props) {
         </h3>
       </div>
       <div className="space-y-2">
-        {pageLevel.map((c) => (
-          <CommentItem
-            key={c.id}
-            comment={c}
-            onUpdate={(text) => update({ id: c.id, text })}
-            onResolve={(resolved) => resolve({ id: c.id, resolved })}
-            onRemove={() => remove({ id: c.id })}
-          />
-        ))}
+        {pageLevel.map((c) => {
+          const isAuthor = !!c.authorId && c.authorId === user.id;
+          // Within the dashboard, the viewer is always the page owner —
+          // the page-by-id query rejects access otherwise. Hence delete +
+          // resolve are always allowed here. Edit is author-only.
+          return (
+            <CommentItem
+              key={c.id}
+              comment={c}
+              onUpdate={(text) => update({ id: c.id, text })}
+              onResolve={(resolved) => resolve({ id: c.id, resolved })}
+              onRemove={() => remove({ id: c.id })}
+              canEdit={isAuthor}
+              canDelete
+              canResolve
+            />
+          );
+        })}
       </div>
       <div className="mt-3">
         <CommentComposer onSubmit={onCreate} placeholder="Add a comment to this page…" />

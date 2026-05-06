@@ -38,6 +38,7 @@ function toComment(doc: any): Comment {
     resolved: doc.resolved,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
+    authorId: doc.userId,
   };
 }
 

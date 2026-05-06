@@ -17,9 +17,18 @@ interface Props {
   onUpdate: (text: string) => void;
   onResolve: (resolved: boolean) => void;
   onRemove: () => void;
+  /** True when the viewer authored this comment. Controls edit affordance. */
+  canEdit?: boolean;
+  /** True when the viewer can delete (author OR page owner). */
+  canDelete?: boolean;
+  /** True when the viewer can flip resolved state (author OR page owner). */
+  canResolve?: boolean;
 }
 
-export function CommentItem({ comment, onUpdate, onResolve, onRemove }: Props) {
+export function CommentItem({
+  comment, onUpdate, onResolve, onRemove,
+  canEdit = true, canDelete = true, canResolve = true,
+}: Props) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(comment.text);
 
@@ -68,15 +77,19 @@ export function CommentItem({ comment, onUpdate, onResolve, onRemove }: Props) {
           )}
         </div>
       </div>
-      {!editing && (
+      {!editing && (canEdit || canResolve || canDelete) && (
         <div className="mt-1 flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition">
-          <IconBtn label="Edit" onClick={() => setEditing(true)}><Pencil className="h-3 w-3" /></IconBtn>
-          {comment.resolved ? (
+          {canEdit && (
+            <IconBtn label="Edit" onClick={() => setEditing(true)}><Pencil className="h-3 w-3" /></IconBtn>
+          )}
+          {canResolve && (comment.resolved ? (
             <IconBtn label="Reopen" onClick={() => onResolve(false)}><RotateCcw className="h-3 w-3" /></IconBtn>
           ) : (
             <IconBtn label="Resolve" onClick={() => onResolve(true)}><Check className="h-3 w-3" /></IconBtn>
+          ))}
+          {canDelete && (
+            <IconBtn label="Delete" destructive onClick={onRemove}><Trash2 className="h-3 w-3" /></IconBtn>
           )}
-          <IconBtn label="Delete" destructive onClick={onRemove}><Trash2 className="h-3 w-3" /></IconBtn>
         </div>
       )}
     </div>

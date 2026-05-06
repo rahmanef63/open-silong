@@ -8,4 +8,6 @@ export interface Comment {
   resolved: boolean;
   createdAt: number;
   updatedAt: number;
+  /** Author user id. Absent on public-share DTOs (sanitized). */
+  authorId?: string;
 }

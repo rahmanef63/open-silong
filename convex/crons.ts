@@ -12,4 +12,11 @@ crons.daily(
   internal.maintenance.pruneRateLimits,
 );
 
+/** Permanently deletes pages soft-deleted > 30 days ago. */
+crons.daily(
+  "purge-stale-trash",
+  { hourUTC: 3, minuteUTC: 30 },
+  internal.maintenance.purgeStaleTrash,
+);
+
 export default crons;
