@@ -1,6 +1,7 @@
 import { mutation } from "../../_generated/server";
 import { v } from "convex/values";
-import { getAuthUserId } from "@convex-dev/auth/server";
+import { requireAuth, requireOwned } from "../../_shared/auth";
+import { rateLimit } from "../../_shared/rateLimit";
 import { Id } from "../../_generated/dataModel";
 
 export const create = mutation({
@@ -12,17 +13,9 @@ export const create = mutation({
     authorIcon: v.string(),
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
-    let page;
-    try {
-      page = await ctx.db.get(args.pageId as Id<"pages">);
-    } catch {
-      throw new Error("Not found");
-    }
-    if (!page || page.userId !== userId) {
-      throw new Error("Not authorized");
-    }
+    if (args.text.length > 5_000) throw new Error("Comment too long");
+    const { userId } = await requireOwned(ctx, "pages", args.pageId as Id<"pages">);
+    await rateLimit(ctx, userId, { scope: "comments.create", max: 30, windowMs: 60_000 });
     const now = Date.now();
     return await ctx.db.insert("comments", {
       userId,
@@ -41,8 +34,8 @@ export const create = mutation({
 export const update = mutation({
   args: { id: v.string(), text: v.string() },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
+    if (args.text.length > 5_000) throw new Error("Comment too long");
+    const userId = await requireAuth(ctx);
     const c = await ctx.db.get(args.id as Id<"comments">);
     if (!c || c.userId !== userId) throw new Error("Not found");
     await ctx.db.patch(args.id as Id<"comments">, {
@@ -55,8 +48,7 @@ export const update = mutation({
 export const resolve = mutation({
   args: { id: v.string(), resolved: v.boolean() },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
+    const userId = await requireAuth(ctx);
     const c = await ctx.db.get(args.id as Id<"comments">);
     if (!c || c.userId !== userId) throw new Error("Not found");
     await ctx.db.patch(args.id as Id<"comments">, {
@@ -69,8 +61,7 @@ export const resolve = mutation({
 export const remove = mutation({
   args: { id: v.string() },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
+    const userId = await requireAuth(ctx);
     const c = await ctx.db.get(args.id as Id<"comments">);
     if (!c || c.userId !== userId) return;
     await ctx.db.delete(args.id as Id<"comments">);

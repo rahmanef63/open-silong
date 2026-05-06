@@ -3,6 +3,7 @@
 import { action } from "../_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { internal } from "../_generated/api";
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 const DEFAULT_MODEL = "anthropic/claude-haiku-4.5";
@@ -24,6 +25,7 @@ export const complete = action({
   handler: async (ctx, { messages, system, model, maxTokens }) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Belum login");
+    await ctx.runMutation(internal.ai.internal.checkRateLimit, {});
 
     const apiKey = process.env.OPENROUTER_API_KEY;
     if (!apiKey) {

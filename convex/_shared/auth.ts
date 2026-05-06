@@ -1,6 +1,6 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
-import type { Id } from "../_generated/dataModel";
+import type { Doc, Id } from "../_generated/dataModel";
 
 const FORBIDDEN = "Tidak berwenang";
 
@@ -99,6 +99,26 @@ export async function requireSuperAdmin(ctx: QueryCtx | MutationCtx): Promise<Id
 export async function actorEmail(ctx: QueryCtx | MutationCtx, userId: Id<"users">): Promise<string | undefined> {
   const u = await ctx.db.get(userId);
   return (u?.email as string | undefined) ?? undefined;
+}
+
+/** Resolve a doc by id and enforce `doc.userId === userId`. Throws "not
+ *  found" — never leak existence. Returns the doc on success.
+ *
+ *  Use in place of the `getAuthUserId → throw if !userId → db.get → throw
+ *  if doc.userId !== userId` triplet (was repeated in 22 sites). */
+type OwnedTable = "pages" | "databases" | "snapshots";
+
+export async function requireOwned<T extends OwnedTable>(
+  ctx: QueryCtx | MutationCtx,
+  _table: T,
+  id: Id<T>,
+): Promise<{ userId: Id<"users">; doc: Doc<T> }> {
+  const userId = await requireAuth(ctx);
+  const doc = await ctx.db.get(id);
+  if (!doc) throw new Error("Tidak ditemukan");
+  const ownerId = (doc as unknown as { userId: Id<"users"> }).userId;
+  if (ownerId !== userId) throw new Error("Tidak ditemukan");
+  return { userId, doc: doc as Doc<T> };
 }
 
 export const ERR_FORBIDDEN = FORBIDDEN;

@@ -27,12 +27,15 @@ describe("parseIconValue", () => {
   });
 
   it("normalises hex case + strips leading #", () => {
-    expect(parseIconValue("lucide:Star?c=#ABCDEF")?.color).toBe("#abcdef");
+    const p = parseIconValue("lucide:Star?c=#ABCDEF");
+    expect(p.kind === "lucide" && p.color).toBe("#abcdef");
   });
 
   it("rejects invalid hex (not 3-8 chars)", () => {
-    expect(parseIconValue("lucide:Star?c=zz")?.color).toBeUndefined();
-    expect(parseIconValue("lucide:Star?c=12345g")?.color).toBeUndefined();
+    const a = parseIconValue("lucide:Star?c=zz");
+    const b = parseIconValue("lucide:Star?c=12345g");
+    expect(a.kind === "lucide" && a.color).toBeFalsy();
+    expect(b.kind === "lucide" && b.color).toBeFalsy();
   });
 
   it("returns empty for bare lucide: prefix with no name", () => {
@@ -41,7 +44,8 @@ describe("parseIconValue", () => {
   });
 
   it("ignores unknown query params", () => {
-    expect(parseIconValue("lucide:Star?foo=bar&c=ff0000")?.color).toBe("#ff0000");
+    const p = parseIconValue("lucide:Star?foo=bar&c=ff0000");
+    expect(p.kind === "lucide" && p.color).toBe("#ff0000");
   });
 });
 

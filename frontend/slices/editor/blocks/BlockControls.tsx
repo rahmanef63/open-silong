@@ -15,7 +15,7 @@ interface Props {
   pageId: string;
   block: Block;
   index: number;
-  listeners?: Record<string, unknown>;
+  listeners?: import("@dnd-kit/core/dist/hooks/utilities").SyntheticListenerMap;
   convertTo: (t: BlockType) => void;
 }
 

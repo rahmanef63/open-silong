@@ -1,6 +1,7 @@
 import { mutation } from "../../_generated/server";
 import { v } from "convex/values";
-import { getAuthUserId } from "@convex-dev/auth/server";
+import { requireAuth } from "../../_shared/auth";
+import { rateLimit } from "../../_shared/rateLimit";
 import { Id } from "../../_generated/dataModel";
 
 export const create = mutation({
@@ -20,8 +21,10 @@ export const create = mutation({
     actorIcon: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
+    if (args.title.length > 200) throw new Error("Title too long");
+    if (args.body && args.body.length > 4_000) throw new Error("Body too long");
+    const userId = await requireAuth(ctx);
+    await rateLimit(ctx, userId, { scope: "inbox.create", max: 100, windowMs: 60_000 });
     return await ctx.db.insert("notifications", {
       userId,
       kind: args.kind,
@@ -40,8 +43,7 @@ export const create = mutation({
 export const markRead = mutation({
   args: { id: v.string() },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
+    const userId = await requireAuth(ctx);
     const note = await ctx.db.get(args.id as Id<"notifications">);
     if (!note || note.userId !== userId) return;
     await ctx.db.patch(args.id as Id<"notifications">, { read: true });
@@ -51,8 +53,7 @@ export const markRead = mutation({
 export const markAllRead = mutation({
   args: {},
   handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
+    const userId = await requireAuth(ctx);
     const items = await ctx.db
       .query("notifications")
       .withIndex("by_user_unread", (q) => q.eq("userId", userId).eq("read", false))
@@ -64,8 +65,7 @@ export const markAllRead = mutation({
 export const remove = mutation({
   args: { id: v.string() },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
+    const userId = await requireAuth(ctx);
     const note = await ctx.db.get(args.id as Id<"notifications">);
     if (!note || note.userId !== userId) return;
     await ctx.db.delete(args.id as Id<"notifications">);

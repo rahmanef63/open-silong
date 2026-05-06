@@ -1,6 +1,8 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { requireAuth, requireOwned } from "./_shared/auth";
+import { rateLimit } from "./_shared/rateLimit";
 import { Id } from "./_generated/dataModel";
 import { buildSearchText } from "./features/search/lib";
 
@@ -125,8 +127,8 @@ export const create = mutation({
     rowOfDatabaseId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
+    const userId = await requireAuth(ctx);
+    await rateLimit(ctx, userId, { scope: "pages.create", max: 60, windowMs: 60_000 });
     const now = Date.now();
     const blocks = [emptyBlock()];
     return await ctx.db.insert("pages", {
@@ -173,10 +175,10 @@ export const update = mutation({
     }),
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
-    const page = await ctx.db.get(args.pageId as Id<"pages">);
-    if (!page || page.userId !== userId) throw new Error("Not found");
+    if (args.patch.title !== undefined && args.patch.title.length > 200) {
+      throw new Error("Title too long");
+    }
+    const { userId, doc: page } = await requireOwned(ctx, "pages", args.pageId as Id<"pages">);
     const nextTitle = args.patch.title ?? page.title;
     const nextBlocks = args.patch.blocks ?? page.blocks;
     const touchesContent = "title" in args.patch || "blocks" in args.patch;
@@ -193,10 +195,7 @@ export const update = mutation({
 export const setPublic = mutation({
   args: { pageId: v.string(), isPublic: v.boolean() },
   handler: async (ctx, { pageId, isPublic }) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
-    const page = await ctx.db.get(pageId as Id<"pages">);
-    if (!page || page.userId !== userId) throw new Error("Not found");
+    await requireOwned(ctx, "pages", pageId as Id<"pages">);
     await ctx.db.patch(pageId as Id<"pages">, { isPublic, updatedAt: Date.now() });
   },
 });
@@ -204,8 +203,7 @@ export const setPublic = mutation({
 export const trash = mutation({
   args: { pageId: v.string() },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
+    const { userId } = await requireOwned(ctx, "pages", args.pageId as Id<"pages">);
     const allPages = await ctx.db.query("pages").withIndex("by_user", (q) => q.eq("userId", userId)).collect();
 
     const collectDescendants = (id: string): string[] => {
@@ -226,8 +224,7 @@ export const trash = mutation({
 export const restore = mutation({
   args: { pageId: v.string() },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
+    const { userId } = await requireOwned(ctx, "pages", args.pageId as Id<"pages">);
     const allPages = await ctx.db.query("pages").withIndex("by_user", (q) => q.eq("userId", userId)).collect();
 
     const collectDescendants = (id: string): string[] => {
@@ -247,8 +244,7 @@ export const restore = mutation({
 export const permanentlyDelete = mutation({
   args: { pageId: v.string() },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
+    const { userId } = await requireOwned(ctx, "pages", args.pageId as Id<"pages">);
     const allPages = await ctx.db.query("pages").withIndex("by_user", (q) => q.eq("userId", userId)).collect();
 
     const collectDescendants = (id: string): string[] => {
@@ -270,10 +266,7 @@ export const permanentlyDelete = mutation({
 export const duplicate = mutation({
   args: { pageId: v.string() },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
-    const src = await ctx.db.get(args.pageId as Id<"pages">);
-    if (!src || src.userId !== userId) throw new Error("Not found");
+    const { userId, doc: src } = await requireOwned(ctx, "pages", args.pageId as Id<"pages">);
     const now = Date.now();
     const blocks = JSON.parse(JSON.stringify(src.blocks)).map((b: any) => ({ ...b, id: uid() }));
     const title = src.title ? `${src.title} (copy)` : "";
@@ -304,10 +297,7 @@ export const addBlock = mutation({
     init: v.optional(v.any()),
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
-    const page = await ctx.db.get(args.pageId as Id<"pages">);
-    if (!page || page.userId !== userId) throw new Error("Not found");
+    const { userId, doc: page } = await requireOwned(ctx, "pages", args.pageId as Id<"pages">);
     const newId = uid();
     const blocks = [...page.blocks];
     blocks.splice(args.afterIndex + 1, 0, {
@@ -329,10 +319,7 @@ export const addBlock = mutation({
 export const updateBlock = mutation({
   args: { pageId: v.string(), blockId: v.string(), patch: v.any() },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
-    const page = await ctx.db.get(args.pageId as Id<"pages">);
-    if (!page || page.userId !== userId) throw new Error("Not found");
+    const { userId, doc: page } = await requireOwned(ctx, "pages", args.pageId as Id<"pages">);
     const blocks = page.blocks.map((b: any) =>
       b.id === args.blockId ? { ...b, ...args.patch } : b
     );
@@ -351,10 +338,7 @@ export const updateBlock = mutation({
 export const deleteBlock = mutation({
   args: { pageId: v.string(), blockId: v.string() },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
-    const page = await ctx.db.get(args.pageId as Id<"pages">);
-    if (!page || page.userId !== userId) throw new Error("Not found");
+    const { userId, doc: page } = await requireOwned(ctx, "pages", args.pageId as Id<"pages">);
     let blocks = page.blocks.filter((b: any) => b.id !== args.blockId);
     if (!blocks.length) blocks = [emptyBlock()];
     await ctx.db.patch(args.pageId as Id<"pages">, {
@@ -368,10 +352,7 @@ export const deleteBlock = mutation({
 export const reorderBlocks = mutation({
   args: { pageId: v.string(), orderedIds: v.array(v.string()) },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
-    const page = await ctx.db.get(args.pageId as Id<"pages">);
-    if (!page || page.userId !== userId) throw new Error("Not found");
+    const { userId, doc: page } = await requireOwned(ctx, "pages", args.pageId as Id<"pages">);
     const map = new Map(page.blocks.map((b: any) => [b.id, b]));
     const blocks = args.orderedIds.map((id) => map.get(id)).filter(Boolean);
     await ctx.db.patch(args.pageId as Id<"pages">, {

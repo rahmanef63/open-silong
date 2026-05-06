@@ -27,6 +27,14 @@ export default defineSchema({
     smallText: v.optional(v.boolean()),
     fullWidth: v.optional(v.boolean()),
     locked: v.optional(v.boolean()),
+    /** Wiki mode — treats this page as the canonical entry for a topic. */
+    wiki: v.optional(v.object({
+      ownerId: v.id("users"),
+      ownerName: v.string(),
+      ownerIcon: v.string(),
+      verified: v.boolean(),
+      verifiedAt: v.optional(v.number()),
+    })),
     /** Denormalized title + flattened block text. Updated on every page write
      *  so Convex searchIndex can match body content, not just title. */
     searchText: v.optional(v.string()),
@@ -163,6 +171,15 @@ export default defineSchema({
   })
     .index("by_status", ["status"])
     .index("by_user", ["userId"]),
+
+  // === rate limits — fixed-window counter per (userId, scope) ===
+  // Pruned lazily by the helper itself; no cron needed at this scale.
+  rateLimits: defineTable({
+    userId: v.id("users"),
+    scope: v.string(),       // e.g. "comments.create", "ai.complete"
+    windowStart: v.number(), // epoch ms truncated to bucket boundary
+    count: v.number(),
+  }).index("by_user_scope", ["userId", "scope"]),
 
   // === page templates (admin-managed JSON blueprints) ===
   pageTemplates: defineTable({
