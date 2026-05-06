@@ -25,6 +25,9 @@ import { MobileBottomNav } from "@/slices/mobile-nav";
 const CommandPalette = lazy(() =>
   import("@/slices/command-palette").then((m) => ({ default: m.CommandPalette })),
 );
+const ShortcutsDialog = lazy(() =>
+  import("@/slices/command-palette").then((m) => ({ default: m.ShortcutsDialog })),
+);
 
 function AuthGuard({ children }: { children: ReactNode }) {
   const { isAuthenticated, isLoading } = useConvexAuth();
@@ -92,6 +95,9 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
           <StoreProvider>
             <Suspense fallback={null}>
               <CommandPalette />
+            </Suspense>
+            <Suspense fallback={null}>
+              <ShortcutsDialog />
             </Suspense>
             <SelectionToolbar />
 
