@@ -1,7 +1,8 @@
 "use client";
 
 import { useId } from "react";
-import { Settings as SettingsIcon } from "lucide-react";
+import { Settings as SettingsIcon, Download } from "lucide-react";
+import { toast } from "sonner";
 import { useStore } from "@/shared/lib/store";
 import { cn } from "@/shared/lib/utils";
 import {
@@ -12,6 +13,7 @@ import { WORKSPACE_EMOJIS } from "@/shared/constants/icons";
 import { Field } from "@/shared/components/forms/Field";
 import { Choice } from "@/shared/components/forms/Choice";
 import { useDebouncedCommit } from "@/shared/hooks/useDebouncedCommit";
+import { downloadFile } from "@/shared/lib/markdown";
 
 const THEME_OPTIONS = [
   ["light", "Light"], ["dark", "Dark"], ["system", "System"],
@@ -34,8 +36,28 @@ const EDITOR_OPTIONS = [
 ] as const satisfies ReadonlyArray<readonly [EditorBehavior, string]>;
 
 export default function SettingsPage() {
-  const { workspace, updateWorkspace, preferences, updatePreferences } = useStore();
+  const { workspace, updateWorkspace, preferences, updatePreferences, pages, databases } = useStore();
   const wsNameId = useId();
+
+  const onExportWorkspace = () => {
+    const livePages = pages.filter((p) => !p.trashed);
+    const liveDbs = databases.filter((d) => !d.trashed);
+    const payload = {
+      version: 1 as const,
+      exportedAt: new Date().toISOString(),
+      workspace: { name: workspace.name, emoji: workspace.emoji },
+      preferences,
+      pages: livePages,
+      databases: liveDbs,
+    };
+    const stamp = new Date().toISOString().slice(0, 10);
+    downloadFile(
+      `nosion-backup-${stamp}.json`,
+      JSON.stringify(payload, null, 2),
+      "application/json",
+    );
+    toast.success(`Exported ${livePages.length} pages, ${liveDbs.length} databases`);
+  };
 
   const [wsName, setWsName, flushWsName] = useDebouncedCommit(
     workspace.name,
@@ -129,6 +151,23 @@ export default function SettingsPage() {
             onChange={(editorBehavior) => updatePreferences({ editorBehavior })}
             options={EDITOR_OPTIONS}
           />
+        </Field>
+      </Section>
+
+      <Section title="Backup">
+        <Field label="Workspace export">
+          <button
+            type="button"
+            onClick={onExportWorkspace}
+            className="inline-flex items-center gap-2 rounded-md border border-border bg-background px-3 py-1.5 text-sm hover:bg-accent transition"
+          >
+            <Download className="h-3.5 w-3.5" />
+            Download JSON backup
+          </button>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Single-file snapshot of every live page + database, plus your
+            preferences. Trashed items and snapshots are excluded.
+          </p>
         </Field>
       </Section>
     </>

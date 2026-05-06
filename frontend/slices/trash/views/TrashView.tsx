@@ -19,10 +19,25 @@ export function TrashView() {
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
             <Trash2 className="h-5 w-5 text-muted-foreground" />
           </div>
-          <div>
+          <div className="flex-1">
             <h1 className="text-2xl font-bold tracking-tight font-serif">Trash</h1>
-            <p className="text-sm text-muted-foreground">Restore or permanently delete items.</p>
+            <p className="text-sm text-muted-foreground">
+              Restore or permanently delete items. Items older than 30 days are auto-purged.
+            </p>
           </div>
+          {!isEmpty && (
+            <button
+              onClick={() => {
+                const total = trash.length + trashedDatabases.length;
+                if (!confirm(`Permanently delete all ${total} item${total === 1 ? "" : "s"}? This cannot be undone.`)) return;
+                trash.forEach((p) => permanentlyDelete(p.id));
+                trashedDatabases.forEach((db) => permanentlyDeleteDatabase(db.id));
+              }}
+              className="flex items-center gap-1 rounded-md border border-destructive/40 bg-destructive/5 px-3 py-1.5 text-xs text-destructive hover:bg-destructive/10 transition"
+            >
+              <Trash2 className="h-3.5 w-3.5" /> Empty trash
+            </button>
+          )}
         </div>
 
         {isEmpty ? (
