@@ -18,6 +18,7 @@ import {
 } from "@/shared/components/PageHeaderSlot";
 import { AppSidebar } from "@/slices/workspace-sidebar";
 import { SearchModal } from "@/slices/command-palette/components/SearchModal";
+import { SelectionToolbar } from "@/slices/editor/components/SelectionToolbar";
 import { useThemePreset } from "@/slices/theme-presets";
 import { MobileBottomNav } from "@/slices/mobile-nav";
 
@@ -92,6 +93,7 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
             <Suspense fallback={null}>
               <CommandPalette />
             </Suspense>
+            <SelectionToolbar />
 
             <SidebarProvider defaultOpen style={SIDEBAR_STYLE}>
               <AppSidebar onOpenSearch={() => setSearchOpen(true)} />

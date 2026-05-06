@@ -78,4 +78,8 @@
 - [x] Caption editable below image
 
 ### Inline Text Formatting
-- [ ] Bold / Italic / Underline / Code via selection toolbar (deferred - needs rich-text refactor away from contentEditable innerText)
+- [x] Bold / Italic / Strike / Code / Link via floating selection toolbar
+      Inserts markdown-style markers (`**…**`, `_…_`, `~~…~~`, `` `…` ``,
+      `[label](url)`) into the selected text. Editor shows raw markers
+      (Slack model). Public share view + exports parse and render
+      formatted output via `inlineMd.tsx`.
