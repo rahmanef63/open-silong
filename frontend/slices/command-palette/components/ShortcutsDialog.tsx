@@ -20,6 +20,7 @@ const SHORTCUTS: Array<{ section: string; rows: Array<[string, string]> }> = [
       ["⌘ / Ctrl + E", "Inline code"],
       ["⌘ / Ctrl + Shift + X", "Strike-through"],
       ["⌘ / Ctrl + Shift + K", "Link"],
+      ["@", "Mention a page"],
     ],
   },
   {

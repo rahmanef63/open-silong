@@ -19,6 +19,7 @@ import {
 import { AppSidebar } from "@/slices/workspace-sidebar";
 import { SearchModal } from "@/slices/command-palette/components/SearchModal";
 import { SelectionToolbar } from "@/slices/editor/components/SelectionToolbar";
+import { MentionTypeahead } from "@/slices/editor/components/MentionTypeahead";
 import { useThemePreset } from "@/slices/theme-presets";
 import { MobileBottomNav } from "@/slices/mobile-nav";
 
@@ -100,6 +101,7 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
               <ShortcutsDialog />
             </Suspense>
             <SelectionToolbar />
+            <MentionTypeahead />
 
             <SidebarProvider defaultOpen style={SIDEBAR_STYLE}>
               <AppSidebar onOpenSearch={() => setSearchOpen(true)} />

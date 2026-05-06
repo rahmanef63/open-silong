@@ -56,4 +56,16 @@ describe("tokenizeInline", () => {
   it("rejects markers spanning newlines", () => {
     expect(tokenizeInline("**a\nb**")).toEqual([{ kind: "text", value: "**a\nb**" }]);
   });
+
+  it("accepts relative dashboard links", () => {
+    expect(tokenizeInline("[Page](/dashboard/p/abc)")).toEqual([
+      { kind: "link", label: "Page", href: "/dashboard/p/abc" },
+    ]);
+  });
+
+  it("rejects javascript: scheme links", () => {
+    expect(tokenizeInline("[x](javascript:alert(1))")).toEqual([
+      { kind: "text", value: "[x](javascript:alert(1))" },
+    ]);
+  });
 });
