@@ -33,6 +33,7 @@ import type * as http from "../http.js";
 import type * as import_internal from "../import/internal.js";
 import type * as import_markdown from "../import/markdown.js";
 import type * as import_zip from "../import/zip.js";
+import type * as maintenance from "../maintenance.js";
 import type * as pages from "../pages.js";
 import type * as preferences from "../preferences.js";
 import type * as recents from "../recents.js";
@@ -80,6 +81,7 @@ declare const fullApi: ApiFromModules<{
   "import/internal": typeof import_internal;
   "import/markdown": typeof import_markdown;
   "import/zip": typeof import_zip;
+  maintenance: typeof maintenance;
   pages: typeof pages;
   preferences: typeof preferences;
   recents: typeof recents;

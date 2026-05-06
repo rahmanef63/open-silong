@@ -88,6 +88,15 @@ export interface Page {
   blockCount?: number;
   /** First text-bearing block (truncated 120 chars). From slim listMeta. */
   previewText?: string;
+  /** Wiki mode metadata — present when this page is the canonical entry
+   *  for a topic. */
+  wiki?: {
+    ownerId: string;
+    ownerName: string;
+    ownerIcon: string;
+    verified: boolean;
+    verifiedAt?: number;
+  };
 }
 
 export interface Workspace {
