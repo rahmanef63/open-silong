@@ -56,15 +56,21 @@ export function BlockCommentsPopover({ pageId, blockId, trigger }: Props) {
               No comments yet.
             </div>
           )}
-          {items.map((c) => (
-            <CommentItem
-              key={c.id}
-              comment={c}
-              onUpdate={(text) => update({ id: c.id, text })}
-              onResolve={(resolved) => resolve({ id: c.id, resolved })}
-              onRemove={() => remove({ id: c.id })}
-            />
-          ))}
+          {items.map((c) => {
+            const isAuthor = !!c.authorId && c.authorId === user.id;
+            return (
+              <CommentItem
+                key={c.id}
+                comment={c}
+                onUpdate={(text) => update({ id: c.id, text })}
+                onResolve={(resolved) => resolve({ id: c.id, resolved })}
+                onRemove={() => remove({ id: c.id })}
+                canEdit={isAuthor}
+                canDelete
+                canResolve
+              />
+            );
+          })}
         </div>
         <CommentComposer onSubmit={onCreate} />
       </PopoverContent>

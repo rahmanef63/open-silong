@@ -22,6 +22,8 @@ export function SelectionToolbar() {
   const [pos, setPos] = React.useState<{ x: number; y: number } | null>(null);
   const rangeRef = React.useRef<Range | null>(null);
 
+  const applyRef = React.useRef<(m: Mark) => void>(() => {});
+
   React.useEffect(() => {
     function update() {
       const sel = window.getSelection();
@@ -46,17 +48,34 @@ export function SelectionToolbar() {
       rangeRef.current = range.cloneRange();
       setPos({ x: rect.left + rect.width / 2, y: rect.top });
     }
+    function onKey(e: KeyboardEvent) {
+      // Only intercept when there's a live selection inside an editable.
+      if (!rangeRef.current) return;
+      if (!(e.metaKey || e.ctrlKey)) return;
+      const k = e.key.toLowerCase();
+      let mark: Mark | null = null;
+      if (k === "b") mark = "bold";
+      else if (k === "i") mark = "italic";
+      else if (k === "e") mark = "code";
+      else if (k === "k" && e.shiftKey) mark = "link";
+      else if (k === "x" && e.shiftKey) mark = "strike";
+      if (!mark) return;
+      e.preventDefault();
+      applyRef.current(mark);
+    }
     document.addEventListener("selectionchange", update);
     document.addEventListener("scroll", update, true);
+    document.addEventListener("keydown", onKey);
     window.addEventListener("resize", update);
     return () => {
       document.removeEventListener("selectionchange", update);
       document.removeEventListener("scroll", update, true);
+      document.removeEventListener("keydown", onKey);
       window.removeEventListener("resize", update);
     };
   }, []);
 
-  const apply = (mark: Mark) => {
+  const apply = React.useCallback((mark: Mark) => {
     const range = rangeRef.current;
     if (!range) return;
     const ce = closestContentEditable(range.startContainer);
@@ -72,7 +91,8 @@ export function SelectionToolbar() {
     const [open, close] = WRAP[mark];
     const wrapped = `${open}${selected}${close}`;
     replaceRange(range, wrapped, ce);
-  };
+  }, []);
+  applyRef.current = apply;
 
   if (!pos) return null;
 
@@ -93,9 +113,9 @@ export function SelectionToolbar() {
     >
       <Btn label="Bold (Cmd/Ctrl+B)" onClick={() => apply("bold")}><Bold className="h-3.5 w-3.5" /></Btn>
       <Btn label="Italic (Cmd/Ctrl+I)" onClick={() => apply("italic")}><Italic className="h-3.5 w-3.5" /></Btn>
-      <Btn label="Strike-through" onClick={() => apply("strike")}><Strikethrough className="h-3.5 w-3.5" /></Btn>
-      <Btn label="Inline code" onClick={() => apply("code")}><Code className="h-3.5 w-3.5" /></Btn>
-      <Btn label="Link" onClick={() => apply("link")}><Link2 className="h-3.5 w-3.5" /></Btn>
+      <Btn label="Strike-through (Cmd/Ctrl+Shift+X)" onClick={() => apply("strike")}><Strikethrough className="h-3.5 w-3.5" /></Btn>
+      <Btn label="Inline code (Cmd/Ctrl+E)" onClick={() => apply("code")}><Code className="h-3.5 w-3.5" /></Btn>
+      <Btn label="Link (Cmd/Ctrl+Shift+K)" onClick={() => apply("link")}><Link2 className="h-3.5 w-3.5" /></Btn>
     </div>
   );
 }
