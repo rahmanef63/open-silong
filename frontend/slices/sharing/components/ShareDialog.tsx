@@ -1,18 +1,24 @@
 import { useState } from "react";
+import { useMutation } from "convex/react";
+import { api } from "@convex/_generated/api";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/shared/ui/dialog";
 import { Switch } from "@/shared/ui/switch";
 import { Page } from "@/shared/types/domain";
 import { useStore } from "@/shared/lib/store";
 import { DynamicIcon } from "@/slices/icon-picker";
-import { Copy, Globe, Lock, ExternalLink } from "lucide-react";
+import { Copy, Globe, Lock, ExternalLink, Check } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { toast } from "sonner";
+import { reportError } from "@/shared/lib/error";
 
 export function ShareDialog({ open, onOpenChange, page }: { open: boolean; onOpenChange: (o: boolean) => void; page: Page }) {
   const { togglePublic } = useStore();
+  const setShareSlug = useMutation(api.pages.setShareSlug);
   const [copied, setCopied] = useState(false);
-  const url = `${window.location.origin}/share/${page.id}`;
-  const editUrl = `${window.location.origin}/p/${page.id}`;
+  const [slugDraft, setSlugDraft] = useState(page.shareSlug ?? "");
+  const [savingSlug, setSavingSlug] = useState(false);
+  const slugForUrl = page.shareSlug || page.id;
+  const url = `${window.location.origin}/share/${slugForUrl}`;
 
   const copy = async (s: string) => {
     try {
@@ -25,12 +31,29 @@ export function ShareDialog({ open, onOpenChange, page }: { open: boolean; onOpe
     }
   };
 
+  const saveSlug = async () => {
+    if (savingSlug) return;
+    const next = slugDraft.trim().toLowerCase();
+    if (next === (page.shareSlug ?? "")) return;
+    setSavingSlug(true);
+    try {
+      await setShareSlug({ pageId: page.id, slug: next });
+      toast.success(next ? "Slug updated" : "Slug cleared");
+    } catch (err) {
+      const safe = reportError("ShareDialog.setSlug", err);
+      toast.error(safe.message);
+      setSlugDraft(page.shareSlug ?? "");
+    } finally {
+      setSavingSlug(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <DynamicIcon value={page.icon} className="text-lg" /> Share "{page.title || "Untitled"}"
+            <DynamicIcon value={page.icon} className="text-lg" /> Share &quot;{page.title || "Untitled"}&quot;
           </DialogTitle>
           <DialogDescription>Share this page with anyone using a link.</DialogDescription>
         </DialogHeader>
@@ -58,8 +81,35 @@ export function ShareDialog({ open, onOpenChange, page }: { open: boolean; onOpe
               </Button>
             </div>
             {!page.isPublic && (
-              <p className="mt-2 text-xs text-muted-foreground">Enable "Public to web" to make this link work for others.</p>
+              <p className="mt-2 text-xs text-muted-foreground">Enable &quot;Public to web&quot; to make this link work for others.</p>
             )}
+          </div>
+
+          <div>
+            <label className="text-xs uppercase tracking-wider font-semibold text-muted-foreground">Custom URL slug</label>
+            <div className="mt-1 flex items-center gap-2">
+              <span className="rounded-l-md border border-r-0 border-border bg-muted/30 px-2 py-1.5 text-xs text-muted-foreground">/share/</span>
+              <input
+                value={slugDraft}
+                onChange={(e) => setSlugDraft(e.target.value)}
+                onBlur={saveSlug}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    (e.currentTarget as HTMLInputElement).blur();
+                  }
+                  if (e.key === "Escape") setSlugDraft(page.shareSlug ?? "");
+                }}
+                placeholder="my-page-slug"
+                pattern="[a-z0-9-]{3,60}"
+                className="flex-1 rounded-r-md border border-border bg-card px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-ring"
+              />
+              {savingSlug && <Check className="h-4 w-4 animate-pulse text-muted-foreground" />}
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Lowercase a–z, digits, hyphens. 3–60 chars. Leave blank to use the
+              default id-based URL.
+            </p>
           </div>
 
           {page.isPublic && (

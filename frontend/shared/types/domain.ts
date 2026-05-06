@@ -88,6 +88,8 @@ export interface Page {
   blockCount?: number;
   /** First text-bearing block (truncated 120 chars). From slim listMeta. */
   previewText?: string;
+  /** Custom share-link slug. When set, /share/<slug> resolves to this page. */
+  shareSlug?: string;
   /** Wiki mode metadata — present when this page is the canonical entry
    *  for a topic. */
   wiki?: {

@@ -27,6 +27,10 @@ export default defineSchema({
     smallText: v.optional(v.boolean()),
     fullWidth: v.optional(v.boolean()),
     locked: v.optional(v.boolean()),
+    /** Custom share-link slug (lowercase a–z 0–9 -, 3–60 chars).
+     *  Optional — defaults to the convex id. Unique per user; the
+     *  by_share_slug index lets `/share/<slug>` resolve in O(1). */
+    shareSlug: v.optional(v.string()),
     /** Wiki mode — treats this page as the canonical entry for a topic. */
     wiki: v.optional(v.object({
       ownerId: v.id("users"),
@@ -43,6 +47,7 @@ export default defineSchema({
   })
     .index("by_user", ["userId"])
     .index("by_user_parent", ["userId", "parentId"])
+    .index("by_share_slug", ["shareSlug"])
     .searchIndex("search_content", {
       searchField: "searchText",
       filterFields: ["userId", "trashed"],
