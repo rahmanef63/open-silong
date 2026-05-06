@@ -20,7 +20,10 @@ const BOLD = /\*\*([^*\n]+)\*\*/;
 const STRIKE = /~~([^~\n]+)~~/;
 const CODE = /`([^`\n]+)`/;
 const ITALIC = /(?:\*([^*\n]+)\*|_([^_\n]+)_)/;
-const LINK_MD = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/;
+// Allow relative `/path` for internal mentions in addition to http(s).
+// `javascript:` and other dangerous schemes are excluded by anchoring
+// to `https?://` or `/`.
+const LINK_MD = /\[([^\]]+)\]\(((?:https?:\/\/|\/)[^\s)]+)\)/;
 const BARE_URL = /(https?:\/\/[^\s)]+)/;
 
 type Token =
@@ -82,18 +85,20 @@ export function renderInline(input: string): React.ReactNode {
         return <del key={i}>{t.inner}</del>;
       case "code":
         return <code key={i} className="rounded bg-muted/70 px-1 py-0.5 font-mono text-[0.9em]">{t.inner}</code>;
-      case "link":
+      case "link": {
+        const internal = t.href.startsWith("/");
         return (
           <a
             key={i}
             href={t.href}
-            target="_blank"
-            rel="noopener noreferrer nofollow"
+            target={internal ? undefined : "_blank"}
+            rel={internal ? undefined : "noopener noreferrer nofollow"}
             className="text-brand underline-offset-2 hover:underline"
           >
             {t.label}
           </a>
         );
+      }
     }
   });
 }
