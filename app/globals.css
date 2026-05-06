@@ -239,3 +239,16 @@
     transition-timing-function: ease;
   }
 }
+
+/* Print: save-as-PDF on /share/[id] gets a clean reading layout */
+@media print {
+  html, body { background: white !important; color: black !important; }
+  * { box-shadow: none !important; }
+  a { color: black !important; text-decoration: underline; }
+  a[href^="http"]::after { content: " (" attr(href) ")"; font-size: 80%; }
+  pre, code { background: #f3f4f6 !important; color: #111 !important; }
+  h1, h2, h3, h4 { page-break-after: avoid; break-after: avoid; }
+  p, li, blockquote { orphans: 3; widows: 3; }
+  .print\:hidden { display: none !important; }
+  .print\:bg-white { background: white !important; }
+}
