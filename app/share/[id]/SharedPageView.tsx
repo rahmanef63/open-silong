@@ -3,6 +3,7 @@ import katex from "katex";
 import "katex/dist/katex.min.css";
 import { renderInline } from "@/shared/lib/inlineMd";
 import { DynamicIcon } from "@/slices/icon-picker";
+import { ShareThemeBoot } from "./ShareThemeBoot";
 
 type Block = {
   id: string;
@@ -36,8 +37,9 @@ type SharedPage = {
 
 export function SharedPageView({ page }: { page: SharedPage }) {
   return (
-    <div className="min-h-screen bg-surface">
-      <header className="border-b border-border bg-background/80 backdrop-blur px-6 h-12 flex items-center justify-between">
+    <div className="min-h-screen bg-surface print:bg-white">
+      <ShareThemeBoot />
+      <header className="border-b border-border bg-background/80 backdrop-blur px-6 h-12 flex items-center justify-between print:hidden">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <span className="text-xs uppercase tracking-wider font-semibold">Shared via Nosion</span>
         </div>

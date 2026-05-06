@@ -1,13 +1,16 @@
+import { useState } from "react";
 import { useNavigate } from "@/shared/lib/router-compat";
 import { useStore } from "@/shared/lib/store";
-import { Plus, Star, Clock, FileText, Table2 } from "lucide-react";
+import { Plus, Star, Clock, FileText, Table2, Sparkles } from "lucide-react";
 import { DynamicIcon } from "@/slices/icon-picker";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { cn } from "@/shared/lib/utils";
+import { TemplateGalleryDialog } from "@/slices/templates";
 
 export function Dashboard() {
   const { pages, recents, childrenOf, createPage, createDatabase, databases, workspace, addBlock, updateBlock, isInitialLoading } = useStore();
   const navigate = useNavigate();
+  const [tplOpen, setTplOpen] = useState(false);
 
   if (isInitialLoading) return <DashboardSkeleton />;
 
@@ -61,12 +64,24 @@ export function Dashboard() {
             }}
           />
           <ActionCard
-            icon={FileText}
-            title="Browse all"
-            subtitle={`${regularPages.length} pages`}
-            onClick={() => { if (root[0]) navigate(`/p/${root[0].id}`); }}
+            icon={regularPages.length === 0 ? Sparkles : FileText}
+            title={regularPages.length === 0 ? "Try a template" : "Browse all"}
+            subtitle={regularPages.length === 0 ? "Spin up from a blueprint" : `${regularPages.length} pages`}
+            onClick={() => {
+              if (regularPages.length === 0) {
+                setTplOpen(true);
+                return;
+              }
+              if (root[0]) navigate(`/p/${root[0].id}`);
+            }}
           />
         </div>
+
+        <TemplateGalleryDialog
+          open={tplOpen}
+          onOpenChange={setTplOpen}
+          onInstantiated={(rootPageId) => navigate(`/p/${rootPageId}`)}
+        />
 
         {favorites.length > 0 && (
           <Section title="Favorites" icon={Star}>
