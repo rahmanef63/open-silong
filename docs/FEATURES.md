@@ -40,7 +40,7 @@
 
 ### Board View
 - [x] Group-by switcher (pick which select/status prop to group on)
-- [ ] Column reorder (out of scope - complex)
+- [x] Column reorder (horizontal DnD; persisted via `view.boardColumnOrder`)
 
 ### Calendar View
 - [x] Prev / Next month navigation

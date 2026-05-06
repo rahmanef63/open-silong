@@ -251,6 +251,9 @@ export interface DatabaseViewConfig {
   boardHideEmptyGroups?: boolean;
   /** Property id used to color cards (select/status). */
   boardColorByProp?: string;
+  /** Persisted column order (option ids). The trailing `null` slot for
+   *  "no value" is implicit — included if explicitly listed. */
+  boardColumnOrder?: string[];
 
   // ─── Gallery view ────────────────────────────────────
   gallerySize?: "small" | "medium" | "large";
