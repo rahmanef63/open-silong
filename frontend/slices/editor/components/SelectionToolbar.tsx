@@ -1,10 +1,44 @@
 "use client";
 
 import * as React from "react";
-import { Bold, Italic, Code, Strikethrough, Link2 } from "lucide-react";
+import { Bold, Italic, Code, Strikethrough, Link2, Sparkles, Loader2 } from "lucide-react";
+import { useAction } from "convex/react";
+import { toast } from "sonner";
+import { api } from "@convex/_generated/api";
 import { cn } from "@/shared/lib/utils";
+import { reportError } from "@/shared/lib/error";
 
 type Mark = "bold" | "italic" | "strike" | "code" | "link";
+
+type AIPreset = "improve" | "shorter" | "longer" | "grammar" | "translate";
+
+const AI_PROMPTS: Record<AIPreset, { label: string; system: string; build: (sel: string) => string }> = {
+  improve: {
+    label: "Improve writing",
+    system: "Rewrite the user's text to read more clearly and concisely while preserving meaning. Output only the rewritten text — no commentary, no quotes, no markdown wrappers.",
+    build: (s) => s,
+  },
+  shorter: {
+    label: "Make shorter",
+    system: "Shorten the user's text while preserving its meaning. Output only the shortened text — no commentary.",
+    build: (s) => s,
+  },
+  longer: {
+    label: "Make longer",
+    system: "Expand the user's text with relevant detail while preserving its meaning. Output only the expanded text — no commentary.",
+    build: (s) => s,
+  },
+  grammar: {
+    label: "Fix grammar & spelling",
+    system: "Correct grammar and spelling in the user's text. Preserve voice, meaning, and formatting. Output only the corrected text — no commentary.",
+    build: (s) => s,
+  },
+  translate: {
+    label: "Translate to English",
+    system: "Translate the user's text to English. If it is already English, translate to Indonesian instead. Output only the translation — no commentary.",
+    build: (s) => s,
+  },
+};
 
 const WRAP: Record<Exclude<Mark, "link">, [string, string]> = {
   bold: ["**", "**"],
@@ -20,9 +54,11 @@ const WRAP: Record<Exclude<Mark, "link">, [string, string]> = {
  *  formatted output. */
 export function SelectionToolbar() {
   const [pos, setPos] = React.useState<{ x: number; y: number } | null>(null);
+  const [aiOpen, setAiOpen] = React.useState(false);
+  const [aiPending, setAiPending] = React.useState(false);
   const rangeRef = React.useRef<Range | null>(null);
-
   const applyRef = React.useRef<(m: Mark) => void>(() => {});
+  const complete = useAction(api.ai.chat.complete);
 
   React.useEffect(() => {
     function update() {
@@ -94,6 +130,37 @@ export function SelectionToolbar() {
   }, []);
   applyRef.current = apply;
 
+  const applyAI = React.useCallback(async (preset: AIPreset) => {
+    const range = rangeRef.current;
+    if (!range || aiPending) return;
+    const ce = closestContentEditable(range.startContainer);
+    if (!ce) return;
+    const selected = range.toString().trim();
+    if (!selected) return;
+    setAiPending(true);
+    setAiOpen(false);
+    try {
+      const cfg = AI_PROMPTS[preset];
+      const res = await complete({
+        messages: [{ role: "user", content: cfg.build(selected) }],
+        system: cfg.system,
+        maxTokens: 1024,
+      });
+      const next = (res.text ?? "").trim();
+      if (!next) {
+        toast.error("AI returned an empty response.");
+        return;
+      }
+      replaceRange(range, next, ce);
+      toast.success(cfg.label + " — done");
+    } catch (err) {
+      const safe = reportError("SelectionToolbar.AI", err);
+      toast.error(safe.message);
+    } finally {
+      setAiPending(false);
+    }
+  }, [complete, aiPending]);
+
   if (!pos) return null;
 
   return (
@@ -116,6 +183,32 @@ export function SelectionToolbar() {
       <Btn label="Strike-through (Cmd/Ctrl+Shift+X)" onClick={() => apply("strike")}><Strikethrough className="h-3.5 w-3.5" /></Btn>
       <Btn label="Inline code (Cmd/Ctrl+E)" onClick={() => apply("code")}><Code className="h-3.5 w-3.5" /></Btn>
       <Btn label="Link (Cmd/Ctrl+Shift+K)" onClick={() => apply("link")}><Link2 className="h-3.5 w-3.5" /></Btn>
+      <span className="mx-0.5 h-4 w-px bg-border" aria-hidden />
+      <div className="relative">
+        <Btn
+          label={aiPending ? "AI working…" : "AI actions"}
+          onClick={() => setAiOpen((o) => !o)}
+        >
+          {aiPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+        </Btn>
+        {aiOpen && !aiPending && (
+          <div
+            className="absolute left-1/2 top-full mt-1 w-44 -translate-x-1/2 overflow-hidden rounded-md border border-border bg-popover/95 shadow-soft backdrop-blur"
+            onMouseDown={(e) => e.preventDefault()}
+          >
+            {(Object.keys(AI_PROMPTS) as AIPreset[]).map((k) => (
+              <button
+                key={k}
+                type="button"
+                onClick={() => applyAI(k)}
+                className="block w-full px-3 py-1.5 text-left text-xs hover:bg-accent"
+              >
+                {AI_PROMPTS[k].label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
