@@ -1,8 +1,10 @@
 "use client";
 
-import { useId } from "react";
-import { Settings as SettingsIcon, Download } from "lucide-react";
+import { useId, useState } from "react";
+import { Settings as SettingsIcon, Download, Upload, Loader2 } from "lucide-react";
+import { useMutation } from "convex/react";
 import { toast } from "sonner";
+import { api } from "@convex/_generated/api";
 import { useStore } from "@/shared/lib/store";
 import { cn } from "@/shared/lib/utils";
 import {
@@ -13,7 +15,8 @@ import { WORKSPACE_EMOJIS } from "@/shared/constants/icons";
 import { Field } from "@/shared/components/forms/Field";
 import { Choice } from "@/shared/components/forms/Choice";
 import { useDebouncedCommit } from "@/shared/hooks/useDebouncedCommit";
-import { downloadFile } from "@/shared/lib/markdown";
+import { downloadFile, pickFile } from "@/shared/lib/markdown";
+import { reportError } from "@/shared/lib/error";
 
 const THEME_OPTIONS = [
   ["light", "Light"], ["dark", "Dark"], ["system", "System"],
@@ -38,6 +41,30 @@ const EDITOR_OPTIONS = [
 export default function SettingsPage() {
   const { workspace, updateWorkspace, preferences, updatePreferences, pages, databases } = useStore();
   const wsNameId = useId();
+  const importJson = useMutation(api["import/workspace"].importFromJson);
+  const [importing, setImporting] = useState(false);
+
+  const onImportWorkspace = async () => {
+    if (importing) return;
+    const file = await pickFile("application/json,.json");
+    if (!file) return;
+    if (file.size > 8 * 1024 * 1024) {
+      toast.error("File too large (max 8 MB)");
+      return;
+    }
+    if (!confirm(`Import "${file.name}"? Existing pages and databases stay; the import is additive.`)) return;
+    setImporting(true);
+    try {
+      const text = await file.text();
+      const res = await importJson({ json: text });
+      toast.success(`Imported ${res.pages} pages, ${res.databases} databases`);
+    } catch (err) {
+      const safe = reportError("workspaceImport", err);
+      toast.error(safe.message);
+    } finally {
+      setImporting(false);
+    }
+  };
 
   const onExportWorkspace = () => {
     const livePages = pages.filter((p) => !p.trashed);
@@ -167,6 +194,27 @@ export default function SettingsPage() {
           <p className="mt-2 text-xs text-muted-foreground">
             Single-file snapshot of every live page + database, plus your
             preferences. Trashed items and snapshots are excluded.
+          </p>
+        </Field>
+        <Field label="Workspace import">
+          <button
+            type="button"
+            onClick={onImportWorkspace}
+            disabled={importing}
+            className="inline-flex items-center gap-2 rounded-md border border-border bg-background px-3 py-1.5 text-sm hover:bg-accent transition disabled:opacity-60"
+          >
+            {importing ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Upload className="h-3.5 w-3.5" />
+            )}
+            {importing ? "Importing…" : "Restore from JSON"}
+          </button>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Additive — your existing pages and databases stay. Imported
+            pages get fresh ids; cross-references inside the file
+            (parent links, database rows, page+database blocks) are
+            remapped automatically. Cap: 8 MB / 500 pages / 50 databases.
           </p>
         </Field>
       </Section>
