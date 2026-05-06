@@ -87,6 +87,21 @@ export const list = query({
   },
 });
 
+/** Anonymous-readable. Returns the bare minimum for sitemap entries —
+ *  page id, optional slug, updatedAt. Capped + only published pages. */
+export const listPublicForSitemap = query({
+  args: {},
+  handler: async (ctx) => {
+    // No userId scope — sitemap should expose all public-published pages.
+    // Keep the projection tight; trashed pages never make it through.
+    const docs = await ctx.db.query("pages").take(2_000);
+    return docs
+      .filter((d) => d.isPublic && !d.trashed)
+      .map((d) => ({ id: d._id as string, slug: d.shareSlug, updatedAt: d.updatedAt }))
+      .slice(0, 1_000);
+  },
+});
+
 /** Slim DTO for sidebar/dashboard/list views. Excludes `blocks`,
  *  `searchText`, `rowProps` — those are 95% of the payload and only the
  *  active page editor needs them. Use `pages.getById(id)` for the full doc.
