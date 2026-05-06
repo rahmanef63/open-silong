@@ -1,3 +1,4 @@
+import * as React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "@/shared/lib/router-compat";
 import { useStore } from "@/shared/lib/store";
@@ -19,6 +20,7 @@ import {
   SortableContext, verticalListSortingStrategy, sortableKeyboardCoordinates,
 } from "@dnd-kit/sortable";
 import { ShareDialog } from "@/slices/sharing/components/ShareDialog";
+import { WikiBadge } from "@/slices/wiki";
 import { VersionHistory } from "@/slices/snapshots/components/VersionHistory";
 import { Button } from "@/shared/ui/button";
 import { findLocation, moveBlock, type Location } from "./lib/blockTree";
@@ -271,6 +273,8 @@ export function PageEditor() {
               }}
             />
 
+            <WikiBadge pageId={page.id} />
+
             {page.locked && (
               <div className="mt-3 flex items-center gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-xs text-amber-700 dark:text-amber-400">
                 <span>🔒</span>
@@ -368,7 +372,13 @@ function PageEditorSkeleton() {
   );
 }
 
-function Subpages({ page, subpages }: { page: Page; subpages: Page[] }) {
+const Subpages = React.memo(SubpagesImpl, (a, b) =>
+  a.page.id === b.page.id &&
+  a.subpages.length === b.subpages.length &&
+  a.subpages.every((sp, i) => sp.id === b.subpages[i].id && sp.title === b.subpages[i].title && sp.icon === b.subpages[i].icon),
+);
+
+function SubpagesImpl({ page, subpages }: { page: Page; subpages: Page[] }) {
   const navigate = useNavigate();
   const { createPage } = useStore();
   return (
@@ -410,20 +420,33 @@ function Subpages({ page, subpages }: { page: Page; subpages: Page[] }) {
   );
 }
 
-function HeaderBreadcrumbs({ page }: { page: Page }) {
+const HeaderBreadcrumbs = React.memo(HeaderBreadcrumbsImpl, (a, b) =>
+  a.page.id === b.page.id &&
+  a.page.title === b.page.title &&
+  a.page.icon === b.page.icon &&
+  a.page.parentId === b.page.parentId &&
+  a.page.rowOfDatabaseId === b.page.rowOfDatabaseId,
+);
+
+function HeaderBreadcrumbsImpl({ page }: { page: Page }) {
   const { getPage, pages } = useStore();
   const navigate = useNavigate();
-  const crumbs: Page[] = [];
-  let cur: Page | undefined = page;
-  while (cur) {
-    crumbs.unshift(cur);
-    cur = cur.parentId ? getPage(cur.parentId) : undefined;
-  }
+  const crumbs = React.useMemo(() => {
+    const out: Page[] = [];
+    let cur: Page | undefined = page;
+    while (cur) {
+      out.unshift(cur);
+      cur = cur.parentId ? getPage(cur.parentId) : undefined;
+    }
+    return out;
+  }, [page, getPage]);
 
-  const dbHostPage =
-    page.rowOfDatabaseId
+  const dbHostPage = React.useMemo(
+    () => page.rowOfDatabaseId
       ? pages.find((p) => !p.trashed && p.databaseHostFor?.includes(page.rowOfDatabaseId!))
-      : undefined;
+      : undefined,
+    [page.rowOfDatabaseId, pages],
+  );
 
   const finalCrumbs =
     dbHostPage && !crumbs.some((c) => c.id === dbHostPage.id)
