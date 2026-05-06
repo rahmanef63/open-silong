@@ -4,7 +4,11 @@ import { useMemo } from "react";
 import {
   DndContext, useDraggable, useDroppable, PointerSensor, useSensor, useSensors, DragEndEvent, KeyboardSensor,
 } from "@dnd-kit/core";
-import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
+import {
+  SortableContext, useSortable, horizontalListSortingStrategy, sortableKeyboardCoordinates,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { GripVertical } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { focusSiblingBySelector, isTextInputTarget } from "@/shared/lib/keyboard";
 import { colorClass } from "@/shared/lib/format";
@@ -20,7 +24,6 @@ interface Props { db: Database; view: DatabaseViewConfig; rows: Page[]; onOpenRo
 
 export function BoardView({ db, view, rows, onOpenRow }: Props) {
   const { setRowValue, updateView } = useStore();
-  void updateView;
   const [quickOpen, setQuickOpen] = useState(false);
   const [quickPrefill, setQuickPrefill] = useState<Record<string, PropertyValue>>({});
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
@@ -48,8 +51,19 @@ export function BoardView({ db, view, rows, onOpenRow }: Props) {
   const cardPropIds = view.boardCardProps;
   const viewVisible = getVisibleProps(db, view);
 
+  // Apply persisted column order (boardColumnOrder) — unknown ids fall to
+  // the end in their original order. Cheap O(n) — board columns rarely > 20.
+  const orderIdx = new Map<string, number>(
+    (view.boardColumnOrder ?? []).map((id, i) => [id, i]),
+  );
+  const sortedOptions = [...groupProp.options].sort((a, b) => {
+    const ai = orderIdx.has(a.id) ? orderIdx.get(a.id)! : Number.MAX_SAFE_INTEGER;
+    const bi = orderIdx.has(b.id) ? orderIdx.get(b.id)! : Number.MAX_SAFE_INTEGER;
+    return ai - bi;
+  });
+
   let columns: { id: string | null; option?: SelectOption; rows: Page[] }[] = [
-    ...groupProp.options.map(o => ({
+    ...sortedOptions.map(o => ({
       id: o.id, option: o,
       rows: rows.filter(r => r.rowProps?.[groupProp.id] === o.id),
     })),
@@ -59,47 +73,100 @@ export function BoardView({ db, view, rows, onOpenRow }: Props) {
     columns = columns.filter(c => c.rows.length > 0);
   }
 
+  const sortableIds = columns.map(c => `colsort_${c.id ?? "null"}`);
+
   const onDragEnd = (e: DragEndEvent) => {
     const { active, over } = e;
     if (!over) return;
+    const activeId = String(active.id);
     const overId = String(over.id);
+
+    // Column reorder — both ids prefixed `colsort_`.
+    if (activeId.startsWith("colsort_") && overId.startsWith("colsort_")) {
+      if (activeId === overId) return;
+      const fromKey = activeId.slice("colsort_".length);
+      const toKey = overId.slice("colsort_".length);
+      const fromIdx = sortableIds.indexOf(activeId);
+      const toIdx = sortableIds.indexOf(overId);
+      if (fromIdx === -1 || toIdx === -1) return;
+      // Skip persisting null-column moves — boardColumnOrder only tracks
+      // option ids; the "no value" column is always virtual at the tail.
+      if (fromKey === "null" || toKey === "null") return;
+      const next = sortedOptions.map(o => o.id);
+      next.splice(toIdx, 0, next.splice(fromIdx, 1)[0]);
+      updateView(db.id, view.id, { boardColumnOrder: next });
+      return;
+    }
+
+    // Card → column drop (existing path).
     const colId = overId.startsWith("col_") ? overId.slice(4) : null;
-    setRowValue(db.id, String(active.id), groupProp.id, colId === "null" || colId === null ? null : colId);
+    setRowValue(db.id, activeId, groupProp.id, colId === "null" || colId === null ? null : colId);
   };
 
   return (
     <DndContext sensors={sensors} onDragEnd={onDragEnd}>
-      <div className="flex gap-3 overflow-x-auto p-3 min-h-[280px]">
-        <QuickCreateDialog
-          db={db}
-          view={view}
-          open={quickOpen}
-          onOpenChange={setQuickOpen}
-          prefill={quickPrefill}
-          onCreated={onOpenRow}
-          title="Add to board"
-        />
-        {columns.map(col => (
-          <BoardColumn key={col.id ?? "none"} db={db} col={col} groupProp={groupProp}
-            cardPadding={cardPadding} cardSpacing={cardSpacing}
-            colorByProp={colorByProp} cardPropIds={cardPropIds}
-            viewVisible={viewVisible}
-            onAdd={() => {
-              setQuickPrefill({ [groupProp.id]: col.id ?? null });
-              setQuickOpen(true);
-            }} onOpen={onOpenRow} />
-        ))}
-      </div>
+      <SortableContext items={sortableIds} strategy={horizontalListSortingStrategy}>
+        <div className="flex gap-3 overflow-x-auto p-3 min-h-[280px]">
+          <QuickCreateDialog
+            db={db}
+            view={view}
+            open={quickOpen}
+            onOpenChange={setQuickOpen}
+            prefill={quickPrefill}
+            onCreated={onOpenRow}
+            title="Add to board"
+          />
+          {columns.map(col => (
+            <BoardColumn key={col.id ?? "none"} db={db} col={col} groupProp={groupProp}
+              cardPadding={cardPadding} cardSpacing={cardSpacing}
+              colorByProp={colorByProp} cardPropIds={cardPropIds}
+              viewVisible={viewVisible}
+              onAdd={() => {
+                setQuickPrefill({ [groupProp.id]: col.id ?? null });
+                setQuickOpen(true);
+              }} onOpen={onOpenRow} />
+          ))}
+        </div>
+      </SortableContext>
     </DndContext>
   );
 }
 
 function BoardColumn({ db, col, groupProp, onAdd, onOpen, cardPadding, cardSpacing, colorByProp, cardPropIds, viewVisible }: any) {
-  const { setNodeRef, isOver } = useDroppable({ id: `col_${col.id ?? "null"}` });
+  // Sortable identity for column reorder — keep separate from `col_*` drop
+  // target so cards continue to drop into columns without triggering a sort.
+  const sortable = useSortable({ id: `colsort_${col.id ?? "null"}`, disabled: col.id === null });
+  const drop = useDroppable({ id: `col_${col.id ?? "null"}` });
+  const setRefs = (el: HTMLElement | null) => {
+    sortable.setNodeRef(el);
+    drop.setNodeRef(el);
+  };
+  const style = {
+    transform: CSS.Transform.toString(sortable.transform),
+    transition: sortable.transition,
+  };
   return (
-    <div ref={setNodeRef} className={cn("w-64 shrink-0 rounded-lg bg-muted/40 p-2 transition", isOver && "ring-2 ring-brand bg-muted/70")}>
+    <div
+      ref={setRefs}
+      style={style}
+      className={cn(
+        "w-64 shrink-0 rounded-lg bg-muted/40 p-2 transition",
+        drop.isOver && "ring-2 ring-brand bg-muted/70",
+        sortable.isDragging && "opacity-50",
+      )}
+    >
       <div className="flex items-center justify-between px-1 mb-2">
         <div className="flex items-center gap-2">
+          {col.id !== null && (
+            <button
+              {...sortable.attributes}
+              {...sortable.listeners}
+              aria-label="Reorder column"
+              className="rounded p-0.5 text-muted-foreground hover:bg-accent cursor-grab active:cursor-grabbing"
+            >
+              <GripVertical className="h-3 w-3" />
+            </button>
+          )}
           {col.option ? (
             <span className={cn("inline-flex items-center rounded-full border px-2 py-0.5 text-xs", colorClass(col.option.color))}>{col.option.name}</span>
           ) : (
