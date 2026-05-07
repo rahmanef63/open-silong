@@ -10,30 +10,9 @@ import {
 } from "lucide-react";
 import { DATABASE_PRESETS } from "@/slices/database-presets";
 import { DynamicIcon } from "@/slices/icon-picker";
+import { loadHistory, saveHistory, type HistoryEntry } from "../lib/cmdkHistory";
 
 const MAX_PAGES = 12;
-const HISTORY_KEY = "nosion.cmdk.history";
-const HISTORY_MAX = 5;
-
-type HistoryEntry = { id: string; label: string };
-
-function loadHistory(): HistoryEntry[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(HISTORY_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed.slice(0, HISTORY_MAX) : [];
-  } catch { return []; }
-}
-function saveHistory(entry: HistoryEntry) {
-  if (typeof window === "undefined") return;
-  try {
-    const cur = loadHistory().filter((e) => e.id !== entry.id);
-    const next = [entry, ...cur].slice(0, HISTORY_MAX);
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
-  } catch { /* quota / parse */ }
-}
 
 export function CommandPalette() {
   const [open, setOpen] = useState(false);

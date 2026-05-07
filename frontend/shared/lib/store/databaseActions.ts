@@ -4,6 +4,7 @@ import { api } from "../../../../convex/_generated/api";
 import type {
   Database, DatabaseViewConfig, Page, Property, PropertyType, PropertyValue, SelectOption,
 } from "@/shared/types/domain";
+import { applyMirrorToInverse, planRelationMirror } from "@/slices/databases/lib/relationMirror";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 const SELECT_COLORS = ["gray", "brown", "orange", "yellow", "green", "blue", "purple", "pink", "red"];
@@ -258,35 +259,25 @@ export function useDatabaseActions({ databaseMap, pageMap, pushStructuralAction 
     if (!inverseProp) return;
 
     const srcRow = pageMap.get(srcRowId);
-    const prior: string[] = Array.isArray(srcRow?.rowProps?.[prop.id])
-      ? (srcRow!.rowProps![prop.id] as string[])
-      : [];
-    const next: string[] = Array.isArray(nextValue) ? nextValue : [];
-    const added = next.filter((id) => !prior.includes(id));
-    const removed = prior.filter((id) => !next.includes(id));
-
+    const { added, removed } = planRelationMirror({
+      srcRowId,
+      prior: srcRow?.rowProps?.[prop.id],
+      next: nextValue,
+    });
     for (const targetRowId of added) {
       const target = pageMap.get(targetRowId);
       if (!target) continue;
-      const cur = Array.isArray(target.rowProps?.[inverseProp.id])
-        ? (target.rowProps![inverseProp.id] as string[])
-        : [];
-      if (cur.includes(srcRowId)) continue;
       mutSetRowValue({
         dbId: targetDb.id, rowPageId: targetRowId, propId: inverseProp.id,
-        value: [...cur, srcRowId],
+        value: applyMirrorToInverse(target.rowProps?.[inverseProp.id], srcRowId, "add"),
       });
     }
     for (const targetRowId of removed) {
       const target = pageMap.get(targetRowId);
       if (!target) continue;
-      const cur = Array.isArray(target.rowProps?.[inverseProp.id])
-        ? (target.rowProps![inverseProp.id] as string[])
-        : [];
-      if (!cur.includes(srcRowId)) continue;
       mutSetRowValue({
         dbId: targetDb.id, rowPageId: targetRowId, propId: inverseProp.id,
-        value: cur.filter((id) => id !== srcRowId),
+        value: applyMirrorToInverse(target.rowProps?.[inverseProp.id], srcRowId, "remove"),
       });
     }
   };

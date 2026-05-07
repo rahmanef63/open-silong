@@ -17,6 +17,18 @@
 import * as React from "react";
 import katex from "katex";
 
+/** Strip inline-markdown markers from a plain-text source. Inverse of
+ *  the wrap-with-marker behavior in `SelectionToolbar`. Used by the
+ *  toolbar's eraser button. Pure — testable without DOM. */
+export function stripMd(s: string): string {
+  return s
+    .replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/~~(.+?)~~/g, "$1")
+    .replace(/(^|\W)_([^_]+?)_(?=\W|$)/g, "$1$2")
+    .replace(/`([^`]+)`/g, "$1")
+    .replace(/\[([^\]]+)\]\((?:https?:\/\/|\/)[^\s)]+\)/g, "$1");
+}
+
 const BOLD = /\*\*([^*\n]+)\*\*/;
 const STRIKE = /~~([^~\n]+)~~/;
 const CODE = /`([^`\n]+)`/;

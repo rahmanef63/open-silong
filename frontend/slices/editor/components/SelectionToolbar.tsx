@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { api } from "@convex/_generated/api";
 import { cn } from "@/shared/lib/utils";
 import { reportError } from "@/shared/lib/error";
+import { stripMd } from "@/shared/lib/inlineMd";
 
 type Mark = "bold" | "italic" | "strike" | "code" | "link";
 
@@ -236,15 +237,6 @@ function Btn({ children, label, onClick }: { children: React.ReactNode; label: s
       {children}
     </button>
   );
-}
-
-function stripMd(s: string): string {
-  return s
-    .replace(/\*\*(.+?)\*\*/g, "$1")
-    .replace(/~~(.+?)~~/g, "$1")
-    .replace(/(^|\W)_([^_]+?)_(?=\W|$)/g, "$1$2")
-    .replace(/`([^`]+)`/g, "$1")
-    .replace(/\[([^\]]+)\]\((?:https?:\/\/|\/)[^\s)]+\)/g, "$1");
 }
 
 function closestContentEditable(node: Node | null): HTMLElement | null {

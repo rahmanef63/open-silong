@@ -3,6 +3,7 @@ import { AlertTriangle, Check, Link2, Plus, X } from "lucide-react";
 import type { Page } from "@/shared/types/domain";
 import { useStore } from "@/shared/lib/store";
 import { cn } from "@/shared/lib/utils";
+import { filterRelationCandidates } from "../lib/relationCandidates";
 import {
   Popover, PopoverContent, PopoverTrigger,
 } from "@/shared/ui/popover";
@@ -26,13 +27,11 @@ export function RelationCell({ db, prop, row, value, onSet, cellClass }: CellPro
     : null;
   const targetDbMissing = targetDbConfigured && !targetDb;
 
-  const databaseRows = pages.filter((p) => !p.trashed && p.id !== row.id && p.rowOfDatabaseId);
-  const fallbackPages = pages.filter((p) => !p.trashed && p.id !== row.id && !p.rowOfDatabaseId);
-  const baseCandidates = databaseRows.length ? databaseRows : fallbackPages;
-  const candidates = baseCandidates
-    .filter((p) => !prop.relationDatabaseId || targetDbMissing || p.rowOfDatabaseId === prop.relationDatabaseId)
-    .filter((p) => `${p.title} ${p.icon}`.toLowerCase().includes(query.trim().toLowerCase()))
-    .slice(0, 40);
+  const candidates = filterRelationCandidates({
+    pages, selfRowId: row.id,
+    targetDbId: prop.relationDatabaseId, targetDbMissing,
+    query,
+  });
 
   const toggle = (id: string) => {
     onSet(linkedIds.includes(id) ? linkedIds.filter((x) => x !== id) : [...linkedIds, id]);
