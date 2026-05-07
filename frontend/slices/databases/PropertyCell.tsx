@@ -10,6 +10,7 @@ import { FilesCell } from "./property-cells/FilesCell";
 import { RollupCell } from "./property-cells/RollupCell";
 import { FormulaCell } from "./property-cells/FormulaCell";
 import { OptionRow, AddOption } from "./property-cells/SelectOptionRow";
+import { NumberCell } from "./property-cells/NumberCell";
 
 interface Props {
   db: Database;
@@ -38,12 +39,11 @@ export function PropertyCell({ db, prop, row, compact = false }: Props) {
       );
     case "number":
       return (
-        <input
-          type="number"
-          value={(value as number) ?? ""}
-          onChange={e => set(e.target.value === "" ? null : Number(e.target.value))}
-          placeholder="-"
-          className={cn(cellClass, "w-full bg-transparent outline-none px-2 py-1 rounded hover:bg-accent/50 tabular-nums")}
+        <NumberCell
+          prop={prop}
+          value={typeof value === "number" ? value : null}
+          onSet={(v) => set(v)}
+          cellClass={cellClass}
         />
       );
     case "url":

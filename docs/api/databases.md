@@ -216,14 +216,53 @@ All views share: `filters[]`, `sorts[]`, `search`, `hiddenPropIds[]`.
 
 | type | extra fields |
 |---|---|
-| `text` / `number` / `url` / `email` / `phone` / `checkbox` / `created_time` / `last_edited_time` | — |
+| `text` / `url` / `email` / `phone` / `checkbox` / `created_time` / `last_edited_time` | — |
+| `number` | `numberFormat`, `numberDecimals`, `numberCurrencyCode` |
 | `select` / `multi_select` / `status` | `options: SelectOption[]` |
 | `date` / `person` / `files` | — (value shape varies) |
-| `relation` | `relationDatabaseId` |
+| `relation` | `relationDatabaseId`, `relationTwoWay`, `relationInversePropertyId` |
 | `rollup` | `rollupRelationPropertyId`, `rollupTargetPropertyId`, `rollupAggregate` |
 | `formula` | `formulaExpression` (string) |
 | `created_by` / `last_edited_by` | — (resolved from page metadata) |
 | `unique_id` | `uniqueIdPrefix?: string` |
+
+### Number formatting
+
+`numberFormat`:
+
+| value | example (en-US) |
+|---|---|
+| `"number"` (default) | `1,234` |
+| `"decimal"` | `1,234.50` |
+| `"percent"` (value is 0..100) | `25%` |
+| `"currency"` | `$1,234.50` (with `numberCurrencyCode: "USD"`) |
+
+Decimals: 0-4, defaults 0 for `number`/`percent`, 2 for `decimal`/`currency`.
+Currency code: ISO 4217 (USD/EUR/GBP/JPY/IDR/SGD/MYR/AUD/CAD/CHF/INR/KRW/THB/VND/PHP/CNY).
+Helper: `frontend/slices/databases/lib/numberFormat.ts:formatPropertyNumber`.
+
+### Two-way relations
+
+When `relationTwoWay: true` on a relation property:
+
+1. The store's `setRelationTwoWay(dbId, propId, true)` creates an
+   inverse `relation` property on the target db (named `Related <src>` by
+   default), pointing back at the source db.
+2. The inverse pointer is stored as `relationInversePropertyId` on
+   both ends — so toggling off + on reuses the same inverse prop.
+3. `setRowValue` (in `frontend/shared/lib/store/databaseActions.ts`)
+   diffs added/removed ids and patches the inverse `rowProps[inverseId]`
+   on each affected target row. Mirror is automatic; user only edits
+   one side.
+4. Switching `relationDatabaseId` clears `relationTwoWay` and
+   `relationInversePropertyId` (the old inverse stays on the previous
+   target db; data is preserved, pointer dropped).
+
+PK / FK semantics: source row's id is the FK stored in target row's
+`rowProps[inverseId]` (and vice versa). No server-enforced integrity —
+mirroring is best-effort client-side. A direct `setRowValue` call
+that bypasses the store (e.g. workspace import) won't mirror; rely on
+re-running mirror on import or accept eventual inconsistency.
 
 Aggregates for rollup: `count`, `count_unique`, `values`, `sum`, `avg`,
 `min`, `max`, `earliest`, `latest`, `checked`, `percent_checked`.

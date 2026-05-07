@@ -102,6 +102,7 @@ interface StoreCtx {
   deleteRow: (dbId: string, rowPageId: string) => void;
   reorderRows: (dbId: string, orderedIds: string[]) => void;
   setRowValue: (dbId: string, rowPageId: string, propId: string, value: PropertyValue) => void;
+  setRelationTwoWay: (dbId: string, propId: string, on: boolean, name?: string) => string | undefined;
   addView: (dbId: string, view: Omit<DatabaseViewConfig, "id">) => DatabaseViewConfig;
   updateView: (dbId: string, viewId: string, patch: Partial<DatabaseViewConfig>) => void;
   deleteView: (dbId: string, viewId: string) => void;
@@ -200,6 +201,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const databaseActions = useDatabaseActions({
     databaseMap,
+    pageMap,
     pushStructuralAction: history.pushStructuralAction,
   });
 

@@ -28,6 +28,8 @@ import {
   RowMarqueeOverlay, useRowSelection, useRowSelectionOptional,
 } from "@/slices/database-row-selection";
 import { getVisibleProps } from "../lib/visibility";
+import { PropertyConfigPanel } from "../components/PropertyConfigPanel";
+import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
 
 const PROP_TYPE_ICON: Record<PropertyType, React.ElementType> = {
   text: Type, number: Hash, select: ChevronDown, multi_select: Tags,
@@ -188,16 +190,8 @@ function RowCheckbox({ rowId }: { rowId: string }) {
 
 function SortableHeader({ prop, db }: { prop: Property; db: Database }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: prop.id });
-  const { updateProperty, deleteProperty } = useStore();
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(prop.name);
+  const [popOpen, setPopOpen] = useState(false);
   const TypeIcon = PROP_TYPE_ICON[prop.type];
-
-  const commit = () => {
-    setEditing(false);
-    if (draft.trim()) updateProperty(db.id, prop.id, { name: draft.trim() });
-    else setDraft(prop.name);
-  };
 
   return (
     <div
@@ -209,50 +203,23 @@ function SortableHeader({ prop, db }: { prop: Property; db: Database }) {
         <GripVertical className="h-3 w-3" />
       </button>
       <TypeIcon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-label={PROPERTY_TYPE_LABELS[prop.type]} />
-      {editing ? (
-        <input
-          autoFocus
-          value={draft}
-          onChange={e => setDraft(e.target.value)}
-          onBlur={commit}
-          onKeyDown={e => { if (e.key === "Enter") commit(); if (e.key === "Escape") { setEditing(false); setDraft(prop.name); } }}
-          className="flex-1 bg-background border border-brand rounded px-1 text-xs outline-none min-w-0"
-        />
-      ) : (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
-              onDoubleClick={() => { setDraft(prop.name); setEditing(true); }}
-              className="flex-1 text-left truncate text-xs hover:text-foreground min-w-0"
-              title={PROPERTY_TYPE_LABELS[prop.type]}
-            >
-              {prop.name}
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-52">
-            <DropdownMenuItem onClick={() => { setDraft(prop.name); setEditing(true); }}>
-              Rename
-            </DropdownMenuItem>
-            <DropdownMenuSub>
-              <DropdownMenuSubTrigger>Change type</DropdownMenuSubTrigger>
-              <DropdownMenuSubContent className="max-h-72 overflow-y-auto">
-                <DropdownMenuLabel className="text-xs">Property type</DropdownMenuLabel>
-                {(Object.keys(PROPERTY_TYPE_LABELS) as PropertyType[]).map(t => (
-                  <DropdownMenuItem key={t} onClick={() => updateProperty(db.id, prop.id, { type: t })}>
-                    {prop.type === t && <Check className="mr-2 h-3.5 w-3.5" />}
-                    {prop.type !== t && <span className="mr-2 w-3.5 inline-block" />}
-                    {PROPERTY_TYPE_LABELS[t]}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuSubContent>
-            </DropdownMenuSub>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive" onClick={() => deleteProperty(db.id, prop.id)}>
-              <Trash2 className="mr-2 h-3.5 w-3.5" /> Delete property
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )}
+      <Popover open={popOpen} onOpenChange={setPopOpen}>
+        <PopoverTrigger asChild>
+          <button
+            className="flex-1 text-left truncate text-xs hover:text-foreground min-w-0"
+            title={`${PROPERTY_TYPE_LABELS[prop.type]} — click to configure`}
+          >
+            {prop.name}
+          </button>
+        </PopoverTrigger>
+        <PopoverContent align="start" sideOffset={4} className="p-0 w-auto">
+          <PropertyConfigPanel
+            db={db}
+            prop={prop}
+            onClose={() => setPopOpen(false)}
+          />
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }
