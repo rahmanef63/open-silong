@@ -54,16 +54,8 @@ const VIEW_META: Record<DbView, { icon: any; label: string }> = {
   form: { icon: ClipboardList, label: "Form" },
 };
 
-export const PROPERTY_TYPE_LABELS: Record<PropertyType, string> = {
-  text: "Text", number: "Number", select: "Select", multi_select: "Multi-select",
-  status: "Status", date: "Date", person: "Person", checkbox: "Checkbox",
-  url: "URL", email: "Email", phone: "Phone", files: "Files", relation: "Relation",
-  rollup: "Rollup", formula: "Formula", created_time: "Created time",
-  created_by: "Created by", last_edited_time: "Last edited time", last_edited_by: "Last edited by",
-  unique_id: "Unique ID",
-  button: "Button",
-  place: "Place",
-};
+import { PROPERTY_TYPE_LABELS, PROPERTY_TYPES } from "./lib/propertyTypeMeta";
+export { PROPERTY_TYPE_LABELS };
 
 export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block }) {
   const {
@@ -502,7 +494,7 @@ function PropertiesMenu({ db, view }: { db: Database; view: DatabaseViewConfig }
         <DropdownMenuSub>
           <DropdownMenuSubTrigger className="text-xs"><Plus className="mr-2 h-3.5 w-3.5" /> Add property</DropdownMenuSubTrigger>
           <DropdownMenuSubContent className="max-h-72 overflow-y-auto">
-            {(Object.keys(PROPERTY_TYPE_LABELS) as PropertyType[]).map(t => (
+            {PROPERTY_TYPES.map(t => (
               <DropdownMenuItem key={t} onClick={() => addProperty(db.id, t)}>
                 {PROPERTY_TYPE_LABELS[t]}
               </DropdownMenuItem>

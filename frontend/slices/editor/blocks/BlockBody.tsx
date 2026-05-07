@@ -1,9 +1,10 @@
 import type { KeyboardEvent } from "react";
 import dynamic from "next/dynamic";
-import type { Block, BlockType } from "@/shared/types/domain";
+import type { Block } from "@/shared/types/domain";
 import { Checkbox } from "@/shared/ui/checkbox";
 import { cn } from "@/shared/lib/utils";
 import { bgColorClass, colorClass } from "../lib/colors";
+import { TOP_LEVEL_PLACEHOLDERS as PLACEHOLDERS } from "./placeholders";
 
 // hljs (~90KB) only loaded when a code block actually renders.
 const CodeBlock = dynamic(
@@ -19,16 +20,6 @@ interface Props {
   onCheck: (v: boolean) => void;
   onLang: (l: string) => void;
 }
-
-const PLACEHOLDERS: Record<BlockType, string> = {
-  paragraph: "Write, or press / for commands",
-  h1: "Heading 1", h2: "Heading 2", h3: "Heading 3",
-  todo: "To-do", bullet: "List item", numbered: "List item",
-  quote: "Quote", code: "Type code…", callout: "Highlight an idea",
-  divider: "", page: "", database: "",
-  columns2: "", columns3: "", toggle: "", image: "", equation: "", table: "",
-  embed: "", button: "",
-};
 
 export function BlockBody({ block, setRef, handleInput, handleKeyDown, onCheck, onLang }: Props) {
   const textCls = colorClass(block.color);

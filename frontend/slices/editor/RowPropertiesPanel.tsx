@@ -3,41 +3,14 @@ import { useStore } from "@/shared/lib/store";
 import { Page, Property, PropertyType } from "@/shared/types/domain";
 import { PropertyCell } from "@/slices/databases/PropertyCell";
 import { DynamicIcon } from "@/slices/icon-picker";
-import { PROPERTY_TYPE_LABELS } from "@/slices/databases/DatabaseBlock";
+import { PROPERTY_TYPE_ICONS, PROPERTY_TYPE_LABELS } from "@/slices/databases/lib/propertyTypeMeta";
 import { cn } from "@/shared/lib/utils";
-import {
-  Type, Hash, ChevronDown, Tags, Circle, Calendar, User, CheckSquare,
-  Link2, Mail, Phone, Paperclip, ArrowUpRight, Sigma, Calculator, Clock,
-  UserCheck, Plus, ChevronRight, Trash2, Fingerprint,
-} from "lucide-react";
+import { Plus, ChevronRight, Trash2 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
 
-const PROP_TYPE_ICON: Record<PropertyType, React.ElementType> = {
-  text: Type,
-  number: Hash,
-  select: ChevronDown,
-  multi_select: Tags,
-  status: Circle,
-  date: Calendar,
-  person: User,
-  checkbox: CheckSquare,
-  url: Link2,
-  email: Mail,
-  phone: Phone,
-  files: Paperclip,
-  relation: ArrowUpRight,
-  rollup: Sigma,
-  formula: Calculator,
-  created_time: Clock,
-  last_edited_time: Clock,
-  created_by: UserCheck,
-  last_edited_by: UserCheck,
-  unique_id: Fingerprint,
-  button: Type,
-  place: Type,
-};
+const PROP_TYPE_ICON = PROPERTY_TYPE_ICONS;
 
 function PropertyNameCell({
   dbId,

@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { Database, DatabaseViewConfig, Page, Property, PropertyType } from "@/shared/types/domain";
 import { useStore } from "@/shared/lib/store";
 import { PropertyCell } from "../PropertyCell";
-import { PROPERTY_TYPE_LABELS } from "../DatabaseBlock";
+import { PROPERTY_TYPE_ICONS, PROPERTY_TYPE_LABELS } from "../lib/propertyTypeMeta";
 import {
   DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors, DragEndEvent,
 } from "@dnd-kit/core";
@@ -12,9 +12,6 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import {
   GripVertical, MoreHorizontal, Trash2, Check, Minus,
-  Type, Hash, ChevronDown, Tags, Circle, Calendar, User, CheckSquare,
-  Link2, Mail, Phone, Paperclip, ArrowUpRight, Sigma, Calculator, Clock,
-  UserCheck, Fingerprint, MousePointer, MapPin,
 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { focusSiblingBySelector, isTextInputTarget } from "@/shared/lib/keyboard";
@@ -32,14 +29,7 @@ import { ColumnHeaderMenu } from "../components/ColumnHeaderMenu";
 import { calcLabel, computeCalc } from "../lib/calcAggregate";
 import type { CalcKind } from "@/shared/types/domain";
 
-const PROP_TYPE_ICON: Record<PropertyType, React.ElementType> = {
-  text: Type, number: Hash, select: ChevronDown, multi_select: Tags,
-  status: Circle, date: Calendar, person: User, checkbox: CheckSquare,
-  url: Link2, email: Mail, phone: Phone, files: Paperclip, relation: ArrowUpRight,
-  rollup: Sigma, formula: Calculator, created_time: Clock, last_edited_time: Clock,
-  created_by: UserCheck, last_edited_by: UserCheck, unique_id: Fingerprint,
-  button: MousePointer, place: MapPin,
-};
+const PROP_TYPE_ICON = PROPERTY_TYPE_ICONS;
 
 interface ViewProps { db: Database; view: DatabaseViewConfig; rows: Page[]; onOpenRow: (id: string) => void }
 
