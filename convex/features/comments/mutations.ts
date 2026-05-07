@@ -3,6 +3,7 @@ import type { MutationCtx } from "../../_generated/server";
 import { v } from "convex/values";
 import { requireAuth, requireOwned } from "../../_shared/auth";
 import { rateLimit } from "../../_shared/rateLimit";
+import { CHAR_CAPS, RATE_LIMITS } from "../../_shared/limits";
 import { Id } from "../../_generated/dataModel";
 
 export const create = mutation({
@@ -14,9 +15,9 @@ export const create = mutation({
     authorIcon: v.string(),
   },
   handler: async (ctx, args) => {
-    if (args.text.length > 5_000) throw new Error("Comment too long");
+    if (args.text.length > CHAR_CAPS.commentText) throw new Error("Comment too long");
     const { userId } = await requireOwned(ctx, "pages", args.pageId as Id<"pages">);
-    await rateLimit(ctx, userId, { scope: "comments.create", max: 30, windowMs: 60_000 });
+    await rateLimit(ctx, userId, RATE_LIMITS.commentsCreate);
     const now = Date.now();
     return await ctx.db.insert("comments", {
       userId,
@@ -35,7 +36,7 @@ export const create = mutation({
 export const update = mutation({
   args: { id: v.string(), text: v.string() },
   handler: async (ctx, args) => {
-    if (args.text.length > 5_000) throw new Error("Comment too long");
+    if (args.text.length > CHAR_CAPS.commentText) throw new Error("Comment too long");
     const userId = await requireAuth(ctx);
     const c = await ctx.db.get(args.id as Id<"comments">);
     if (!c || c.userId !== userId) throw new Error("Not found");

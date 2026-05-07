@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import { z } from "zod";
 import { requireAuth } from "../_shared/auth";
 import { rateLimit } from "../_shared/rateLimit";
+import { COUNT_CAPS, FILE_SIZES, RATE_LIMITS } from "../_shared/limits";
 import type { Id } from "../_generated/dataModel";
 
 /** Schema validates the export shape produced by Settings → Backup. We
@@ -82,11 +83,11 @@ function remapBlocks(
 export const importFromJson = mutation({
   args: { json: v.string() },
   handler: async (ctx, { json }) => {
-    if (json.length > 8 * 1024 * 1024) {
-      throw new Error("Import too large (max 8 MB)");
+    if (json.length > FILE_SIZES.workspaceJsonBytes) {
+      throw new Error(`Import too large (max ${FILE_SIZES.workspaceJsonBytes / 1024 / 1024} MB)`);
     }
     const userId = await requireAuth(ctx);
-    await rateLimit(ctx, userId, { scope: "import.workspace", max: 3, windowMs: 60_000 });
+    await rateLimit(ctx, userId, RATE_LIMITS.importWorkspace);
 
     let raw: unknown;
     try { raw = JSON.parse(json); } catch { throw new Error("Invalid JSON"); }

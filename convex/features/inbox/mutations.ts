@@ -2,6 +2,7 @@ import { mutation } from "../../_generated/server";
 import { v } from "convex/values";
 import { requireAuth } from "../../_shared/auth";
 import { rateLimit } from "../../_shared/rateLimit";
+import { CHAR_CAPS, RATE_LIMITS } from "../../_shared/limits";
 import { Id } from "../../_generated/dataModel";
 
 export const create = mutation({
@@ -21,10 +22,10 @@ export const create = mutation({
     actorIcon: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    if (args.title.length > 200) throw new Error("Title too long");
-    if (args.body && args.body.length > 4_000) throw new Error("Body too long");
+    if (args.title.length > CHAR_CAPS.inboxTitle) throw new Error("Title too long");
+    if (args.body && args.body.length > CHAR_CAPS.inboxBody) throw new Error("Body too long");
     const userId = await requireAuth(ctx);
-    await rateLimit(ctx, userId, { scope: "inbox.create", max: 100, windowMs: 60_000 });
+    await rateLimit(ctx, userId, RATE_LIMITS.inboxCreate);
     return await ctx.db.insert("notifications", {
       userId,
       kind: args.kind,

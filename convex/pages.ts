@@ -5,6 +5,9 @@ import { requireAuth, requireOwned } from "./_shared/auth";
 import { rateLimit } from "./_shared/rateLimit";
 import { Id } from "./_generated/dataModel";
 import { buildSearchText } from "./features/search/lib";
+import { collectDescendantsFromDocs } from "./_shared/pageTree";
+import { regenAllBlockIds, findDuplicateBlockId, type BlockLike } from "./_shared/blocks";
+import { CHAR_CAPS, COUNT_CAPS, RATE_LIMITS, SHARE_SLUG_RE } from "./_shared/limits";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
@@ -59,8 +62,6 @@ export const setShareIndexable = mutation({
   },
 });
 
-const SLUG_RE = /^[a-z0-9](?:[a-z0-9-]{1,58}[a-z0-9])?$/;
-
 /** Set or clear the custom share slug for a page. Slug must be 3–60
  *  chars, lowercase + digits + hyphens, not starting/ending with hyphen.
  *  Empty string clears the slug. Throws on collision with another page. */
@@ -73,10 +74,10 @@ export const setShareSlug = mutation({
       await ctx.db.patch(args.pageId as Id<"pages">, { shareSlug: undefined, updatedAt: Date.now() });
       return { slug: null };
     }
-    if (!SLUG_RE.test(slug)) {
-      throw new Error("Slug must be 3–60 chars: lowercase letters, digits, hyphens (not at edges)");
+    if (!SHARE_SLUG_RE.test(slug)) {
+      throw new Error(`Slug must be ${CHAR_CAPS.shareSlugMin}–${CHAR_CAPS.shareSlugMax} chars: lowercase letters, digits, hyphens (not at edges)`);
     }
-    if (slug.length < 3) throw new Error("Slug too short (min 3 chars)");
+    if (slug.length < CHAR_CAPS.shareSlugMin) throw new Error(`Slug too short (min ${CHAR_CAPS.shareSlugMin} chars)`);
     const existing = await ctx.db
       .query("pages")
       .withIndex("by_share_slug", (q) => q.eq("shareSlug", slug))
@@ -201,7 +202,7 @@ export const create = mutation({
   },
   handler: async (ctx, args) => {
     const userId = await requireAuth(ctx);
-    await rateLimit(ctx, userId, { scope: "pages.create", max: 60, windowMs: 60_000 });
+    await rateLimit(ctx, userId, RATE_LIMITS.pagesCreate);
     const now = Date.now();
     const blocks = [emptyBlock()];
     return await ctx.db.insert("pages", {
@@ -248,8 +249,11 @@ export const update = mutation({
     }),
   },
   handler: async (ctx, args) => {
-    if (args.patch.title !== undefined && args.patch.title.length > 200) {
+    if (args.patch.title !== undefined && args.patch.title.length > CHAR_CAPS.pageTitle) {
       throw new Error("Title too long");
+    }
+    if (args.patch.blocks !== undefined && args.patch.blocks.length > COUNT_CAPS.blocksPerPage) {
+      throw new Error(`Page exceeds block cap (${COUNT_CAPS.blocksPerPage})`);
     }
     const { userId, doc: page } = await requireOwned(ctx, "pages", args.pageId as Id<"pages">);
     const nextTitle = args.patch.title ?? page.title;
@@ -264,32 +268,28 @@ export const update = mutation({
 });
 
 /** Toggle public-share status. Carved out of update() so the public flip
- *  cannot piggyback on a routine content patch. */
+ *  cannot piggyback on a routine content patch. Rate-limited
+ *  (`pagesSetPublic`) — toggling 100×/min would hammer downstream
+ *  share-page CDNs / OG-image edge regenerations. */
 export const setPublic = mutation({
   args: { pageId: v.string(), isPublic: v.boolean() },
   handler: async (ctx, { pageId, isPublic }) => {
-    await requireOwned(ctx, "pages", pageId as Id<"pages">);
+    const { userId } = await requireOwned(ctx, "pages", pageId as Id<"pages">);
+    await rateLimit(ctx, userId, RATE_LIMITS.pagesSetPublic);
     await ctx.db.patch(pageId as Id<"pages">, { isPublic, updatedAt: Date.now() });
   },
 });
 
 /** Soft-delete `pageId` and ALL descendants. Walks `parentId` over the
- *  user's owned pages. Cron `maintenance.purgeStaleTrash` permanently
- *  deletes after 30 days. Touches `updatedAt`. */
+ *  user's owned pages via `collectDescendantsFromDocs`. Cron
+ *  `maintenance.purgeStaleTrash` permanently deletes after 30 days.
+ *  Touches `updatedAt`. */
 export const trash = mutation({
   args: { pageId: v.string() },
   handler: async (ctx, args) => {
     const { userId } = await requireOwned(ctx, "pages", args.pageId as Id<"pages">);
     const allPages = await ctx.db.query("pages").withIndex("by_user", (q) => q.eq("userId", userId)).collect();
-
-    const collectDescendants = (id: string): string[] => {
-      const out = [id];
-      const kids = allPages.filter((p) => p.parentId === id);
-      for (const k of kids) out.push(...collectDescendants(k._id));
-      return out;
-    };
-
-    const ids = collectDescendants(args.pageId);
+    const ids = collectDescendantsFromDocs(allPages, args.pageId);
     const now = Date.now();
     for (const id of ids) {
       await ctx.db.patch(id as Id<"pages">, { trashed: true, updatedAt: now });
@@ -306,15 +306,7 @@ export const restore = mutation({
   handler: async (ctx, args) => {
     const { userId } = await requireOwned(ctx, "pages", args.pageId as Id<"pages">);
     const allPages = await ctx.db.query("pages").withIndex("by_user", (q) => q.eq("userId", userId)).collect();
-
-    const collectDescendants = (id: string): string[] => {
-      const out = [id];
-      const kids = allPages.filter((p) => p.parentId === id);
-      for (const k of kids) out.push(...collectDescendants(k._id));
-      return out;
-    };
-
-    const ids = collectDescendants(args.pageId);
+    const ids = collectDescendantsFromDocs(allPages, args.pageId);
     for (const id of ids) {
       await ctx.db.patch(id as Id<"pages">, { trashed: false });
     }
@@ -328,15 +320,7 @@ export const permanentlyDelete = mutation({
   handler: async (ctx, args) => {
     const { userId } = await requireOwned(ctx, "pages", args.pageId as Id<"pages">);
     const allPages = await ctx.db.query("pages").withIndex("by_user", (q) => q.eq("userId", userId)).collect();
-
-    const collectDescendants = (id: string): string[] => {
-      const out = [id];
-      const kids = allPages.filter((p) => p.parentId === id);
-      for (const k of kids) out.push(...collectDescendants(k._id));
-      return out;
-    };
-
-    const ids = collectDescendants(args.pageId);
+    const ids = collectDescendantsFromDocs(allPages, args.pageId);
     for (const id of ids) {
       const snaps = await ctx.db.query("snapshots").withIndex("by_user_page", (q) => q.eq("userId", userId).eq("pageId", id)).collect();
       for (const s of snaps) await ctx.db.delete(s._id);
@@ -345,17 +329,19 @@ export const permanentlyDelete = mutation({
   },
 });
 
-/** Deep-clone `pageId` with fresh top-level block ids. Title gets
+/** Deep-clone `pageId` with fresh block ids — recursively across
+ *  `children` and `columns` (uses `regenAllBlockIds`). Title gets
  *  " (copy)" suffix. Inherits `isPublic`/`rowOfDatabaseId`/`rowProps`
- *  from source. Does NOT regenerate ids of nested children/columns
- *  (kept stable to preserve internal refs; safe since the new page
- *  has its own pageId). Returns the new `Id<"pages">`. */
+ *  from source. Rate-limited (`pagesDuplicate`). Returns the new
+ *  `Id<"pages">`. */
 export const duplicate = mutation({
   args: { pageId: v.string() },
   handler: async (ctx, args) => {
     const { userId, doc: src } = await requireOwned(ctx, "pages", args.pageId as Id<"pages">);
+    await rateLimit(ctx, userId, RATE_LIMITS.pagesDuplicate);
     const now = Date.now();
-    const blocks = JSON.parse(JSON.stringify(src.blocks)).map((b: any) => ({ ...b, id: uid() }));
+    const cloned = JSON.parse(JSON.stringify(src.blocks)) as BlockLike[];
+    const blocks = regenAllBlockIds(cloned);
     const title = src.title ? `${src.title} (copy)` : "";
     return await ctx.db.insert("pages", {
       userId,

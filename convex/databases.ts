@@ -2,6 +2,8 @@ import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { requireAuth, requireOwned } from "./_shared/auth";
+import { rateLimit } from "./_shared/rateLimit";
+import { RATE_LIMITS } from "./_shared/limits";
 import { Id } from "./_generated/dataModel";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -67,6 +69,7 @@ export const create = mutation({
   args: { name: v.optional(v.string()) },
   handler: async (ctx, args) => {
     const userId = await requireAuth(ctx);
+    await rateLimit(ctx, userId, RATE_LIMITS.dbCreate);
     const now = Date.now();
     const titleProp = { id: uid(), name: "Name", type: "text" };
     const statusProp = {
@@ -115,6 +118,7 @@ export const addRow = mutation({
   args: { dbId: v.string(), init: v.optional(v.any()), templateId: v.optional(v.string()) },
   handler: async (ctx, args) => {
     const { userId, doc: db } = await requireOwned(ctx, "databases", args.dbId as Id<"databases">);
+    await rateLimit(ctx, userId, RATE_LIMITS.dbAddRow);
     const now = Date.now();
 
     const uniqueIdProps: { id: string; prefix?: string }[] = (db.properties ?? [])
