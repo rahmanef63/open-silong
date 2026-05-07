@@ -118,10 +118,13 @@ export const listPublicForSitemap = query({
   },
 });
 
-/** Slim DTO for sidebar/dashboard/list views. Excludes `blocks`,
- *  `searchText`, `rowProps` — those are 95% of the payload and only the
- *  active page editor needs them. Use `pages.getById(id)` for the full doc.
- *  Cuts websocket payload per keystroke from O(all-pages × blocks) to O(meta). */
+/** Slim DTO for sidebar/dashboard/list views. Excludes `blocks` +
+ *  `searchText` — those are the 95% payload only the active page
+ *  editor needs (use `pages.getById(id)` for the full doc).
+ *
+ *  `rowProps` IS included — it's small (one map per row) and database
+ *  views (Table / Board / Calendar / etc.) read every row's rowProps
+ *  to render cell values. Skipping it broke the whole database UI. */
 export const listMeta = query({
   args: {},
   handler: async (ctx) => {
@@ -144,6 +147,7 @@ export const listMeta = query({
       isPublic: d.isPublic,
       shareSlug: d.shareSlug,
       rowOfDatabaseId: d.rowOfDatabaseId,
+      rowProps: d.rowProps,
       font: d.font,
       smallText: d.smallText,
       fullWidth: d.fullWidth,
