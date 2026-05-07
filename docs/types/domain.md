@@ -146,15 +146,25 @@ type PropertyType =
   | "created_time" | "created_by" | "last_edited_time" | "last_edited_by"
   | "unique_id";
 
+type NumberFormat = "number" | "decimal" | "percent" | "currency";
+
 interface Property {
   id: string;
   name: string;
   type: PropertyType;
   hidden?: boolean;                 // global hide (vs view.hiddenPropIds)
+  description?: string;             // shown in property panel + form view
   options?: SelectOption[];         // select | multi_select | status
+
+  // number
+  numberFormat?: NumberFormat;      // default "number"
+  numberDecimals?: number;          // 0..4; default 0 (number/percent), 2 (decimal/currency)
+  numberCurrencyCode?: string;      // ISO 4217, default "USD"
 
   // relation
   relationDatabaseId?: string | null;
+  relationTwoWay?: boolean;         // mirror to inverse on add/remove
+  relationInversePropertyId?: string; // pointer set on twoWay enable
 
   // rollup
   rollupRelationPropertyId?: string | null;

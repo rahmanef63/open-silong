@@ -11,10 +11,11 @@ const pickColor = (i: number) => SELECT_COLORS[i % SELECT_COLORS.length];
 
 interface Args {
   databaseMap: Map<string, Database>;
+  pageMap: Map<string, Page>;
   pushStructuralAction: (a: { label: string; undo: () => void; redo: () => void }) => void;
 }
 
-export function useDatabaseActions({ databaseMap, pushStructuralAction }: Args) {
+export function useDatabaseActions({ databaseMap, pageMap, pushStructuralAction }: Args) {
   const mutCreateDatabase = useMutation(api.databases.create);
   const mutUpdateDatabase = useMutation(api.databases.update);
   const mutTrashDatabase = useMutation(api.databases.trash);
@@ -238,11 +239,133 @@ export function useDatabaseActions({ databaseMap, pushStructuralAction }: Args) 
     [databaseMap, mutUpdateDatabase, pushStructuralAction],
   );
 
+  /** Mirror a two-way relation change. Diffs the new vs prior value
+   *  on the source row, then patches the inverse property on each
+   *  added/removed target row.
+   *
+   *  Pure side-effect — invoked from setRowValue when the property
+   *  is `relation` with `relationTwoWay`. */
+  const mirrorTwoWay = (
+    db: Database, prop: Property, srcRowId: string, nextValue: PropertyValue,
+  ) => {
+    if (prop.type !== "relation" || !prop.relationTwoWay) return;
+    if (!prop.relationDatabaseId || !prop.relationInversePropertyId) return;
+    const targetDb = databaseMap.get(prop.relationDatabaseId);
+    if (!targetDb) return;
+    const inverseProp = targetDb.properties.find(
+      (p) => p.id === prop.relationInversePropertyId,
+    );
+    if (!inverseProp) return;
+
+    const srcRow = pageMap.get(srcRowId);
+    const prior: string[] = Array.isArray(srcRow?.rowProps?.[prop.id])
+      ? (srcRow!.rowProps![prop.id] as string[])
+      : [];
+    const next: string[] = Array.isArray(nextValue) ? nextValue : [];
+    const added = next.filter((id) => !prior.includes(id));
+    const removed = prior.filter((id) => !next.includes(id));
+
+    for (const targetRowId of added) {
+      const target = pageMap.get(targetRowId);
+      if (!target) continue;
+      const cur = Array.isArray(target.rowProps?.[inverseProp.id])
+        ? (target.rowProps![inverseProp.id] as string[])
+        : [];
+      if (cur.includes(srcRowId)) continue;
+      mutSetRowValue({
+        dbId: targetDb.id, rowPageId: targetRowId, propId: inverseProp.id,
+        value: [...cur, srcRowId],
+      });
+    }
+    for (const targetRowId of removed) {
+      const target = pageMap.get(targetRowId);
+      if (!target) continue;
+      const cur = Array.isArray(target.rowProps?.[inverseProp.id])
+        ? (target.rowProps![inverseProp.id] as string[])
+        : [];
+      if (!cur.includes(srcRowId)) continue;
+      mutSetRowValue({
+        dbId: targetDb.id, rowPageId: targetRowId, propId: inverseProp.id,
+        value: cur.filter((id) => id !== srcRowId),
+      });
+    }
+  };
+
   const setRowValue = useCallback(
     (dbId: string, rowPageId: string, propId: string, value: PropertyValue) => {
       mutSetRowValue({ dbId, rowPageId, propId, value });
+      const db = databaseMap.get(dbId);
+      const prop = db?.properties.find((p) => p.id === propId);
+      if (db && prop) mirrorTwoWay(db, prop, rowPageId, value);
     },
-    [mutSetRowValue],
+    [mutSetRowValue, databaseMap, pageMap],
+  );
+
+  /** Toggle two-way mirroring on a relation property. Creates an
+   *  inverse `relation` prop on the target db on enable; clears the
+   *  inverse pointer on disable (does NOT delete the inverse prop —
+   *  data is kept intact, future re-enable wires the same id back).
+   *
+   *  Returns the inverse prop id (newly created or existing) on
+   *  enable; undefined on disable / no-op. */
+  const setRelationTwoWay = useCallback(
+    (dbId: string, propId: string, on: boolean, inverseName?: string): string | undefined => {
+      const srcDb = databaseMap.get(dbId);
+      if (!srcDb) return undefined;
+      const srcProp = srcDb.properties.find((p) => p.id === propId);
+      if (!srcProp || srcProp.type !== "relation") return undefined;
+      if (!on) {
+        // Just clear the flag — keep inversePropertyId pointer dormant
+        // so re-enabling wires the same prop back.
+        const properties = srcDb.properties.map((p) =>
+          p.id === propId ? { ...p, relationTwoWay: false } : p,
+        );
+        mutUpdateDatabase({ dbId, patch: { properties } });
+        return undefined;
+      }
+      if (!srcProp.relationDatabaseId) return undefined;
+      const targetDb = databaseMap.get(srcProp.relationDatabaseId);
+      if (!targetDb) return undefined;
+
+      // Reuse existing inverse if pointer is set and target prop exists.
+      let inverseId = srcProp.relationInversePropertyId;
+      const existingInverse = inverseId
+        ? targetDb.properties.find((p) => p.id === inverseId)
+        : undefined;
+
+      if (!existingInverse) {
+        const newInverse: Property = {
+          id: uid(),
+          name: inverseName ?? `Related ${srcDb.name}`,
+          type: "relation",
+          relationDatabaseId: srcDb.id,
+          relationTwoWay: true,
+          relationInversePropertyId: srcProp.id,
+        };
+        inverseId = newInverse.id;
+        mutUpdateDatabase({
+          dbId: targetDb.id,
+          patch: { properties: [...targetDb.properties, newInverse] },
+        });
+      } else if (existingInverse.relationInversePropertyId !== srcProp.id) {
+        // Repair pointer drift.
+        const properties = targetDb.properties.map((p) =>
+          p.id === existingInverse.id
+            ? { ...p, relationInversePropertyId: srcProp.id, relationTwoWay: true }
+            : p,
+        );
+        mutUpdateDatabase({ dbId: targetDb.id, patch: { properties } });
+      }
+
+      const properties = srcDb.properties.map((p) =>
+        p.id === propId
+          ? { ...p, relationTwoWay: true, relationInversePropertyId: inverseId }
+          : p,
+      );
+      mutUpdateDatabase({ dbId, patch: { properties } });
+      return inverseId;
+    },
+    [databaseMap, mutUpdateDatabase],
   );
 
   const addView = useCallback(
@@ -281,7 +404,7 @@ export function useDatabaseActions({ databaseMap, pushStructuralAction }: Args) 
     trashDatabase, restoreDatabase, permanentlyDeleteDatabase,
     addProperty, updateProperty, deleteProperty, reorderProperties,
     addSelectOption, updateSelectOption, deleteSelectOption,
-    addRow, deleteRow, reorderRows, setRowValue,
+    addRow, deleteRow, reorderRows, setRowValue, setRelationTwoWay,
     addView, updateView, deleteView,
   };
 }
