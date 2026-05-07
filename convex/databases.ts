@@ -6,6 +6,9 @@ import { Id } from "./_generated/dataModel";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
+/** Owner-only full list. Includes `properties[]`, `views[]`,
+ *  `rowIds[]`, `templates[]`. Acceptable to ship in full because
+ *  databases are typically O(10s) per workspace. */
 export const list = query({
   args: {},
   handler: async (ctx) => {
@@ -15,6 +18,9 @@ export const list = query({
   },
 });
 
+/** Soft-delete database. Does NOT cascade to row pages — they remain
+ *  reachable by direct id (e.g. backlinks). Use `permanentlyDelete`
+ *  to cascade. */
 export const trash = mutation({
   args: { dbId: v.string() },
   handler: async (ctx, args) => {
@@ -23,6 +29,8 @@ export const trash = mutation({
   },
 });
 
+/** Inverse of `trash`. Un-flips `trashed`. Row pages were not
+ *  touched by `trash`, so no cascade needed here either. */
 export const restore = mutation({
   args: { dbId: v.string() },
   handler: async (ctx, args) => {
@@ -31,6 +39,11 @@ export const restore = mutation({
   },
 });
 
+/** Cascade delete: every row page owned by the same user, then the
+ *  database doc. Snapshots referencing those row pages are NOT cleaned
+ *  up here — `pages.permanentlyDelete` is the surface that walks
+ *  `snapshots.by_user_page`. Today's row pages don't typically have
+ *  snapshots so leak risk is low. */
 export const permanentlyDelete = mutation({
   args: { dbId: v.string() },
   handler: async (ctx, args) => {
@@ -47,6 +60,9 @@ export const permanentlyDelete = mutation({
   },
 });
 
+/** Insert a new database. Seeds Title (text) + Status (select with 3
+ *  options) + one Table view as the active view. Returns the bare
+ *  `Id<"databases">`. */
 export const create = mutation({
   args: { name: v.optional(v.string()) },
   handler: async (ctx, args) => {
@@ -76,6 +92,12 @@ export const create = mutation({
   },
 });
 
+/** Firehose patch — accepts any partial of the database doc. Frontend
+ *  drives schema (properties / views / rowIds / templates) through
+ *  this single mutation rather than 50+ thin ones. Server-side trust
+ *  is full; client-side guard lives in
+ *  `frontend/shared/lib/store/mutationGuard.ts`. See
+ *  `docs/api/databases.md` for the patch shape table. */
 export const update = mutation({
   args: { dbId: v.string(), patch: v.any() },
   handler: async (ctx, args) => {
@@ -84,6 +106,11 @@ export const update = mutation({
   },
 });
 
+/** Insert a new row page (page with `rowOfDatabaseId: dbId`). Merges
+ *  `templateId` body+rowProps with `init.rowProps`. Auto-bumps every
+ *  `unique_id` property's counter and seeds the row with the next id
+ *  (prefix-aware). Appends to `database.rowIds`. Returns row's
+ *  `Id<"pages">`. */
 export const addRow = mutation({
   args: { dbId: v.string(), init: v.optional(v.any()), templateId: v.optional(v.string()) },
   handler: async (ctx, args) => {
@@ -139,6 +166,8 @@ export const addRow = mutation({
   },
 });
 
+/** Soft-delete a row page (sets `pages.trashed: true`) and remove its
+ *  id from `database.rowIds`. Recoverable from trash for 30 days. */
 export const deleteRow = mutation({
   args: { dbId: v.string(), rowPageId: v.string() },
   handler: async (ctx, args) => {
@@ -152,6 +181,11 @@ export const deleteRow = mutation({
   },
 });
 
+/** Patch a single property on a row. Auth gate is page ownership
+ *  (the row's page IS the auth). `dbId` arg is currently unused
+ *  server-side — kept for forward-compat with cross-row computed
+ *  updates (relation propagation). Pass the parent dbId so callers
+ *  don't have to change when that lands. */
 export const setRowValue = mutation({
   args: { dbId: v.string(), rowPageId: v.string(), propId: v.string(), value: v.any() },
   handler: async (ctx, args) => {

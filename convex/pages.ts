@@ -89,6 +89,10 @@ export const setShareSlug = mutation({
   },
 });
 
+/** Owner-only full list — includes `blocks` and `searchText`. Heavy.
+ *  Prefer `listMeta` for tree / sidebar / palette callers. Kept for
+ *  legacy consumers that need per-page blocks.
+ *  Auth: `getAuthUserId` — returns `[]` if anonymous. */
 export const list = query({
   args: {},
   handler: async (ctx) => {
@@ -183,6 +187,11 @@ export const getById = query({
   },
 });
 
+/** Insert a new page. Seeds one empty paragraph block + searchText.
+ *  When `rowOfDatabaseId` is set, the page becomes a database row
+ *  (initializes `rowProps: {}`).
+ *  Rate limit: 60/min/user (`pages.create`).
+ *  Returns the bare `Id<"pages">` (NOT wrapped). */
 export const create = mutation({
   args: {
     parentId: v.union(v.string(), v.null()),
@@ -264,6 +273,9 @@ export const setPublic = mutation({
   },
 });
 
+/** Soft-delete `pageId` and ALL descendants. Walks `parentId` over the
+ *  user's owned pages. Cron `maintenance.purgeStaleTrash` permanently
+ *  deletes after 30 days. Touches `updatedAt`. */
 export const trash = mutation({
   args: { pageId: v.string() },
   handler: async (ctx, args) => {
@@ -285,6 +297,10 @@ export const trash = mutation({
   },
 });
 
+/** Inverse of `trash`. Restores the entire descendant tree.
+ *  Does NOT touch `updatedAt` — restoring shouldn't bump the page to
+ *  top of recents. Does NOT re-parent orphans (parent might still be
+ *  trashed) — caller responsibility. */
 export const restore = mutation({
   args: { pageId: v.string() },
   handler: async (ctx, args) => {
@@ -305,6 +321,8 @@ export const restore = mutation({
   },
 });
 
+/** Recursively delete `pageId` + descendants AND every snapshot
+ *  referencing those pages (`snapshots.by_user_page` index). One-way. */
 export const permanentlyDelete = mutation({
   args: { pageId: v.string() },
   handler: async (ctx, args) => {
@@ -327,6 +345,11 @@ export const permanentlyDelete = mutation({
   },
 });
 
+/** Deep-clone `pageId` with fresh top-level block ids. Title gets
+ *  " (copy)" suffix. Inherits `isPublic`/`rowOfDatabaseId`/`rowProps`
+ *  from source. Does NOT regenerate ids of nested children/columns
+ *  (kept stable to preserve internal refs; safe since the new page
+ *  has its own pageId). Returns the new `Id<"pages">`. */
 export const duplicate = mutation({
   args: { pageId: v.string() },
   handler: async (ctx, args) => {
@@ -353,6 +376,10 @@ export const duplicate = mutation({
   },
 });
 
+/** Insert a new block at `afterIndex + 1` in `page.blocks`. Default
+ *  type `paragraph`. `init` patches over the new block (frontend
+ *  drives shape — see `Block` in types/domain.md).
+ *  Rebuilds `searchText`. Returns the new block id. */
 export const addBlock = mutation({
   args: {
     pageId: v.string(),
@@ -380,6 +407,10 @@ export const addBlock = mutation({
   },
 });
 
+/** Patch a single block by id. `patch` merges over the existing block.
+ *  `searchText` rebuilt only when patch touches `text`/`type`/`lang`/
+ *  `caption` — style-only patches (color/bgColor/width/align/collapsed)
+ *  skip the O(blocks) string build (color picker fires per drag). */
 export const updateBlock = mutation({
   args: { pageId: v.string(), blockId: v.string(), patch: v.any() },
   handler: async (ctx, args) => {
@@ -399,6 +430,9 @@ export const updateBlock = mutation({
   },
 });
 
+/** Remove block by id. If the page would become empty, seeds one
+ *  paragraph so cursor always has somewhere to land. Rebuilds
+ *  `searchText`. */
 export const deleteBlock = mutation({
   args: { pageId: v.string(), blockId: v.string() },
   handler: async (ctx, args) => {
@@ -413,6 +447,9 @@ export const deleteBlock = mutation({
   },
 });
 
+/** Shuffle `page.blocks` to match `orderedIds`. Blocks not in the list
+ *  are dropped silently. Used by dnd-kit drop handler. Does NOT
+ *  rebuild `searchText` — reorder preserves the word set. */
 export const reorderBlocks = mutation({
   args: { pageId: v.string(), orderedIds: v.array(v.string()) },
   handler: async (ctx, args) => {
