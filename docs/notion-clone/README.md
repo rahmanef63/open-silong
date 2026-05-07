@@ -46,8 +46,17 @@ Numbers above are pre-cycle-3/4 audit work. Net delta since 2026-05-02
 is unticked: wiki verified UI, OG image, custom share slug, JSON
 backup loop, AI selection actions, `@`-mention typeahead, sitemap,
 image align/resize, inline-RT Slack-model toolbar, comment
-moderation UI, empty-trash bulk + 30d auto-purge, rate limiter, CSP.
-See `docs/audit/2026-05-03-audit-bp.md` cycles 3 + 4.
+moderation UI, empty-trash bulk + 30d auto-purge, rate limiter, CSP,
+block anchors, clear-formatting, inline math, indexable share toggle,
+cmdk MRU history, move-block shortcut.
+
+Cycle-5 (2026-05-07) shipped: `_shared/{pageTree,blocks,limits}.ts`
+extractions, deep block-id regen on duplicate, full doc reference
+suite (16 files / ~3 000 lines under `docs/api/` + `docs/types/`),
+rate-limit gaps closed (`setPublic`, `duplicate`, `db.create`,
+`addRow`).
+
+See `docs/audit/2026-05-03-audit-bp.md` cycles 3-5.
 
 Recompute with: `cd docs/notion-clone && grep -cE '^- \[x\]\|^  - \[x\]\|^    - \[x\]' BACKLOG.md`.
 

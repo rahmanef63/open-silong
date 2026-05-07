@@ -10,6 +10,25 @@ inconsistencies.
 
 ---
 
+## 0. Shared modules (use these, don't reinvent)
+
+`convex/_shared/` is the source of truth for cross-fn primitives.
+**Never** inline what already exists here:
+
+| module | what it gives you |
+|---|---|
+| `auth.ts` | `requireAuth`, `requireOwned`, `requireAdmin*`, `requireSuperAdmin`, `actorEmail`, `ensureUserProfile` |
+| `rateLimit.ts` | `rateLimit(ctx, userId, cfg)` — fixed-window counter |
+| `limits.ts` | `RATE_LIMITS`, `CHAR_CAPS`, `COUNT_CAPS`, `RETENTION`, `FILE_SIZES`, `SHARE_SLUG_RE` constants |
+| `pageTree.ts` | `collectDescendants(pages, rootId)` — page-tree walk, cycle-safe |
+| `blocks.ts` | `regenBlockIdsDeep`, `regenAllBlockIds`, `walkBlocks`, `findDuplicateBlockId`, `topLevelDatabaseIds` |
+
+When you find yourself writing a helper that operates on `pages` or
+block trees, check `_shared/` first. If it doesn't exist, add it
+there (with tests) instead of inline.
+
+---
+
 ## 1. Identity & authorization
 
 ```ts
@@ -65,11 +84,23 @@ args: {
 ## 3. Rate limiting
 
 Hot mutations gate on `rateLimit()` from
-`convex/_shared/rateLimit.ts`. Pattern:
+`convex/_shared/rateLimit.ts`. **Always** reference a budget from
+`RATE_LIMITS` in `_shared/limits.ts` — don't inline numbers:
 
 ```ts
 const userId = await requireAuth(ctx);
-await rateLimit(ctx, userId, { scope: "<module>.<op>", max: N, windowMs: 60_000 });
+await rateLimit(ctx, userId, RATE_LIMITS.pagesCreate);
+```
+
+Adding a new mutation? Add the budget to `RATE_LIMITS` first, then
+reference it:
+
+```ts
+// convex/_shared/limits.ts
+export const RATE_LIMITS = {
+  // ...
+  myFeatureBigOp: { scope: "myFeature.bigOp", max: 10, windowMs: 60_000 },
+} as const;
 ```
 
 Default scopes:

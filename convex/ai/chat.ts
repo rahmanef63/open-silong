@@ -5,9 +5,11 @@ import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { internal } from "../_generated/api";
 
+import { CHAR_CAPS } from "../_shared/limits";
+
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 const DEFAULT_MODEL = "anthropic/claude-haiku-4.5";
-const MAX_INPUT_CHARS = 60_000;
+const MAX_INPUT_CHARS = CHAR_CAPS.aiInput;
 const MAX_TOKENS_HARD_CAP = 4096;
 
 const MessageSchema = v.object({
