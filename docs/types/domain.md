@@ -144,7 +144,22 @@ type PropertyType =
   | "date" | "person" | "checkbox" | "url" | "email" | "phone"
   | "files" | "relation" | "rollup" | "formula"
   | "created_time" | "created_by" | "last_edited_time" | "last_edited_by"
-  | "unique_id";
+  | "unique_id" | "button" | "place";
+
+type CalcKind =
+  | "none"
+  | "count_all" | "count_values" | "count_unique_values"
+  | "count_empty" | "count_not_empty"
+  | "percent_empty" | "percent_not_empty"
+  | "sum" | "average" | "median" | "min" | "max" | "range"
+  | "checked" | "unchecked" | "percent_checked" | "percent_unchecked"
+  | "earliest_date" | "latest_date" | "date_range";
+
+type ButtonAction =
+  | { kind: "open_url"; url: string }
+  | { kind: "open_page"; pageId: string }
+  | { kind: "edit_property"; propId: string; value: PropertyValue }
+  | { kind: "show_confirmation"; message: string };
 
 type NumberFormat = "number" | "decimal" | "percent" | "currency";
 
@@ -180,6 +195,12 @@ interface Property {
 
   // unique_id
   uniqueIdPrefix?: string;
+
+  // button
+  buttonLabel?: string;
+  buttonActions?: ButtonAction[];
+
+  description?: string;
 }
 
 interface SelectOption {

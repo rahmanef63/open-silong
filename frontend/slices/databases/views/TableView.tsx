@@ -14,7 +14,7 @@ import {
   GripVertical, MoreHorizontal, Trash2, Check, Minus,
   Type, Hash, ChevronDown, Tags, Circle, Calendar, User, CheckSquare,
   Link2, Mail, Phone, Paperclip, ArrowUpRight, Sigma, Calculator, Clock,
-  UserCheck, Fingerprint,
+  UserCheck, Fingerprint, MousePointer, MapPin,
 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { focusSiblingBySelector, isTextInputTarget } from "@/shared/lib/keyboard";
@@ -28,8 +28,9 @@ import {
   RowMarqueeOverlay, useRowSelection, useRowSelectionOptional,
 } from "@/slices/database-row-selection";
 import { getVisibleProps } from "../lib/visibility";
-import { PropertyConfigPanel } from "../components/PropertyConfigPanel";
-import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
+import { ColumnHeaderMenu } from "../components/ColumnHeaderMenu";
+import { calcLabel, computeCalc } from "../lib/calcAggregate";
+import type { CalcKind } from "@/shared/types/domain";
 
 const PROP_TYPE_ICON: Record<PropertyType, React.ElementType> = {
   text: Type, number: Hash, select: ChevronDown, multi_select: Tags,
@@ -37,6 +38,7 @@ const PROP_TYPE_ICON: Record<PropertyType, React.ElementType> = {
   url: Link2, email: Mail, phone: Phone, files: Paperclip, relation: ArrowUpRight,
   rollup: Sigma, formula: Calculator, created_time: Clock, last_edited_time: Clock,
   created_by: UserCheck, last_edited_by: UserCheck, unique_id: Fingerprint,
+  button: MousePointer, place: MapPin,
 };
 
 interface ViewProps { db: Database; view: DatabaseViewConfig; rows: Page[]; onOpenRow: (id: string) => void }
@@ -95,7 +97,7 @@ export function TableView({ db, view, rows, onOpenRow }: ViewProps) {
           <div className="min-w-full">
             <div className="flex border-b border-border bg-muted/30 text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
               <HeaderCheckboxGutter rowIds={rowIds} />
-              {visibleProps.map(p => <SortableHeader key={p.id} prop={p} db={db} />)}
+              {visibleProps.map((p, i) => <SortableHeader key={p.id} prop={p} db={db} view={view} index={i} />)}
               <AddColumnHeader dbId={db.id} />
             </div>
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onRowEnd}>
@@ -124,6 +126,7 @@ export function TableView({ db, view, rows, onOpenRow }: ViewProps) {
               const r = await addRow(db.id);
               setPendingFocusId(r.id);
             }} />
+            <CalcFooter db={db} view={view} rows={rows} visibleProps={visibleProps} />
           </div>
         </SortableContext>
       </DndContext>
@@ -188,38 +191,39 @@ function RowCheckbox({ rowId }: { rowId: string }) {
   );
 }
 
-function SortableHeader({ prop, db }: { prop: Property; db: Database }) {
+function SortableHeader({ prop, db, view, index }: { prop: Property; db: Database; view: DatabaseViewConfig; index: number }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: prop.id });
-  const [popOpen, setPopOpen] = useState(false);
   const TypeIcon = PROP_TYPE_ICON[prop.type];
+  const isFrozen = view.frozenPropIds?.includes(prop.id) ?? false;
 
   return (
     <div
       ref={setNodeRef as any}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className="flex items-center gap-1 border-r border-border px-1 py-1.5 min-w-[160px] flex-1"
+      className={cn(
+        "flex items-center gap-1 border-r border-border px-1 py-1.5 min-w-[160px] flex-1",
+        isFrozen && "sticky left-0 z-10 bg-background",
+      )}
     >
       <button {...attributes} {...listeners} className="cursor-grab text-muted-foreground/40 hover:text-foreground shrink-0">
         <GripVertical className="h-3 w-3" />
       </button>
       <TypeIcon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-label={PROPERTY_TYPE_LABELS[prop.type]} />
-      <Popover open={popOpen} onOpenChange={setPopOpen}>
-        <PopoverTrigger asChild>
+      <ColumnHeaderMenu
+        db={db}
+        view={view}
+        prop={prop}
+        index={index}
+        trigger={
           <button
             className="flex-1 text-left truncate text-xs hover:text-foreground min-w-0"
-            title={`${PROPERTY_TYPE_LABELS[prop.type]} — click to configure`}
+            title={`${PROPERTY_TYPE_LABELS[prop.type]} — click for options`}
           >
             {prop.name}
+            {isFrozen && <span className="ml-1 text-[9px] text-brand/70">📌</span>}
           </button>
-        </PopoverTrigger>
-        <PopoverContent align="start" sideOffset={4} className="p-0 w-auto">
-          <PropertyConfigPanel
-            db={db}
-            prop={prop}
-            onClose={() => setPopOpen(false)}
-          />
-        </PopoverContent>
-      </Popover>
+        }
+      />
     </div>
   );
 }
@@ -299,6 +303,39 @@ function SortableRow({ row, rowIndex, db, visibleProps, onOpen, onDelete, autoEd
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+    </div>
+  );
+}
+
+
+function CalcFooter({ db, view, rows, visibleProps }: { db: Database; view: DatabaseViewConfig; rows: Page[]; visibleProps: Property[] }) {
+  const calcs = view.tableCalcs ?? {};
+  const hasAny = Object.values(calcs).some((c) => c && c !== "none");
+  if (!hasAny) return null;
+  return (
+    <div className="flex border-t border-border bg-muted/20 text-[11px] text-muted-foreground">
+      <div className="w-8 border-r border-border" aria-hidden />
+      {visibleProps.map((p) => {
+        const c = (calcs[p.id] ?? "none") as CalcKind;
+        const isFrozen = view.frozenPropIds?.includes(p.id) ?? false;
+        const display = c === "none" ? "" : computeCalc(rows, p, c);
+        return (
+          <div
+            key={p.id}
+            className={cn(
+              "flex flex-col gap-0 border-r border-border px-2 py-1 min-w-[160px] flex-1 truncate",
+              isFrozen && "sticky left-0 z-10 bg-muted/40",
+            )}
+            title={display ? `${calcLabel(c)}: ${display}` : ""}
+          >
+            {display && <>
+              <span className="text-[9px] uppercase tracking-wider opacity-60">{calcLabel(c)}</span>
+              <span className="text-foreground tabular-nums truncate">{display}</span>
+            </>}
+          </div>
+        );
+      })}
+      <div className="flex-1" />
     </div>
   );
 }

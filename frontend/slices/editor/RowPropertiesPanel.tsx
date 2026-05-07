@@ -35,6 +35,8 @@ const PROP_TYPE_ICON: Record<PropertyType, React.ElementType> = {
   created_by: UserCheck,
   last_edited_by: UserCheck,
   unique_id: Fingerprint,
+  button: Type,
+  place: Type,
 };
 
 function PropertyNameCell({

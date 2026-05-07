@@ -155,7 +155,42 @@ export type PropertyType =
   | "created_by"
   | "last_edited_time"
   | "last_edited_by"
-  | "unique_id";
+  | "unique_id"
+  | "button"
+  | "place";
+
+/** Calculate aggregate for the table footer. Mirrors Notion's
+ *  per-type set; UI gates which aggregates are valid for which
+ *  property type (see `lib/calcAggregate.ts`). */
+export type CalcKind =
+  | "none"
+  | "count_all"
+  | "count_values"
+  | "count_unique_values"
+  | "count_empty"
+  | "count_not_empty"
+  | "percent_empty"
+  | "percent_not_empty"
+  | "sum"
+  | "average"
+  | "median"
+  | "min"
+  | "max"
+  | "range"
+  | "checked"
+  | "unchecked"
+  | "percent_checked"
+  | "percent_unchecked"
+  | "earliest_date"
+  | "latest_date"
+  | "date_range";
+
+/** Button property action. Minimal runner — extend with action engine later. */
+export type ButtonAction =
+  | { kind: "open_url"; url: string }
+  | { kind: "open_page"; pageId: string }
+  | { kind: "edit_property"; propId: string; value: PropertyValue }
+  | { kind: "show_confirmation"; message: string };
 
 export interface SelectOption {
   id: string;
@@ -216,6 +251,10 @@ export interface Property {
 
   /** ─── Unique ID (type === "unique_id") ────────────────────── */
   uniqueIdPrefix?: string;
+
+  /** ─── Button (type === "button") ──────────────────────────── */
+  buttonLabel?: string;
+  buttonActions?: ButtonAction[];
 }
 
 export type PropertyValue =
@@ -274,6 +313,12 @@ export interface DatabaseViewConfig {
   /** Per-view hidden property ids — independent of global Property.hidden so
    *  hiding a column in one view never affects another. */
   hiddenPropIds?: string[];
+  /** Per-view frozen-pinned property ids (Table view). Frozen columns
+   *  stick to the left edge with `position: sticky`. */
+  frozenPropIds?: string[];
+  /** Per-column calculate aggregate (Table view footer). Map propId →
+   *  CalcKind. Empty / "none" hides the cell. */
+  tableCalcs?: Record<string, string>;
   /** Feed view: secondary timestamp source */
   feedTimestamp?: "createdAt" | "updatedAt";
 

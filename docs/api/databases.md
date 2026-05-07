@@ -206,13 +206,41 @@ matrix lives in `docs/types/domain.md`.
 | `map` | `mapLatProp`, `mapLngProp` (number) | `mapPinColorProp`, `mapShowList` |
 | `form` | — | `formTitle`, `formDescription`, `formRequiredProps`, `formShownProps`, `formSuccessMessage` |
 
-All views share: `filters[]`, `sorts[]`, `search`, `hiddenPropIds[]`.
+All views share: `filters[]`, `sorts[]`, `search`, `hiddenPropIds[]`,
+`frozenPropIds[]` (Table only — pin columns to left edge),
+`tableCalcs: Record<propId, CalcKind>` (Table footer aggregates).
 
 ---
 
+## Column header menu (Table view)
+
+Click any column header to open the Notion-style 13-item menu:
+
+| Item | Wires to |
+|---|---|
+| Edit property | Opens `PropertyConfigPanel` (Dialog) |
+| Change type | Submenu — sets `Property.type` |
+| AI Autofill | Reserved (deferred) |
+| Filter | Seeds `view.filters` with this prop + inferred operator |
+| Sort | Submenu — adds asc/desc to `view.sorts`, or clear |
+| Group | Switches view to `board` with `groupBy = prop.id` (select/status only) |
+| Calculate | Submenu — sets `view.tableCalcs[propId]` to a `CalcKind` |
+| Freeze | Toggles prop in `view.frozenPropIds` (sticky-left) |
+| Hide | Toggles prop in `view.hiddenPropIds` |
+| Wrap content | Toggles `view.tableWrapCells` |
+| Insert left/right | `addProperty` then `reorderProperties` to land at offset |
+| Delete property | Cascades referenced ids out of all views (see Cascade) |
+
+Implementation: `frontend/slices/databases/components/ColumnHeaderMenu.tsx`.
+
+Calculate aggregates are computed in
+`frontend/slices/databases/lib/calcAggregate.ts:computeCalc(rows, prop, calc)`.
+Per-type valid set in `validCalcs(prop)`. The footer renders below
+the AddRowFooter as a frozen-aware row.
+
 ## Property schema (`Property` type)
 
-19 property types. Required type-specific fields:
+21 property types. Required type-specific fields:
 
 | type | extra fields |
 |---|---|
@@ -225,6 +253,8 @@ All views share: `filters[]`, `sorts[]`, `search`, `hiddenPropIds[]`.
 | `formula` | `formulaExpression` (string) |
 | `created_by` / `last_edited_by` | — (resolved from page metadata) |
 | `unique_id` | `uniqueIdPrefix?: string` |
+| `button` | `buttonLabel`, `buttonActions[]` (open_url / open_page / show_confirmation / edit_property) |
+| `place` | free-form location string (map view integration planned) |
 
 ### Number formatting
 

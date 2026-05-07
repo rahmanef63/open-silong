@@ -418,6 +418,7 @@ function defaultPropName(type: PropertyType): string {
     created_time: "Created", created_by: "Created by",
     last_edited_time: "Last edited", last_edited_by: "Last edited by",
     unique_id: "ID",
+    button: "Action", place: "Place",
   };
   return map[type];
 }
