@@ -61,6 +61,8 @@ export const PROPERTY_TYPE_LABELS: Record<PropertyType, string> = {
   rollup: "Rollup", formula: "Formula", created_time: "Created time",
   created_by: "Created by", last_edited_time: "Last edited time", last_edited_by: "Last edited by",
   unique_id: "Unique ID",
+  button: "Button",
+  place: "Place",
 };
 
 export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block }) {
