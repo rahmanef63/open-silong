@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   Sliders, Repeat, Sparkles, Filter as FilterIcon, ArrowUpDown,
   Group as GroupIcon, Sigma, Pin, EyeOff, Type as WrapIcon,
@@ -9,7 +8,6 @@ import {
   DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent,
   DropdownMenuSubTrigger, DropdownMenuLabel,
 } from "@/shared/ui/dropdown-menu";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/shared/ui/dialog";
 import type { CalcKind, Database, DatabaseViewConfig, Property, PropertyType } from "@/shared/types/domain";
 import { useStore } from "@/shared/lib/store";
 import { cn } from "@/shared/lib/utils";
@@ -48,7 +46,6 @@ export function ColumnHeaderMenu({ db, view, prop, index, trigger }: Props) {
   const {
     updateProperty, deleteProperty, addProperty, reorderProperties, updateView,
   } = useStore();
-  const [editOpen, setEditOpen] = useState(false);
 
   const isFrozen = view.frozenPropIds?.includes(prop.id) ?? false;
   const isHidden = view.hiddenPropIds?.includes(prop.id) ?? false;
@@ -106,9 +103,20 @@ export function ColumnHeaderMenu({ db, view, prop, index, trigger }: Props) {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="w-56">
-          <DropdownMenuItem onClick={() => setEditOpen(true)}>
-            <Sliders className="mr-2 h-3.5 w-3.5" /> Edit property
-          </DropdownMenuItem>
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>
+              <Sliders className="mr-2 h-3.5 w-3.5" /> Edit property
+            </DropdownMenuSubTrigger>
+            <DropdownMenuSubContent
+              className="p-0 w-auto"
+              // Stop Radix menu from intercepting typing / arrow-keys inside form inputs
+              onKeyDown={(e) => e.stopPropagation()}
+              onPointerDown={(e) => e.stopPropagation()}
+              sideOffset={2}
+            >
+              <PropertyConfigPanel db={db} prop={prop} />
+            </DropdownMenuSubContent>
+          </DropdownMenuSub>
 
           <DropdownMenuSub>
             <DropdownMenuSubTrigger><Repeat className="mr-2 h-3.5 w-3.5" /> Change type</DropdownMenuSubTrigger>
@@ -234,14 +242,6 @@ export function ColumnHeaderMenu({ db, view, prop, index, trigger }: Props) {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="max-w-md p-0">
-          <DialogHeader className="border-b border-border px-3 py-2">
-            <DialogTitle className="text-sm font-medium">Edit property</DialogTitle>
-          </DialogHeader>
-          <PropertyConfigPanel db={db} prop={prop} onClose={() => setEditOpen(false)} />
-        </DialogContent>
-      </Dialog>
     </>
   );
 }

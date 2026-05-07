@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { tokenizeInline } from "./inlineMd";
+import { stripMd, tokenizeInline } from "./inlineMd";
 
 describe("tokenizeInline", () => {
   it("returns empty for empty input", () => {
@@ -78,5 +78,30 @@ describe("tokenizeInline", () => {
 
   it("does not match cross-newline math", () => {
     expect(tokenizeInline("$a\nb$")).toEqual([{ kind: "text", value: "$a\nb$" }]);
+  });
+});
+
+describe("stripMd", () => {
+  it("strips bold markers", () => {
+    expect(stripMd("**hi**")).toBe("hi");
+  });
+  it("strips italic markers (_…_)", () => {
+    expect(stripMd("_hi_")).toBe("hi");
+  });
+  it("strips strike markers", () => {
+    expect(stripMd("~~bye~~")).toBe("bye");
+  });
+  it("strips inline code", () => {
+    expect(stripMd("`code`")).toBe("code");
+  });
+  it("strips link, keeps label", () => {
+    expect(stripMd("[Page](/dashboard/p/abc)")).toBe("Page");
+    expect(stripMd("[ext](https://x.io)")).toBe("ext");
+  });
+  it("preserves plain text", () => {
+    expect(stripMd("hello world")).toBe("hello world");
+  });
+  it("strips multiple markers in one string", () => {
+    expect(stripMd("**bold** and _it_ with `code`")).toBe("bold and it with code");
   });
 });
