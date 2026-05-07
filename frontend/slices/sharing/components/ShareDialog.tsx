@@ -14,6 +14,7 @@ import { reportError } from "@/shared/lib/error";
 export function ShareDialog({ open, onOpenChange, page }: { open: boolean; onOpenChange: (o: boolean) => void; page: Page }) {
   const { togglePublic } = useStore();
   const setShareSlug = useMutation(api.pages.setShareSlug);
+  const setShareIndexable = useMutation(api.pages.setShareIndexable);
   const [copied, setCopied] = useState(false);
   const [slugDraft, setSlugDraft] = useState(page.shareSlug ?? "");
   const [savingSlug, setSavingSlug] = useState(false);
@@ -111,6 +112,24 @@ export function ShareDialog({ open, onOpenChange, page }: { open: boolean; onOpe
               default id-based URL.
             </p>
           </div>
+
+          {page.isPublic && (
+            <div className="flex items-center justify-between rounded-md border border-border px-3 py-2">
+              <div>
+                <div className="text-sm font-medium">Allow search engines</div>
+                <div className="text-xs text-muted-foreground">
+                  When off, the share emits <code>noindex,nofollow</code> and is excluded from sitemap.xml.
+                </div>
+              </div>
+              <Switch
+                checked={!!page.shareIndexable}
+                onCheckedChange={async (v) => {
+                  try { await setShareIndexable({ pageId: page.id, indexable: v }); }
+                  catch (err) { const safe = reportError("ShareDialog.indexable", err); toast.error(safe.message); }
+                }}
+              />
+            </div>
+          )}
 
           {page.isPublic && (
             <a href={url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-brand hover:underline">

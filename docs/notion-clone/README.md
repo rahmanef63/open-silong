@@ -13,10 +13,10 @@ Reference: this backlog tracks the full feature surface of [Notion Help → Page
 
 Cross-links inside the repo:
 
-- `.claude/RULES.md` — non-negotiable architecture/style rules
-- `.claude/ARCHITECTURE.md` — slice anatomy
-- `.claude/DEBT.md` — tracked deviations from the rules
+- `CLAUDE.md` — agent conventions (layout, navigation, deploy,
+  feature-flag/discipline rules, audit trail)
 - `docs/FEATURES.md` — high-level feature descriptions
+- `docs/audit/2026-05-03-audit-bp.md` — full audit + remediation cycles
 
 ---
 
@@ -35,22 +35,31 @@ Cross-links inside the repo:
 
 ---
 
-## Completion stats (2026-05-02)
+## Completion stats (2026-05-07)
 
 | Doc | Done | Remaining | Total | % |
 | --- | ---: | ---: | ---: | ---: |
 | `BACKLOG.md` | 435 | 417 | 852 | **51.1%** |
 | `ROADMAP.md` | 28 | 25 | 53 | **52.8%** |
 
+Numbers above are pre-cycle-3/4 audit work. Net delta since 2026-05-02
+is unticked: wiki verified UI, OG image, custom share slug, JSON
+backup loop, AI selection actions, `@`-mention typeahead, sitemap,
+image align/resize, inline-RT Slack-model toolbar, comment
+moderation UI, empty-trash bulk + 30d auto-purge, rate limiter, CSP.
+See `docs/audit/2026-05-03-audit-bp.md` cycles 3 + 4.
+
 Recompute with: `cd docs/notion-clone && grep -cE '^- \[x\]\|^  - \[x\]\|^    - \[x\]' BACKLOG.md`.
 
-## Current state snapshot (2026-05-02)
+## Current state snapshot (2026-05-07)
 
 The codebase already covers a usable single-user MVP plus most of the V1 surface. Items below are confirmed shipped:
 
 **Foundation & infra**
-- Convex self-hosted backend, Vite + React 19 + TS frontend
-- Slice architecture under `src/slices/<name>/` (feature isolation)
+- Convex self-hosted backend (Postgres-backed, Dokploy)
+- Next.js 16 (App Router) + React 19 + TypeScript + Tailwind v4
+- Slice architecture under `frontend/slices/<name>/` (feature isolation,
+  no `defineFeature`/`config.ts` shell — slices export via `index.ts`)
 - ErrorBoundary at root + per-view; lazy-loaded routes & DB views; Skeleton fallbacks
 - Memoized store, centralized comments, `React.memo(BlockEditor)` (perf overhaul)
 

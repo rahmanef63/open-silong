@@ -68,4 +68,15 @@ describe("tokenizeInline", () => {
       { kind: "text", value: "[x](javascript:alert(1))" },
     ]);
   });
+
+  it("tokenizes inline math", () => {
+    expect(tokenizeInline("e=$mc^2$")).toEqual([
+      { kind: "text", value: "e=" },
+      { kind: "math", inner: "mc^2" },
+    ]);
+  });
+
+  it("does not match cross-newline math", () => {
+    expect(tokenizeInline("$a\nb$")).toEqual([{ kind: "text", value: "$a\nb$" }]);
+  });
 });
