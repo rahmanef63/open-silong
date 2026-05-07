@@ -5,6 +5,7 @@ import type {
   Database, DatabaseViewConfig, Page, Property, PropertyType, PropertyValue, SelectOption,
 } from "@/shared/types/domain";
 import { applyMirrorToInverse, planRelationMirror } from "@/slices/databases/lib/relationMirror";
+import { defaultPropName } from "@/slices/databases/lib/propertyTypeMeta";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 const SELECT_COLORS = ["gray", "brown", "orange", "yellow", "green", "blue", "purple", "pink", "red"];
@@ -400,16 +401,3 @@ export function useDatabaseActions({ databaseMap, pageMap, pushStructuralAction 
   };
 }
 
-function defaultPropName(type: PropertyType): string {
-  const map: Record<PropertyType, string> = {
-    text: "Text", number: "Number", select: "Select", multi_select: "Tags",
-    status: "Status", date: "Date", person: "Person", checkbox: "Done",
-    url: "URL", email: "Email", phone: "Phone", files: "Files",
-    relation: "Relation", rollup: "Rollup", formula: "Formula",
-    created_time: "Created", created_by: "Created by",
-    last_edited_time: "Last edited", last_edited_by: "Last edited by",
-    unique_id: "ID",
-    button: "Action", place: "Place",
-  };
-  return map[type];
-}

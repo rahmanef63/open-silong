@@ -11,7 +11,7 @@ import {
 import type { CalcKind, Database, DatabaseViewConfig, Property, PropertyType } from "@/shared/types/domain";
 import { useStore } from "@/shared/lib/store";
 import { cn } from "@/shared/lib/utils";
-import { PROPERTY_TYPE_LABELS } from "../DatabaseBlock";
+import { PROPERTY_TYPE_LABELS, PROPERTY_TYPES } from "../lib/propertyTypeMeta";
 import { PropertyConfigPanel } from "./PropertyConfigPanel";
 import { calcLabel, validCalcs } from "../lib/calcAggregate";
 
@@ -122,7 +122,7 @@ export function ColumnHeaderMenu({ db, view, prop, index, trigger }: Props) {
             <DropdownMenuSubTrigger><Repeat className="mr-2 h-3.5 w-3.5" /> Change type</DropdownMenuSubTrigger>
             <DropdownMenuSubContent className="max-h-72 overflow-y-auto">
               <DropdownMenuLabel className="text-xs">Property type</DropdownMenuLabel>
-              {(Object.keys(PROPERTY_TYPE_LABELS) as PropertyType[]).map((t) => (
+              {PROPERTY_TYPES.map((t) => (
                 <DropdownMenuItem key={t} onClick={() => updateProperty(db.id, prop.id, { type: t })}>
                   {prop.type === t && <Check className="mr-2 h-3.5 w-3.5" />}
                   {prop.type !== t && <span className="mr-2 inline-block w-3.5" />}

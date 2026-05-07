@@ -50,12 +50,7 @@ function NestingCap({ type }: { type: string }) {
   );
 }
 
-const PLACEHOLDERS: Partial<Record<BlockType, string>> = {
-  paragraph: "Write…",
-  h1: "Heading 1", h2: "Heading 2", h3: "Heading 3",
-  todo: "To-do", bullet: "List item", numbered: "List item",
-  quote: "Quote", callout: "Callout…",
-};
+import { NESTED_PLACEHOLDERS as PLACEHOLDERS } from "./placeholders";
 
 export function NestedBlock({
   block, onUpdate, onAddAfter, onDelete, onFocusNext, onFocusPrev, registerRef, depth = 1, pageId,

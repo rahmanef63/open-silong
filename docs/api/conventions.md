@@ -10,6 +10,24 @@ inconsistencies.
 
 ---
 
+## Frontend single-source modules (avoid copy-paste of metadata maps)
+
+Companion to the convex/_shared section: client-side metadata/registry
+modules every consumer should import instead of defining their own.
+
+| module | what it gives you |
+|---|---|
+| `frontend/slices/databases/lib/propertyTypeMeta.ts` | `PROPERTY_TYPE_META`, `PROPERTY_TYPE_LABELS`, `PROPERTY_TYPE_ICONS`, `PROPERTY_TYPES`, `defaultPropName` |
+| `frontend/slices/editor/blocks/placeholders.ts` | `TOP_LEVEL_PLACEHOLDERS`, `NESTED_PLACEHOLDERS` |
+| `frontend/slices/databases/components/PropertyTypeIcon.tsx` | reusable `<PropertyTypeIcon type=>` element |
+
+Adding a new property type? Add ONE entry in `PROPERTY_TYPE_META` and
+every consumer (label, icon, default name, slash-group, change-type
+submenu) updates automatically. Never define `Record<PropertyType, ...>`
+in a component file.
+
+---
+
 ## 0. Shared modules (use these, don't reinvent)
 
 `convex/_shared/` is the source of truth for cross-fn primitives.

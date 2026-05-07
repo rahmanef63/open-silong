@@ -4,6 +4,8 @@ import Script from "next/script";
 import { Inter, Fraunces } from "next/font/google";
 import { ConvexAuthNextjsServerProvider } from "@convex-dev/auth/nextjs/server";
 import Providers from "./providers";
+import { HeadHints } from "@/shared/components/HeadHints";
+import { InstallPrompt } from "@/shared/components/InstallPrompt";
 import "./globals.css";
 
 const inter = Inter({
@@ -76,12 +78,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <ConvexAuthNextjsServerProvider>
       <html lang="en" suppressHydrationWarning className={`${inter.variable} ${fraunces.variable}`}>
+        <HeadHints />
         <body>
           <div id="root">
             <Providers>
               <Suspense fallback={null}>{children}</Suspense>
             </Providers>
           </div>
+          <InstallPrompt />
           <Script
             src="https://www.googletagmanager.com/gtag/js?id=G-82JXWGW4GM"
             strategy="afterInteractive"

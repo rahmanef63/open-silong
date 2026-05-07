@@ -5,16 +5,7 @@ import { COMMON_CURRENCIES } from "../lib/numberFormat";
 import { Trash2, Check } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 
-const PROPERTY_TYPE_LABELS: Record<PropertyType, string> = {
-  text: "Text", number: "Number", select: "Select", multi_select: "Multi-select",
-  status: "Status", date: "Date", person: "Person", checkbox: "Checkbox",
-  url: "URL", email: "Email", phone: "Phone", files: "Files",
-  relation: "Relation", rollup: "Rollup", formula: "Formula",
-  created_time: "Created time", created_by: "Created by",
-  last_edited_time: "Last edited time", last_edited_by: "Last edited by",
-  unique_id: "Unique ID",
-  button: "Button", place: "Place",
-};
+import { PROPERTY_TYPE_LABELS, PROPERTY_TYPES } from "../lib/propertyTypeMeta";
 
 const NUMBER_FORMAT_LABELS: Record<NumberFormat, string> = {
   number: "Number (1,234)",
@@ -83,7 +74,7 @@ export function PropertyConfigPanel({ db, prop, onClose, immutableType }: Props)
             onChange={(e) => updateProperty(db.id, prop.id, { type: e.target.value as PropertyType })}
             className="mt-1 h-8 w-full rounded-md border border-border bg-background px-2 text-sm outline-none"
           >
-            {(Object.keys(PROPERTY_TYPE_LABELS) as PropertyType[]).map((t) => (
+            {PROPERTY_TYPES.map((t) => (
               <option key={t} value={t}>{PROPERTY_TYPE_LABELS[t]}</option>
             ))}
           </select>
