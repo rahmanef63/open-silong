@@ -85,9 +85,12 @@ sidebar / palette. Kept for legacy callers.
 
 ### `listMeta() → PageMeta[]`
 
-Owner-only slim DTO (no `blocks`, no `searchText`, no `rowProps`).
+Owner-only slim DTO (no `blocks`, no `searchText`).
+**Includes `rowProps`** — database views read every row's rowProps
+to render cell values; stripping it would break the whole DB UI.
 Adds `databaseHostFor[]`, `blockCount`, `previewText`. Use this for
-sidebar tree, dashboard cards, command-palette suggestions.
+sidebar tree, dashboard cards, command-palette suggestions, and
+database views.
 
 ```ts
 type PageMeta = {
@@ -97,6 +100,7 @@ type PageMeta = {
   favorite: boolean; trashed: boolean;
   isPublic?: boolean; shareSlug?: string;
   rowOfDatabaseId?: string;
+  rowProps?: Record<string, PropertyValue>;
   font?: PageFont; smallText?: boolean; fullWidth?: boolean; locked?: boolean;
   createdAt: number; updatedAt: number;
   databaseHostFor: string[]; // db ids for `database` blocks on this page
