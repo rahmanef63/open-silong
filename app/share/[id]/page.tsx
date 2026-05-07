@@ -29,7 +29,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       type: "article",
     },
     twitter: { card: "summary_large_image", title },
-    robots: { index: true, follow: true },
+    robots: page.shareIndexable
+      ? { index: true, follow: true }
+      : { index: false, follow: false },
   };
 }
 

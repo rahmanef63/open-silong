@@ -1,4 +1,5 @@
-import { CheckSquare, Copy, GripVertical, MessageSquare, MoreHorizontal, Plus, Trash2 } from "lucide-react";
+import { CheckSquare, Copy, GripVertical, Link2, MessageSquare, MoreHorizontal, Plus, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
@@ -79,6 +80,17 @@ export function BlockControls({ pageId, block, index, listeners, convertTo }: Pr
           }}>
             <Copy className="mr-2 h-3.5 w-3.5" /> Duplicate
             <span className="ml-auto text-[10px] text-muted-foreground">⌘D</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={async () => {
+            const url = `${window.location.origin}/dashboard/p/${pageId}#block-${block.id}`;
+            try {
+              await navigator.clipboard.writeText(url);
+              toast.success("Block link copied");
+            } catch {
+              toast.error("Copy failed");
+            }
+          }}>
+            <Link2 className="mr-2 h-3.5 w-3.5" /> Copy link to block
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => {
             const text = window.prompt("Add comment");

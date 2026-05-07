@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Bold, Italic, Code, Strikethrough, Link2, Sparkles, Loader2 } from "lucide-react";
+import { Bold, Italic, Code, Strikethrough, Link2, Sparkles, Loader2, Eraser } from "lucide-react";
 import { useAction } from "convex/react";
 import { toast } from "sonner";
 import { api } from "@convex/_generated/api";
@@ -130,6 +130,16 @@ export function SelectionToolbar() {
   }, []);
   applyRef.current = apply;
 
+  const clearFormatting = React.useCallback(() => {
+    const range = rangeRef.current;
+    if (!range) return;
+    const ce = closestContentEditable(range.startContainer);
+    if (!ce) return;
+    const selected = range.toString();
+    if (!selected) return;
+    replaceRange(range, stripMd(selected), ce);
+  }, []);
+
   const applyAI = React.useCallback(async (preset: AIPreset) => {
     const range = rangeRef.current;
     if (!range || aiPending) return;
@@ -183,6 +193,7 @@ export function SelectionToolbar() {
       <Btn label="Strike-through (Cmd/Ctrl+Shift+X)" onClick={() => apply("strike")}><Strikethrough className="h-3.5 w-3.5" /></Btn>
       <Btn label="Inline code (Cmd/Ctrl+E)" onClick={() => apply("code")}><Code className="h-3.5 w-3.5" /></Btn>
       <Btn label="Link (Cmd/Ctrl+Shift+K)" onClick={() => apply("link")}><Link2 className="h-3.5 w-3.5" /></Btn>
+      <Btn label="Clear formatting" onClick={clearFormatting}><Eraser className="h-3.5 w-3.5" /></Btn>
       <span className="mx-0.5 h-4 w-px bg-border" aria-hidden />
       <div className="relative">
         <Btn
@@ -225,6 +236,15 @@ function Btn({ children, label, onClick }: { children: React.ReactNode; label: s
       {children}
     </button>
   );
+}
+
+function stripMd(s: string): string {
+  return s
+    .replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/~~(.+?)~~/g, "$1")
+    .replace(/(^|\W)_([^_]+?)_(?=\W|$)/g, "$1$2")
+    .replace(/`([^`]+)`/g, "$1")
+    .replace(/\[([^\]]+)\]\((?:https?:\/\/|\/)[^\s)]+\)/g, "$1");
 }
 
 function closestContentEditable(node: Node | null): HTMLElement | null {

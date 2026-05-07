@@ -44,7 +44,18 @@ export const getPublicShare = query({
       fullWidth: doc.fullWidth,
       updatedAt: doc.updatedAt,
       shareSlug: doc.shareSlug,
+      shareIndexable: doc.shareIndexable ?? false,
     };
+  },
+});
+
+/** Toggle whether the public share allows search-engine indexing. */
+export const setShareIndexable = mutation({
+  args: { pageId: v.string(), indexable: v.boolean() },
+  handler: async (ctx, { pageId, indexable }) => {
+    await requireOwned(ctx, "pages", pageId as Id<"pages">);
+    await ctx.db.patch(pageId as Id<"pages">, { shareIndexable: indexable, updatedAt: Date.now() });
+    return { indexable };
   },
 });
 
@@ -96,7 +107,7 @@ export const listPublicForSitemap = query({
     // Keep the projection tight; trashed pages never make it through.
     const docs = await ctx.db.query("pages").take(2_000);
     return docs
-      .filter((d) => d.isPublic && !d.trashed)
+      .filter((d) => d.isPublic && !d.trashed && d.shareIndexable === true)
       .map((d) => ({ id: d._id as string, slug: d.shareSlug, updatedAt: d.updatedAt }))
       .slice(0, 1_000);
   },

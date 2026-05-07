@@ -20,6 +20,7 @@ function toPage(doc: any): Page {
     id: doc._id, parentId: doc.parentId, title: doc.title, icon: doc.icon, cover: doc.cover,
     blocks: doc.blocks ?? [], favorite: doc.favorite, trashed: doc.trashed, isPublic: doc.isPublic,
     shareSlug: doc.shareSlug,
+    shareIndexable: doc.shareIndexable,
     rowOfDatabaseId: doc.rowOfDatabaseId, rowProps: doc.rowProps,
     font: doc.font, smallText: doc.smallText, fullWidth: doc.fullWidth, locked: doc.locked,
     wiki: doc.wiki,

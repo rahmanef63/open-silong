@@ -40,13 +40,19 @@ Status: **mostly shipped**, gaps below.
 - [x] Templates (per-database, default flag, body block seed via H2/H3/bullet/todo shortcuts)
 - [x] Backlinks panel
 - [x] Comments (page + block, resolve, edit)
-- [x] Public sharing (`/share/:id`)
+- [x] Public sharing (`/share/:id` + custom slug + OG image + sitemap + reader theme + print layout)
 - [ ] Duplicate public page (login-walled clone)
 - [x] Code blocks with syntax highlight (highlight.js, 30+ langs, copy button)
 - [x] Math equations (KaTeX block math, click-to-edit, error state)
-- [x] Keyboard shortcuts (in-editor + global ⌘K palette)
+- [x] Keyboard shortcuts (in-editor + global ⌘K palette + `?` help dialog)
 - [x] Task database preset (Tasks/Sprints/Projects via ⌘K with seeded schema + views + templates)
 - [ ] Sprints basic — link/start/complete/burndown still missing
+- [x] Wiki + verified pages (owner metadata + verified flag + verifiedAt + WikiBadge UI)
+- [x] JSON workspace backup loop (export + import with id remap)
+- [x] AI selection actions (Improve/Shorter/Longer/Grammar/Translate via OpenRouter, gated + rate limited)
+- [x] `@`-page mention typeahead
+- [x] Inline rich-text formatting (Slack-model markdown markers)
+- [x] Comment moderation UI (page-owner delete/resolve)
 - [ ] Offline read
 
 ---
@@ -57,14 +63,13 @@ Status: **not started**, items live in BACKLOG.
 
 - [ ] Synced blocks
 - [ ] Offline write (mutation queue + reconcile)
-- [ ] Wiki + verified pages
 - [ ] Sub-items
 - [ ] Dependencies
-- [ ] Timeline drag-to-adjust + dependency lines
+- [x] Timeline drag-to-adjust (move bar + edge resize) — dependency lines still missing
 - [ ] Presentation mode
 - [ ] Linked database / data sources
-- [ ] Formula advanced functions (date / list / logic)
-- [ ] Import / export (Markdown / HTML / CSV / ZIP)
+- [x] Formula advanced functions (date / list / logic — 18 functions shipped)
+- [x] Import / export — JSON workspace backup + ZIP (md/csv/html/pdf entries) + CSV per-DB + Markdown per-page
 - [ ] Activity log
 - [ ] Advanced permissions (per-page overrides, guest access)
 

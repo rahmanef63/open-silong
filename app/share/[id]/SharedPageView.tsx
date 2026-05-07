@@ -4,6 +4,7 @@ import "katex/dist/katex.min.css";
 import { renderInline } from "@/shared/lib/inlineMd";
 import { DynamicIcon } from "@/slices/icon-picker";
 import { ShareThemeBoot } from "./ShareThemeBoot";
+import { HashScroll } from "./HashScroll";
 
 type Block = {
   id: string;
@@ -55,9 +56,12 @@ export function SharedPageView({ page }: { page: SharedPage }) {
         </h1>
         <div className={`prose-editor space-y-2 pb-32 ${page.smallText ? "text-sm" : ""}`}>
           {page.blocks.map((b) => (
-            <ReadBlock key={b.id} block={b} />
+            <div key={b.id} id={`block-${b.id}`} className="scroll-mt-16">
+              <ReadBlock block={b} />
+            </div>
           ))}
         </div>
+        <HashScroll />
       </article>
     </div>
   );

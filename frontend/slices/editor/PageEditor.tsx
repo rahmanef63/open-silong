@@ -63,6 +63,52 @@ export function PageEditor() {
 
   useEffect(() => { if (id && page) pushRecent(id); }, [id]);
 
+  useEffect(() => {
+    const scroll = () => {
+      const m = window.location.hash.match(/^#block-(.+)$/);
+      if (!m) return;
+      const el = document.querySelector<HTMLElement>(`[data-block-id="${m[1]}"]`);
+      if (!el) return;
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.classList.add("ring-2", "ring-brand", "rounded-md");
+      window.setTimeout(() => el.classList.remove("ring-2", "ring-brand", "rounded-md"), 1600);
+    };
+    if (window.location.hash) window.setTimeout(scroll, 80);
+    window.addEventListener("hashchange", scroll);
+    return () => window.removeEventListener("hashchange", scroll);
+  }, [id]);
+
+  useEffect(() => {
+    if (!id) return;
+    const onKey = (e: KeyboardEvent) => {
+      const meta = e.metaKey || e.ctrlKey;
+      if (!meta || !e.shiftKey) return;
+      if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
+      const ae = document.activeElement as HTMLElement | null;
+      if (!ae) return;
+      const host = ae.closest<HTMLElement>("[data-block-id]");
+      if (!host) return;
+      const blockId = host.getAttribute("data-block-id");
+      const blocks = blocksRef.current;
+      if (!blockId || !blocks) return;
+      const idx = blocks.findIndex((b) => b.id === blockId);
+      if (idx === -1) return;
+      const dir = e.key === "ArrowUp" ? -1 : 1;
+      const target = idx + dir;
+      if (target < 0 || target >= blocks.length) return;
+      e.preventDefault();
+      const next = blocks.slice();
+      const [item] = next.splice(idx, 1);
+      next.splice(target, 0, item);
+      updatePage(id, { blocks: next });
+      window.setTimeout(() => {
+        document.querySelector<HTMLElement>(`[data-block-id="${blockId}"]`)?.focus();
+      }, 30);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [id, updatePage]);
+
   // Hooks MUST run on every render — keep above any early return below.
   const registerRef = useCallback((id: string, el: HTMLElement | null) => {
     refs.current.set(id, el);

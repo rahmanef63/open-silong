@@ -90,6 +90,8 @@ export interface Page {
   previewText?: string;
   /** Custom share-link slug. When set, /share/<slug> resolves to this page. */
   shareSlug?: string;
+  /** Allow search engines to index the public share. Off by default. */
+  shareIndexable?: boolean;
   /** Wiki mode metadata — present when this page is the canonical entry
    *  for a topic. */
   wiki?: {

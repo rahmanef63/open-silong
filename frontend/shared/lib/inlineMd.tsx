@@ -15,11 +15,14 @@
  *  there is no XSS surface. */
 
 import * as React from "react";
+import katex from "katex";
 
 const BOLD = /\*\*([^*\n]+)\*\*/;
 const STRIKE = /~~([^~\n]+)~~/;
 const CODE = /`([^`\n]+)`/;
 const ITALIC = /(?:\*([^*\n]+)\*|_([^_\n]+)_)/;
+// Inline math `$...$` — single-dollar form, no whitespace right after `$`.
+const MATH = /\$([^$\n]+)\$/;
 // Allow relative `/path` for internal mentions in addition to http(s).
 // `javascript:` and other dangerous schemes are excluded by anchoring
 // to `https?://` or `/`.
@@ -28,7 +31,7 @@ const BARE_URL = /(https?:\/\/[^\s)]+)/;
 
 type Token =
   | { kind: "text"; value: string }
-  | { kind: "bold" | "italic" | "strike" | "code"; inner: string }
+  | { kind: "bold" | "italic" | "strike" | "code" | "math"; inner: string }
   | { kind: "link"; label: string; href: string };
 
 /** Tokenise a single line. Order matters: code first to swallow markers
@@ -41,6 +44,7 @@ export function tokenizeInline(input: string): Token[] {
   while (buf.length > 0) {
     const matches: Array<{ idx: number; len: number; tok: Token }> = [];
     push(matches, buf.match(CODE), (m) => ({ kind: "code", inner: m[1] }));
+    push(matches, buf.match(MATH), (m) => ({ kind: "math", inner: m[1] }));
     push(matches, buf.match(BOLD), (m) => ({ kind: "bold", inner: m[1] }));
     push(matches, buf.match(STRIKE), (m) => ({ kind: "strike", inner: m[1] }));
     push(matches, buf.match(ITALIC), (m) => ({ kind: "italic", inner: m[1] ?? m[2] }));
@@ -85,6 +89,10 @@ export function renderInline(input: string): React.ReactNode {
         return <del key={i}>{t.inner}</del>;
       case "code":
         return <code key={i} className="rounded bg-muted/70 px-1 py-0.5 font-mono text-[0.9em]">{t.inner}</code>;
+      case "math": {
+        const html = katex.renderToString(t.inner, { throwOnError: false, displayMode: false });
+        return <span key={i} dangerouslySetInnerHTML={{ __html: html }} />;
+      }
       case "link": {
         const internal = t.href.startsWith("/");
         return (

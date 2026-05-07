@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "@/shared/lib/router-compat";
 import {
   CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
@@ -12,6 +12,28 @@ import { DATABASE_PRESETS } from "@/slices/database-presets";
 import { DynamicIcon } from "@/slices/icon-picker";
 
 const MAX_PAGES = 12;
+const HISTORY_KEY = "nosion.cmdk.history";
+const HISTORY_MAX = 5;
+
+type HistoryEntry = { id: string; label: string };
+
+function loadHistory(): HistoryEntry[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(HISTORY_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.slice(0, HISTORY_MAX) : [];
+  } catch { return []; }
+}
+function saveHistory(entry: HistoryEntry) {
+  if (typeof window === "undefined") return;
+  try {
+    const cur = loadHistory().filter((e) => e.id !== entry.id);
+    const next = [entry, ...cur].slice(0, HISTORY_MAX);
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
+  } catch { /* quota / parse */ }
+}
 
 export function CommandPalette() {
   const [open, setOpen] = useState(false);
@@ -33,7 +55,13 @@ export function CommandPalette() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  const run = (fn: () => void) => () => { setOpen(false); fn(); };
+  const [historyTick, setHistoryTick] = useState(0);
+  const history = useMemo(() => loadHistory(), [historyTick, open]);
+  const run = (fn: () => void, track?: HistoryEntry) => () => {
+    setOpen(false);
+    if (track) { saveHistory(track); setHistoryTick((n) => n + 1); }
+    fn();
+  };
 
   const visiblePages = pages.filter((p) => !p.trashed && !p.rowOfDatabaseId);
   const matched = query.trim()
@@ -102,30 +130,58 @@ export function CommandPalette() {
           </CommandGroup>
         )}
 
+        {!query && history.length > 0 && (
+          <CommandGroup heading="Recent commands">
+            {history.map((h) => (
+              <CommandItem
+                key={h.id}
+                value={`hist:${h.id}`}
+                onSelect={run(() => {
+                  // Replay by id
+                  if (h.id === "action:new-page") (async () => {
+                    const p = await createPage(null, { title: "Untitled" });
+                    navigate(`/p/${p.id}`);
+                  })();
+                  else if (h.id === "action:home") navigate("/");
+                  else if (h.id === "action:inbox") navigate("/inbox");
+                  else if (h.id === "action:trash") navigate("/trash");
+                  else if (h.id === "action:settings") navigate("/settings");
+                  else if (h.id === "action:theme-toggle")
+                    updatePreferences({ theme: preferences.theme === "dark" ? "light" : "dark" });
+                }, h)}
+              >
+                <History className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
+                <span className="flex-1 truncate">{h.label}</span>
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        )}
+
         <CommandGroup heading="Actions">
           <CommandItem value="action:new-page" onSelect={run(async () => {
             const p = await createPage(null, { title: "Untitled" });
             navigate(`/p/${p.id}`);
-          })}>
+          }, { id: "action:new-page", label: "New page" })}>
             <Plus className="mr-2 h-3.5 w-3.5" />
             New page
             <span className="ml-auto text-[10px] text-muted-foreground">⌘N</span>
           </CommandItem>
-          <CommandItem value="action:home" onSelect={run(() => navigate("/"))}>
+          <CommandItem value="action:home" onSelect={run(() => navigate("/"), { id: "action:home", label: "Home" })}>
             <Home className="mr-2 h-3.5 w-3.5" /> Home
           </CommandItem>
-          <CommandItem value="action:inbox" onSelect={run(() => navigate("/inbox"))}>
+          <CommandItem value="action:inbox" onSelect={run(() => navigate("/inbox"), { id: "action:inbox", label: "Inbox" })}>
             <Inbox className="mr-2 h-3.5 w-3.5" /> Inbox
           </CommandItem>
-          <CommandItem value="action:trash" onSelect={run(() => navigate("/trash"))}>
+          <CommandItem value="action:trash" onSelect={run(() => navigate("/trash"), { id: "action:trash", label: "Trash" })}>
             <Trash2 className="mr-2 h-3.5 w-3.5" /> Trash
           </CommandItem>
-          <CommandItem value="action:settings" onSelect={run(() => navigate("/settings"))}>
+          <CommandItem value="action:settings" onSelect={run(() => navigate("/settings"), { id: "action:settings", label: "Settings" })}>
             <Settings className="mr-2 h-3.5 w-3.5" /> Settings
           </CommandItem>
           <CommandItem
             value="action:theme-toggle"
-            onSelect={run(() => updatePreferences({ theme: preferences.theme === "dark" ? "light" : "dark" }))}
+            onSelect={run(() => updatePreferences({ theme: preferences.theme === "dark" ? "light" : "dark" }),
+              { id: "action:theme-toggle", label: "Toggle theme" })}
           >
             {preferences.theme === "dark"
               ? <><Sun className="mr-2 h-3.5 w-3.5" /> Switch to light theme</>

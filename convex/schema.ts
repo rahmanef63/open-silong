@@ -31,6 +31,9 @@ export default defineSchema({
      *  Optional — defaults to the convex id. Unique per user; the
      *  by_share_slug index lets `/share/<slug>` resolve in O(1). */
     shareSlug: v.optional(v.string()),
+    /** Allow search engines to index the public share page. Default false:
+     *  the share is reachable but `noindex,nofollow` is emitted. */
+    shareIndexable: v.optional(v.boolean()),
     /** Wiki mode — treats this page as the canonical entry for a topic. */
     wiki: v.optional(v.object({
       ownerId: v.id("users"),

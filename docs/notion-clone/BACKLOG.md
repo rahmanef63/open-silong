@@ -56,7 +56,7 @@
 
 ## 0.3 Technical Architecture
 
-- [x] Stack frontend: React 19 + Vite + TypeScript + Tailwind + shadcn/ui (cmdk, Radix)
+- [x] Stack frontend: Next.js 16 (App Router) + React 19 + TypeScript + Tailwind v4 + shadcn/ui (cmdk, Radix)
 - [x] Block editor engine: contentEditable + dnd-kit + custom block model
 - [x] Backend stack: Convex self-hosted (Dokploy) — mutations/queries/subscriptions
 - [x] Auth: `@convex-dev/auth` (PKDF2)
@@ -224,7 +224,8 @@
 - [x] Link
 - [x] Mention page / user / date
 - [ ] Clear formatting button
-- [x] Floating formatting toolbar (browser default for now)
+- [x] Floating formatting toolbar (`SelectionToolbar`, Slack-model: wraps selection with `**bold**`/`_italic_`/`~~strike~~`/`` `code` ``/`[label](url)` markers)
+- [x] AI selection actions (Improve / Shorter / Longer / Fix grammar / Translate via OpenRouter)
 - [x] Keyboard shortcuts (⌘B / ⌘I / ⌘U / ⌘K)
 
 ## 4.3 Layout Blocks — P1
@@ -240,7 +241,7 @@
 
 ## 4.4 Media Blocks — P1
 
-- [x] Image (upload + URL + caption + alt placeholder)
+- [x] Image (upload + URL + drag-drop + clipboard paste + caption + alt placeholder; 10 MB / image-MIME cap)
 - [x] Resize image (drag right-edge handle, persists `width` %)
 - [x] Align image (left / center / right toolbar, persists `align`)
 - [ ] Download original
@@ -331,8 +332,8 @@
 - [x] Restore page with original parent
 - [ ] Restore page if parent deleted (orphan handling)
 - [x] Permanent delete
-- [x] Empty trash
-- [ ] Permission check for delete / restore (single-user)
+- [x] Empty trash (header bulk button + 30d auto-purge cron in `convex/maintenance.purgeStaleTrash`)
+- [x] Permission check for delete / restore (`requireOwned(ctx, "pages", id)` at entry, recursive over user-owned tree)
 - [ ] Audit log for destructive actions
 
 ---
@@ -363,6 +364,7 @@
 ## 6.3 User Mentions
 
 - [x] `@` user mention (single-user, pulls from workspace user)
+- [x] `@` page mention typeahead (`MentionTypeahead` document-level listener; inserts `[Page Title](/dashboard/p/<id>)`)
 - [ ] Search workspace members
 - [x] Insert mention into block
 - [ ] Notify mentioned user
@@ -384,11 +386,11 @@
 
 - [x] Mark page tree as wiki (toggle in PageActionsMenu)
 - [ ] Wiki home page concept
-- [ ] Owner / maintainer metadata
-- [ ] Verification status
-- [ ] Last-verified date
+- [x] Owner / maintainer metadata (`pages.wiki.{ownerId,ownerName,ownerIcon}`)
+- [x] Verification status (`pages.wiki.verified`)
+- [x] Last-verified date (`pages.wiki.verifiedAt`)
 - [ ] Verification expiration / reminder
-- [ ] "Verified" badge UI
+- [x] "Verified" badge UI (`WikiBadge` on PageEditor)
 - [ ] Stale page warning
 - [ ] Filter wiki pages by verified state
 
@@ -436,7 +438,7 @@
 
 - [x] Global shortcut map (basic, in editor)
 - [x] Editor shortcut map
-- [ ] Shortcut help modal
+- [x] Shortcut help modal (`?` opens `ShortcutsDialog` listing every binding)
 - [ ] Customize shortcuts
 - [x] Core shortcuts
   - [ ] New page (⌘N)
@@ -537,9 +539,14 @@
 
 - [x] Share page publicly (ShareDialog)
 - [x] Generate public URL (`/share/:id`)
+- [x] Custom slug URL (`/share/<slug>`, 3-60 char a-z0-9 hyphens; uniqueness checked)
+- [x] OG image (`/share/[id]/opengraph-image` edge `ImageResponse` 1200×630)
+- [x] Sitemap (`app/sitemap.ts` lists public pages, `revalidate=3600`)
 - [x] Disable public URL
 - [ ] Allow search-engine indexing toggle
-- [x] Public read-only view
+- [x] Public read-only view (full block fidelity: toggle, columns, image align/width, KaTeX, embed, table, button)
+- [x] Reader theme follows visitor `prefers-color-scheme` (`ShareThemeBoot`)
+- [x] Print-friendly layout (`@media print` rules, link expansion)
 - [ ] Permission-safe rendering (hide private backlinks / restricted children)
 
 ## 12.2 Duplicate Public Pages
@@ -1048,7 +1055,7 @@
 - [x] Resolve / reopen
 - [ ] Mention user in comment
 - [ ] Comment notifications
-- [ ] Permission-aware comments
+- [x] Permission-aware comments (page-owner moderation: delete / resolve any comment on owned pages; author-only edit; sanitized DTO on public-share viewer path)
 
 ## 27.3 Activity Log
 
@@ -1100,8 +1107,8 @@
 
 ## 29.1 Import
 
-- [ ] Markdown import
-- [ ] HTML import
+- [x] Markdown import (ZIP import accepts `.md` / Notion exports via `convex/import/markdown.ts`)
+- [x] HTML import (ZIP entries; sanitized to block model)
 - [x] CSV import into database (with type coercion)
 - [x] JSON backup import (full schema + rows + views + templates with id remap)
 - [x] Map CSV columns to properties (CsvImportDialog)
@@ -1124,9 +1131,9 @@
 ## 29.3 Backup
 
 - [x] Workspace backup via snapshots (per-page)
-- [ ] Workspace-wide backup job
-- [ ] Restore from backup
-- [ ] Versioned export
+- [x] Workspace-wide backup job (`Settings → Backup`: JSON export of pages + databases + views + templates + preferences)
+- [x] Restore from backup (`convex/import/workspace.ts:importFromJson`, zod-validated, four-phase id remap)
+- [x] Versioned export (versioned schema; additive — never carries `isPublic`/`trashed`)
 - [ ] Admin-only backup
 
 ---
@@ -1200,11 +1207,11 @@
 - [x] Output escaping (React default)
 - [ ] XSS protection for paste-as-HTML rich text
 - [ ] HTML paste sanitization
-- [ ] File upload validation (type / size whitelist)
+- [x] File upload validation (image only + 10 MB cap in `ImageBlock`; ZIP import 50 MB / 5 000 entries cap)
 - [ ] Virus scanning
 - [x] CSRF (Convex auth uses Bearer tokens, not cookies)
-- [ ] Rate limiting
-- [x] Secure headers (Dokploy default)
+- [x] Rate limiting (`convex/_shared/rateLimit.ts` fixed-window; comments 30/min, pages 60/min, inbox 100/min, ai.complete 20/h, import 3/min)
+- [x] Secure headers (CSP + Strict-Transport-Security + Permissions-Policy in `next.config.mjs`)
 - [ ] Audit logs
 
 ## 32.2 Permission Security
