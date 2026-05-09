@@ -34,3 +34,29 @@ export function formatDateTime(ts: number) {
     month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit",
   });
 }
+
+/** Default short date — e.g. "5/9/2026" (locale-dependent). Use for
+ *  inline timestamps where space is tight. */
+export function formatDate(ts: number): string {
+  return new Date(ts).toLocaleDateString();
+}
+
+/** Long form — e.g. "May 9, 2026". Use for headers / card titles. */
+export function formatDateLong(ts: number): string {
+  return new Date(ts).toLocaleDateString(undefined, {
+    year: "numeric", month: "short", day: "numeric",
+  });
+}
+
+/** Calendar weekday — e.g. "Sunday, May 9". Use for calendar/feed
+ *  group headers. */
+export function formatDateWeekday(ts: number): string {
+  return new Date(ts).toLocaleDateString(undefined, {
+    weekday: "long", month: "short", day: "numeric",
+  });
+}
+
+/** ISO `YYYY-MM-DD` — use for sort keys and audit log. */
+export function formatDateISO(ts: number): string {
+  return new Date(ts).toISOString().slice(0, 10);
+}

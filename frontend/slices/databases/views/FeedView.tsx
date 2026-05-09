@@ -4,6 +4,7 @@ import { PropertyCell } from "../PropertyCell";
 import { useStore } from "@/shared/lib/store";
 import { Clock, Plus, MoreHorizontal, Trash2 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
+import { formatDateWeekday } from "@/shared/lib/format";
 import { focusSiblingBySelector } from "@/shared/lib/keyboard";
 import { getVisibleProps } from "../lib/visibility";
 import {
@@ -27,7 +28,7 @@ function dayLabel(ts: number): string {
   const dd = new Date(d); dd.setHours(0, 0, 0, 0);
   if (dd.getTime() === today.getTime()) return "Today";
   if (dd.getTime() === yest.getTime()) return "Yesterday";
-  return d.toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" });
+  return formatDateWeekday(ts);
 }
 
 function timeLabel(ts: number): string {

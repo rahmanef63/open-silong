@@ -3,6 +3,7 @@
 import { useStore } from "@/shared/lib/store";
 import { Trash2, RotateCcw, X, Table2, FileText } from "lucide-react";
 import { DynamicIcon } from "@/slices/icon-picker";
+import { formatDateTime } from "@/shared/lib/format";
 
 export function TrashView() {
   const {
@@ -59,7 +60,7 @@ export function TrashView() {
                       <DynamicIcon value={p.icon} className="text-lg" />
                       <div className="min-w-0 flex-1">
                         <div className="truncate text-sm font-medium">{p.title || "Untitled"}</div>
-                        <div className="text-xs text-muted-foreground">Deleted {new Date(p.updatedAt).toLocaleString()}</div>
+                        <div className="text-xs text-muted-foreground">Deleted {formatDateTime(p.updatedAt)}</div>
                       </div>
                       <button
                         onClick={() => restorePage(p.id)}
@@ -91,7 +92,7 @@ export function TrashView() {
                       <div className="min-w-0 flex-1">
                         <div className="truncate text-sm font-medium">{db.name || "Untitled database"}</div>
                         <div className="text-xs text-muted-foreground">
-                          {db.rowIds.length} row{db.rowIds.length === 1 ? "" : "s"} · trashed {new Date(db.updatedAt).toLocaleString()}
+                          {db.rowIds.length} row{db.rowIds.length === 1 ? "" : "s"} · trashed {formatDateTime(db.updatedAt)}
                         </div>
                       </div>
                       <button
