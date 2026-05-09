@@ -97,6 +97,44 @@ exist before a query reads it.
 
 ---
 
+## Bootstrapping a fresh deployment
+
+A self-hosted Nosion has zero admins on day 0. Three paths to promote
+the first one — pick whichever fits the install:
+
+### 1. Env-var auto-promotion (preferred for prod)
+
+Set on the Convex deployment:
+
+```bash
+npx convex env set SUPER_ADMIN_EMAIL casadezian@gmail.com
+# OR for non-super admins (comma-separated):
+npx convex env set ADMIN_BOOTSTRAP_EMAILS one@x.io,two@y.io
+```
+
+Sign in with that email. `useAdminRole` runs `bootstrapMyProfile` on
+first mount → `ensureUserProfile` reads the env → role flips silently.
+
+### 2. UI claim (escape hatch for fresh installs)
+
+When the workspace has **zero superadmins**, the sidebar shows a
+"Claim admin" entry and `/admin` renders a "Claim ownership" panel.
+First signed-in user clicks → `mutations.claimSuperAdmin` runs →
+done. After the first claim succeeds, the button disappears for
+everyone (one-shot, race-safe via Convex's per-workspace mutation
+serialization).
+
+### 3. Direct DB patch (last-resort)
+
+`docker exec` into the Convex container and patch `userProfiles`
+manually, OR use `npx convex run admin/mutations:claimSuperAdmin
+--admin-key …`. Only needed if env + UI both fail.
+
+After ANY of the three, `setUserRole` from inside the admin panel
+manages further promotions/demotions.
+
+---
+
 ## `actorEmail(ctx, userId) → string | undefined`
 
 Reads `users.email` for telemetry / display. Convex Auth mints the

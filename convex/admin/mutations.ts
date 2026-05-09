@@ -23,6 +23,40 @@ export const bootstrapMyProfile = mutation({
   },
 });
 
+/** First-deployer escape hatch — promote the caller to "superadmin"
+ *  ONLY if no superadmin exists yet anywhere. Race-safe: the unique
+ *  superadmin invariant is guarded by a re-query inside the mutation
+ *  body (Convex serializes mutations on the same workspace).
+ *
+ *  This is intended for fresh self-hosted deployments where the
+ *  operator hasn't set `SUPER_ADMIN_EMAIL` env var. After the first
+ *  claim succeeds, subsequent calls throw and the operator should use
+ *  `setUserRole` from inside the admin panel for further changes. */
+export const claimSuperAdmin = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await requireAuth(ctx);
+    const allProfiles = await ctx.db.query("userProfiles").collect();
+    if (allProfiles.some((p) => p.role === "superadmin")) {
+      throw new Error("Superadmin already claimed — ask the existing superadmin to grant you a role.");
+    }
+    const existing = allProfiles.find((p) => p.userId === userId);
+    if (existing) {
+      await ctx.db.patch(existing._id, { role: "superadmin" });
+    } else {
+      await ctx.db.insert("userProfiles", {
+        userId,
+        role: "superadmin",
+        createdAt: Date.now(),
+      });
+    }
+    const email = await actorEmail(ctx, userId);
+    // Audit trail — surfaces in Admin → Audit log immediately.
+    await logAuditEventInternal(ctx, userId, "superadmin.claim", String(userId), { email });
+    return { role: "superadmin" as const };
+  },
+});
+
 export const setUserRole = mutation({
   args: {
     targetUserId: v.id("users"),

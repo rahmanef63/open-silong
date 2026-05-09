@@ -31,7 +31,7 @@ export function MobileBottomNav({ onOpenSearch }: Props) {
   const location = useLocation();
   const navigate = useNavigate();
   const nextRouter = useRouter();
-  const { isAdmin } = useAdminRole();
+  const { isAdmin, claimableSuperAdmin } = useAdminRole();
   const [aiOpen, setAiOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [templatesOpen, setTemplatesOpen] = useState(false);
@@ -94,7 +94,7 @@ export function MobileBottomNav({ onOpenSearch }: Props) {
       <MoreDrawer
         open={moreOpen}
         onOpenChange={setMoreOpen}
-        isAdmin={isAdmin}
+        isAdmin={isAdmin || claimableSuperAdmin}
         onNavigate={(href, isExternal) => {
           setMoreOpen(false);
           if (isExternal) nextRouter.push(href);

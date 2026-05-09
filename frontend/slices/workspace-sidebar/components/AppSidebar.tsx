@@ -41,7 +41,7 @@ export function AppSidebar({ onOpenSearch }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const { setOpenMobile, isMobile } = useSidebar();
-  const { isAdmin } = useAdminRole();
+  const { isAdmin, claimableSuperAdmin } = useAdminRole();
   const { createPage } = useStore();
   const [templatesOpen, setTemplatesOpen] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
@@ -85,10 +85,10 @@ export function AppSidebar({ onOpenSearch }: Props) {
     { icon: Settings, label: "Settings", onClick: () => go("/settings"), active: pathname === path("/settings") },
     { icon: Trash2, label: "Trash", onClick: () => go("/trash"), active: pathname === path("/trash") },
   ];
-  if (isAdmin) {
+  if (isAdmin || claimableSuperAdmin) {
     accountItems.push({
       icon: ShieldAlert,
-      label: "Admin",
+      label: claimableSuperAdmin && !isAdmin ? "Claim admin" : "Admin",
       onClick: () => { router.push("/admin"); closeMobile(); },
       active: pathname.startsWith("/admin"),
     });

@@ -6,17 +6,31 @@ import { requireAdminQuery } from "../_shared/auth";
 const DAY_MS = 86_400_000;
 
 /** Read-only: returns role for the current user, or "user" if not bootstrapped /
- *  not signed in. Used by frontend to gate the Admin nav entry. */
+ *  not signed in. Used by frontend to gate the Admin nav entry.
+ *
+ *  `claimableSuperAdmin` indicates the workspace has NO superadmin yet —
+ *  the signed-in user can claim it via `mutations.claimSuperAdmin`. This
+ *  is the bootstrap escape hatch for fresh deployments where the deployer
+ *  hasn't set `SUPER_ADMIN_EMAIL` env var. */
 export const getMyRole = query({
   args: {},
   handler: async (ctx) => {
     const userId = await getAuthUserId(ctx);
-    if (!userId) return { role: "user" as const, signedIn: false };
+    if (!userId) {
+      return { role: "user" as const, signedIn: false, claimableSuperAdmin: false };
+    }
     const profile = await ctx.db
       .query("userProfiles")
       .withIndex("by_user", (q) => q.eq("userId", userId))
       .unique();
-    return { role: (profile?.role ?? "user") as "admin" | "user", signedIn: true };
+    const role = (profile?.role ?? "user") as "superadmin" | "admin" | "user";
+    const allProfiles = await ctx.db.query("userProfiles").collect();
+    const hasSuperAdmin = allProfiles.some((p) => p.role === "superadmin");
+    return {
+      role,
+      signedIn: true,
+      claimableSuperAdmin: !hasSuperAdmin && role !== "superadmin",
+    };
   },
 });
 
@@ -36,7 +50,7 @@ export const getOverview = query({
         ctx.db.query("notifications").collect(),
       ]);
     const trashedPages = pages.filter((p) => p.trashed).length;
-    const adminCount = profiles.filter((p) => p.role === "admin").length;
+    const adminCount = profiles.filter((p) => p.role === "admin" || p.role === "superadmin").length;
     return {
       users: users.length,
       admins: adminCount,
@@ -95,7 +109,7 @@ export const listUsersWithProfiles = query({
       email: (u.email as string | undefined) ?? null,
       name: (u.name as string | undefined) ?? null,
       createdAt: u._creationTime as number,
-      role: (profileByUser.get(u._id)?.role ?? "user") as "admin" | "user",
+      role: (profileByUser.get(u._id)?.role ?? "user") as "superadmin" | "admin" | "user",
       pageCount: pageCountByUser.get(u._id) ?? 0,
     }));
   },

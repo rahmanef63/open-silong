@@ -14,7 +14,11 @@ export function UsersPanel() {
 
   if (users === undefined) return <div className="text-sm text-muted-foreground">Loading…</div>;
 
-  async function toggle(userId: Id<"users">, current: "admin" | "user") {
+  async function toggle(userId: Id<"users">, current: "superadmin" | "admin" | "user") {
+    if (current === "superadmin") {
+      alert("Superadmin can't be demoted via this UI.");
+      return;
+    }
     setPending(String(userId));
     try {
       await setRole({ targetUserId: userId, role: current === "admin" ? "user" : "admin" });
@@ -46,7 +50,11 @@ export function UsersPanel() {
               <TableCell>
                 <span className={
                   "inline-flex rounded px-1.5 py-0.5 text-xs " +
-                  (u.role === "admin" ? "bg-brand/20 text-foreground" : "bg-muted text-muted-foreground")
+                  (u.role === "superadmin"
+                    ? "bg-amber-500/20 text-amber-700 dark:text-amber-400"
+                    : u.role === "admin"
+                      ? "bg-brand/20 text-foreground"
+                      : "bg-muted text-muted-foreground")
                 }>{u.role}</span>
               </TableCell>
               <TableCell className="hidden md:table-cell">{u.pageCount}</TableCell>
@@ -57,10 +65,10 @@ export function UsersPanel() {
                 <Button
                   size="sm"
                   variant="outline"
-                  disabled={pending === String(u._id)}
+                  disabled={pending === String(u._id) || u.role === "superadmin"}
                   onClick={() => toggle(u._id, u.role)}
                 >
-                  {u.role === "admin" ? "Demote" : "Make admin"}
+                  {u.role === "superadmin" ? "Owner" : u.role === "admin" ? "Demote" : "Make admin"}
                 </Button>
               </TableCell>
             </TableRow>
