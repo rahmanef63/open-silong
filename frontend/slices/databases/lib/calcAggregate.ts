@@ -5,6 +5,7 @@
  */
 
 import type { CalcKind, Page, Property, PropertyValue } from "@/shared/types/domain";
+import { formatDateLong as fmtDate } from "../../../shared/lib/format";
 
 const COMMON: CalcKind[] = [
   "count_all", "count_values", "count_unique_values",
@@ -83,9 +84,6 @@ const toDate = (v: PropertyValue | undefined): number | null => {
   }
   return null;
 };
-
-const fmtDate = (ms: number) =>
-  new Date(ms).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
 
 /** Compute the aggregate display string. Returns "" when not
  *  applicable / no data. */

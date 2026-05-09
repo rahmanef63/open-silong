@@ -8,7 +8,7 @@ import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { ArrowDown, ArrowUp, ArrowUpDown, Search } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
-import { formatRelTime } from "@/shared/lib/format";
+import { formatRelTime, formatDateISO } from "@/shared/lib/format";
 import type { Id } from "@convex/_generated/dataModel";
 
 type SortKey = "email" | "name" | "role" | "pageCount" | "dbCount" | "createdAt" | "lastEditAt";
@@ -168,7 +168,7 @@ export function UsersPanel() {
                 <TableCell className="hidden lg:table-cell tabular-nums">{u.dbCount}</TableCell>
                 <TableCell className="hidden lg:table-cell text-xs text-muted-foreground">{relTime(u.lastEditAt)}</TableCell>
                 <TableCell className="hidden md:table-cell text-xs text-muted-foreground">
-                  {new Date(u.createdAt).toISOString().slice(0, 10)}
+                  {formatDateISO(u.createdAt)}
                 </TableCell>
                 <TableCell className="text-right">
                   <Button

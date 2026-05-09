@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Database, DatabaseViewConfig, Page, Property } from "@/shared/types/domain";
 import { Hash, ListChecks, TrendingUp, Calendar as CalIcon, Users } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
-import { colorClass } from "@/shared/lib/format";
+import { colorClass, formatDate } from "@/shared/lib/format";
 import { getVisibleProps } from "../lib/visibility";
 import { DynamicIcon } from "@/slices/icon-picker";
 
@@ -99,7 +99,7 @@ export function DashboardView({ db, view, rows, onOpenRow }: Props) {
                 <span className="truncate">{r.title || "Untitled"}</span>
               </span>
               <span className="text-[10px] text-muted-foreground shrink-0">
-                {new Date(r.updatedAt ?? Date.now()).toLocaleDateString()}
+                {formatDate(r.updatedAt ?? Date.now())}
               </span>
             </button>
           ))}

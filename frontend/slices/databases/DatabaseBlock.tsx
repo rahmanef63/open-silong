@@ -1,5 +1,5 @@
 import { lazy, Suspense, useMemo, useState } from "react";
-import { Link } from "@/shared/lib/router-compat";
+import { Link, useNavigate } from "@/shared/lib/router-compat";
 import { Block, Database, DatabaseViewConfig, DbView, Page, Property, PropertyType } from "@/shared/types/domain";
 import { useStore } from "@/shared/lib/store";
 import { cn } from "@/shared/lib/utils";
@@ -7,6 +7,7 @@ import {
   Table2, LayoutGrid, List as ListIcon, Image, Calendar as CalendarIcon, Clock,
   Plus, Search, MoreHorizontal, Trash2, Eye, EyeOff, ArrowUpDown, Filter, Settings2,
   Check, Pencil, BarChart3, LayoutDashboard, Rss, Map as MapIcon, ClipboardList, Copy,
+  Maximize2,
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
@@ -59,9 +60,12 @@ export { PROPERTY_TYPE_LABELS };
 
 export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block }) {
   const {
-    getDatabase, pages, updateDatabase, addView, updateView, deleteView,
+    getDatabase, getPage, pages, updateDatabase, addView, updateView, deleteView,
+    createPage, addBlock, updateBlock,
   } = useStore();
+  const navigate = useNavigate();
   const [openRowId, setOpenRowId] = useState<string | null>(null);
+  const [openingAsPage, setOpeningAsPage] = useState(false);
 
   const db = block.databaseId ? getDatabase(block.databaseId) : undefined;
   const view = db ? db.views.find(v => v.id === db.activeViewId) ?? db.views[0] : undefined;
@@ -130,6 +134,43 @@ export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block 
     );
   }
 
+  // "Open as page": find a dedicated host page for this database, or
+  // create one parented under the current page. A host page is one
+  // whose only block is a database referencing this id (matches the
+  // PageEditor's `fullPageDb` heuristic).
+  const isInline = (() => {
+    const host = getPage(pageId);
+    if (!host) return true;
+    const blocks = host.blocks ?? [];
+    if (blocks.length !== 1) return true;
+    const only = blocks[0];
+    return !(only.type === "database" && only.databaseId === db?.id);
+  })();
+
+  async function openAsPage() {
+    if (!db || openingAsPage) return;
+    setOpeningAsPage(true);
+    try {
+      const existing = pages.find((p) => {
+        if (p.trashed) return false;
+        const b = p.blocks ?? [];
+        if (b.length !== 1) return false;
+        const only = b[0];
+        return only.type === "database" && only.databaseId === db.id;
+      });
+      if (existing) {
+        navigate(`/p/${existing.id}`);
+        return;
+      }
+      const newPage = await createPage(pageId, { title: db.name, icon: db.icon ?? "🗂️" });
+      const blockId = await addBlock(newPage.id, 0, "database");
+      updateBlock(newPage.id, blockId, { databaseId: db.id });
+      navigate(`/p/${newPage.id}`);
+    } finally {
+      setOpeningAsPage(false);
+    }
+  }
+
   const ViewComponent = (
     {
       table: TableView, board: BoardView, list: ListView, gallery: GalleryView,
@@ -161,6 +202,18 @@ export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block 
             onChange={e => updateDatabase(db.id, { name: e.target.value })}
             className="bg-transparent text-sm font-semibold outline-none flex-1 min-w-0 max-w-xs"
           />
+          {isInline && (
+            <button
+              type="button"
+              onClick={openAsPage}
+              disabled={openingAsPage}
+              title="Open as page"
+              aria-label="Open database as page"
+              className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground transition disabled:opacity-50"
+            >
+              <Maximize2 className="h-3.5 w-3.5" />
+            </button>
+          )}
         </div>
         <div className="flex items-center gap-1 max-w-full overflow-x-auto scrollbar-thin">
           {db.views.map(v => (
