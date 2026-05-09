@@ -187,6 +187,9 @@ export async function instantiateTemplate(
       favorite: false,
       trashed: false,
       isPublic: false,
+      // Templates default to full-width — they're built around column
+      // dashboards that need the breathing room (cycle 8, 2026-05-09).
+      fullWidth: true,
       createdAt: now,
       updatedAt: now,
     });

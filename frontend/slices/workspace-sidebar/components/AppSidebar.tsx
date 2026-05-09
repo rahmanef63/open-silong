@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import {
-  Inbox, Search, Settings, Sparkles, Trash2, User, ShieldAlert, FileBox, Bot, Plus, FileArchive,
+  Inbox, Search, Settings, Sparkles, Trash2, User, ShieldAlert, FileBox, Bot, Plus, FileArchive, FileJson,
 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import {
@@ -26,6 +26,7 @@ import { TemplateGalleryDialog } from "@/slices/templates";
 import { AIAgentConsole } from "@/slices/ai-agent";
 import { InboxBadge } from "@/slices/inbox";
 import { ImportZipDialog } from "@/slices/import-zip";
+import { ExportImportJsonDialog } from "@/slices/export-import-json";
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
 import { NavUser } from "./NavUser";
 import { PagesPanel } from "./PagesPanel";
@@ -46,6 +47,7 @@ export function AppSidebar({ onOpenSearch }: Props) {
   const [templatesOpen, setTemplatesOpen] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [jsonOpen, setJsonOpen] = useState(false);
 
   const closeMobile = () => { if (isMobile) setOpenMobile(false); };
 
@@ -77,6 +79,7 @@ export function AppSidebar({ onOpenSearch }: Props) {
       active: pathname === path("/inbox"), badge: <InboxBadge />,
     },
     { icon: FileBox, label: "Templates", onClick: () => setTemplatesOpen(true), active: false },
+    { icon: FileJson, label: "Export / Import JSON", onClick: () => setJsonOpen(true), active: false },
     { icon: FileArchive, label: "Import ZIP", onClick: () => setImportOpen(true), active: false },
   ];
 
@@ -147,6 +150,7 @@ export function AppSidebar({ onOpenSearch }: Props) {
       />
       <AIAgentConsole open={aiOpen} onOpenChange={setAiOpen} />
       <ImportZipDialog open={importOpen} onOpenChange={setImportOpen} parentId={null} />
+      <ExportImportJsonDialog open={jsonOpen} onOpenChange={setJsonOpen} />
     </Sidebar>
   );
 }
