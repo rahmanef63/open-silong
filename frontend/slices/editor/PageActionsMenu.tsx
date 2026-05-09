@@ -25,6 +25,8 @@ import {
 } from "lucide-react";
 import { FONT_OPTIONS } from "./page-actions/fonts";
 import { RowButton, Row, ToggleRow, SectionLabel } from "./page-actions/MenuRows";
+import { useWorkspaceIO } from "@/slices/workspace-io";
+import { FileJson, FileArchive } from "lucide-react";
 
 interface Props {
   page: Page;
@@ -34,6 +36,7 @@ interface Props {
 export function PageActionsMenu({ page, onShowHistory }: Props) {
   const { updatePage, duplicatePage, deletePage, addBlock, pages, movePage } = useStore();
   const navigate = useNavigate();
+  const workspaceIO = useWorkspaceIO();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [moveOpen, setMoveOpen] = useState(false);
@@ -83,7 +86,7 @@ export function PageActionsMenu({ page, onShowHistory }: Props) {
     toast.success("Moved to trash");
   };
 
-  const onExport = () => {
+  const onExportMd = () => {
     const md = pageToMarkdown(page);
     const safeTitle = (page.title || "untitled").replace(/[^a-z0-9-_ ]/gi, "_").trim() || "untitled";
     downloadFile(`${safeTitle}.md`, md);
@@ -91,7 +94,7 @@ export function PageActionsMenu({ page, onShowHistory }: Props) {
     setOpen(false);
   };
 
-  const onImport = async () => {
+  const onImportMd = async () => {
     setOpen(false);
     const file = await pickFile(".md,.markdown,text/markdown,text/plain");
     if (!file) return;
@@ -105,6 +108,21 @@ export function PageActionsMenu({ page, onShowHistory }: Props) {
       });
     }
     toast.success(`Imported ${blocks.length} blocks`);
+  };
+
+  const onExportJson = () => {
+    setOpen(false);
+    workspaceIO.open({ tab: "export", preselectPageId: page.id });
+  };
+
+  const onImportJson = () => {
+    setOpen(false);
+    workspaceIO.open({ tab: "import-json", zipParentId: page.id });
+  };
+
+  const onImportZip = () => {
+    setOpen(false);
+    workspaceIO.open({ tab: "import-zip", zipParentId: page.id });
   };
 
   const stub = (label: string) => () => {
@@ -310,10 +328,13 @@ export function PageActionsMenu({ page, onShowHistory }: Props) {
         )}
 
         {/* Tools */}
-        {groupVisible("Import", "Export", "Turn into wiki", "Updates & analytics", "Version history", "Notify me", "Mentions") && (
+        {groupVisible("Export JSON", "Export Markdown", "Import JSON", "Import Markdown", "Import ZIP", "Turn into wiki", "Updates & analytics", "Version history", "Notify me", "Mentions") && (
           <div className="py-1">
-            {match("Import") && <Row icon={Upload} label="Import" onClick={onImport} />}
-            {match("Export") && <Row icon={Download} label="Export" onClick={onExport} />}
+            {match("Export JSON") && <Row icon={FileJson} label="Export JSON (this page + subtree)" onClick={onExportJson} />}
+            {match("Export Markdown") && <Row icon={Download} label="Export as Markdown" onClick={onExportMd} />}
+            {match("Import JSON") && <Row icon={FileJson} label="Import JSON" onClick={onImportJson} />}
+            {match("Import Markdown") && <Row icon={Upload} label="Import Markdown" onClick={onImportMd} />}
+            {match("Import ZIP") && <Row icon={FileArchive} label="Import ZIP under this page" onClick={onImportZip} />}
             {match("Turn into wiki") && (
               <WikiToggleAction pageId={page.id} onClose={() => setOpen(false)} />
             )}
