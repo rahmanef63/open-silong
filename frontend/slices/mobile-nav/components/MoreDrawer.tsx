@@ -35,7 +35,7 @@ export function MoreDrawer({ open, onOpenChange, isAdmin, onNavigate, onOpenTemp
       label: "Admin",
       hint: "Operational control",
       hue: "from-red-500 to-rose-700",
-      onClick: () => onNavigate("/admin", true),
+      onClick: () => onNavigate("/dashboard/admin"),
     });
   }
 

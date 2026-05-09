@@ -72,6 +72,8 @@ const nextConfig = {
       { source: "/trash", destination: "/dashboard/trash", permanent: true },
       { source: "/settings", destination: "/dashboard/settings", permanent: true },
       { source: "/profile", destination: "/dashboard/profile", permanent: true },
+      { source: "/admin", destination: "/dashboard/admin", permanent: true },
+      { source: "/admin/:path*", destination: "/dashboard/admin/:path*", permanent: true },
     ];
   },
   async headers() {

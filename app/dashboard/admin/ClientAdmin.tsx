@@ -19,9 +19,6 @@ export default function ClientAdmin() {
       router.replace("/auth");
       return;
     }
-    // Redirect non-admins ONLY when there's no claim path. The claim
-    // page itself sits at /admin so a fresh deployer hits it after
-    // first sign-in and can self-promote.
     if (!isAdmin && !claimableSuperAdmin) {
       router.replace("/dashboard");
     }
@@ -34,8 +31,6 @@ export default function ClientAdmin() {
     return <div className="p-6 text-sm text-muted-foreground">Redirecting…</div>;
   }
 
-  // Not admin, but the workspace has no superadmin yet — show the
-  // claim panel instead of bouncing the user away.
   if (!isAdmin && claimableSuperAdmin) {
     return (
       <div className="mx-auto max-w-xl px-4 py-16">
