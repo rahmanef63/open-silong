@@ -22,7 +22,7 @@ import { decorateInPlace } from "./lib/inlineDecorator";
 // decorate (skips code/database/page/columns/toggle which own their
 // own UI or use mono-font where styling would be wrong).
 const DECORATE_TYPES = new Set<BlockType>([
-  "paragraph", "h1", "h2", "h3", "todo", "bullet", "numbered", "quote", "callout",
+  "paragraph", "h1", "h2", "h3", "h4", "todo", "bullet", "numbered", "quote", "callout",
 ]);
 
 interface Props {
@@ -262,6 +262,15 @@ function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerR
       });
       return;
     }
+    if (type === "columns4" || type === "columns5") {
+      const n = type === "columns4" ? 4 : 5;
+      setBlockType(pageId, block.id, type);
+      updateBlock(pageId, block.id, {
+        text: "",
+        columns: Array.from({ length: n }, () => [{ id: uid(), type: "paragraph" as BlockType, text: "" }]),
+      });
+      return;
+    }
     if (type === "toggle") {
       setBlockType(pageId, block.id, "toggle");
       updateBlock(pageId, block.id, { text: "", children: [], collapsed: false });
@@ -327,7 +336,7 @@ function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerR
     );
   }
 
-  if (block.type === "columns2" || block.type === "columns3") {
+  if (block.type === "columns2" || block.type === "columns3" || block.type === "columns4" || block.type === "columns5") {
     return (
       <BlockShell
         setNodeRef={setNodeRef} style={style} isDragging={isDragging} isOver={isOver} blockId={block.id}

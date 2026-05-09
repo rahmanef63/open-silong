@@ -72,6 +72,12 @@ export const getOverview = query({
     const newUsers30d = users.filter((u) => (u._creationTime ?? 0) > now - 30 * dayMs).length;
     const editedPages24h = pages.filter((p) => !p.trashed && (p.updatedAt ?? 0) > now - dayMs).length;
     const editedPages7d = pages.filter((p) => !p.trashed && (p.updatedAt ?? 0) > now - 7 * dayMs).length;
+    // Real DAU/WAU/MAU based on userProfiles.lastSeenAt (touched by
+    // useTouchLastSeen on the dashboard, debounced ~5min). Falls back
+    // to 0 for profiles without the field (rolled out 2026-05-09).
+    const dau = profiles.filter((p) => (p.lastSeenAt ?? 0) > now - dayMs).length;
+    const wau = profiles.filter((p) => (p.lastSeenAt ?? 0) > now - 7 * dayMs).length;
+    const mau = profiles.filter((p) => (p.lastSeenAt ?? 0) > now - 30 * dayMs).length;
     return {
       users: users.length,
       admins: adminCount,
@@ -90,6 +96,9 @@ export const getOverview = query({
       newUsers30d,
       editedPages24h,
       editedPages7d,
+      dau,
+      wau,
+      mau,
     };
   },
 });

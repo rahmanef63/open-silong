@@ -1,6 +1,7 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { ensureUserProfile } from "./_shared/auth";
 
 export const getMe = query({
   args: {},
@@ -22,6 +23,20 @@ export const getMe = query({
         ? name.trim()
         : (email ? email.split("@")[0] : "User"),
     };
+  },
+});
+
+/** Stamp `userProfiles.lastSeenAt = now` for the current user. Cheap
+ *  patch — debounced from the client (~5 min) via `useTouchLastSeen`.
+ *  Powers real DAU/WAU/MAU in the admin overview. Idempotent. */
+export const touchLastSeen = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return { ok: false };
+    const profile = await ensureUserProfile(ctx, userId);
+    await ctx.db.patch(profile._id, { lastSeenAt: Date.now() });
+    return { ok: true };
   },
 });
 

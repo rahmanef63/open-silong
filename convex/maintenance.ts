@@ -23,22 +23,21 @@ export const pruneRateLimits = internalMutation({
   },
 });
 
-/** Permanently delete pages whose `trashed === true` and last `updatedAt`
- *  is older than 30 days. Mirrors `pages.permanentlyDelete` (also drops
- *  associated snapshots). Trash is a soft-delete UX; this gives users 30
- *  days to restore before storage gets reclaimed. */
+/** Permanently delete pages + databases whose `trashed === true` and
+ *  last `updatedAt` is older than 30 days. Mirrors `pages.permanently
+ *  Delete` / `databases.permanentlyDeleteDatabase` (also drops
+ *  associated snapshots). Trash is a soft-delete UX; this gives users
+ *  30 days to restore before storage gets reclaimed. */
 export const purgeStaleTrash = internalMutation({
   args: {},
   handler: async (ctx) => {
     const cutoff = Date.now() - TRASH_TTL_MS;
-    // Use the search index filter for `trashed=true` to skip live pages.
-    // Without `searchText` we can't actually call .search(); fall back to
-    // scanning by trashed flag using full collect() — for a 30-day prune
-    // run this is acceptable.
-    const all = await ctx.db.query("pages").collect();
+    const allPages = await ctx.db.query("pages").collect();
+    const allDbs = await ctx.db.query("databases").collect();
     let pages = 0;
     let snaps = 0;
-    for (const p of all) {
+    let dbs = 0;
+    for (const p of allPages) {
       if (!p.trashed) continue;
       if (p.updatedAt > cutoff) continue;
       const ss = await ctx.db
@@ -52,6 +51,12 @@ export const purgeStaleTrash = internalMutation({
       await ctx.db.delete(p._id);
       pages++;
     }
-    return { pages, snaps };
+    for (const d of allDbs) {
+      if (!d.trashed) continue;
+      if (d.updatedAt > cutoff) continue;
+      await ctx.db.delete(d._id);
+      dbs++;
+    }
+    return { pages, snaps, dbs };
   },
 });

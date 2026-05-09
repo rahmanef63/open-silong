@@ -1,10 +1,10 @@
 import { z } from "zod";
 
 const BLOCK_TYPES = [
-  "paragraph", "h1", "h2", "h3", "todo", "bullet", "numbered",
+  "paragraph", "h1", "h2", "h3", "h4", "todo", "bullet", "numbered",
   "quote", "code", "divider", "callout",
   "page", "database",
-  "columns2", "columns3", "toggle",
+  "columns2", "columns3", "columns4", "columns5", "toggle",
   "image", "equation", "table", "embed", "button",
 ] as const;
 
@@ -176,6 +176,12 @@ export function validateTemplate(input: unknown): TemplateJson {
       }
       if (b.type === "columns3" && b.columns && b.columns.length !== 3) {
         errors.push(`columns3 must have exactly 3 columns (got ${b.columns.length}) on "${ctxPage.title}"`);
+      }
+      if (b.type === "columns4" && b.columns && b.columns.length !== 4) {
+        errors.push(`columns4 must have exactly 4 columns (got ${b.columns.length}) on "${ctxPage.title}"`);
+      }
+      if (b.type === "columns5" && b.columns && b.columns.length !== 5) {
+        errors.push(`columns5 must have exactly 5 columns (got ${b.columns.length}) on "${ctxPage.title}"`);
       }
       for (const col of b.columns ?? []) for (const cb of col) visit(cb, ctxPage);
       for (const child of b.children ?? []) visit(child, ctxPage);

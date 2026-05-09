@@ -140,7 +140,7 @@ function ColumnDivider({
   );
 }
 
-/** Root column layout block (columns2 or columns3) — pure callback API.
+/** Root column layout block (columns2 / columns3 / columns4 / columns5) — pure callback API.
  * `depth` is the depth assigned to inner NestedBlocks. Top-level usage = 1; nested
  * usage = parent depth + 1. The NestedBlock itself enforces the MAX-NEST cap.
  */
@@ -152,7 +152,10 @@ export function ColumnBlockEditor({
   depth?: number;
   pageId?: string;
 }) {
-  const n = block.type === "columns3" ? 3 : 2;
+  const n =
+    block.type === "columns5" ? 5 :
+    block.type === "columns4" ? 4 :
+    block.type === "columns3" ? 3 : 2;
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   const emptyBlock = (): Block => ({ id: uid(), type: "paragraph", text: "" });

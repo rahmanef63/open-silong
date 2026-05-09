@@ -1,5 +1,6 @@
 import { getErrorMessage } from "@/shared/lib/error";
 import { useState } from "react";
+import { useAsyncError } from "@/shared/hooks/useAsyncError";
 import { Upload, AlertCircle, Check, Plus } from "lucide-react";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
@@ -41,11 +42,14 @@ export function CsvImportDialog({ db, open, onOpenChange }: Props) {
   const { addRow, setRowValue, updatePage, updateDatabase, pages } = useStore();
   const [parsed, setParsed] = useState<ParsedCsv | null>(null);
   const [mapping, setMapping] = useState<Record<number, string>>({});
-  const [importing, setImporting] = useState(false);
   const [imported, setImported] = useState<number | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [parseError, setParseError] = useState<string | null>(null);
+  const importAsync = useAsyncError("CsvImportDialog.import");
+  const importing = importAsync.pending;
+  const error = parseError ?? importAsync.error?.message ?? null;
+  const setError = setParseError;
 
-  const reset = () => { setParsed(null); setMapping({}); setImporting(false); setImported(null); setError(null); };
+  const reset = () => { setParsed(null); setMapping({}); setImported(null); setParseError(null); importAsync.clear(); };
 
   const onFile = async (file: File) => {
     setError(null);
@@ -178,9 +182,8 @@ export function CsvImportDialog({ db, open, onOpenChange }: Props) {
           {parsed && imported === null && (
             <Button onClick={async () => {
               if (!parsed) return;
-              setImporting(true);
-              setError(null);
-              try {
+              setParseError(null);
+              const count = await importAsync.execute(async () => {
                 // 1) Build all "+ Create new" properties LOCALLY, then commit them
                 //    in a single updateDatabase call. Calling addProperty in a loop
                 //    races on the React-state baseline (each call sees the same
@@ -237,12 +240,9 @@ export function CsvImportDialog({ db, open, onOpenChange }: Props) {
                   if (title) await updatePage(newRow.id, { title });
                   count++;
                 }
-                setImported(count);
-              } catch (e: unknown) {
-                setError(getErrorMessage(e, "Import failed mid-way"));
-              } finally {
-                setImporting(false);
-              }
+                return count;
+              });
+              if (typeof count === "number") setImported(count);
             }} disabled={importing}>
               {importing ? "Importing…" : `Import ${parsed.rows.length} rows`}
             </Button>

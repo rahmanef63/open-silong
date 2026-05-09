@@ -53,6 +53,9 @@ export function BlockBody({ block, setRef, handleInput, handleKeyDown, onCheck, 
     case "h3":
       body = wrap(<h3 ref={setRef as React.Ref<HTMLHeadingElement>} {...baseProps} className={cn(baseProps.className as string, "text-xl font-semibold tracking-tight")} />);
       break;
+    case "h4":
+      body = wrap(<h4 ref={setRef as React.Ref<HTMLHeadingElement>} {...baseProps} className={cn(baseProps.className as string, "text-lg font-semibold tracking-tight")} />);
+      break;
     case "todo":
       body = (
         <div className="flex flex-1 items-start gap-2">
