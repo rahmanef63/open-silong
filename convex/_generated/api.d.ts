@@ -35,6 +35,8 @@ import type * as import_markdown from "../import/markdown.js";
 import type * as import_workspace from "../import/workspace.js";
 import type * as import_zip from "../import/zip.js";
 import type * as maintenance from "../maintenance.js";
+import type * as mcp_http from "../mcp/http.js";
+import type * as mcp_internal from "../mcp/internal.js";
 import type * as pages from "../pages.js";
 import type * as preferences from "../preferences.js";
 import type * as recents from "../recents.js";
@@ -84,6 +86,8 @@ declare const fullApi: ApiFromModules<{
   "import/workspace": typeof import_workspace;
   "import/zip": typeof import_zip;
   maintenance: typeof maintenance;
+  "mcp/http": typeof mcp_http;
+  "mcp/internal": typeof mcp_internal;
   pages: typeof pages;
 
   preferences: typeof preferences;

@@ -39,7 +39,7 @@ const EDITOR_OPTIONS = [
 ] as const satisfies ReadonlyArray<readonly [EditorBehavior, string]>;
 
 export default function SettingsPage() {
-  const { workspace, updateWorkspace, preferences, updatePreferences, pages, databases } = useStore();
+  const { workspace, updateWorkspace, preferences, updatePreferences, pages, databases, snapshots } = useStore();
   const wsNameId = useId();
   const importJson = useMutation(api["import/workspace"].importFromJson);
   const [importing, setImporting] = useState(false);
@@ -57,7 +57,13 @@ export default function SettingsPage() {
     try {
       const text = await file.text();
       const res = await importJson({ json: text });
-      toast.success(`Imported ${res.pages} pages, ${res.databases} databases`);
+      const extra = [
+        res.snapshots ? `${res.snapshots} snapshots` : null,
+        res.slugCollisions ? `${res.slugCollisions} slug collision(s) dropped` : null,
+      ].filter(Boolean).join(", ");
+      toast.success(
+        `Imported ${res.pages} pages, ${res.databases} databases${extra ? ` (${extra})` : ""}`,
+      );
     } catch (err) {
       const safe = reportError("workspaceImport", err);
       toast.error(safe.message);
@@ -69,6 +75,11 @@ export default function SettingsPage() {
   const onExportWorkspace = () => {
     const livePages = pages.filter((p) => !p.trashed);
     const liveDbs = databases.filter((d) => !d.trashed);
+    const livePageIds = new Set(livePages.map((p) => p.id));
+    // Bundle snapshots for live pages only — orphaned snapshots are
+    // dropped (their page was trashed; restoring them post-import
+    // would point at nothing).
+    const liveSnapshots = snapshots.filter((s) => livePageIds.has(s.pageId));
     const payload = {
       version: 1 as const,
       exportedAt: new Date().toISOString(),
@@ -76,6 +87,7 @@ export default function SettingsPage() {
       preferences,
       pages: livePages,
       databases: liveDbs,
+      snapshots: liveSnapshots,
     };
     const stamp = new Date().toISOString().slice(0, 10);
     downloadFile(
@@ -83,7 +95,9 @@ export default function SettingsPage() {
       JSON.stringify(payload, null, 2),
       "application/json",
     );
-    toast.success(`Exported ${livePages.length} pages, ${liveDbs.length} databases`);
+    toast.success(
+      `Exported ${livePages.length} pages, ${liveDbs.length} databases, ${liveSnapshots.length} snapshots`,
+    );
   };
 
   const [wsName, setWsName, flushWsName] = useDebouncedCommit(
@@ -192,8 +206,8 @@ export default function SettingsPage() {
             Download JSON backup
           </button>
           <p className="mt-2 text-xs text-muted-foreground">
-            Single-file snapshot of every live page + database, plus your
-            preferences. Trashed items and snapshots are excluded.
+            Single-file backup of every live page, database, and version
+            snapshot, plus your preferences. Trashed items are excluded.
           </p>
         </Field>
         <Field label="Workspace import">
@@ -212,9 +226,13 @@ export default function SettingsPage() {
           </button>
           <p className="mt-2 text-xs text-muted-foreground">
             Additive — your existing pages and databases stay. Imported
-            pages get fresh ids; cross-references inside the file
-            (parent links, database rows, page+database blocks) are
-            remapped automatically. Cap: 8 MB / 500 pages / 50 databases.
+            pages and blocks get fresh ids; cross-references (parent
+            links, database rows, page+database blocks, inline
+            <code>/p/&lt;id&gt;</code> mentions, relation arrays, button
+            actions) are remapped automatically. Snapshots are restored
+            against new page ids. Share slugs that already exist on this
+            workspace are dropped silently. Cap: 8 MB / 500 pages / 50
+            databases.
           </p>
         </Field>
       </Section>
