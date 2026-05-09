@@ -16,6 +16,14 @@ import { BlockBody } from "./blocks/BlockBody";
 import { ToggleBlock } from "./blocks/ToggleBlock";
 import { getBlockRenderer } from "./blocks/registry";
 import { MARKDOWN_TRIGGERS } from "./lib/markdownTriggers";
+import { decorateInPlace } from "./lib/inlineDecorator";
+
+// Block types whose BlockBody renders a contentEditable we should
+// decorate (skips code/database/page/columns/toggle which own their
+// own UI or use mono-font where styling would be wrong).
+const DECORATE_TYPES = new Set<BlockType>([
+  "paragraph", "h1", "h2", "h3", "todo", "bullet", "numbered", "quote", "callout",
+]);
 
 interface Props {
   pageId: string;
@@ -36,6 +44,7 @@ function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerR
   const [slashOpen, setSlashOpen] = useState(false);
   const [slashQuery, setSlashQuery] = useState("");
   const ref = useRef<HTMLElement | null>(null);
+  const composingRef = useRef(false);
   const history = useBlockHistory(block.text);
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging, isOver } =
@@ -53,9 +62,41 @@ function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerR
     // Clobbering innerText here resets the caret to position 0 — corrupts fast typing.
     if (document.activeElement === el) return;
     if (el.innerText !== block.text) {
-      el.innerText = block.text;
+      if (DECORATE_TYPES.has(block.type)) {
+        decorateInPlace(el, block.text);
+      } else {
+        el.innerText = block.text;
+      }
     }
   }, [block.text, block.type]);
+
+  // First mount: decorate immediately so existing markers render styled.
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || !DECORATE_TYPES.has(block.type)) return;
+    if (document.activeElement === el) return;
+    decorateInPlace(el, block.text);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // IME composition handlers: skip decorate while composing (would
+  // break the in-flight accent/CJK input), then re-decorate on end.
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || !DECORATE_TYPES.has(block.type)) return;
+    const onStart = () => { composingRef.current = true; };
+    const onEnd = () => {
+      composingRef.current = false;
+      const txt = el.innerText;
+      decorateInPlace(el, txt);
+    };
+    el.addEventListener("compositionstart", onStart);
+    el.addEventListener("compositionend", onEnd);
+    return () => {
+      el.removeEventListener("compositionstart", onStart);
+      el.removeEventListener("compositionend", onEnd);
+    };
+  }, [block.type]);
 
   const setRef = (el: HTMLElement | null) => {
     ref.current = el;
@@ -80,11 +121,20 @@ function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerR
     }
 
     updateBlock(pageId, block.id, { text });
-    if (text === "/" || (text.startsWith("/") && !text.includes("\n"))) {
+
+    // Slash menu detection BEFORE decoration (decorator may rewrap "/").
+    const isSlash = text === "/" || (text.startsWith("/") && !text.includes("\n"));
+    if (isSlash) {
       setSlashOpen(true);
       setSlashQuery(text.slice(1));
     } else {
       setSlashOpen(false);
+    }
+
+    // Live WYSIWYG: re-render the editable with styled markers + content.
+    // Skip during IME composition to avoid breaking accents/CJK input.
+    if (DECORATE_TYPES.has(block.type) && !composingRef.current && !isSlash) {
+      decorateInPlace(el, text);
     }
   };
 
@@ -115,19 +165,31 @@ function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerR
     if (meta && e.shiftKey && e.key.toLowerCase() === "z") {
       e.preventDefault();
       const txt = history.redo(el.innerText);
-      if (txt !== null) { el.innerText = txt; updateBlock(pageId, block.id, { text: txt }); }
+      if (txt !== null) {
+        el.innerText = txt;
+        if (DECORATE_TYPES.has(block.type)) decorateInPlace(el, txt);
+        updateBlock(pageId, block.id, { text: txt });
+      }
       return;
     }
     if (meta && e.key.toLowerCase() === "y") {
       e.preventDefault();
       const txt = history.redo(el.innerText);
-      if (txt !== null) { el.innerText = txt; updateBlock(pageId, block.id, { text: txt }); }
+      if (txt !== null) {
+        el.innerText = txt;
+        if (DECORATE_TYPES.has(block.type)) decorateInPlace(el, txt);
+        updateBlock(pageId, block.id, { text: txt });
+      }
       return;
     }
     if (meta && e.key.toLowerCase() === "z") {
       e.preventDefault();
       const txt = history.undo(el.innerText);
-      if (txt !== null) { el.innerText = txt; updateBlock(pageId, block.id, { text: txt }); }
+      if (txt !== null) {
+        el.innerText = txt;
+        if (DECORATE_TYPES.has(block.type)) decorateInPlace(el, txt);
+        updateBlock(pageId, block.id, { text: txt });
+      }
       return;
     }
 
