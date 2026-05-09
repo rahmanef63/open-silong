@@ -28,6 +28,10 @@ Ignore its grades. `audit-bp.sh` itself is fine.
   pattern. The legacy `@/shared/lib/router-compat` shim still exists for
   large untouched files; new code should use `next/navigation` directly.
 - Outside dashboard (auth, marketing, /share): plain `next/link` + `useRouter`.
+- Dashboard routes today: `/dashboard`, `/dashboard/library`,
+  `/dashboard/admin`, `/dashboard/inbox`, `/dashboard/trash`,
+  `/dashboard/settings`, `/dashboard/profile`, `/dashboard/p/:id`.
+  `/admin` legacy URL redirects to `/dashboard/admin`.
 
 ## Deploy
 
@@ -59,28 +63,68 @@ new commits, never amend.
   (`sanitizeError` / `reportError`). Never show raw React or Convex
   stacks. Mutation guards live in
   `frontend/shared/lib/store/mutationGuard.ts`.
-- Inline rich-text uses the **Slack model**: `SelectionToolbar` wraps
-  selections with markdown markers (`**…**`, `_…_`, `~~…~~`,
-  `` `…` ``, `[label](url)`). The editor is plain-text source-of-truth;
-  read surfaces (public share, exports) parse via
-  `frontend/shared/lib/inlineMd.tsx`. Relative `/path` links are
-  permitted (used for `@page` mentions); other schemes rejected.
+- Inline rich-text uses the **Slack model + WYSIWYG decoration**:
+  `SelectionToolbar` wraps selections with markdown markers (`**…**`,
+  `_…_`, `~~…~~`, `` `…` ``, `[label](url)`, `$math$`). The editor
+  remains plain-text source-of-truth, but the contentEditable DOM is
+  re-decorated after every input via
+  `frontend/slices/editor/lib/inlineDecorator.ts` so bold/italic/strike/
+  code/link render visually in-place (markers stay visible but dimmed).
+  Caret is preserved across the pass via text-offset save/restore.
+  IME-safe (skips during compositionstart/end). Read surfaces (public
+  share, exports) parse via `frontend/shared/lib/inlineMd.tsx`.
+  Relative `/path` links permitted (used for `@page` mentions); other
+  schemes rejected.
 - No raw `<a>` for internal routes; no raw `<img>` for hosted assets.
 - `ResponsiveDialog`, `DateField`, `<FileUpload>` primitives live in
   `frontend/shared/`.
 
 ## Backup & restore
 
-`Settings → Backup` round-trips a JSON file. Export is client-side
-(`frontend/shared/lib/markdown.ts:downloadFile`). Import goes through
-`convex/import/workspace.ts:importFromJson` — zod-validated, four-phase
-id remap (insert pages → insert databases → patch pages with
-parent/rowOfDb/blocks-with-remapped-refs → patch databases with
-remapped rowIds). Additive; never carries `isPublic` or `trashed`
-across.
+`Settings → Backup` and the unified `WorkspaceIODialog` (mounted via
+`WorkspaceIOProvider`, surfaced from sidebar + page-action menu)
+round-trip a JSON file. Export is client-side
+(`frontend/shared/lib/markdown.ts:downloadFile` + `buildSelectionExport`
+in `frontend/slices/workspace-io/lib/buildExport.ts`). Import goes
+through `convex/import/workspace.ts:importFromJson` — zod-validated,
+**five-phase** ID remap:
+  1. Insert pages
+  2. Insert databases
+  3. Patch pages with parent / rowOfDb / blocks-with-remapped-refs
+  4. Patch databases with remapped rowIds
+  5. Insert snapshots with remapped pageIds (added cycle 6)
+
+Snapshot/share-slug/wiki state IS now preserved across import (with
+slug collision dropping); only `trashed` is filtered. Mention text in
+blocks gets rewritten via `convex/_shared/idRemap.ts:rewriteMentions`.
 
 ## Audit / review
 
 - Latest holistic audit: `docs/audit/2026-05-03-audit-bp.md` (full scope)
   + delta findings appended to that doc per cycle.
 - Cache Components deferral: `docs/audit/cache-components.md`.
+- Modularity / DRY / docs-freshness audit:
+  `docs/audit/2026-05-09-modularity-audit.md`.
+
+## Feature surfaces (per-slice index)
+
+Every feature lives in `frontend/slices/<name>/` and exports through
+`index.ts`. Per-slice docs live under `docs/api/`:
+
+- `editor/` — block-based page editor, slash menu, WYSIWYG decorator,
+  Notion-canonical block menu (search · turn-into · color · actions).
+  Doc: `docs/api/blocks.md` + `docs/api/block-controls.md`.
+- `databases/` — table/board/feed/calendar/gallery views, per-property
+  config, column header menu (13 items). Doc: `docs/api/databases.md`.
+- `library/` — `/dashboard/library` route. Recents/Favorites/Shared/
+  Private/All sections + bulk action bar. Doc: `docs/api/library.md`.
+- `admin-panel/` — `/dashboard/admin` route. Overview analytics, users
+  table, audit log, templates, feedback. Doc: `docs/api/admin.md`.
+- `workspace-io/` — unified Export/Import dialog, JSON + ZIP tabs.
+  Doc: `docs/api/import-export.md`.
+- `templates/` — gallery + AI prompt generator. Doc: `docs/api/templates.md`.
+- `mcp/` (under `convex/`) — MCP HTTP surface for Notion-canonical JSON.
+  Doc: `docs/api/mcp.md`.
+- `comments`, `mentions`, `notifications`, `wiki`, `sharing`, `snapshots`,
+  `trash`, `inbox`, `command-palette`, `ai-agent`, `search`, `files`,
+  `feedback` — see slice index.ts + `docs/api/<name>.md` where present.

@@ -1,16 +1,8 @@
 import { useState } from "react";
 import { Check, Pencil, Trash2, X, RotateCcw } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
+import { formatRelTime as relTime } from "@/shared/lib/format";
 import type { Comment } from "../types";
-
-function relTime(ts: number) {
-  const m = Math.floor((Date.now() - ts) / 60000);
-  if (m < 1) return "just now";
-  if (m < 60) return `${m}m ago`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ago`;
-  return new Date(ts).toLocaleDateString();
-}
 
 interface Props {
   comment: Comment;
