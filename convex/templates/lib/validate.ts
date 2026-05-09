@@ -13,10 +13,13 @@ const PROPERTY_TYPES = [
   "date", "person", "checkbox", "url", "email", "phone",
   "files", "relation", "rollup", "formula",
   "created_time", "created_by", "last_edited_time", "last_edited_by",
-  "unique_id",
+  "unique_id", "button", "place",
 ] as const;
 
-const VIEW_TYPES = ["table", "board", "list", "gallery", "calendar", "timeline"] as const;
+const VIEW_TYPES = [
+  "table", "board", "list", "gallery", "calendar", "timeline",
+  "chart", "dashboard", "feed", "map", "form",
+] as const;
 
 const TplOption = z.object({
   id: z.string().min(1),
@@ -29,8 +32,14 @@ const TplProperty = z.object({
   name: z.string().min(1),
   type: z.enum(PROPERTY_TYPES),
   options: z.array(TplOption).max(50).optional(),
-  numberFormat: z.enum(["plain", "currency", "percent"]).optional(),
+  numberFormat: z.enum(["plain", "number", "decimal", "currency", "percent"]).optional(),
+  numberCurrencyCode: z.string().max(8).optional(),
+  numberDecimals: z.number().int().min(0).max(4).optional(),
   formulaExpression: z.string().max(500).optional(),
+  /** Cross-db relation target (refers to a TplDatabase.ref). */
+  relationDatabaseRef: z.string().optional(),
+  relationTwoWay: z.boolean().optional(),
+  uniqueIdPrefix: z.string().max(16).optional(),
 });
 
 const TplView = z.object({
@@ -39,6 +48,10 @@ const TplView = z.object({
   name: z.string().min(1),
   isDefault: z.boolean().optional(),
   groupBy: z.string().optional(),
+  /** Free-form view config payload — sprayed onto DatabaseViewConfig
+   *  on instantiate. Use for chart/dashboard/calendar/etc. specifics
+   *  (chartKind, chartXProp, dashboardKPIs, calendarDateProp, etc.). */
+  payload: z.record(z.unknown()).optional(),
 });
 
 const TplSeedRow = z.object({ props: z.record(z.unknown()) });
@@ -52,22 +65,41 @@ const TplDatabase = z.object({
   seedRows: z.array(TplSeedRow).max(200).optional(),
 });
 
-const TplBlock = z.object({
-  type: z.enum(BLOCK_TYPES),
-  text: z.string().max(10_000).optional(),
-  checked: z.boolean().optional(),
-  lang: z.string().max(40).optional(),
-  databaseRef: z.string().optional(),
-  pageRef: z.string().optional(),
-  payload: z.record(z.unknown()).optional(),
-});
+interface TplBlockI {
+  type: typeof BLOCK_TYPES[number];
+  text?: string;
+  checked?: boolean;
+  lang?: string;
+  databaseRef?: string;
+  pageRef?: string;
+  payload?: Record<string, unknown>;
+  /** For columns2 / columns3 — array of arrays of nested template
+   *  blocks. Length must match the column count (2 or 3). */
+  columns?: TplBlockI[][];
+  /** For toggle — child blocks. */
+  children?: TplBlockI[];
+}
+
+const TplBlock: z.ZodType<TplBlockI> = z.lazy(() =>
+  z.object({
+    type: z.enum(BLOCK_TYPES),
+    text: z.string().max(10_000).optional(),
+    checked: z.boolean().optional(),
+    lang: z.string().max(40).optional(),
+    databaseRef: z.string().optional(),
+    pageRef: z.string().optional(),
+    payload: z.record(z.unknown()).optional(),
+    columns: z.array(z.array(TplBlock).max(80)).max(3).optional(),
+    children: z.array(TplBlock).max(80).optional(),
+  }),
+) as z.ZodType<TplBlockI>;
 
 interface TplPage {
   ref?: string;
   title: string;
   icon: string;
   cover?: string | null;
-  blocks: z.infer<typeof TplBlock>[];
+  blocks: TplBlockI[];
   databases?: z.infer<typeof TplDatabase>[];
   children?: TplPage[];
 }
@@ -94,8 +126,10 @@ export const TemplateJsonSchema = z.object({
 });
 
 export type TemplateJson = z.infer<typeof TemplateJsonSchema>;
-export type TplBlockT = z.infer<typeof TplBlock>;
+export type TplBlockT = TplBlockI;
 export type TplDatabaseT = z.infer<typeof TplDatabase>;
+export type TplPropertyT = z.infer<typeof TplProperty>;
+export type TplViewT = z.infer<typeof TplView>;
 export type TplPageT = TplPage;
 
 /** Parse + cross-ref validate. Throws Error with all violations joined. */
@@ -129,18 +163,40 @@ export function validateTemplate(input: unknown): TemplateJson {
   walk(data.page);
 
   function checkBlocks(p: TplPageT) {
-    for (const b of p.blocks) {
+    function visit(b: TplBlockI, ctxPage: TplPageT) {
       if (b.type === "database") {
-        if (!b.databaseRef) errors.push(`database block missing databaseRef on page "${p.title}"`);
+        if (!b.databaseRef) errors.push(`database block missing databaseRef on page "${ctxPage.title}"`);
         else if (!dbRefs.has(b.databaseRef)) errors.push(`unknown databaseRef "${b.databaseRef}"`);
       }
       if (b.type === "page") {
         if (b.pageRef && !pageRefs.has(b.pageRef)) errors.push(`unknown pageRef "${b.pageRef}"`);
       }
+      if (b.type === "columns2" && b.columns && b.columns.length !== 2) {
+        errors.push(`columns2 must have exactly 2 columns (got ${b.columns.length}) on "${ctxPage.title}"`);
+      }
+      if (b.type === "columns3" && b.columns && b.columns.length !== 3) {
+        errors.push(`columns3 must have exactly 3 columns (got ${b.columns.length}) on "${ctxPage.title}"`);
+      }
+      for (const col of b.columns ?? []) for (const cb of col) visit(cb, ctxPage);
+      for (const child of b.children ?? []) visit(child, ctxPage);
     }
+    for (const b of p.blocks) visit(b, p);
     for (const child of p.children ?? []) checkBlocks(child);
   }
   checkBlocks(data.page);
+
+  // Cross-ref: relationDatabaseRef on properties must resolve.
+  function checkRelations(p: TplPageT) {
+    for (const db of p.databases ?? []) {
+      for (const prop of db.properties) {
+        if (prop.relationDatabaseRef && !dbRefs.has(prop.relationDatabaseRef)) {
+          errors.push(`unknown relationDatabaseRef "${prop.relationDatabaseRef}" on db "${db.name}"`);
+        }
+      }
+    }
+    for (const c of p.children ?? []) checkRelations(c);
+  }
+  checkRelations(data.page);
 
   if (errors.length) throw new Error(`Template invalid: ${errors.join("; ")}`);
   return data;
