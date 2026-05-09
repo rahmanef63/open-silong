@@ -16,6 +16,8 @@ Live: https://nosion.rahmanef.com  ·  Convex: https://api-notion-page-clone.rah
 | | `api/inbox.md` | notifications |
 | | `api/auth.md` | requireAuth / requireOwned / requireAdmin / requireSuperAdmin |
 | | `api/import-export.md` | JSON workspace round-trip + CSV + ZIP |
+| | `api/notion-shape.md` | Notion-canonical JSON adapter (block / property / value bridge) |
+| | `api/mcp.md` | Nosion MCP — Notion-shape HTTPS surface + stdio server |
 | | `api/ai.md` | OpenRouter chat action |
 | | `api/integration.md` | how a slice consumes pages/databases |
 | **Types** | `types/domain.md` | Block / Page / Database / Property reference |

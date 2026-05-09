@@ -19,8 +19,8 @@ Source:
 
 ### Export (frontend, no Convex call)
 
-`frontend/shared/lib/markdown.ts:downloadFile` writes a JSON object
-client-side. Shape:
+`app/dashboard/(account)/settings/page.tsx:onExportWorkspace`
+writes a JSON object client-side via `downloadFile`. Shape:
 
 ```ts
 {
@@ -30,11 +30,15 @@ client-side. Shape:
   preferences: Preferences,
   pages: PageImport[],          // max 500
   databases: DatabaseImport[],  // max 50
+  snapshots: SnapshotImport[],  // max 5 000 — orphaned snapshots dropped
 }
 ```
 
-`PageImport` excludes `userId`, `_id`, `createdAt`, `updatedAt` —
-the import re-mints those.
+`PageImport` excludes `userId`, `_id`, `createdAt`, `updatedAt`,
+`databaseHostFor`, `blockCount`, `previewText` (derived) — the import
+re-mints / recomputes those. State flags (`isPublic`, `shareSlug`,
+`shareIndexable`, `wiki`, `trashed`) ARE serialized — see Round-trip
+contract below.
 
 ### Import — `importFromJson({json: string})` mutation
 
@@ -44,33 +48,72 @@ Server-side. Auth: `requireAuth`. Rate-limited: **3 / minute**
 **Validation**: zod (`ImportSchema`). Re-validates server-side
 because the JSON is user-supplied and could be hand-edited.
 
-**Four-phase ID remap**:
+**Five-phase ID remap** (cycle 6, 2026-05-09 — was four):
 
 ```
-Phase 1: insert pages with parentId=null, capture {oldId → Id<"pages">} map
-Phase 2: insert databases, capture {oldId → Id<"databases">} map
-Phase 3: patch pages — re-attach parentId / rowOfDatabaseId / blocks
-         (blocks are walked recursively; pageId / databaseId fields are
-         remapped via the maps from phases 1+2)
-Phase 4: patch databases with remapped rowIds
+Phase 1: insert pages with parentId=null + empty blocks, capture
+         {oldPageId → Id<"pages">} map. Page-level state flags
+         (isPublic, shareSlug, shareIndexable, wiki, trashed)
+         persisted here — see "Round-trip contract" for safety rules.
+Phase 2: insert databases with empty properties + rowIds, capture
+         {oldDbId → Id<"databases">} map.
+Phase 3: patch pages — re-attach parentId / rowOfDatabaseId; blocks
+         processed via importBlockTree() (regen ids → remap pageId/
+         databaseId block refs → rewrite inline-md /p/<id> mentions);
+         rowProps relation arrays remapped via remapRowProps().
+Phase 4: patch databases — properties walked through
+         remapPropertyXRefs() (relationDatabaseId, ButtonAction.pageId);
+         templates walked through remapTemplates() (block-tree nested);
+         rowIds remapped.
+Phase 5: snapshots inserted with pageId remapped + blocks regen'd via
+         importBlockTree().
 ```
 
-Why four phases: blocks reference pageId/databaseId, databases
-reference rowIds, pages reference parentId/rowOfDatabaseId — none of
+Why five phases: blocks reference pageId/databaseId, databases
+reference rowIds, pages reference parentId/rowOfDatabaseId,
+properties reference databaseId, snapshots reference pageId — none of
 these new ids exist until inserts complete. Forward-references
 across the same call would fail.
 
-**Caps**:
-- 500 pages, 50 databases per file
-- 2 000 blocks per page
+**Caps** (`convex/_shared/limits.ts`):
+- 500 pages (`importPagesPerFile`), 50 databases (`importDbsPerFile`),
+  5 000 snapshots per file
+- 2 000 blocks per page (`importBlocksPerPage`)
 - 200 properties / 50 views / 5 000 rowIds per database
+- 8 MB total file size (`workspaceJsonBytes`)
 
-**Additive** — never carries:
-- `isPublic` (you don't want a backup to silently re-publish)
-- `trashed` (restoring trash is meaningless)
-- `userId` (re-minted from auth)
+**Round-trip contract** (cycle 6):
 
-**Returns** `void`. Throws plain Error on validation failure.
+| Field | Carried? | Why |
+|---|---|---|
+| Block ids | Regenerated | Cross-source collision avoidance (`regenAllBlockIds`) |
+| Inline `/p/<id>` mentions | Rewritten via pageMap | `[label](/p/old)` → `[label](/p/new)`; unknown ids left alone |
+| Block `pageId`, `databaseId` | Remapped | Recursive over children + columns |
+| Property `relationDatabaseId` | Remapped | Cross-database relation graph survives |
+| `ButtonAction.pageId` | Remapped | Button "Open page" actions survive |
+| `rowProps` relation arrays | Remapped | Row-to-row links survive |
+| `rowProps` person arrays | Cleared | Cross-workspace user ids meaningless |
+| `relationInversePropertyId`, `rollupRelationPropertyId`, `subItemsParentPropId`, `defaultTemplateId` | Pass-through | Property/template ids are scoped to the db doc — stable |
+| Templates seed blocks | Walked through importBlockTree | Same regen + remap pass as live blocks |
+| Snapshots | Inserted with remapped pageId + regen'd blocks | Restore round-trips post-import |
+| `wiki.ownerId` | Rewritten to importer | Cross-workspace ownership meaningless |
+| `wiki.ownerName/Icon/verified/verifiedAt` | Carried verbatim | Stable presentation across workspaces |
+| `shareSlug` | Pre-checked uniqueness, dropped on collision | by_share_slug index is workspace-wide; collisions can't co-exist |
+| `isPublic`, `shareIndexable` | Carried | User explicitly imported — re-share semantics preserved |
+| `trashed` | Carried | Exporter filters trashed already, but flag is honored if present |
+| `userId`, `_id`, `_creationTime`, `databaseHostFor`, `blockCount`, `previewText` | Dropped | Re-minted / recomputed |
+
+**Returns**:
+```ts
+{
+  pages: number,           // count attempted
+  databases: number,       // count attempted
+  snapshots: number,       // count actually inserted (orphans skipped)
+  slugCollisions: number,  // count of pages whose shareSlug was force-dropped
+}
+```
+
+Throws plain Error on validation failure.
 
 ---
 
