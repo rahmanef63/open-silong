@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery } from "convex/react";
+import { Sparkles } from "lucide-react";
 import { api } from "@convex/_generated/api";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
@@ -10,6 +11,7 @@ import { Label } from "@/shared/ui/label";
 import { Textarea } from "@/shared/ui/textarea";
 import type { Id } from "@convex/_generated/dataModel";
 import { summarizeTemplate } from "../lib/previewTemplate";
+import { AIGenerateDialog } from "./AIGenerateDialog";
 
 const BLANK_JSON = {
   version: 1,
@@ -41,6 +43,7 @@ export function TemplateEditor({ templateId, onClose }: Props) {
   const [isPublished, setIsPublished] = useState(false);
   const [jsonText, setJsonText] = useState(JSON.stringify(BLANK_JSON, null, 2));
   const [saving, setSaving] = useState(false);
+  const [aiOpen, setAiOpen] = useState(false);
 
   useEffect(() => {
     if (existing) {
@@ -85,11 +88,31 @@ export function TemplateEditor({ templateId, onClose }: Props) {
     }
   }
 
+  /** Adopt JSON the user generated via an external LLM. Auto-derive
+   *  name/icon/category from the parsed JSON so the form stays in
+   *  sync with the JSON source-of-truth. */
+  function adoptAiJson(json: string) {
+    setJsonText(json);
+    try {
+      const obj = JSON.parse(json) as { name?: string; icon?: string; category?: string; description?: string };
+      if (typeof obj.name === "string") setName(obj.name);
+      if (typeof obj.icon === "string") setIcon(obj.icon);
+      if (typeof obj.category === "string") setCategory(obj.category);
+      if (typeof obj.description === "string") setDescription(obj.description);
+    } catch {
+      // adopt anyway — user can fix in editor
+    }
+  }
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <Button variant="ghost" onClick={onClose}>← Back</Button>
         <div className="flex items-center gap-3">
+          <Button variant="outline" onClick={() => setAiOpen(true)}>
+            <Sparkles className="mr-1.5 h-3.5 w-3.5" />
+            Generate with AI
+          </Button>
           <div className="flex items-center gap-2">
             <Switch checked={isPublished} onCheckedChange={setIsPublished} id="pub" />
             <Label htmlFor="pub" className="text-sm">Published</Label>
@@ -99,6 +122,8 @@ export function TemplateEditor({ templateId, onClose }: Props) {
           </Button>
         </div>
       </div>
+
+      <AIGenerateDialog open={aiOpen} onOpenChange={setAiOpen} onAccept={adoptAiJson} />
 
       <div className="grid md:grid-cols-4 gap-3">
         <Input value={icon} onChange={(e) => setIcon(e.target.value)} placeholder="Icon (emoji)" className="md:col-span-1" />

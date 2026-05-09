@@ -1,33 +1,55 @@
 import type { MutationCtx } from "../../_generated/server";
 import type { Id } from "../../_generated/dataModel";
-import type { TemplateJson, TplBlockT, TplDatabaseT, TplPageT } from "./validate";
+import type {
+  TemplateJson, TplBlockT, TplDatabaseT, TplPageT, TplViewT,
+} from "./validate";
 
 const nano = () => Math.random().toString(36).slice(2, 10);
+
+/** Recursively build a Nosion block from a template block.
+ *  Handles `columns: TplBlock[][]` (for columns2/3) and
+ *  `children: TplBlock[]` (for toggle) so AI-generated templates
+ *  can express nested column dashboards. */
+function buildBlock(
+  b: TplBlockT,
+  dbMap: Map<string, Id<"databases">>,
+  pageMap: Map<string, Id<"pages">>,
+): Record<string, unknown> {
+  const out: Record<string, unknown> = {
+    id: nano(),
+    type: b.type,
+    text: b.text ?? "",
+  };
+  if (b.checked !== undefined) out.checked = b.checked;
+  if (b.lang) out.lang = b.lang;
+  if (b.databaseRef) {
+    const id = dbMap.get(b.databaseRef);
+    if (id) out.databaseId = String(id);
+  }
+  if (b.pageRef) {
+    const id = pageMap.get(b.pageRef);
+    if (id) out.pageId = String(id);
+  }
+  if (Array.isArray(b.columns)) {
+    out.columns = b.columns.map((col) =>
+      col.map((cb) => buildBlock(cb, dbMap, pageMap)),
+    );
+  }
+  if (Array.isArray(b.children)) {
+    out.children = b.children.map((cb) => buildBlock(cb, dbMap, pageMap));
+  }
+  // payload sprays last so the template can override defaults
+  // (e.g. block color, image url, embed url, button label).
+  if (b.payload) Object.assign(out, b.payload);
+  return out;
+}
 
 function buildBlocks(
   blocks: TplBlockT[],
   dbMap: Map<string, Id<"databases">>,
   pageMap: Map<string, Id<"pages">>,
-): any[] {
-  return blocks.map((b) => {
-    const out: Record<string, unknown> = {
-      id: nano(),
-      type: b.type,
-      text: b.text ?? "",
-    };
-    if (b.checked !== undefined) out.checked = b.checked;
-    if (b.lang) out.lang = b.lang;
-    if (b.databaseRef) {
-      const id = dbMap.get(b.databaseRef);
-      if (id) out.databaseId = String(id);
-    }
-    if (b.pageRef) {
-      const id = pageMap.get(b.pageRef);
-      if (id) out.pageId = String(id);
-    }
-    if (b.payload) Object.assign(out, b.payload);
-    return out;
-  });
+): Record<string, unknown>[] {
+  return blocks.map((b) => buildBlock(b, dbMap, pageMap));
 }
 
 function collectAllDatabases(page: TplPageT): TplDatabaseT[] {
@@ -40,31 +62,58 @@ function collectAllDatabases(page: TplPageT): TplDatabaseT[] {
   return out;
 }
 
-function buildDbDoc(db: TplDatabaseT, userId: Id<"users">) {
+/** Map TplView → DatabaseViewConfig. Spreads `payload` last so AI
+ *  templates can customize chart kind, dashboard KPIs, calendar date
+ *  property, etc., without the template DSL having to enumerate
+ *  every per-view-type option. */
+function buildView(v: TplViewT): Record<string, unknown> {
+  return {
+    id: v.id,
+    type: v.type,
+    name: v.name,
+    groupBy: v.groupBy,
+    sorts: [],
+    filters: [],
+    search: "",
+    ...(v.payload ?? {}),
+  };
+}
+
+function buildDbDoc(
+  db: TplDatabaseT,
+  userId: Id<"users">,
+  dbMap: Map<string, Id<"databases">>,
+) {
   const now = Date.now();
   const views = db.views?.length
-    ? db.views.map((v) => ({
-        id: v.id,
-        type: v.type,
-        name: v.name,
-        groupBy: v.groupBy,
-        sort: [],
-        filters: [],
-      }))
-    : [{ id: "v1", type: "table", name: "Table", sort: [], filters: [] }];
-  const activeViewId = db.views?.find((v) => v.isDefault)?.id ?? views[0].id;
+    ? db.views.map(buildView)
+    : [{ id: "v1", type: "table", name: "Table", sorts: [], filters: [], search: "" }];
+  const activeViewId = db.views?.find((v) => v.isDefault)?.id ?? views[0].id as string;
   return {
     userId,
     name: db.name,
     icon: db.icon,
-    properties: db.properties.map((p) => ({
-      id: p.id,
-      name: p.name,
-      type: p.type,
-      ...(p.options ? { options: p.options } : {}),
-      ...(p.numberFormat ? { numberFormat: p.numberFormat } : {}),
-      ...(p.formulaExpression ? { formulaExpression: p.formulaExpression } : {}),
-    })),
+    properties: db.properties.map((p) => {
+      const out: Record<string, unknown> = {
+        id: p.id,
+        name: p.name,
+        type: p.type,
+      };
+      if (p.options) out.options = p.options;
+      if (p.numberFormat) out.numberFormat = p.numberFormat;
+      if (p.numberCurrencyCode) out.numberCurrencyCode = p.numberCurrencyCode;
+      if (p.numberDecimals !== undefined) out.numberDecimals = p.numberDecimals;
+      if (p.formulaExpression) out.formulaExpression = p.formulaExpression;
+      if (p.uniqueIdPrefix) out.uniqueIdPrefix = p.uniqueIdPrefix;
+      if (p.relationDatabaseRef) {
+        const target = dbMap.get(p.relationDatabaseRef);
+        if (target) {
+          out.relationDatabaseId = String(target);
+          if (p.relationTwoWay) out.relationTwoWay = true;
+        }
+      }
+      return out;
+    }),
     rowIds: [] as string[],
     views,
     activeViewId,
@@ -92,11 +141,35 @@ export async function instantiateTemplate(
   const pageMap = new Map<string, Id<"pages">>();
   let rowsInserted = 0;
 
-  // 1. insert all databases (rowIds empty for now)
+  // 1a. Pre-allocate empty databases so cross-refs can resolve in step 1b.
   const allDbs = collectAllDatabases(template.page);
   for (const db of allDbs) {
-    const id = await ctx.db.insert("databases", buildDbDoc(db, userId));
+    const id = await ctx.db.insert("databases", {
+      userId,
+      name: db.name,
+      icon: db.icon,
+      properties: [],
+      rowIds: [],
+      views: [{ id: "v_tmp", type: "table", name: "Table", sorts: [], filters: [], search: "" }],
+      activeViewId: "v_tmp",
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
     dbMap.set(db.ref, id);
+  }
+  // 1b. Patch each db with its real properties (now that dbMap is full,
+  //     so relation/rollup refs can resolve).
+  for (const db of allDbs) {
+    const id = dbMap.get(db.ref)!;
+    const doc = buildDbDoc(db, userId, dbMap);
+    await ctx.db.patch(id, {
+      name: doc.name,
+      icon: doc.icon,
+      properties: doc.properties,
+      views: doc.views,
+      activeViewId: doc.activeViewId,
+      updatedAt: Date.now(),
+    });
   }
 
   // 2. pre-order walk: insert pages with first-pass blocks (pageRef may not resolve yet)
@@ -128,26 +201,19 @@ export async function instantiateTemplate(
 
   // 3. second-pass: re-rewrite any page with forward pageRefs (now that pageMap is full)
   function hasUnresolvedPageRef(blocks: TplBlockT[]): boolean {
-    return blocks.some((b) => b.type === "page" && b.pageRef);
-  }
-  async function repatch(p: TplPageT, pageId: Id<"pages">) {
-    if (hasUnresolvedPageRef(p.blocks)) {
-      const finalBlocks = buildBlocks(p.blocks, dbMap, pageMap);
-      await ctx.db.patch(pageId, { blocks: finalBlocks, updatedAt: Date.now() });
+    for (const b of blocks) {
+      if (b.type === "page" && b.pageRef) return true;
+      if (b.columns) for (const col of b.columns) if (hasUnresolvedPageRef(col)) return true;
+      if (b.children && hasUnresolvedPageRef(b.children)) return true;
     }
-    for (const child of p.children ?? []) {
-      // child page id was assigned only if child had a ref; locate by walking template + map
-      // simpler: re-derive by walking template tree alongside child indices
-    }
+    return false;
   }
-  // Walk in lock-step with insertion order to know each page's id
   async function walkRepatch(p: TplPageT, pageId: Id<"pages">) {
     if (hasUnresolvedPageRef(p.blocks)) {
       const finalBlocks = buildBlocks(p.blocks, dbMap, pageMap);
       await ctx.db.patch(pageId, { blocks: finalBlocks, updatedAt: Date.now() });
     }
   }
-  // For root + every refed page, repatch if needed (others can't have forward refs we'd resolve)
   await walkRepatch(template.page, rootPageId);
   for (const [ref, pid] of pageMap.entries()) {
     if (ref === template.page.ref) continue;
