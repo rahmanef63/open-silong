@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
+  DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent,
 } from "@/shared/ui/dropdown-menu";
 import type { Block, BlockType } from "@/shared/types/domain";
 import { useStore } from "@/shared/lib/store";
@@ -68,6 +69,25 @@ export function BlockControls({ pageId, block, index, listeners, convertTo }: Pr
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" side="right" className="w-56">
           <DropdownMenuLabel className="text-xs text-muted-foreground">Block actions</DropdownMenuLabel>
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>
+              <Plus className="mr-2 h-3.5 w-3.5" /> Add new block
+            </DropdownMenuSubTrigger>
+            <DropdownMenuSubContent className="max-h-80 overflow-y-auto w-56">
+              <DropdownMenuLabel className="text-xs text-muted-foreground">Insert below</DropdownMenuLabel>
+              {BLOCK_SPECS.map((s) => (
+                <DropdownMenuItem
+                  key={s.type}
+                  onClick={async () => {
+                    const id = await addBlock(pageId, index, s.type);
+                    if (id) setTimeout(() => document.querySelector<HTMLElement>(`[data-block-id="${id}"]`)?.focus(), 0);
+                  }}
+                >
+                  <s.icon className="mr-2 h-3.5 w-3.5" /> {s.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuSubContent>
+          </DropdownMenuSub>
           {sel && (
             <DropdownMenuItem onClick={() => sel.selectOne(block.id)}>
               <CheckSquare className="mr-2 h-3.5 w-3.5" /> Select block
