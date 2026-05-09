@@ -4,6 +4,7 @@ export const MARKDOWN_TRIGGERS: Record<string, { type: BlockType; patch?: Partia
   "# ":   { type: "h1" },
   "## ":  { type: "h2" },
   "### ": { type: "h3" },
+  "#### ": { type: "h4" },
   "- ":   { type: "bullet" },
   "* ":   { type: "bullet" },
   "1. ":  { type: "numbered" },

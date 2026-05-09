@@ -198,6 +198,8 @@ const NOSION_TO_NOTION_TYPE: Record<string, string> = {
   h1: "heading_1",
   h2: "heading_2",
   h3: "heading_3",
+  h4: "heading_3", // Notion API has only 3 heading levels — collapse to heading_3
+
   todo: "to_do",
   bullet: "bulleted_list_item",
   numbered: "numbered_list_item",
@@ -209,6 +211,8 @@ const NOSION_TO_NOTION_TYPE: Record<string, string> = {
   database: "child_database",
   columns2: "column_list",
   columns3: "column_list",
+  columns4: "column_list",
+  columns5: "column_list",
   toggle: "toggle",
   image: "image",
   equation: "equation",
@@ -361,7 +365,10 @@ export function blockFromNotion(n: NotionBlock): BlockLike {
   }
   if (ntype === "column_list") {
     const cols = (payload?.children as NotionBlock[] | undefined) ?? [];
-    out.type = cols.length === 3 ? "columns3" : "columns2";
+    out.type =
+      cols.length >= 5 ? "columns5" :
+      cols.length === 4 ? "columns4" :
+      cols.length === 3 ? "columns3" : "columns2";
     out.columns = cols.map((c) => {
       const colPayload = (c as Record<string, unknown>).column as { children?: NotionBlock[] } | undefined;
       return (colPayload?.children ?? []).map(blockFromNotion);

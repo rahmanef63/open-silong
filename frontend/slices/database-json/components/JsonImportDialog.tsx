@@ -6,6 +6,7 @@ import {
 } from "@/shared/ui/dialog";
 import { Button } from "@/shared/ui/button";
 import { useStore } from "@/shared/lib/store";
+import { useAsyncError } from "@/shared/hooks/useAsyncError";
 import { applyImport, parseExport, type DatabaseExportV1 } from "../lib/serialize";
 import { DynamicIcon } from "@/slices/icon-picker";
 
@@ -19,27 +20,33 @@ interface Props {
 export function JsonImportDialog({ open, onOpenChange, onImported }: Props) {
   const { createDatabase, updateDatabase, addRow, setRowValue, updatePage } = useStore();
   const [parsed, setParsed] = useState<DatabaseExportV1 | null>(null);
-  const [importing, setImporting] = useState(false);
   const [importedDbId, setImportedDbId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [parseError, setParseError] = useState<string | null>(null);
+  const importAsync = useAsyncError("JsonImportDialog.apply");
+  const importing = importAsync.pending;
+  const error = parseError ?? importAsync.error?.message ?? null;
 
-  const reset = () => { setParsed(null); setImporting(false); setImportedDbId(null); setError(null); };
+  const reset = () => {
+    setParsed(null);
+    setImportedDbId(null);
+    setParseError(null);
+    importAsync.clear();
+  };
 
   const onFile = async (file: File) => {
-    setError(null);
+    setParseError(null);
     try {
       const text = await file.text();
       setParsed(parseExport(text));
     } catch (e: unknown) {
-      setError(getErrorMessage(e, "Failed to parse JSON."));
+      setParseError(getErrorMessage(e, "Failed to parse JSON."));
     }
   };
 
   const onApply = async () => {
     if (!parsed) return;
-    setImporting(true);
-    setError(null);
-    try {
+    setParseError(null);
+    const result = await importAsync.execute(async () => {
       const { dbId } = await applyImport(parsed, {
         createDatabase,
         updateDatabase,
@@ -47,12 +54,11 @@ export function JsonImportDialog({ open, onOpenChange, onImported }: Props) {
         setRowValue,
         updatePage,
       });
-      setImportedDbId(dbId);
-      onImported?.(dbId);
-    } catch (e: unknown) {
-      setError(getErrorMessage(e, "Import failed."));
-    } finally {
-      setImporting(false);
+      return dbId;
+    });
+    if (result) {
+      setImportedDbId(result);
+      onImported?.(result);
     }
   };
 

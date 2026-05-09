@@ -180,7 +180,16 @@ export function OverviewPanel() {
       </div>
 
       <div>
-        <h3 className="text-sm font-medium mb-2">Activity windows</h3>
+        <h3 className="text-sm font-medium mb-2">Active users (real lastSeenAt)</h3>
+        <div className="grid grid-cols-3 gap-3">
+          <StatCard label="DAU · 24h" value={overview.dau ?? 0} icon={Activity} tone="brand" />
+          <StatCard label="WAU · 7d" value={overview.wau ?? 0} icon={Activity} tone="brand" />
+          <StatCard label="MAU · 30d" value={overview.mau ?? 0} icon={Activity} tone="brand" />
+        </div>
+      </div>
+
+      <div>
+        <h3 className="text-sm font-medium mb-2">Signups + edit windows</h3>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <StatCard label="New users · 24h" value={overview.newUsers24h} icon={TrendingUp} tone="good" />
           <StatCard label="New users · 7d" value={overview.newUsers7d} icon={TrendingUp} tone="good" />

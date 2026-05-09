@@ -3,6 +3,7 @@ export type BlockType =
   | "h1"
   | "h2"
   | "h3"
+  | "h4"
   | "todo"
   | "bullet"
   | "numbered"
@@ -14,6 +15,8 @@ export type BlockType =
   | "database"
   | "columns2"   // 2-column layout
   | "columns3"   // 3-column layout
+  | "columns4"   // 4-column layout
+  | "columns5"   // 5-column layout
   | "toggle"     // collapsible block
   | "image"      // image embed (URL)
   | "equation"   // LaTeX block equation
@@ -396,6 +399,12 @@ export interface DatabaseViewConfig {
   // ─── Form view (additional) ──────────────────────────
   formTitle?: string;
   formDescription?: string;
+  /** Public form: when true, anyone can submit via /forms/<formSlug>
+   *  without auth. Submissions land as new rows owned by the database
+   *  owner. */
+  formIsPublic?: boolean;
+  /** Slug for the public form URL. Auto-derived from view.id if blank. */
+  formSlug?: string;
 }
 
 export interface Database {

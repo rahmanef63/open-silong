@@ -9,6 +9,7 @@ import { DynamicIcon } from "@/slices/icon-picker";
 import { Copy, Globe, Lock, ExternalLink, Check } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { toast } from "sonner";
+import { useAsyncError } from "@/shared/hooks/useAsyncError";
 import { reportError } from "@/shared/lib/error";
 
 export function ShareDialog({ open, onOpenChange, page }: { open: boolean; onOpenChange: (o: boolean) => void; page: Page }) {
@@ -17,7 +18,7 @@ export function ShareDialog({ open, onOpenChange, page }: { open: boolean; onOpe
   const setShareIndexable = useMutation(api.pages.setShareIndexable);
   const [copied, setCopied] = useState(false);
   const [slugDraft, setSlugDraft] = useState(page.shareSlug ?? "");
-  const [savingSlug, setSavingSlug] = useState(false);
+  const slugSave = useAsyncError("ShareDialog.setSlug");
   const slugForUrl = page.shareSlug || page.id;
   const url = `${window.location.origin}/share/${slugForUrl}`;
 
@@ -33,20 +34,14 @@ export function ShareDialog({ open, onOpenChange, page }: { open: boolean; onOpe
   };
 
   const saveSlug = async () => {
-    if (savingSlug) return;
+    if (slugSave.pending) return;
     const next = slugDraft.trim().toLowerCase();
     if (next === (page.shareSlug ?? "")) return;
-    setSavingSlug(true);
-    try {
+    const ok = await slugSave.execute(async () => {
       await setShareSlug({ pageId: page.id, slug: next });
       toast.success(next ? "Slug updated" : "Slug cleared");
-    } catch (err) {
-      const safe = reportError("ShareDialog.setSlug", err);
-      toast.error(safe.message);
-      setSlugDraft(page.shareSlug ?? "");
-    } finally {
-      setSavingSlug(false);
-    }
+    });
+    if (ok === undefined) setSlugDraft(page.shareSlug ?? "");
   };
 
   return (
@@ -105,7 +100,7 @@ export function ShareDialog({ open, onOpenChange, page }: { open: boolean; onOpe
                 pattern="[a-z0-9-]{3,60}"
                 className="flex-1 rounded-r-md border border-border bg-card px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-ring"
               />
-              {savingSlug && <Check className="h-4 w-4 animate-pulse text-muted-foreground" />}
+              {slugSave.pending && <Check className="h-4 w-4 animate-pulse text-muted-foreground" />}
             </div>
             <p className="mt-2 text-xs text-muted-foreground">
               Lowercase a–z, digits, hyphens. 3–60 chars. Leave blank to use the

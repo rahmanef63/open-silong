@@ -22,6 +22,7 @@ import { SearchModal } from "@/slices/command-palette/components/SearchModal";
 import { SelectionToolbar } from "@/slices/editor/components/SelectionToolbar";
 import { MentionTypeahead } from "@/slices/editor/components/MentionTypeahead";
 import { useThemePreset } from "@/slices/theme-presets";
+import { useTouchLastSeen } from "@/shared/hooks/useTouchLastSeen";
 import { MobileBottomNav } from "@/slices/mobile-nav";
 
 const CommandPalette = lazy(() =>
@@ -47,6 +48,7 @@ const SIDEBAR_STYLE = { "--sidebar-width": "17rem" } as React.CSSProperties;
 
 export default function DashboardShell({ children }: { children: ReactNode }) {
   useThemePreset();
+  useTouchLastSeen();
   const [searchOpen, setSearchOpen] = useState(false);
 
   useEffect(() => {

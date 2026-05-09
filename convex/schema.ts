@@ -154,7 +154,13 @@ export default defineSchema({
     userId: v.id("users"),
     role: v.union(v.literal("superadmin"), v.literal("admin"), v.literal("user")),
     createdAt: v.number(),
-  }).index("by_user", ["userId"]),
+    /** Updated by `users.touchLastSeen` — debounced ~5 min from the
+     *  client. Powers real DAU/WAU/MAU in the admin overview. Optional
+     *  so existing rows don't need a backfill. */
+    lastSeenAt: v.optional(v.number()),
+  })
+    .index("by_user", ["userId"])
+    .index("by_lastSeen", ["lastSeenAt"]),
 
   // === admin: audit log ===
   auditLog: defineTable({

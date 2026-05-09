@@ -31,6 +31,12 @@ export const RATE_LIMITS = {
 
   // AI (per-hour)
   aiComplete:        { scope: "ai.complete",        max: 20,  windowMs: 60 * 60_000 },
+
+  // Public form submissions — generous but capped per-form-owner. The
+  // anonymous submitter is bucketed against the form OWNER's userId
+  // (we don't have anonymous IPs in Convex), so 60/min keeps a single
+  // form from getting hammered into oblivion regardless of source.
+  formsPublicSubmit: { scope: "forms.publicSubmit", max: 60,  windowMs: 60_000 },
 } as const;
 
 // ─── Char caps ────────────────────────────────────────────────────
