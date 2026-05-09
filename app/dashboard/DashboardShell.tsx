@@ -9,6 +9,7 @@ import { TooltipProvider } from "@/shared/ui/tooltip";
 import { Toaster } from "@/shared/ui/toaster";
 import { Toaster as Sonner } from "@/shared/ui/sonner";
 import { StoreProvider } from "@/shared/lib/store";
+import { WorkspaceIOProvider } from "@/slices/workspace-io";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/shared/ui/sidebar";
 import { Separator } from "@/shared/ui/separator";
 import {
@@ -94,6 +95,7 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
         <Sonner />
         <AuthGuard>
           <StoreProvider>
+            <WorkspaceIOProvider>
             <Suspense fallback={null}>
               <CommandPalette />
             </Suspense>
@@ -154,6 +156,7 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
                 is fixed-positioned. */}
             <SearchModal open={searchOpen} onOpenChange={setSearchOpen} />
             <MobileBottomNav onOpenSearch={() => setSearchOpen(true)} />
+            </WorkspaceIOProvider>
           </StoreProvider>
         </AuthGuard>
       </TooltipProvider>
