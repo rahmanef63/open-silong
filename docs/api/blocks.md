@@ -86,11 +86,34 @@ top-level reorder of the toggle.
 
 ---
 
-## Inline rich text (Slack model)
+## Inline rich text (Slack model + WYSIWYG decoration)
 
 Block `text` is **plain-text source-of-truth**. Markdown markers are
-literal characters in the text. The editor does NOT show formatted
-output — readers parse on render:
+literal characters in the text. As of cycle 9 (commit `af77524`,
+2026-05-09) the editor **also** renders bold/italic/strike/code/link
+visually in-place via a live decorator pass — markers stay visible but
+dimmed (`opacity-50`, `0.85em`). The decoration is structural only;
+`el.innerText` after the pass still equals the source string, so
+store/save/export logic is unchanged.
+
+The decorator (`frontend/slices/editor/lib/inlineDecorator.ts`):
+1. Captures caret as a text-character offset.
+2. Tokenises via `tokenizeInline` (same parser as read surfaces).
+3. Rebuilds the contentEditable's children with `<strong>`/`<em>`/
+   `<del>`/`<code>`/styled link spans, marker spans interleaved.
+4. Restores caret to the prior text offset.
+
+Runs on every `onInput`, on first mount, after undo/redo, and after
+`compositionend`. Skipped during `compositionstart`→`compositionend`
+to avoid breaking IME/CJK input. Applies to: paragraph, h1, h2, h3,
+todo, bullet, numbered, quote, callout. Code/database/page/columns/
+toggle have their own UI and are not decorated.
+
+Read surfaces (public share, exports) parse the same source via
+`frontend/shared/lib/inlineMd.tsx` — single source of truth, two
+render targets (live editor DOM vs static React tree).
+
+The marker syntax:
 
 - `**bold**` → `<strong>`
 - `*italic*` / `_italic_` → `<em>`
