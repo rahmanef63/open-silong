@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { groupPagesForLibrary, pageBreadcrumb } from "../lib/groupPages";
-import type { Page } from "@/shared/types/domain";
+import { groupPagesForLibrary, pageBreadcrumb, pageSource } from "../lib/groupPages";
+import type { Database, Page } from "@/shared/types/domain";
 
 function mk(id: string, patch: Partial<Page> = {}): Page {
   return {
@@ -68,22 +68,80 @@ describe("groupPagesForLibrary", () => {
     expect(priv.pages.map((p) => p.id).sort()).toEqual(["a", "d"]);
   });
 
-  it("all is sorted by updatedAt desc", () => {
+  it("favorites/shared/private are sorted by updatedAt desc", () => {
     const pages = [
-      mk("a", { updatedAt: 100 }),
-      mk("b", { updatedAt: 300 }),
-      mk("c", { updatedAt: 200 }),
+      mk("a", { favorite: true, updatedAt: 100 }),
+      mk("b", { favorite: true, updatedAt: 300 }),
+      mk("c", { favorite: true, updatedAt: 200 }),
     ];
     const out = groupPagesForLibrary({ pages, recentIds: [] });
-    const all = out.find((s) => s.key === "all")!;
-    expect(all.pages.map((p) => p.id)).toEqual(["b", "c", "a"]);
+    const fav = out.find((s) => s.key === "favorites")!;
+    expect(fav.pages.map((p) => p.id)).toEqual(["b", "c", "a"]);
   });
 
-  it("returns five sections in canonical order", () => {
+  it("returns four tab buckets in canonical order", () => {
     const out = groupPagesForLibrary({ pages: [], recentIds: [] });
     expect(out.map((s) => s.key)).toEqual([
-      "recents", "favorites", "shared", "private", "all",
+      "recents", "favorites", "shared", "private",
     ]);
+  });
+});
+
+describe("pageSource", () => {
+  function mkDb(id: string, patch: Partial<Database> = {}): Database {
+    return {
+      id,
+      name: id,
+      icon: "🗂️",
+      properties: [],
+      rowIds: [],
+      views: [],
+      activeViewId: "v1",
+      createdAt: 0,
+      updatedAt: 0,
+      defaultTemplateId: null,
+      subItemsParentPropId: null,
+      trashed: false,
+      ...patch,
+    } as Database;
+  }
+
+  it("returns root for top-level page", () => {
+    const p = mk("a");
+    const src = pageSource(p, [p], []);
+    expect(src.kind).toBe("root");
+    expect(src.label).toBe("Root");
+    expect(src.targetId).toBeNull();
+  });
+
+  it("returns parent page for nested page", () => {
+    const root = mk("root", { title: "Projects", icon: "📁" });
+    const child = mk("child", { parentId: "root" });
+    const src = pageSource(child, [root, child], []);
+    expect(src).toEqual({ kind: "page", label: "Projects", icon: "📁", targetId: "root" });
+  });
+
+  it("returns database for db row", () => {
+    const db = mkDb("db1", { name: "Tasks", icon: "✅" });
+    const row = mk("r1", { rowOfDatabaseId: "db1" });
+    const src = pageSource(row, [row], [db]);
+    expect(src).toEqual({ kind: "database", label: "Tasks", icon: "✅", targetId: "db1" });
+  });
+
+  it("falls back to root when parent or db is missing", () => {
+    const orphan = mk("o", { parentId: "ghost" });
+    expect(pageSource(orphan, [orphan], []).kind).toBe("root");
+    const lostRow = mk("r", { rowOfDatabaseId: "ghost" });
+    expect(pageSource(lostRow, [lostRow], []).kind).toBe("root");
+  });
+
+  it("uses Untitled placeholder for empty parent title / db name", () => {
+    const root = mk("root", { title: "" });
+    const child = mk("child", { parentId: "root" });
+    expect(pageSource(child, [root, child], []).label).toBe("Untitled");
+    const db = mkDb("db", { name: "" });
+    const row = mk("r", { rowOfDatabaseId: "db" });
+    expect(pageSource(row, [row], [db]).label).toBe("Untitled database");
   });
 });
 

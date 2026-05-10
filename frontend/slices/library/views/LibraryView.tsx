@@ -5,14 +5,37 @@ import { useRouter } from "next/navigation";
 import { Library, Search, Plus } from "lucide-react";
 import { Input } from "@/shared/ui/input";
 import { Button } from "@/shared/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 import { useStore } from "@/shared/lib/store";
-import { groupPagesForLibrary } from "../lib/groupPages";
-import { SectionTable } from "../components/SectionTable";
+import { groupPagesForLibrary, type LibrarySectionKey } from "../lib/groupPages";
+import { PagesTable } from "../components/PagesTable";
+import { DatabasesTable } from "../components/DatabasesTable";
 import { BulkActionBar } from "../components/BulkActionBar";
+
+type TabKey = LibrarySectionKey | "databases";
+
+const TAB_ORDER: TabKey[] = ["recents", "favorites", "shared", "private", "databases"];
+
+const TAB_LABELS: Record<TabKey, string> = {
+  recents: "Recents",
+  favorites: "Favorites",
+  shared: "Shared",
+  private: "Private",
+  databases: "Databases",
+};
+
+const EMPTY_HINT: Record<TabKey, string> = {
+  recents: "Pages you visit will appear here.",
+  favorites: "Star pages to keep them at hand.",
+  shared: "Pages you publish via Share will appear here.",
+  private: "Top-level private pages live here.",
+  databases: "No databases yet — slash menu › Database to create one.",
+};
 
 export function LibraryView() {
   const router = useRouter();
-  const { pages, recents, workspace, user, createPage, isInitialLoading } = useStore();
+  const { pages, databases, recents, workspace, user, createPage, isInitialLoading } = useStore();
+  const [tab, setTab] = useState<TabKey>("recents");
   const [filter, setFilter] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
@@ -24,7 +47,25 @@ export function LibraryView() {
     return groupPagesForLibrary({ pages: filtered, recentIds: recents });
   }, [pages, recents, filter]);
 
-  const totalShown = sections.reduce((acc, s) => acc + s.pages.length, 0);
+  const filteredDatabases = useMemo(() => {
+    const q = filter.trim().toLowerCase();
+    const list = q
+      ? databases.filter((d) => (d.name ?? "").toLowerCase().includes(q))
+      : databases;
+    return [...list].sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0));
+  }, [databases, filter]);
+
+  const sectionByKey = useMemo(() => new Map(sections.map((s) => [s.key, s])), [sections]);
+
+  const counts: Record<TabKey, number> = {
+    recents: sectionByKey.get("recents")?.pages.length ?? 0,
+    favorites: sectionByKey.get("favorites")?.pages.length ?? 0,
+    shared: sectionByKey.get("shared")?.pages.length ?? 0,
+    private: sectionByKey.get("private")?.pages.length ?? 0,
+    databases: filteredDatabases.length,
+  };
+
+  const totalShown = TAB_ORDER.reduce((acc, k) => acc + counts[k], 0);
 
   function toggle(id: string) {
     setSelected((prev) => {
@@ -49,6 +90,21 @@ export function LibraryView() {
   async function newPage() {
     const p = await createPage(null);
     router.push(`/dashboard/p/${p.id}`);
+  }
+
+  function openPage(id: string) {
+    router.push(`/dashboard/p/${id}`);
+  }
+
+  /** Databases live on their host page — find it; otherwise no-op. */
+  function openDatabase(id: string) {
+    const host = pages.find((p) => !p.trashed && p.databaseHostFor?.includes(id));
+    if (host) router.push(`/dashboard/p/${host.id}`);
+  }
+
+  function openSource(kind: "page" | "database", id: string) {
+    if (kind === "page") openPage(id);
+    else openDatabase(id);
   }
 
   if (isInitialLoading) {
@@ -100,35 +156,45 @@ export function LibraryView() {
           {totalShown} entries · {selected.size} selected
         </div>
 
-        <div className="space-y-4 pb-32">
-          {sections.map((s) => (
-            <SectionTable
-              key={s.key}
-              label={s.label}
-              pages={s.pages}
-              allPages={pages}
-              workspaceName={workspace.name}
-              recentIds={recents}
-              selected={selected}
-              onToggle={toggle}
-              onToggleAll={toggleMany}
-              onOpen={(id) => router.push(`/dashboard/p/${id}`)}
-              ownerLabel={ownerLabel}
-              defaultOpen={s.key !== "all" || filter.length > 0}
-              emptyHint={
-                s.key === "recents"
-                  ? "Pages you visit will appear here."
-                  : s.key === "favorites"
-                    ? "Star pages to keep them at hand."
-                    : s.key === "shared"
-                      ? "Pages you publish via Share will appear here."
-                      : s.key === "private"
-                        ? "Top-level private pages live here."
-                        : "No pages yet."
-              }
-            />
+        <Tabs value={tab} onValueChange={(v) => setTab(v as TabKey)} className="space-y-3">
+          <TabsList className="h-9 w-full justify-start gap-1 overflow-x-auto">
+            {TAB_ORDER.map((k) => (
+              <TabsTrigger key={k} value={k} className="gap-1.5">
+                <span>{TAB_LABELS[k]}</span>
+                <span className="rounded-full bg-muted/60 px-1.5 py-0 text-[10px] tabular-nums text-muted-foreground data-[state=active]:bg-background">
+                  {counts[k]}
+                </span>
+              </TabsTrigger>
+            ))}
+          </TabsList>
+
+          {(["recents", "favorites", "shared", "private"] as const).map((k) => (
+            <TabsContent key={k} value={k} className="pb-32">
+              <PagesTable
+                pages={sectionByKey.get(k)?.pages ?? []}
+                allPages={pages}
+                databases={databases}
+                recentIds={recents}
+                selected={selected}
+                onToggle={toggle}
+                onToggleAll={toggleMany}
+                onOpen={openPage}
+                onOpenSource={openSource}
+                ownerLabel={ownerLabel}
+                emptyHint={EMPTY_HINT[k]}
+              />
+            </TabsContent>
           ))}
-        </div>
+
+          <TabsContent value="databases" className="pb-32">
+            <DatabasesTable
+              databases={filteredDatabases}
+              onOpen={openDatabase}
+              ownerLabel={ownerLabel}
+              emptyHint={EMPTY_HINT.databases}
+            />
+          </TabsContent>
+        </Tabs>
       </div>
 
       <BulkActionBar selectedIds={[...selected]} onClear={() => setSelected(new Set())} />

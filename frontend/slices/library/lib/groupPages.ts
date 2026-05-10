@@ -1,6 +1,6 @@
-import type { Page } from "@/shared/types/domain";
+import type { Database, Page } from "@/shared/types/domain";
 
-export type LibrarySectionKey = "recents" | "favorites" | "shared" | "private" | "all";
+export type LibrarySectionKey = "recents" | "favorites" | "shared" | "private";
 
 export interface LibrarySection {
   key: LibrarySectionKey;
@@ -15,10 +15,11 @@ export interface GroupOptions {
   recentLimit?: number;
 }
 
-/** Split the workspace's pages into the five Library sections.
- *  Excludes trashed pages and database rows from every section.
- *  `all` is sorted by updatedAt desc; the other sections preserve
- *  their input order (recents = most-recent-first by recentIds). */
+/** Split the workspace's pages into the four Library tab buckets.
+ *  Excludes trashed pages and database rows from every bucket.
+ *  Order within each bucket is intentional:
+ *    - recents → most-recent-first by recentIds
+ *    - favorites/shared/private → updatedAt desc */
 export function groupPagesForLibrary({
   pages,
   recentIds,
@@ -26,6 +27,8 @@ export function groupPagesForLibrary({
 }: GroupOptions): LibrarySection[] {
   const visible = pages.filter((p) => !p.trashed && !p.rowOfDatabaseId);
   const byId = new Map(visible.map((p) => [p.id, p]));
+  const sortByUpdated = (arr: Page[]) =>
+    [...arr].sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0));
 
   const recents: Page[] = [];
   const seen = new Set<string>();
@@ -39,21 +42,52 @@ export function groupPagesForLibrary({
     }
   }
 
-  const favorites = visible.filter((p) => !!p.favorite);
-  const shared = visible.filter((p) => !!p.isPublic);
+  const favorites = sortByUpdated(visible.filter((p) => !!p.favorite));
+  const shared = sortByUpdated(visible.filter((p) => !!p.isPublic));
   // Top-level only for "Private" (matches Notion's Private section).
-  const privatePages = visible.filter(
+  const privatePages = sortByUpdated(visible.filter(
     (p) => !p.isPublic && (p.parentId === null || p.parentId === undefined),
-  );
-  const all = [...visible].sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0));
+  ));
 
   return [
     { key: "recents", label: "Recents", pages: recents },
     { key: "favorites", label: "Favorites", pages: favorites },
     { key: "shared", label: "Shared", pages: shared },
     { key: "private", label: "Private", pages: privatePages },
-    { key: "all", label: "All pages", pages: all },
   ];
+}
+
+/** Immediate parent of a page — the surface displayed in the Source
+ *  column. Returns:
+ *    - `database` when the page is a row of a database (label = db name)
+ *    - `page` when the page has a parent page (label = parent title)
+ *    - `root` otherwise (label = "Root")
+ *  Always resolves; never throws. Unknown parents fall back to `root`
+ *  so the table never shows a dangling id. */
+export interface PageSource {
+  kind: "root" | "page" | "database";
+  label: string;
+  icon?: string;
+  /** Target id for click-through. `null` for root. */
+  targetId: string | null;
+}
+
+export function pageSource(
+  page: Page,
+  pages: Page[],
+  databases: Database[],
+): PageSource {
+  if (page.rowOfDatabaseId) {
+    const db = databases.find((d) => d.id === page.rowOfDatabaseId);
+    if (db) return { kind: "database", label: db.name || "Untitled database", icon: db.icon, targetId: db.id };
+    return { kind: "root", label: "Root", targetId: null };
+  }
+  if (page.parentId) {
+    const parent = pages.find((p) => p.id === page.parentId);
+    if (parent) return { kind: "page", label: parent.title || "Untitled", icon: parent.icon, targetId: parent.id };
+    return { kind: "root", label: "Root", targetId: null };
+  }
+  return { kind: "root", label: "Root", targetId: null };
 }
 
 /** Walk parent chain → readable breadcrumb e.g. "Workspace › Projects".
