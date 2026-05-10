@@ -43,10 +43,32 @@ workspaces are user-created via `workspaces.create`.
   workspace exists yet.
 - `requireWorkspaceMember(ctx, workspaceId)` — auth gate; returns
   `{userId, workspace, role}`.
+- `requireActiveWorkspaceWritable(ctx, userId)` — mutation-only.
+  Returns active workspace; throws if viewer is read-only there.
+  Use before any insert that stamps `workspaceId`.
+- `pagesInActiveWorkspace(ctx, userId, active)` /
+  `databasesInActiveWorkspace(...)` — primary read via
+  `by_workspace`, plus a personal-workspace legacy fallback (rows
+  pre-multi-workspace migration that never got `workspaceId`
+  stamped, owned by the viewer).
 - `listMyWorkspaces(ctx, userId)` — joined with role.
 - `rowInActiveWorkspace(row, active, userId)` — transitional
   predicate. Legacy rows with no `workspaceId` resolve under the
-  personal workspace.
+  personal workspace. Still used by callers that filter post-fetch.
+
+## Membership-aware auth (`convex/_shared/auth.ts`)
+
+`requireWorkspaceAccess(ctx, table, id, { write? })` is the gate for
+every page/database read or write that should be reachable by invited
+members. Resolves the doc's `workspaceId`, looks up the viewer's
+`workspaceMembers` row, and throws `"Tidak ditemukan"` for non-members
+(no leak) or FORBIDDEN if `write: true` and role is `viewer`.
+
+Legacy rows (no `workspaceId` stamped) fall back to owner-only access.
+
+`requireOwned` is now reserved for genuinely owner-only state (workspace
+rename / delete, mcpTokens). Every page/database mutation went through
+the swap in session 1.6.
 
 ## Frontend store
 
@@ -97,8 +119,12 @@ clicks Accept. New `workspaceInvites` table indexed by `by_code` +
 
 - URL slug routing (`/dashboard/[wsSlug]/...`).
 - Snapshots / notifications / files / comments queries (filter only
-  by `userId` today). Recents was scoped in session 1.5. The rest
-  are now leaking across invite-shared workspaces — must scope
-  before invites are real-world ready.
+  by `userId` today). Recents + pages + databases were scoped in
+  sessions 1.5/1.6. These remaining tables still leak / hide content
+  across invite-shared workspaces — must scope before they're
+  real-world ready.
 - Per-page collaborator grants (session 4).
 - Presence cursors (session 5).
+- "Created by" column in Library currently shows the viewer's name
+  for every row — needs a per-row author lookup once members can
+  share authorship.

@@ -219,4 +219,83 @@ export function rowInActiveWorkspace(
   return false;
 }
 
+/** Collect every page in the active workspace from the viewer's vantage —
+ *  primary read via `pages.by_workspace`, plus a personal-workspace
+ *  legacy fallback via `pages.by_user` for rows that never got stamped
+ *  with a workspaceId. Results are de-duplicated by `_id`. Used by
+ *  `pages.list`, `pages.listMeta`, and any other workspace-scoped
+ *  page reader. */
+export async function pagesInActiveWorkspace(
+  ctx: QueryCtx | MutationCtx,
+  userId: Id<"users">,
+  active: Doc<"workspaces">,
+): Promise<Doc<"pages">[]> {
+  const byWs = await ctx.db
+    .query("pages")
+    .withIndex("by_workspace", (q) => q.eq("workspaceId", active._id))
+    .collect();
+  if (!active.isPersonal || (active.ownerId ?? active.userId) !== userId) {
+    return byWs;
+  }
+  const byUser = await ctx.db
+    .query("pages")
+    .withIndex("by_user", (q) => q.eq("userId", userId))
+    .collect();
+  const legacy = byUser.filter((p) => !p.workspaceId);
+  if (legacy.length === 0) return byWs;
+  const seen = new Set(byWs.map((p) => p._id));
+  for (const p of legacy) {
+    if (!seen.has(p._id)) byWs.push(p);
+  }
+  return byWs;
+}
+
+/** Sibling of `pagesInActiveWorkspace` for the `databases` table. Same
+ *  contract: by_workspace primary, by_user legacy fallback for the
+ *  viewer's own personal workspace, dedupe by `_id`. */
+export async function databasesInActiveWorkspace(
+  ctx: QueryCtx | MutationCtx,
+  userId: Id<"users">,
+  active: Doc<"workspaces">,
+): Promise<Doc<"databases">[]> {
+  const byWs = await ctx.db
+    .query("databases")
+    .withIndex("by_workspace", (q) => q.eq("workspaceId", active._id))
+    .collect();
+  if (!active.isPersonal || (active.ownerId ?? active.userId) !== userId) {
+    return byWs;
+  }
+  const byUser = await ctx.db
+    .query("databases")
+    .withIndex("by_user", (q) => q.eq("userId", userId))
+    .collect();
+  const legacy = byUser.filter((d) => !d.workspaceId);
+  if (legacy.length === 0) return byWs;
+  const seen = new Set(byWs.map((d) => d._id));
+  for (const d of legacy) {
+    if (!seen.has(d._id)) byWs.push(d);
+  }
+  return byWs;
+}
+
+/** Mutation-only. Asserts the viewer has write access (owner|editor)
+ *  in their currently active workspace before any insert that stamps
+ *  `workspaceId`. Returns the active workspace. Use in `pages.create`,
+ *  `databases.create`, `addRow`, etc. */
+export async function requireActiveWorkspaceWritable(
+  ctx: MutationCtx,
+  userId: Id<"users">,
+): Promise<Doc<"workspaces">> {
+  const ws = await getActiveWorkspaceMutation(ctx, userId);
+  const member = await ctx.db
+    .query("workspaceMembers")
+    .withIndex("by_user_workspace", (q) =>
+      q.eq("userId", userId).eq("workspaceId", ws._id),
+    )
+    .unique();
+  if (!member) throw new Error(NOT_FOUND);
+  if (member.role === "viewer") throw new Error(FORBIDDEN);
+  return ws;
+}
+
 export const ERR_WORKSPACE_FORBIDDEN = FORBIDDEN;

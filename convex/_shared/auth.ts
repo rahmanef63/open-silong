@@ -121,4 +121,47 @@ export async function requireOwned<T extends OwnedTable>(
   return { userId, doc: doc as Doc<T> };
 }
 
+type WsRole = "owner" | "editor" | "viewer";
+
+/** Resolve a doc by id and enforce viewer is a member of the doc's
+ *  workspace. Falls back to ownership for legacy rows that pre-date
+ *  the multi-workspace migration (no workspaceId stamped).
+ *
+ *  - `opts.write = true` rejects viewers (read-only role).
+ *  - Throws "Tidak ditemukan" on missing doc / non-member to avoid
+ *    leaking existence; throws FORBIDDEN when the role is too low.
+ *
+ *  Use this in place of `requireOwned` for any read/write that should
+ *  be reachable by invited members of a shared workspace. Owner-only
+ *  state changes (workspace rename, public-share toggle) should keep
+ *  `requireOwned`. */
+export async function requireWorkspaceAccess<T extends OwnedTable>(
+  ctx: QueryCtx | MutationCtx,
+  _table: T,
+  id: Id<T>,
+  opts: { write?: boolean } = {},
+): Promise<{ userId: Id<"users">; doc: Doc<T>; role: WsRole }> {
+  const userId = await requireAuth(ctx);
+  const doc = await ctx.db.get(id);
+  if (!doc) throw new Error("Tidak ditemukan");
+  const wsId = (doc as unknown as { workspaceId?: Id<"workspaces"> }).workspaceId;
+  let role: WsRole | null = null;
+  if (wsId) {
+    const m = await ctx.db
+      .query("workspaceMembers")
+      .withIndex("by_user_workspace", (q) =>
+        q.eq("userId", userId).eq("workspaceId", wsId),
+      )
+      .unique();
+    if (m) role = m.role;
+  } else {
+    // Legacy row pre-multi-workspace: owner-only.
+    const ownerId = (doc as unknown as { userId: Id<"users"> }).userId;
+    if (ownerId === userId) role = "owner";
+  }
+  if (!role) throw new Error("Tidak ditemukan");
+  if (opts.write && role === "viewer") throw new Error(FORBIDDEN);
+  return { userId, doc: doc as Doc<T>, role };
+}
+
 export const ERR_FORBIDDEN = FORBIDDEN;

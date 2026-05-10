@@ -1,19 +1,46 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { requireAuth, requireOwned } from "./_shared/auth";
+import { requireAuth, requireOwned, requireWorkspaceAccess } from "./_shared/auth";
 import { rateLimit } from "./_shared/rateLimit";
 import { Id } from "./_generated/dataModel";
 import { buildSearchText } from "./features/search/lib";
 import { collectDescendantsFromDocs } from "./_shared/pageTree";
 import { regenAllBlockIds, findDuplicateBlockId, type BlockLike } from "./_shared/blocks";
 import { CHAR_CAPS, COUNT_CAPS, RATE_LIMITS, SHARE_SLUG_RE } from "./_shared/limits";
-import { getActiveWorkspaceMutation, readActiveWorkspace, rowInActiveWorkspace } from "./_shared/workspace";
+import {
+  getActiveWorkspaceMutation,
+  readActiveWorkspace,
+  pagesInActiveWorkspace,
+  requireActiveWorkspaceWritable,
+} from "./_shared/workspace";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
 function emptyBlock() {
   return { id: uid(), type: "paragraph", text: "" };
+}
+
+/** Pulls every page in the same scope as the doc being mutated — by
+ *  workspace if the doc is workspace-stamped, otherwise the viewer's
+ *  legacy by_user pool. Used by the descendant-walking mutations
+ *  (trash / restore / permanentlyDelete) so subpages created by other
+ *  members get included. */
+async function collectScopedPages(
+  ctx: { db: any },
+  userId: Id<"users">,
+  workspaceId: Id<"workspaces"> | undefined,
+) {
+  if (workspaceId) {
+    return await ctx.db
+      .query("pages")
+      .withIndex("by_workspace", (q: any) => q.eq("workspaceId", workspaceId))
+      .collect();
+  }
+  return await ctx.db
+    .query("pages")
+    .withIndex("by_user", (q: any) => q.eq("userId", userId))
+    .collect();
 }
 
 /**
@@ -57,7 +84,7 @@ export const getPublicShare = query({
 export const setShareIndexable = mutation({
   args: { pageId: v.string(), indexable: v.boolean() },
   handler: async (ctx, { pageId, indexable }) => {
-    await requireOwned(ctx, "pages", pageId as Id<"pages">);
+    await requireWorkspaceAccess(ctx, "pages", pageId as Id<"pages">, { write: true });
     await ctx.db.patch(pageId as Id<"pages">, { shareIndexable: indexable, updatedAt: Date.now() });
     return { indexable };
   },
@@ -69,7 +96,7 @@ export const setShareIndexable = mutation({
 export const setShareSlug = mutation({
   args: { pageId: v.string(), slug: v.string() },
   handler: async (ctx, args) => {
-    await requireOwned(ctx, "pages", args.pageId as Id<"pages">);
+    await requireWorkspaceAccess(ctx, "pages", args.pageId as Id<"pages">, { write: true });
     const slug = args.slug.trim().toLowerCase();
     if (!slug) {
       await ctx.db.patch(args.pageId as Id<"pages">, { shareSlug: undefined, updatedAt: Date.now() });
@@ -91,10 +118,11 @@ export const setShareSlug = mutation({
   },
 });
 
-/** Owner-only full list — includes `blocks` and `searchText`. Heavy.
- *  Prefer `listMeta` for tree / sidebar / palette callers. Kept for
- *  legacy consumers that need per-page blocks.
- *  Auth: `getAuthUserId` — returns `[]` if anonymous. */
+/** Workspace-scoped full list — includes `blocks` and `searchText`.
+ *  Heavy. Prefer `listMeta` for tree / sidebar / palette callers.
+ *  Returns every page in the viewer's active workspace they are a
+ *  member of (any role), regardless of which member created it.
+ *  Anonymous → []. */
 export const list = query({
   args: {},
   handler: async (ctx) => {
@@ -102,8 +130,7 @@ export const list = query({
     if (!userId) return [];
     const active = await readActiveWorkspace(ctx, userId);
     if (!active) return [];
-    const all = await ctx.db.query("pages").withIndex("by_user", (q) => q.eq("userId", userId)).collect();
-    return all.filter((p) => rowInActiveWorkspace(p, active, userId));
+    return await pagesInActiveWorkspace(ctx, userId, active);
   },
 });
 
@@ -136,11 +163,7 @@ export const listMeta = query({
     if (!userId) return [];
     const active = await readActiveWorkspace(ctx, userId);
     if (!active) return [];
-    const all = await ctx.db
-      .query("pages")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
-      .collect();
-    const docs = all.filter((p) => rowInActiveWorkspace(p, active, userId));
+    const docs = await pagesInActiveWorkspace(ctx, userId, active);
     return docs.map((d) => ({
       _id: d._id,
       _creationTime: d._creationTime,
@@ -194,7 +217,20 @@ export const getById = query({
     } catch {
       return null;
     }
-    if (!doc || doc.userId !== userId) return null;
+    if (!doc) return null;
+    // Membership-aware: any member of the page's workspace can read.
+    // Legacy unstamped rows fall back to owner-only.
+    if (doc.workspaceId) {
+      const m = await ctx.db
+        .query("workspaceMembers")
+        .withIndex("by_user_workspace", (q) =>
+          q.eq("userId", userId).eq("workspaceId", doc.workspaceId!),
+        )
+        .unique();
+      if (!m) return null;
+    } else if (doc.userId !== userId) {
+      return null;
+    }
     return doc;
   },
 });
@@ -214,7 +250,7 @@ export const create = mutation({
   handler: async (ctx, args) => {
     const userId = await requireAuth(ctx);
     await rateLimit(ctx, userId, RATE_LIMITS.pagesCreate);
-    const active = await getActiveWorkspaceMutation(ctx, userId);
+    const active = await requireActiveWorkspaceWritable(ctx, userId);
     const now = Date.now();
     const blocks = [emptyBlock()];
     return await ctx.db.insert("pages", {
@@ -268,7 +304,7 @@ export const update = mutation({
     if (args.patch.blocks !== undefined && args.patch.blocks.length > COUNT_CAPS.blocksPerPage) {
       throw new Error(`Page exceeds block cap (${COUNT_CAPS.blocksPerPage})`);
     }
-    const { userId, doc: page } = await requireOwned(ctx, "pages", args.pageId as Id<"pages">);
+    const { userId, doc: page } = await requireWorkspaceAccess(ctx, "pages", args.pageId as Id<"pages">, { write: true });
     const nextTitle = args.patch.title ?? page.title;
     const nextBlocks = args.patch.blocks ?? page.blocks;
     const touchesContent = "title" in args.patch || "blocks" in args.patch;
@@ -287,7 +323,7 @@ export const update = mutation({
 export const setPublic = mutation({
   args: { pageId: v.string(), isPublic: v.boolean() },
   handler: async (ctx, { pageId, isPublic }) => {
-    const { userId } = await requireOwned(ctx, "pages", pageId as Id<"pages">);
+    const { userId } = await requireWorkspaceAccess(ctx, "pages", pageId as Id<"pages">, { write: true });
     await rateLimit(ctx, userId, RATE_LIMITS.pagesSetPublic);
     await ctx.db.patch(pageId as Id<"pages">, { isPublic, updatedAt: Date.now() });
   },
@@ -300,8 +336,8 @@ export const setPublic = mutation({
 export const trash = mutation({
   args: { pageId: v.string() },
   handler: async (ctx, args) => {
-    const { userId } = await requireOwned(ctx, "pages", args.pageId as Id<"pages">);
-    const allPages = await ctx.db.query("pages").withIndex("by_user", (q) => q.eq("userId", userId)).collect();
+    const { userId, doc: page } = await requireWorkspaceAccess(ctx, "pages", args.pageId as Id<"pages">, { write: true });
+    const allPages = await collectScopedPages(ctx, userId, page.workspaceId);
     const ids = collectDescendantsFromDocs(allPages, args.pageId);
     const now = Date.now();
     for (const id of ids) {
@@ -317,8 +353,8 @@ export const trash = mutation({
 export const restore = mutation({
   args: { pageId: v.string() },
   handler: async (ctx, args) => {
-    const { userId } = await requireOwned(ctx, "pages", args.pageId as Id<"pages">);
-    const allPages = await ctx.db.query("pages").withIndex("by_user", (q) => q.eq("userId", userId)).collect();
+    const { userId, doc: page } = await requireWorkspaceAccess(ctx, "pages", args.pageId as Id<"pages">, { write: true });
+    const allPages = await collectScopedPages(ctx, userId, page.workspaceId);
     const ids = collectDescendantsFromDocs(allPages, args.pageId);
     for (const id of ids) {
       await ctx.db.patch(id as Id<"pages">, { trashed: false });
@@ -331,10 +367,14 @@ export const restore = mutation({
 export const permanentlyDelete = mutation({
   args: { pageId: v.string() },
   handler: async (ctx, args) => {
-    const { userId } = await requireOwned(ctx, "pages", args.pageId as Id<"pages">);
-    const allPages = await ctx.db.query("pages").withIndex("by_user", (q) => q.eq("userId", userId)).collect();
+    const { userId, doc: page } = await requireWorkspaceAccess(ctx, "pages", args.pageId as Id<"pages">, { write: true });
+    const allPages = await collectScopedPages(ctx, userId, page.workspaceId);
     const ids = collectDescendantsFromDocs(allPages, args.pageId);
     for (const id of ids) {
+      // Snapshot cleanup is best-effort — only the viewer's own snapshots get
+      // deleted (snapshots are author-owned, no by_workspace index yet).
+      // Other members' snapshots become orphaned; session-2 snapshot scoping
+      // will fix the leak.
       const snaps = await ctx.db.query("snapshots").withIndex("by_user_page", (q) => q.eq("userId", userId).eq("pageId", id)).collect();
       for (const s of snaps) await ctx.db.delete(s._id);
       await ctx.db.delete(id as Id<"pages">);
@@ -350,7 +390,7 @@ export const permanentlyDelete = mutation({
 export const duplicate = mutation({
   args: { pageId: v.string() },
   handler: async (ctx, args) => {
-    const { userId, doc: src } = await requireOwned(ctx, "pages", args.pageId as Id<"pages">);
+    const { userId, doc: src } = await requireWorkspaceAccess(ctx, "pages", args.pageId as Id<"pages">, { write: true });
     await rateLimit(ctx, userId, RATE_LIMITS.pagesDuplicate);
     const now = Date.now();
     const cloned = JSON.parse(JSON.stringify(src.blocks)) as BlockLike[];
@@ -389,7 +429,7 @@ export const addBlock = mutation({
     init: v.optional(v.any()),
   },
   handler: async (ctx, args) => {
-    const { userId, doc: page } = await requireOwned(ctx, "pages", args.pageId as Id<"pages">);
+    const { userId, doc: page } = await requireWorkspaceAccess(ctx, "pages", args.pageId as Id<"pages">, { write: true });
     const newId = uid();
     const blocks = [...page.blocks];
     blocks.splice(args.afterIndex + 1, 0, {
@@ -415,7 +455,7 @@ export const addBlock = mutation({
 export const updateBlock = mutation({
   args: { pageId: v.string(), blockId: v.string(), patch: v.any() },
   handler: async (ctx, args) => {
-    const { userId, doc: page } = await requireOwned(ctx, "pages", args.pageId as Id<"pages">);
+    const { userId, doc: page } = await requireWorkspaceAccess(ctx, "pages", args.pageId as Id<"pages">, { write: true });
     const blocks = page.blocks.map((b: any) =>
       b.id === args.blockId ? { ...b, ...args.patch } : b
     );
@@ -437,7 +477,7 @@ export const updateBlock = mutation({
 export const deleteBlock = mutation({
   args: { pageId: v.string(), blockId: v.string() },
   handler: async (ctx, args) => {
-    const { userId, doc: page } = await requireOwned(ctx, "pages", args.pageId as Id<"pages">);
+    const { userId, doc: page } = await requireWorkspaceAccess(ctx, "pages", args.pageId as Id<"pages">, { write: true });
     let blocks = page.blocks.filter((b: any) => b.id !== args.blockId);
     if (!blocks.length) blocks = [emptyBlock()];
     await ctx.db.patch(args.pageId as Id<"pages">, {
@@ -454,7 +494,7 @@ export const deleteBlock = mutation({
 export const reorderBlocks = mutation({
   args: { pageId: v.string(), orderedIds: v.array(v.string()) },
   handler: async (ctx, args) => {
-    const { userId, doc: page } = await requireOwned(ctx, "pages", args.pageId as Id<"pages">);
+    const { userId, doc: page } = await requireWorkspaceAccess(ctx, "pages", args.pageId as Id<"pages">, { write: true });
     const map = new Map(page.blocks.map((b: any) => [b.id, b]));
     const blocks = args.orderedIds.map((id) => map.get(id)).filter(Boolean);
     await ctx.db.patch(args.pageId as Id<"pages">, {
