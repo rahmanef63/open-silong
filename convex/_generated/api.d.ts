@@ -31,6 +31,7 @@ import type * as feedback_mutations from "../feedback/mutations.js";
 import type * as feedback_queries from "../feedback/queries.js";
 import type * as forms_public from "../forms/public.js";
 import type * as http from "../http.js";
+import type * as invites from "../invites.js";
 import type * as import_internal from "../import/internal.js";
 import type * as import_markdown from "../import/markdown.js";
 import type * as import_workspace from "../import/workspace.js";
@@ -90,6 +91,7 @@ declare const fullApi: ApiFromModules<{
   "feedback/queries": typeof feedback_queries;
   "forms/public": typeof forms_public;
   http: typeof http;
+  invites: typeof invites;
   "import/internal": typeof import_internal;
   "import/markdown": typeof import_markdown;
   "import/workspace": typeof import_workspace;
