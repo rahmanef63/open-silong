@@ -52,6 +52,16 @@ interface StoreCtx {
   updatePreferences: (patch: Partial<Preferences>) => void;
   workspace: Workspace;
   updateWorkspace: (patch: Partial<Workspace>) => void;
+  /** All workspaces the viewer is a member of (incl. personal). */
+  workspaces: Workspace[];
+  /** Switch the active workspace; triggers a refetch of pages/databases. */
+  setActiveWorkspace: (workspaceId: string) => Promise<void>;
+  /** Create a new (non-personal) workspace and switch to it. */
+  createWorkspace: (name: string, emoji?: string) => Promise<string>;
+  /** Owner-only delete; refused for personal workspace. */
+  deleteWorkspace: (workspaceId: string) => Promise<void>;
+  /** Member leaves; refused for owner. */
+  leaveWorkspace: (workspaceId: string) => Promise<void>;
   pages: Page[];
   recents: string[];
   getPage: (id: string) => Page | undefined;
@@ -129,13 +139,19 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const rawPages = rawPagesQ ?? [];
   const rawDatabases = rawDatabasesQ ?? [];
   const rawPrefs = useQuery(api.preferences.get);
-  const rawWorkspace = useQuery(api.workspaces.get);
+  const rawWorkspace = useQuery(api.workspaces.getActive);
+  const rawWorkspaces = useQuery(api.workspaces.list) ?? [];
   const rawRecents = useQuery(api.recents.get) ?? [];
   const isInitialLoading = rawPagesQ === undefined || rawDatabasesQ === undefined;
 
   // Cross-cutting mutations (kept here because used in user/workspace updates)
   const mutUpsertWorkspace = useMutation(api.workspaces.upsert);
   const mutUpsertPrefs = useMutation(api.preferences.upsert);
+  const mutSetActiveWs = useMutation(api.workspaces.setActive);
+  const mutCreateWs = useMutation(api.workspaces.create);
+  const mutDeleteWs = useMutation(api.workspaces.remove);
+  const mutLeaveWs = useMutation(api.workspaces.leave);
+  const mutEnsureBootstrap = useMutation(api.workspaces.ensureBootstrapped);
 
   // Derived collections
   const pages: Page[] = useMemo(() => rawPages.map(toPage), [rawPages]);
@@ -159,7 +175,22 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     id: rawWorkspace?._id ?? "local",
     name: rawWorkspace?.name ?? "My Workspace",
     emoji: rawWorkspace?.emoji ?? "🏠",
+    slug: rawWorkspace?.slug,
+    isPersonal: rawWorkspace?.isPersonal,
+    role: rawWorkspace?.role as Workspace["role"],
   }), [rawWorkspace]);
+
+  const workspaces: Workspace[] = useMemo(
+    () => rawWorkspaces.map((w) => ({
+      id: w._id,
+      name: w.name,
+      emoji: w.emoji,
+      slug: w.slug,
+      isPersonal: w.isPersonal,
+      role: w.role as Workspace["role"],
+    })),
+    [rawWorkspaces],
+  );
 
   const me = useQuery(api.users.getMe);
   const [user, setUser] = useState<UserProfile>(seedUser);
@@ -223,6 +254,32 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [workspace, mutUpsertWorkspace],
   );
 
+  const setActiveWorkspace = useCallback(async (workspaceId: string) => {
+    await mutSetActiveWs({ workspaceId: workspaceId as any });
+  }, [mutSetActiveWs]);
+
+  const createWorkspace = useCallback(async (name: string, emoji?: string) => {
+    const id = await mutCreateWs({ name, emoji });
+    return String(id);
+  }, [mutCreateWs]);
+
+  const deleteWorkspace = useCallback(async (workspaceId: string) => {
+    await mutDeleteWs({ workspaceId: workspaceId as any });
+  }, [mutDeleteWs]);
+
+  const leaveWorkspace = useCallback(async (workspaceId: string) => {
+    await mutLeaveWs({ workspaceId: workspaceId as any });
+  }, [mutLeaveWs]);
+
+  // First-load bootstrap: ensure user has a personal workspace + active selection
+  // before any pages.list query runs against an empty active. Cheap idempotent
+  // mutation; runs once per mount when authed.
+  useEffect(() => {
+    if (!me) return;
+    if (rawWorkspace !== null) return; // already have an active
+    void mutEnsureBootstrap({});
+  }, [me, rawWorkspace, mutEnsureBootstrap]);
+
   const signOut = useCallback(() => { authSignOut(); }, [authSignOut]);
 
   const value: StoreCtx = useMemo(
@@ -230,6 +287,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       user, updateUser,
       preferences, updatePreferences,
       workspace, updateWorkspace,
+      workspaces, setActiveWorkspace, createWorkspace, deleteWorkspace, leaveWorkspace,
       pages, recents,
       ...pageActions,
       saving: false,
@@ -247,6 +305,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }),
     [
       user, updateUser, preferences, updatePreferences, workspace, updateWorkspace,
+      workspaces, setActiveWorkspace, createWorkspace, deleteWorkspace, leaveWorkspace,
       pages, recents, pageActions, isInitialLoading,
       databases, trashedDatabases, databaseActions,
       snapshotsApi, history, signOut,

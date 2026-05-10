@@ -18,6 +18,7 @@ import { useDebouncedCommit } from "@/shared/hooks/useDebouncedCommit";
 import { downloadFile, pickFile } from "@/shared/lib/markdown";
 import { reportError } from "@/shared/lib/error";
 import { McpTokensSection } from "./McpTokensSection";
+import { WorkspacesSection } from "./WorkspacesSection";
 
 const THEME_OPTIONS = [
   ["light", "Light"], ["dark", "Dark"], ["system", "System"],
@@ -118,7 +119,11 @@ export default function SettingsPage() {
         </div>
       </header>
 
-      <Section title="Workspace">
+      <Section title="Workspaces">
+        <WorkspacesSection />
+      </Section>
+
+      <Section title="Current workspace">
         <Field label="Workspace name" htmlFor={wsNameId}>
           <input
             id={wsNameId}
