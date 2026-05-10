@@ -6,6 +6,7 @@ import { api } from "@convex/_generated/api";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/shared/ui/dialog";
 import { Button } from "@/shared/ui/button";
 import { useInstantiateTemplate } from "../hooks/useInstantiateTemplate";
+import { useAsyncError } from "@/shared/hooks/useAsyncError";
 import { DynamicIcon } from "@/slices/icon-picker";
 
 interface Props {
@@ -18,6 +19,7 @@ interface Props {
 export function TemplateGalleryDialog({ open, onOpenChange, parentPageId, onInstantiated }: Props) {
   const list = useQuery(api.templates.queries.listPublished);
   const instantiate = useInstantiateTemplate();
+  const inst = useAsyncError("templateGallery.instantiate");
   const [pending, setPending] = useState<string | null>(null);
 
   const grouped = useMemo(() => {
@@ -54,14 +56,13 @@ export function TemplateGalleryDialog({ open, onOpenChange, parentPageId, onInst
                     className="flex items-start gap-3 rounded-lg border border-border bg-card p-3 text-left hover:bg-accent disabled:opacity-50 transition"
                     onClick={async () => {
                       setPending(String(tpl._id));
-                      try {
-                        const r = await instantiate(tpl._id, parentPageId ?? null);
+                      const r = await inst.execute(async () =>
+                        instantiate(tpl._id, parentPageId ?? null),
+                      );
+                      setPending(null);
+                      if (r) {
                         onOpenChange(false);
                         onInstantiated?.(r.rootPageId);
-                      } catch (e) {
-                        alert((e as Error).message);
-                      } finally {
-                        setPending(null);
                       }
                     }}
                   >

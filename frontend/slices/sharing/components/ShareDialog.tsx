@@ -10,7 +10,6 @@ import { Copy, Globe, Lock, ExternalLink, Check } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { toast } from "sonner";
 import { useAsyncError } from "@/shared/hooks/useAsyncError";
-import { reportError } from "@/shared/lib/error";
 
 export function ShareDialog({ open, onOpenChange, page }: { open: boolean; onOpenChange: (o: boolean) => void; page: Page }) {
   const { togglePublic } = useStore();
@@ -19,6 +18,7 @@ export function ShareDialog({ open, onOpenChange, page }: { open: boolean; onOpe
   const [copied, setCopied] = useState(false);
   const [slugDraft, setSlugDraft] = useState(page.shareSlug ?? "");
   const slugSave = useAsyncError("ShareDialog.setSlug");
+  const indexableSave = useAsyncError("ShareDialog.indexable");
   const slugForUrl = page.shareSlug || page.id;
   const url = `${window.location.origin}/share/${slugForUrl}`;
 
@@ -118,9 +118,11 @@ export function ShareDialog({ open, onOpenChange, page }: { open: boolean; onOpe
               </div>
               <Switch
                 checked={!!page.shareIndexable}
-                onCheckedChange={async (v) => {
-                  try { await setShareIndexable({ pageId: page.id, indexable: v }); }
-                  catch (err) { const safe = reportError("ShareDialog.indexable", err); toast.error(safe.message); }
+                disabled={indexableSave.pending}
+                onCheckedChange={(v) => {
+                  void indexableSave.execute(async () => {
+                    await setShareIndexable({ pageId: page.id, indexable: v });
+                  });
                 }}
               />
             </div>
