@@ -6,6 +6,7 @@ core. Read in order:
 | Doc | Audience |
 |---|---|
 | `conventions.md` | Anyone adding a Convex fn — read first |
+| `workspaces.md` | Multi-workspace foundation, switcher, member roles |
 | `pages.md` | Reading / mutating page docs |
 | `databases.md` | Reading / mutating database schema, properties, views, rows |
 | `blocks.md` | Block model, registry, nesting rules, RT model, slash menu |

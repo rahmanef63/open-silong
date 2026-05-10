@@ -56,6 +56,18 @@ new commits, never amend.
   permission check before any DB write. Prefer
   `requireOwned(ctx, table, id)` from `convex/_shared/auth.ts` over the
   raw `getAuthUserId + db.get + userId-compare` triplet.
+- Multi-workspace (cycle 7, session 1): every authed user has 1+
+  workspaces. `convex/_shared/workspace.ts` is the gate —
+  `getActiveWorkspaceMutation` / `readActiveWorkspace` resolve the
+  per-user `userProfiles.activeWorkspaceId`; `requireWorkspaceMember`
+  enforces membership. New entity rows MUST stamp `workspaceId` at
+  insert (already done for pages, databases, db rows). Reads filter
+  through `rowInActiveWorkspace(row, active, userId)` — explicit match
+  OR row has no workspaceId AND active is the user's personal AND
+  row.userId === viewer (legacy data passthrough). Sessions 2–5 will
+  scope remaining tables (snapshots/recents/notifications/files/
+  comments) and add URL slug routing + invites + per-page grants +
+  presence. Roadmap: `docs/audit/2026-05-10-multiworkspace-roadmap.md`.
 - Hot mutations gated through `rateLimit(ctx, userId, { scope, max,
   windowMs })` from `convex/_shared/rateLimit.ts`. Daily prune cron in
   `convex/maintenance.ts` keeps the backing table small.
