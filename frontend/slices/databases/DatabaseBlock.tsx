@@ -7,7 +7,7 @@ import {
   Table2, LayoutGrid, List as ListIcon, Image, Calendar as CalendarIcon, Clock,
   Plus, Search, MoreHorizontal, Trash2, Eye, EyeOff, ArrowUpDown, Filter, Settings2,
   Check, Pencil, BarChart3, LayoutDashboard, Rss, Map as MapIcon, ClipboardList, Copy,
-  Maximize2,
+  Maximize2, Link2,
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
@@ -147,6 +147,25 @@ export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block 
     return !(only.type === "database" && only.databaseId === db?.id);
   })();
 
+  // "Linked" = this inline embed isn't the database's only host. Counts
+  // host blocks across every page (cheap on small workspaces; cost grows
+  // linearly with page count, fine for v1).
+  const isLinked = (() => {
+    if (!isInline || !db) return false;
+    let hosts = 0;
+    for (const p of pages) {
+      if (p.trashed) continue;
+      const blocks = p.blocks ?? [];
+      for (const b of blocks) {
+        if (b.type === "database" && b.databaseId === db.id) {
+          hosts++;
+          if (hosts > 1) return true;
+        }
+      }
+    }
+    return false;
+  })();
+
   async function openAsPage() {
     if (!db || openingAsPage) return;
     setOpeningAsPage(true);
@@ -213,6 +232,14 @@ export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block 
             >
               <Maximize2 className="h-3.5 w-3.5" />
             </button>
+          )}
+          {isLinked && (
+            <span
+              title="This database is also embedded on other pages — edits sync everywhere."
+              className="ml-1 inline-flex items-center gap-1 rounded-full border border-brand/30 bg-brand/5 px-1.5 py-0.5 text-[10px] font-medium text-brand"
+            >
+              <Link2 className="h-3 w-3" /> linked
+            </span>
           )}
         </div>
         <div className="flex items-center gap-1 max-w-full overflow-x-auto scrollbar-thin">

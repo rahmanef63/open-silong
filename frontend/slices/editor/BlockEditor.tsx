@@ -13,6 +13,7 @@ import { ColumnBlockEditor } from "./ColumnBlockEditor";
 import { BlockShell } from "./blocks/BlockShell";
 import { BlockControls } from "./blocks/BlockControls";
 import { BlockBody } from "./blocks/BlockBody";
+import { DatabasePicker } from "./blocks/DatabasePicker";
 import { ToggleBlock } from "./blocks/ToggleBlock";
 import { getBlockRenderer } from "./blocks/registry";
 import { MARKDOWN_TRIGGERS } from "./lib/markdownTriggers";
@@ -44,6 +45,7 @@ function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerR
   const [slashOpen, setSlashOpen] = useState(false);
   const [slashQuery, setSlashQuery] = useState("");
   const [askOpen, setAskOpen] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const ref = useRef<HTMLElement | null>(null);
   const composingRef = useRef(false);
   const history = useBlockHistory(block.text);
@@ -398,9 +400,25 @@ function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerR
       />
       {slashOpen && (
         <div className="relative pl-7">
-          <SlashMenu query={slashQuery} onSelect={onSlashSelect} onClose={() => setSlashOpen(false)} />
+          <SlashMenu
+            query={slashQuery}
+            onSelect={onSlashSelect}
+            onClose={() => setSlashOpen(false)}
+            onSelectLinkedDatabase={() => {
+              setSlashOpen(false);
+              setPickerOpen(true);
+            }}
+          />
         </div>
       )}
+      <DatabasePicker
+        open={pickerOpen}
+        onOpenChange={setPickerOpen}
+        onPick={(databaseId) => {
+          setBlockType(pageId, block.id, "database");
+          updateBlock(pageId, block.id, { text: "", databaseId });
+        }}
+      />
     </BlockShell>
   );
 }

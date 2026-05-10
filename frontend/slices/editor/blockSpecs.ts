@@ -34,7 +34,7 @@ export const BLOCK_SPECS: BlockSpec[] = [
   { type: "image", label: "Image", hint: "Embed an image from a URL", icon: Image, keywords: ["image", "img", "photo", "picture", "url"] },
   { type: "divider", label: "Divider", hint: "Visual separator", icon: Minus, keywords: ["divider", "hr"] },
   { type: "page", label: "Page", hint: "Embed or create a sub-page", icon: FileText, keywords: ["page", "subpage", "doc"] },
-  { type: "database", label: "Database", hint: "Inline database with multiple views", icon: Database, keywords: ["database", "db", "kanban", "board"] },
+  { type: "database", label: "Database — new", hint: "Empty inline database with multiple views", icon: Database, keywords: ["database", "db", "new", "kanban", "board"] },
   { type: "table", label: "Simple table", hint: "Plain table — convert to database later", icon: Table, keywords: ["table", "grid", "spreadsheet", "rows", "columns"] },
   { type: "embed", label: "Embed", hint: "YouTube · Vimeo · Loom · Figma · CodePen · Spotify", icon: Tv2, keywords: ["embed", "iframe", "video", "youtube", "vimeo", "loom", "figma", "codepen", "spotify"] },
   { type: "button", label: "Button", hint: "Call-to-action button → URL or page", icon: MousePointer, keywords: ["button", "cta", "link", "action"] },
