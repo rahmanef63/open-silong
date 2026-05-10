@@ -110,6 +110,9 @@ export interface Workspace {
   id: string;
   name: string;
   emoji: string;
+  slug?: string;
+  isPersonal?: boolean;
+  role?: "owner" | "editor" | "viewer";
 }
 
 export type ThemePref = "light" | "dark" | "system";
