@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronsUpDown, Plus, Pencil, Check, LogOut, Trash2 } from "lucide-react";
+import { ChevronsUpDown, Plus, Pencil, Check, LogOut, Trash2, Users } from "lucide-react";
 import { useStore } from "@/shared/lib/store";
 import { useAsyncError } from "@/shared/hooks/useAsyncError";
 import {
@@ -25,8 +25,8 @@ import {
 } from "@/shared/ui/dialog";
 import { Input } from "@/shared/ui/input";
 import { Button } from "@/shared/ui/button";
-
-const COMMON_EMOJI = ["📓", "🚀", "🎨", "💼", "📚", "🧪", "🌱", "🔥", "🦊", "🪐", "🏠", "📁"];
+import { IconPickerPopover, DynamicIcon } from "@/slices/icon-picker";
+import { MembersDialog } from "@/slices/workspace-members";
 
 export function WorkspaceSwitcher() {
   const {
@@ -40,6 +40,7 @@ export function WorkspaceSwitcher() {
   } = useStore();
   const [editOpen, setEditOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
+  const [membersOpen, setMembersOpen] = useState(false);
   const [draftName, setDraftName] = useState(workspace.name);
   const [draftEmoji, setDraftEmoji] = useState(workspace.emoji);
   const [newName, setNewName] = useState("");
@@ -117,7 +118,7 @@ export function WorkspaceSwitcher() {
                 className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
               >
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-brand/15 text-base">
-                  {workspace.emoji}
+                  <DynamicIcon value={workspace.emoji} className="text-base" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
                   <span className="truncate font-semibold">{workspace.name}</span>
@@ -147,7 +148,7 @@ export function WorkspaceSwitcher() {
                     onSelect={() => { void onPick(w.id); }}
                   >
                     <div className="flex size-7 items-center justify-center rounded-md bg-brand/15 text-sm">
-                      {w.emoji}
+                      <DynamicIcon value={w.emoji} className="text-sm" />
                     </div>
                     <div className="grid flex-1 text-left text-sm leading-tight">
                       <span className="truncate font-medium">{w.name}</span>
@@ -172,6 +173,14 @@ export function WorkspaceSwitcher() {
                     <Pencil className="size-3.5" />
                   </div>
                   <span className="font-medium">Rename current…</span>
+                </DropdownMenuItem>
+              )}
+              {isOwner && (
+                <DropdownMenuItem className="gap-2 p-2" onSelect={() => setMembersOpen(true)}>
+                  <div className="flex size-6 items-center justify-center rounded-md border bg-background">
+                    <Users className="size-3.5" />
+                  </div>
+                  <span className="font-medium">Members &amp; invites…</span>
                 </DropdownMenuItem>
               )}
               {canDelete && (
@@ -207,34 +216,28 @@ export function WorkspaceSwitcher() {
             <DialogTitle>Rename workspace</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Emoji</label>
-              <div className="flex flex-wrap gap-1.5">
-                {COMMON_EMOJI.map((e) => (
+            <div className="flex items-end gap-3">
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Icon</label>
+                <IconPickerPopover value={draftEmoji} onChange={setDraftEmoji}>
                   <button
-                    key={e}
                     type="button"
-                    onClick={() => setDraftEmoji(e)}
-                    className={`flex size-9 items-center justify-center rounded-md border text-lg transition ${
-                      draftEmoji === e ? "border-brand bg-brand/10" : "border-border hover:bg-accent"
-                    }`}
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-border text-2xl hover:bg-accent transition"
                   >
-                    {e}
+                    <DynamicIcon value={draftEmoji} />
                   </button>
-                ))}
+                </IconPickerPopover>
               </div>
-            </div>
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Name</label>
-              <Input
-                autoFocus
-                value={draftName}
-                onChange={(e) => setDraftName(e.target.value)}
-                placeholder="My workspace"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") save();
-                }}
-              />
+              <div className="flex-1">
+                <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Name</label>
+                <Input
+                  autoFocus
+                  value={draftName}
+                  onChange={(e) => setDraftName(e.target.value)}
+                  placeholder="My workspace"
+                  onKeyDown={(e) => { if (e.key === "Enter") save(); }}
+                />
+              </div>
             </div>
           </div>
           <DialogFooter>
@@ -254,32 +257,28 @@ export function WorkspaceSwitcher() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Emoji</label>
-              <div className="flex flex-wrap gap-1.5">
-                {COMMON_EMOJI.map((e) => (
+            <div className="flex items-end gap-3">
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Icon</label>
+                <IconPickerPopover value={newEmoji} onChange={setNewEmoji}>
                   <button
-                    key={e}
                     type="button"
-                    onClick={() => setNewEmoji(e)}
-                    className={`flex size-9 items-center justify-center rounded-md border text-lg transition ${
-                      newEmoji === e ? "border-brand bg-brand/10" : "border-border hover:bg-accent"
-                    }`}
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-border text-2xl hover:bg-accent transition"
                   >
-                    {e}
+                    <DynamicIcon value={newEmoji} />
                   </button>
-                ))}
+                </IconPickerPopover>
               </div>
-            </div>
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Name</label>
-              <Input
-                autoFocus
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                placeholder="Acme team"
-                onKeyDown={(e) => { if (e.key === "Enter") void submitCreate(); }}
-              />
+              <div className="flex-1">
+                <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Name</label>
+                <Input
+                  autoFocus
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  placeholder="Acme team"
+                  onKeyDown={(e) => { if (e.key === "Enter") void submitCreate(); }}
+                />
+              </div>
             </div>
           </div>
           <DialogFooter>
@@ -290,6 +289,8 @@ export function WorkspaceSwitcher() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <MembersDialog open={membersOpen} onOpenChange={setMembersOpen} workspace={workspace} />
     </>
   );
 }

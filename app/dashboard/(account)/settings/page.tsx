@@ -6,12 +6,11 @@ import { useMutation } from "convex/react";
 import { toast } from "sonner";
 import { api } from "@convex/_generated/api";
 import { useStore } from "@/shared/lib/store";
-import { cn } from "@/shared/lib/utils";
 import {
   LandingView, PageSort, SidebarDensity, ThemePref, EditorBehavior,
 } from "@/shared/types/domain";
 import { ThemePicker } from "@/slices/theme-presets";
-import { WORKSPACE_EMOJIS } from "@/shared/constants/icons";
+import { IconPickerPopover, DynamicIcon } from "@/slices/icon-picker";
 import { Field } from "@/shared/components/forms/Field";
 import { Choice } from "@/shared/components/forms/Choice";
 import { useDebouncedCommit } from "@/shared/hooks/useDebouncedCommit";
@@ -135,22 +134,18 @@ export default function SettingsPage() {
           />
         </Field>
         <Field label="Workspace icon">
-          <div className="flex flex-wrap gap-1">
-            {WORKSPACE_EMOJIS.map((i) => (
-              <button
-                key={i}
-                type="button"
-                aria-pressed={workspace.emoji === i}
-                onClick={() => updateWorkspace({ emoji: i })}
-                className={cn(
-                  "text-xl rounded p-2 hover:bg-accent transition-colors",
-                  workspace.emoji === i && "bg-accent ring-1 ring-ring",
-                )}
-              >
-                {i}
-              </button>
-            ))}
-          </div>
+          <IconPickerPopover
+            value={workspace.emoji}
+            onChange={(emoji) => updateWorkspace({ emoji })}
+          >
+            <button
+              type="button"
+              className="inline-flex h-12 w-12 items-center justify-center rounded-md border border-border text-2xl hover:bg-accent transition"
+              aria-label="Change workspace icon"
+            >
+              <DynamicIcon value={workspace.emoji} className="text-2xl" />
+            </button>
+          </IconPickerPopover>
         </Field>
       </Section>
 

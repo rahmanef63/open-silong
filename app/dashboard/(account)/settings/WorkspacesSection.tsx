@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, LogOut, Plus, Trash2 } from "lucide-react";
+import { Check, LogOut, Plus, Trash2, Users } from "lucide-react";
 import { useStore } from "@/shared/lib/store";
 import { useAsyncError } from "@/shared/hooks/useAsyncError";
 import { Button } from "@/shared/ui/button";
@@ -9,13 +9,15 @@ import { Input } from "@/shared/ui/input";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/shared/ui/dialog";
-
-const COMMON_EMOJI = ["📓", "🚀", "🎨", "💼", "📚", "🧪", "🌱", "🔥", "🦊", "🪐", "🏠", "📁"];
+import { IconPickerPopover, DynamicIcon } from "@/slices/icon-picker";
+import { MembersDialog } from "@/slices/workspace-members";
+import type { Workspace } from "@/shared/types/domain";
 
 export function WorkspacesSection() {
   const {
     workspace, workspaces, setActiveWorkspace, createWorkspace, deleteWorkspace, leaveWorkspace,
   } = useStore();
+  const [membersFor, setMembersFor] = useState<Workspace | null>(null);
   const switchOp = useAsyncError("settings.workspaces.switch");
   const createOp = useAsyncError("settings.workspaces.create");
   const deleteOp = useAsyncError("settings.workspaces.delete");
@@ -38,8 +40,9 @@ export function WorkspacesSection() {
     <div className="space-y-3">
       <p className="text-xs text-muted-foreground">
         Workspaces keep separate sets of pages and databases. Your personal
-        workspace cannot be deleted. Invite flow ships in a follow-up cycle —
-        for now every workspace has only its owner.
+        workspace cannot be deleted. Owners can mint single-use invite links
+        from the <strong>Members</strong> button — anyone with the link joins
+        the workspace as an editor or viewer.
       </p>
 
       <div className="space-y-2">
@@ -57,7 +60,7 @@ export function WorkspacesSection() {
               className="flex items-center gap-3 rounded-lg border border-border bg-card p-3"
             >
               <div className="flex size-10 items-center justify-center rounded-lg bg-brand/15 text-lg">
-                {w.emoji}
+                <DynamicIcon value={w.emoji} className="text-lg" />
               </div>
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm font-medium">{w.name}</div>
@@ -78,6 +81,16 @@ export function WorkspacesSection() {
                   onClick={() => void switchOp.execute(async () => { await setActiveWorkspace(w.id); })}
                 >
                   Switch
+                </Button>
+              )}
+              {isOwner && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setMembersFor(w)}
+                  title="Manage members + invites"
+                >
+                  <Users className="h-3.5 w-3.5" />
                 </Button>
               )}
               {canDelete && (
@@ -129,32 +142,28 @@ export function WorkspacesSection() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Emoji</label>
-              <div className="flex flex-wrap gap-1.5">
-                {COMMON_EMOJI.map((e) => (
+            <div className="flex items-end gap-3">
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Icon</label>
+                <IconPickerPopover value={newEmoji} onChange={setNewEmoji}>
                   <button
-                    key={e}
                     type="button"
-                    onClick={() => setNewEmoji(e)}
-                    className={`flex size-9 items-center justify-center rounded-md border text-lg transition ${
-                      newEmoji === e ? "border-brand bg-brand/10" : "border-border hover:bg-accent"
-                    }`}
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-border text-2xl hover:bg-accent transition"
                   >
-                    {e}
+                    <DynamicIcon value={newEmoji} />
                   </button>
-                ))}
+                </IconPickerPopover>
               </div>
-            </div>
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Name</label>
-              <Input
-                autoFocus
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                placeholder="Acme team"
-                onKeyDown={(e) => { if (e.key === "Enter") void submitCreate(); }}
-              />
+              <div className="flex-1">
+                <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Name</label>
+                <Input
+                  autoFocus
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  placeholder="Acme team"
+                  onKeyDown={(e) => { if (e.key === "Enter") void submitCreate(); }}
+                />
+              </div>
             </div>
           </div>
           <DialogFooter>
@@ -165,6 +174,14 @@ export function WorkspacesSection() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {membersFor && (
+        <MembersDialog
+          open={!!membersFor}
+          onOpenChange={(o) => { if (!o) setMembersFor(null); }}
+          workspace={membersFor}
+        />
+      )}
     </div>
   );
 }
