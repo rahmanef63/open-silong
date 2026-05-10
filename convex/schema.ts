@@ -5,14 +5,48 @@ import { authTables } from "@convex-dev/auth/server";
 export default defineSchema({
   ...authTables,
 
+  /** Workspace = collaboration boundary. Every user has exactly one
+   *  `isPersonal` workspace (auto-created at first auth). Additional
+   *  workspaces are user-created via `workspaces.create`. Membership
+   *  lives in `workspaceMembers`; `ownerId` is the original creator
+   *  (cannot be changed without ownership transfer flow). `userId`
+   *  retained as alias of `ownerId` for backward-compat with legacy
+   *  rows; new code reads `ownerId`. */
   workspaces: defineTable({
-    userId: v.id("users"),
+    userId: v.id("users"),                   // legacy alias for ownerId — retained
+    ownerId: v.optional(v.id("users")),      // canonical owner (filled by migration + new rows)
     name: v.string(),
     emoji: v.string(),
-  }).index("by_user", ["userId"]),
+    slug: v.optional(v.string()),            // url-safe (lowercase, digits, hyphens)
+    isPersonal: v.optional(v.boolean()),     // true for the user's auto-created workspace
+    createdAt: v.optional(v.number()),
+  })
+    .index("by_user", ["userId"])
+    .index("by_owner", ["ownerId"])
+    .index("by_slug", ["slug"]),
+
+  /** workspace ↔ user membership ledger. Auto-seeded with role:"owner"
+   *  for the workspace owner. Future invites add role:"editor"|"viewer"
+   *  rows. `by_user_workspace` lets `requireWorkspaceMember` resolve
+   *  in O(1). */
+  workspaceMembers: defineTable({
+    workspaceId: v.id("workspaces"),
+    userId: v.id("users"),
+    role: v.union(v.literal("owner"), v.literal("editor"), v.literal("viewer")),
+    invitedBy: v.optional(v.id("users")),
+    joinedAt: v.number(),
+  })
+    .index("by_workspace", ["workspaceId"])
+    .index("by_user", ["userId"])
+    .index("by_user_workspace", ["userId", "workspaceId"])
+    .index("by_workspace_user", ["workspaceId", "userId"]),
 
   pages: defineTable({
     userId: v.id("users"),
+    /** Workspace this page belongs to. Optional during transition —
+     *  legacy rows resolve to the owner's personal workspace via the
+     *  fallback rule in `requireWorkspaceMember`. */
+    workspaceId: v.optional(v.id("workspaces")),
     parentId: v.union(v.string(), v.null()),
     title: v.string(),
     icon: v.string(),
@@ -50,14 +84,17 @@ export default defineSchema({
   })
     .index("by_user", ["userId"])
     .index("by_user_parent", ["userId", "parentId"])
+    .index("by_workspace", ["workspaceId"])
+    .index("by_workspace_parent", ["workspaceId", "parentId"])
     .index("by_share_slug", ["shareSlug"])
     .searchIndex("search_content", {
       searchField: "searchText",
-      filterFields: ["userId", "trashed"],
+      filterFields: ["userId", "workspaceId", "trashed"],
     }),
 
   databases: defineTable({
     userId: v.id("users"),
+    workspaceId: v.optional(v.id("workspaces")),
     name: v.string(),
     icon: v.string(),
     properties: v.array(v.any()),
@@ -73,9 +110,10 @@ export default defineSchema({
     trashed: v.optional(v.boolean()),
   })
     .index("by_user", ["userId"])
+    .index("by_workspace", ["workspaceId"])
     .searchIndex("search_name", {
       searchField: "name",
-      filterFields: ["userId"],
+      filterFields: ["userId", "workspaceId"],
     }),
 
   preferences: defineTable({
@@ -90,6 +128,7 @@ export default defineSchema({
 
   snapshots: defineTable({
     userId: v.id("users"),
+    workspaceId: v.optional(v.id("workspaces")),
     pageId: v.string(),
     authorId: v.string(),
     authorName: v.string(),
@@ -101,16 +140,21 @@ export default defineSchema({
     rowProps: v.optional(v.any()),
   })
     .index("by_user", ["userId"])
-    .index("by_user_page", ["userId", "pageId"]),
+    .index("by_user_page", ["userId", "pageId"])
+    .index("by_workspace_page", ["workspaceId", "pageId"]),
 
   recents: defineTable({
     userId: v.id("users"),
+    workspaceId: v.optional(v.id("workspaces")),
     pageIds: v.array(v.string()),
-  }).index("by_user", ["userId"]),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_workspace", ["userId", "workspaceId"]),
 
   // === inbox ===
   notifications: defineTable({
     userId: v.id("users"),
+    workspaceId: v.optional(v.id("workspaces")),
     kind: v.string(),                       // "mention" | "comment" | "share" | "system" | "update"
     title: v.string(),
     body: v.optional(v.string()),
@@ -127,10 +171,12 @@ export default defineSchema({
   // === uploaded files (storage ownership ledger) ===
   files: defineTable({
     userId: v.id("users"),
+    workspaceId: v.optional(v.id("workspaces")),
     storageId: v.string(),
     createdAt: v.number(),
   })
     .index("by_user", ["userId"])
+    .index("by_workspace", ["workspaceId"])
     .index("by_storage", ["storageId"]),
 
   // === comments ===
@@ -158,6 +204,9 @@ export default defineSchema({
      *  client. Powers real DAU/WAU/MAU in the admin overview. Optional
      *  so existing rows don't need a backfill. */
     lastSeenAt: v.optional(v.number()),
+    /** Last selected workspace — drives `getActiveWorkspaceId`.
+     *  Falls back to user's personal workspace when null/missing. */
+    activeWorkspaceId: v.optional(v.id("workspaces")),
   })
     .index("by_user", ["userId"])
     .index("by_lastSeen", ["lastSeenAt"]),
