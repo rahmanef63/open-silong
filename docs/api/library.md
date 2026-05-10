@@ -46,20 +46,37 @@ in-tree today). 5 unit tests cover `pageSource` paths.
 
 ## Table columns
 
-`PagesTable.tsx` renders:
+`PagesTable.tsx` and `DatabasesTable.tsx` share an identical column
+shape — fixed widths via `<colgroup>` so a row in one tab lines up
+visually with a row in another:
 
 | Column | Visible | Source |
 |---|---|---|
-| ☐ checkbox | always | tab-level select-all in header |
-| Name | always | `<DynamicIcon>` + title (clickable → page) |
+| ☐ checkbox | always | tab-level select-all in header (both tables) |
+| Name | always | chevron toggle (page only) + `<DynamicIcon>` + title |
 | Created by | `md+` | `user.name ?? user.email ?? "You"` |
-| Source | `lg+` | `pageSource()` — "Root" or parent page/db (clickable) |
-| Last edited | `md+` | `formatRelTime(p.updatedAt)` |
-| Last visited | `xl+` | rank in `recents` (or "—") |
+| Source | `lg+` | `pageSource()` (page) / host page or "Root" (database) |
+| Last edited | `md+` | `formatRelTime(updatedAt)` |
+| ⋮ actions | always | per-row dropdown (Open / Rename / Favorite / Trash) |
 
-`DatabasesTable.tsx` renders the same shape minus checkboxes (no bulk
-ops on databases yet) plus a `Rows` column. Source is always "Root"
-for now — databases have no parent in the schema.
+The Name cell is the only column that diverges in content:
+
+- **Pages** — leading `ChevronRight` button (only enabled when the
+  page has subpages). Click expands inline child rows beneath, indented
+  by `depth × 16px` in the Name cell only — every other column stays
+  pixel-aligned. Subtitle "_N sub_" appears next to the title when
+  there are children. Recursive: child rows can themselves expand.
+  Children are pulled from `allPages` so e.g. a Favorites-tab parent
+  can still expand into its full subtree.
+- **Databases** — empty 5px chevron gutter (for column alignment) +
+  icon + title + "_N rows_" subtitle. No expansion.
+
+Database **Source** column resolves the host page via
+`pages.find(p => p.databaseHostFor?.includes(db.id))` — clickable when
+present, falls back to "Root" for loose databases.
+
+Inline rename (double-click title) and inline icon swap (click icon →
+`IconPickerPopover`) work on both pages and databases.
 
 ## Tab switcher
 
@@ -80,8 +97,9 @@ viewport, shown when `selected.size > 0`:
 - Clear selection
 
 All actions hit the existing `useStore()` mutations (`toggleFavorite`,
-`togglePublic`, `deletePage`) — no new Convex endpoint added. Bulk
-operates on pages only; the Databases tab does not select.
+`togglePublic`, `deletePage`) — no new Convex endpoint added. The
+Databases tab has its own selection set + `DbBulkActionBar` (trash
+only).
 
 ## Filter
 

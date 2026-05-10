@@ -196,7 +196,6 @@ export function LibraryView() {
                 pages={sectionByKey.get(k)?.pages ?? []}
                 allPages={pages}
                 databases={databases}
-                recentIds={recents}
                 selected={selected}
                 onToggle={toggle}
                 onToggleAll={toggleMany}
@@ -211,10 +210,12 @@ export function LibraryView() {
           <TabsContent value="databases" className="pb-32">
             <DatabasesTable
               databases={filteredDatabases}
+              pages={pages}
               selected={selectedDbs}
               onToggle={toggleDb}
               onToggleAll={toggleManyDbs}
               onOpen={openDatabase}
+              onOpenSource={openSource}
               ownerLabel={ownerLabel}
               emptyHint={EMPTY_HINT.databases}
             />

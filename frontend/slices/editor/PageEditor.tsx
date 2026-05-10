@@ -61,7 +61,9 @@ export function PageEditor() {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
-  useEffect(() => { if (id && page) pushRecent(id); }, [id]);
+  // Deps include page?.id so the effect re-fires when the page query resolves
+  // after mount — otherwise the first hit never lands in recents.
+  useEffect(() => { if (id && page) pushRecent(id); }, [id, page?.id]);
 
   useEffect(() => {
     const scroll = () => {
