@@ -145,7 +145,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const isInitialLoading = rawPagesQ === undefined || rawDatabasesQ === undefined;
 
   // Cross-cutting mutations (kept here because used in user/workspace updates)
-  const mutUpsertWorkspace = useMutation(api.workspaces.upsert);
+  const mutRenameWs = useMutation(api.workspaces.rename);
+  const mutSetIconWs = useMutation(api.workspaces.setIcon);
   const mutUpsertPrefs = useMutation(api.preferences.upsert);
   const mutSetActiveWs = useMutation(api.workspaces.setActive);
   const mutCreateWs = useMutation(api.workspaces.create);
@@ -246,12 +247,22 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [mutUpsertPrefs],
   );
 
+  // Patches the *currently active* workspace by id — not "the personal
+  // workspace". Two thin per-field mutations (rename / setIcon) instead of
+  // one firehose so the convex auth gate (`requireWorkspaceMember` →
+  // owner-only) can throw cleanly per field.
   const updateWorkspace = useCallback(
     (patch: Partial<Workspace>) => {
-      const next = { ...workspace, ...patch };
-      mutUpsertWorkspace({ name: next.name, emoji: next.emoji });
+      if (!workspace.id || workspace.id === "local") return;
+      const wsId = workspace.id as any;
+      if (typeof patch.name === "string" && patch.name.trim() && patch.name !== workspace.name) {
+        void mutRenameWs({ workspaceId: wsId, name: patch.name.trim() });
+      }
+      if (typeof patch.emoji === "string" && patch.emoji && patch.emoji !== workspace.emoji) {
+        void mutSetIconWs({ workspaceId: wsId, emoji: patch.emoji });
+      }
     },
-    [workspace, mutUpsertWorkspace],
+    [workspace.id, workspace.name, workspace.emoji, mutRenameWs, mutSetIconWs],
   );
 
   const setActiveWorkspace = useCallback(async (workspaceId: string) => {
