@@ -73,12 +73,32 @@ against an unbootstrapped account.
 - Settings page: `app/dashboard/(account)/settings/WorkspacesSection.tsx`
   (row list mirroring the switcher).
 
+## Invites (session 1.5)
+
+Single-use base64url codes; 14-day expiry. Owner mints from
+WorkspaceSwitcher → "Members & invites…" or Settings → Workspaces
+row → Users icon. Recipient opens `/dashboard/invite/<code>` and
+clicks Accept. New `workspaceInvites` table indexed by `by_code` +
+`by_workspace`.
+
+| Function                                       | Kind     | Notes |
+|------------------------------------------------|----------|-------|
+| `invites.create({workspaceId, role})`          | mutation | Owner-only; returns `{id, code}`. Rate-limited 30/min. |
+| `invites.lookup({code})`                       | query    | Anonymous-readable; returns `{status, workspaceName?, workspaceEmoji?, role?}`. |
+| `invites.accept({code})`                       | mutation | Idempotent; adds membership, marks `acceptedAt`, switches active. |
+| `invites.revoke({inviteId})`                   | mutation | Owner-only; deletes pending invite. |
+| `invites.listForWorkspace({workspaceId})`      | query    | Owner-only; pending + accepted history with expiry flag. |
+
+`MembersDialog` (`frontend/slices/workspace-members/`) is the surface
+— members roster (owner sees emails) + pending invites + role picker
+(editor/viewer) + create/copy/revoke.
+
 ## What's NOT scoped yet (sessions 2+)
 
 - URL slug routing (`/dashboard/[wsSlug]/...`).
-- Snapshots / recents / notifications / files / comments queries
-  (filter only by `userId` today). Safe because each workspace has
-  exactly its owner as a member — no cross-workspace data
-  leakage path exists until session 3 ships invites.
+- Snapshots / notifications / files / comments queries (filter only
+  by `userId` today). Recents was scoped in session 1.5. The rest
+  are now leaking across invite-shared workspaces — must scope
+  before invites are real-world ready.
 - Per-page collaborator grants (session 4).
 - Presence cursors (session 5).
