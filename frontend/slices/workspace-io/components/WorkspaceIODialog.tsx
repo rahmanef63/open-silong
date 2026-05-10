@@ -16,7 +16,7 @@ import { Label } from "@/shared/ui/label";
 import { Switch } from "@/shared/ui/switch";
 import { Input } from "@/shared/ui/input";
 import { downloadFile, pickFile } from "@/shared/lib/markdown";
-import { reportError } from "@/shared/lib/error";
+import { useAsyncError } from "@/shared/hooks/useAsyncError";
 import { useFileUpload } from "@/slices/files/hooks/useFileUpload";
 import { parseFileRef } from "@/slices/files/lib/parse";
 import { buildSelectionExport } from "../lib/buildExport";
@@ -89,20 +89,19 @@ export function WorkspaceIODialog({
 
   // ─── JSON import state ──────────────────────────────────────
   const [dragOverJson, setDragOverJson] = useState(false);
-  const [importingJson, setImportingJson] = useState(false);
+  const jsonImport = useAsyncError("workspaceImport");
 
   // ─── ZIP import state ───────────────────────────────────────
   const [zipFile, setZipFile] = useState<File | null>(null);
-  const [zipPending, setZipPending] = useState(false);
-  const [zipError, setZipError] = useState<string | null>(null);
   const [zipSummary, setZipSummary] = useState<ZipSummary | null>(null);
+  const zipImport = useAsyncError("workspaceImport.zip");
   const zipInputRef = useRef<HTMLInputElement>(null);
   const [dragOverZip, setDragOverZip] = useState(false);
 
   function resetZip() {
     setZipFile(null);
-    setZipError(null);
     setZipSummary(null);
+    zipImport.clear();
     if (zipInputRef.current) zipInputRef.current.value = "";
   }
 
@@ -179,14 +178,13 @@ export function WorkspaceIODialog({
 
   // ─── JSON import handlers ───────────────────────────────────
   async function runJsonImport(file: File) {
-    if (importingJson) return;
+    if (jsonImport.pending) return;
     if (!file.name.endsWith(".json") && file.type !== "application/json") {
       toast.error("Pick a .json file"); return;
     }
     if (file.size > 8 * 1024 * 1024) { toast.error("File too large (max 8 MB)"); return; }
     if (!confirm(`Import "${file.name}"? Existing pages and databases stay; the import is additive.`)) return;
-    setImportingJson(true);
-    try {
+    const ok = await jsonImport.execute(async () => {
       const text = await file.text();
       const res = await importJson({ json: text });
       const extra = [
@@ -196,13 +194,9 @@ export function WorkspaceIODialog({
       toast.success(
         `Imported ${res.pages} pages, ${res.databases} databases${extra ? ` (${extra})` : ""}`,
       );
-      handleClose(false);
-    } catch (err) {
-      const safe = reportError("workspaceImport", err);
-      toast.error(safe.message);
-    } finally {
-      setImportingJson(false);
-    }
+      return res;
+    });
+    if (ok) handleClose(false);
   }
   function pickJson() { pickFile("application/json,.json").then((f) => f && runJsonImport(f)); }
   function dropJson(e: React.DragEvent) {
@@ -215,19 +209,15 @@ export function WorkspaceIODialog({
   // ─── ZIP import handlers ────────────────────────────────────
   async function runZipImport() {
     if (!zipFile) return;
-    setZipError(null); setZipSummary(null); setZipPending(true);
-    try {
+    setZipSummary(null);
+    const result = await zipImport.execute(async () => {
       const ref = await upload(zipFile);
       const parsed = parseFileRef(ref);
       const storageId = parsed.kind === "storage" ? parsed.storageId : undefined;
       if (!storageId) throw new Error("Upload tidak menghasilkan storageId");
-      const result = await importZip({ storageId, parentId: zipParentId });
-      setZipSummary(result);
-    } catch (e) {
-      setZipError((e as Error).message);
-    } finally {
-      setZipPending(false);
-    }
+      return await importZip({ storageId, parentId: zipParentId });
+    });
+    if (result) setZipSummary(result);
   }
   function dropZip(e: React.DragEvent) {
     e.preventDefault();
@@ -235,7 +225,7 @@ export function WorkspaceIODialog({
     const file = e.dataTransfer.files?.[0];
     if (file) setZipFile(file);
   }
-  const zipBusy = zipPending || uploading;
+  const zipBusy = zipImport.pending || uploading;
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -366,16 +356,16 @@ export function WorkspaceIODialog({
               className={cn(
                 "rounded-lg border-2 border-dashed p-10 text-center cursor-pointer transition",
                 dragOverJson ? "border-brand bg-brand/10" : "border-border bg-card hover:bg-accent",
-                importingJson && "pointer-events-none opacity-60",
+                jsonImport.pending && "pointer-events-none opacity-60",
               )}
             >
-              {importingJson ? (
+              {jsonImport.pending ? (
                 <Loader2 className="mx-auto h-8 w-8 animate-spin text-muted-foreground" />
               ) : (
                 <Upload className="mx-auto h-8 w-8 text-muted-foreground" />
               )}
               <p className="mt-2 text-sm font-medium">
-                {importingJson ? "Importing…" : dragOverJson ? "Drop to import" : "Drag a .json file here, or click to choose"}
+                {jsonImport.pending ? "Importing…" : dragOverJson ? "Drop to import" : "Drag a .json file here, or click to choose"}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
                 Accepts the workspace export shape. Cap: 8 MB · 500 pages · 50 databases.
@@ -433,9 +423,9 @@ export function WorkspaceIODialog({
                   )}
                 </div>
 
-                {zipError && (
+                {zipImport.error?.message && (
                   <div className="rounded border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive flex items-start gap-2">
-                    <AlertTriangle className="h-3.5 w-3.5 mt-0.5" /> {zipError}
+                    <AlertTriangle className="h-3.5 w-3.5 mt-0.5" /> {zipImport.error?.message}
                   </div>
                 )}
 
