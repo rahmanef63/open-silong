@@ -38,6 +38,8 @@ import type * as import_zip from "../import/zip.js";
 import type * as maintenance from "../maintenance.js";
 import type * as mcp_http from "../mcp/http.js";
 import type * as mcp_internal from "../mcp/internal.js";
+import type * as mcp_tokens from "../mcp/tokens.js";
+import type * as _shared_hash from "../_shared/hash.js";
 import type * as pages from "../pages.js";
 import type * as preferences from "../preferences.js";
 import type * as recents from "../recents.js";
@@ -95,6 +97,8 @@ declare const fullApi: ApiFromModules<{
   maintenance: typeof maintenance;
   "mcp/http": typeof mcp_http;
   "mcp/internal": typeof mcp_internal;
+  "mcp/tokens": typeof mcp_tokens;
+  "_shared/hash": typeof _shared_hash;
   pages: typeof pages;
 
   preferences: typeof preferences;
