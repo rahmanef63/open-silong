@@ -2,45 +2,70 @@
 
 Route: `/dashboard/library`. Slice: `frontend/slices/library/`.
 
-A Notion-canonical workspace browser: every page in the workspace
-grouped into 5 collapsible sections, each rendered as a sortable table
-with checkboxes for bulk operations.
+A Notion-canonical workspace browser: every page in the active
+workspace split into 5 tabs, each rendered as a sortable table with
+checkboxes for bulk operations.
 
-## Sections
+## Tabs
 
 | Key | Source | Rule |
 |---|---|---|
 | `recents` | `useStore().recents` | Last 20 visited (from per-user `recents` Convex table). |
-| `favorites` | `pages.filter(p => p.favorite)` | Star-toggled pages. |
-| `shared` | `pages.filter(p => p.isPublic)` | Pages with `isPublic === true` (publicly shared via slug). |
-| `private` | top-level non-public, non-trashed | `parentId === null && !p.isPublic`. |
-| `all` | every visible page sorted by `updatedAt` desc | The full catalog. |
+| `favorites` | `pages.filter(p => p.favorite)` | Star-toggled pages, sorted by `updatedAt` desc. |
+| `shared` | `pages.filter(p => p.isPublic)` | Pages with `isPublic === true`, sorted by `updatedAt` desc. |
+| `private` | top-level non-public | `parentId === null && !p.isPublic`, sorted by `updatedAt` desc. |
+| `databases` | `useStore().databases` | Every non-trashed database, sorted by `updatedAt` desc. |
 
 Trashed pages and database rows (`rowOfDatabaseId !== undefined`) are
-excluded from every section.
+excluded from the four page tabs.
 
 Pure splitter: `frontend/slices/library/lib/groupPages.ts:groupPagesForLibrary`
-— takes `{ pages, recentIds, recentLimit? }`, returns `LibrarySection[]`.
-10 invariant tests in `__tests__/groupPages.test.ts`.
+— takes `{ pages, recentIds, recentLimit? }`, returns `LibrarySection[]`
+(four buckets; the `databases` tab is handled separately by `LibraryView`
+since it draws from `databases`, not `pages`).
 
-`pageBreadcrumb(page, allPages, workspaceName?)` walks the parent
-chain (cycle-safe, depth-capped at 12) for the "Source" column.
+`pageSource(page, pages, databases)` is the resolver behind the
+**Source** column. It returns the immediate parent only (no breadcrumb
+walk):
+
+```ts
+{ kind: "root" | "page" | "database",
+  label: "Root" | parent.title | db.name,
+  icon?: parent.icon | db.icon,
+  targetId: parent.id | db.id | null }
+```
+
+- Top-level pages → `{ kind: "root", label: "Root", targetId: null }`.
+- Nested pages → the parent page (clickable, opens parent).
+- Database rows → the host database (clickable, navigates to its host
+  page).
+- Missing parent / missing db → falls back to `root` (never throws).
+
+`pageBreadcrumb` is retained for callers that need the full chain (none
+in-tree today). 5 unit tests cover `pageSource` paths.
 
 ## Table columns
 
-`SectionTable.tsx` renders:
+`PagesTable.tsx` renders:
 
 | Column | Visible | Source |
 |---|---|---|
-| ☐ checkbox | always | section-level select-all in header |
+| ☐ checkbox | always | tab-level select-all in header |
 | Name | always | `<DynamicIcon>` + title (clickable → page) |
 | Created by | `md+` | `user.name ?? user.email ?? "You"` |
-| Source | `lg+` | `pageBreadcrumb()` joined with " › " |
+| Source | `lg+` | `pageSource()` — "Root" or parent page/db (clickable) |
 | Last edited | `md+` | `formatRelTime(p.updatedAt)` |
 | Last visited | `xl+` | rank in `recents` (or "—") |
 
-Default-collapsed: `all` section (unless filter is active). All other
-sections default open.
+`DatabasesTable.tsx` renders the same shape minus checkboxes (no bulk
+ops on databases yet) plus a `Rows` column. Source is always "Root"
+for now — databases have no parent in the schema.
+
+## Tab switcher
+
+Radix `Tabs` primitive (`frontend/shared/ui/tabs.tsx`). The active tab
+is local state (no URL query param). Each trigger shows a count badge
+that updates with the filter.
 
 ## Bulk actions
 
@@ -55,12 +80,14 @@ viewport, shown when `selected.size > 0`:
 - Clear selection
 
 All actions hit the existing `useStore()` mutations (`toggleFavorite`,
-`togglePublic`, `deletePage`) — no new Convex endpoint added.
+`togglePublic`, `deletePage`) — no new Convex endpoint added. Bulk
+operates on pages only; the Databases tab does not select.
 
 ## Filter
 
-A title-substring filter at the top reduces visible pages across all
-sections. When active, the `all` section auto-expands.
+A title-substring filter at the top reduces visible pages across the
+four page tabs **and** databases. The count badge per tab reflects the
+filtered total.
 
 ## Why no Convex query?
 
