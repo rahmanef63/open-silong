@@ -11,6 +11,7 @@ import { groupPagesForLibrary, type LibrarySectionKey } from "../lib/groupPages"
 import { PagesTable } from "../components/PagesTable";
 import { DatabasesTable } from "../components/DatabasesTable";
 import { BulkActionBar } from "../components/BulkActionBar";
+import { DbBulkActionBar } from "../components/DbBulkActionBar";
 
 type TabKey = LibrarySectionKey | "databases";
 
@@ -38,6 +39,7 @@ export function LibraryView() {
   const [tab, setTab] = useState<TabKey>("recents");
   const [filter, setFilter] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [selectedDbs, setSelectedDbs] = useState<Set<string>>(new Set());
 
   const sections = useMemo(() => {
     const q = filter.trim().toLowerCase();
@@ -78,6 +80,26 @@ export function LibraryView() {
 
   function toggleMany(ids: string[], on: boolean) {
     setSelected((prev) => {
+      const next = new Set(prev);
+      for (const id of ids) {
+        if (on) next.add(id);
+        else next.delete(id);
+      }
+      return next;
+    });
+  }
+
+  function toggleDb(id: string) {
+    setSelectedDbs((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleManyDbs(ids: string[], on: boolean) {
+    setSelectedDbs((prev) => {
       const next = new Set(prev);
       for (const id of ids) {
         if (on) next.add(id);
@@ -189,6 +211,9 @@ export function LibraryView() {
           <TabsContent value="databases" className="pb-32">
             <DatabasesTable
               databases={filteredDatabases}
+              selected={selectedDbs}
+              onToggle={toggleDb}
+              onToggleAll={toggleManyDbs}
               onOpen={openDatabase}
               ownerLabel={ownerLabel}
               emptyHint={EMPTY_HINT.databases}
@@ -197,7 +222,12 @@ export function LibraryView() {
         </Tabs>
       </div>
 
-      <BulkActionBar selectedIds={[...selected]} onClear={() => setSelected(new Set())} />
+      {tab !== "databases" && (
+        <BulkActionBar selectedIds={[...selected]} onClear={() => setSelected(new Set())} />
+      )}
+      {tab === "databases" && (
+        <DbBulkActionBar selectedIds={[...selectedDbs]} onClear={() => setSelectedDbs(new Set())} />
+      )}
     </div>
   );
 }
