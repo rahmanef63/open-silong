@@ -12,8 +12,11 @@ import { QuickCreateDialog } from "../components/QuickCreateDialog";
 import { DynamicIcon } from "@/slices/icon-picker";
 import type { PropertyValue } from "@/shared/types/domain";
 import {
-  DndContext, useDraggable, useDroppable, PointerSensor, useSensor, useSensors, DragEndEvent,
+  DndContext, useDraggable, useDroppable, PointerSensor, TouchSensor, useSensor, useSensors, DragEndEvent,
 } from "@dnd-kit/core";
+import {
+  computeDateShift, formatDateValue, parseDropTargetId, parseExistingDate,
+} from "../lib/calendarDrag";
 
 interface Props { db: Database; view: DatabaseViewConfig; rows: Page[]; onOpenRow: (id: string) => void }
 
@@ -160,31 +163,38 @@ export function CalendarView({ db, view, rows, onOpenRow }: Props) {
   const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const orderedDays = [...dayLabels.slice(weekStart), ...dayLabels.slice(0, weekStart)];
 
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    // Touch sensor with a 200ms long-press so taps still open the row.
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 6 } }),
+  );
 
   const onDragEnd = (e: DragEndEvent) => {
     if (!dateProp) return;
     const { active, over } = e;
     if (!over) return;
-    const overId = String(over.id);
-    if (!overId.startsWith("cal-day:")) return;
-    const targetDate = overId.slice("cal-day:".length);
+    const targetDate = parseDropTargetId(String(over.id));
+    if (!targetDate) return;
     const rowId = String(active.id);
-    const row = rows.find(r => r.id === rowId);
-    const startVal = row?.rowProps?.[dateProp.id];
-    const oldStart = (typeof startVal === "object" && startVal && "date" in startVal) ? startVal.date : null;
-    setRowValue(db.id, rowId, dateProp.id, { date: targetDate });
-    if (endProp && oldStart) {
-      const endVal = row?.rowProps?.[endProp.id];
-      const oldEnd = (typeof endVal === "object" && endVal && "date" in endVal) ? endVal.date : null;
-      if (oldEnd) {
-        const dayMs = 86_400_000;
-        const deltaDays = Math.round((new Date(targetDate).getTime() - new Date(oldStart).getTime()) / dayMs);
-        if (deltaDays !== 0) {
-          const shifted = new Date(new Date(oldEnd).getTime() + deltaDays * dayMs);
-          setRowValue(db.id, rowId, endProp.id, { date: ymd(shifted) });
-        }
-      }
+    const row = rows.find((r) => r.id === rowId);
+    if (!row) return;
+
+    const startVal = row.rowProps?.[dateProp.id];
+    const oldStart = parseExistingDate(startVal);
+    const oldStartTime = (startVal && typeof startVal === "object" && "time" in startVal)
+      ? (startVal as { time?: string }).time
+      : undefined;
+
+    const endVal = endProp ? row.rowProps?.[endProp.id] : undefined;
+    const oldEnd = parseExistingDate(endVal);
+    const oldEndTime = (endVal && typeof endVal === "object" && "time" in endVal)
+      ? (endVal as { time?: string }).time
+      : undefined;
+
+    const shift = computeDateShift(oldStart, targetDate, oldEnd);
+    setRowValue(db.id, rowId, dateProp.id, formatDateValue(shift.startYmd, oldStartTime));
+    if (endProp && shift.endYmd && shift.endYmd !== oldEnd) {
+      setRowValue(db.id, rowId, endProp.id, formatDateValue(shift.endYmd, oldEndTime));
     }
   };
 
@@ -434,7 +444,7 @@ function DraggableEvent({
         data-db-nav-item
         title={colorOptName ?? "Click to open · Drag to change date · Right-click to delete"}
         className={cn(
-          "w-full text-left truncate rounded px-1 py-0.5 text-[11px] border pr-5 cursor-grab active:cursor-grabbing",
+          "w-full text-left truncate rounded px-1 py-0.5 text-[11px] border pr-5 cursor-grab active:cursor-grabbing touch-none",
           tone,
         )}
       >
