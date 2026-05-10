@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import {
   CheckSquare, Copy, GripVertical, Link2, MessageSquare, MoreHorizontal,
-  Plus, Trash2, Search, ArrowRightLeft,
+  Plus, Trash2, Search, ArrowRightLeft, Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -9,6 +9,7 @@ import {
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
   DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent,
 } from "@/shared/ui/dropdown-menu";
+import { Popover, PopoverAnchor, PopoverContent } from "@/shared/ui/popover";
 import type { Block, BlockType } from "@/shared/types/domain";
 import { useStore } from "@/shared/lib/store";
 import { cn } from "@/shared/lib/utils";
@@ -17,6 +18,7 @@ import { BLOCK_SPECS } from "../blockSpecs";
 import { BlockCommentsPopover, useBlockComments } from "@/slices/comments";
 import { BlockColorMenu } from "./BlockColorMenu";
 import { useBlockSelectionOptional } from "@/slices/block-selection";
+import { AskAIPanel } from "./AskAIPopover";
 
 interface Props {
   pageId: string;
@@ -24,18 +26,23 @@ interface Props {
   index: number;
   listeners?: import("@dnd-kit/core/dist/hooks/utilities").SyntheticListenerMap;
   convertTo: (t: BlockType) => void;
+  askOpen?: boolean;
+  onAskOpenChange?: (o: boolean) => void;
 }
 
 const relTime = (ts?: number) => (ts ? formatRelTime(ts) : "");
 
 const TURN_INTO_SPECS = BLOCK_SPECS.filter((s) => s.type !== "database");
 
-export function BlockControls({ pageId, block, index, listeners, convertTo }: Props) {
+export function BlockControls({ pageId, block, index, listeners, convertTo, askOpen, onAskOpenChange }: Props) {
   const { addBlock, deleteBlock, duplicateBlock, updateBlock, user, getPage } = useStore();
   const { openCount, create } = useBlockComments(block.id);
   const sel = useBlockSelectionOptional();
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
+  const [askOpenLocal, setAskOpenLocal] = useState(false);
+  const askIsOpen = askOpen ?? askOpenLocal;
+  const setAskOpen = onAskOpenChange ?? setAskOpenLocal;
 
   const currentSpec = BLOCK_SPECS.find((s) => s.type === block.type);
   const currentLabel = currentSpec?.label ?? block.type;
@@ -78,7 +85,9 @@ export function BlockControls({ pageId, block, index, listeners, convertTo }: Pr
   const closeMenu = () => { setOpen(false); setQ(""); };
 
   return (
-    <div className="flex">
+    <Popover open={askIsOpen} onOpenChange={setAskOpen}>
+      <PopoverAnchor asChild>
+        <div className="flex">
       <button
         onClick={async () => {
           const id = await addBlock(pageId, index);
@@ -203,6 +212,15 @@ export function BlockControls({ pageId, block, index, listeners, convertTo }: Pr
                   </DropdownMenuSubContent>
                 </DropdownMenuSub>
 
+                <DropdownMenuItem onSelect={(e) => {
+                  e.preventDefault();
+                  closeMenu();
+                  setAskOpen(true);
+                }}>
+                  <Sparkles className="mr-2 h-3.5 w-3.5 text-brand" /> Ask AI
+                  <span className="ml-auto text-[10px] text-muted-foreground">⌘J</span>
+                </DropdownMenuItem>
+
                 <BlockColorMenu
                   value={block.color}
                   bgValue={block.bgColor}
@@ -287,7 +305,12 @@ export function BlockControls({ pageId, block, index, listeners, convertTo }: Pr
       >
         <GripVertical className="h-3.5 w-3.5" />
       </button>
-    </div>
+        </div>
+      </PopoverAnchor>
+      <PopoverContent className="w-80 p-2" align="start" side="bottom" sideOffset={6}>
+        <AskAIPanel pageId={pageId} block={block} index={index} onClose={() => setAskOpen(false)} />
+      </PopoverContent>
+    </Popover>
   );
 }
 

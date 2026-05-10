@@ -43,6 +43,7 @@ function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerR
   const navigate = useNavigate();
   const [slashOpen, setSlashOpen] = useState(false);
   const [slashQuery, setSlashQuery] = useState("");
+  const [askOpen, setAskOpen] = useState(false);
   const ref = useRef<HTMLElement | null>(null);
   const composingRef = useRef(false);
   const history = useBlockHistory(block.text);
@@ -149,6 +150,11 @@ function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerR
     if (slashOpen && ["ArrowDown", "ArrowUp", "Enter", "Escape"].includes(e.key)) return;
 
     // ----- shortcuts -----
+    if (meta && e.key.toLowerCase() === "j") {
+      e.preventDefault();
+      setAskOpen(true);
+      return;
+    }
     if (meta && e.altKey && (e.key === "1" || e.key === "2" || e.key === "3")) {
       e.preventDefault();
       convertTo(("h" + e.key) as BlockType);
@@ -298,7 +304,7 @@ function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerR
         setNodeRef={setNodeRef} style={style} isDragging={isDragging} isOver={isOver} blockId={block.id}
         attributes={attributes} listeners={listeners}
         controls={
-          <BlockControls pageId={pageId} block={block} index={index} listeners={listeners} convertTo={convertTo} />
+          <BlockControls pageId={pageId} block={block} index={index} listeners={listeners} convertTo={convertTo} askOpen={askOpen} onAskOpenChange={setAskOpen} />
         }
       >
         <button
@@ -328,7 +334,7 @@ function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerR
         setNodeRef={setNodeRef} style={style} isDragging={isDragging} isOver={isOver} blockId={block.id}
         attributes={attributes} listeners={listeners}
         controls={
-          <BlockControls pageId={pageId} block={block} index={index} listeners={listeners} convertTo={convertTo} />
+          <BlockControls pageId={pageId} block={block} index={index} listeners={listeners} convertTo={convertTo} askOpen={askOpen} onAskOpenChange={setAskOpen} />
         }
       >
         <DatabaseBlock pageId={pageId} block={block} />
@@ -341,7 +347,7 @@ function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerR
       <BlockShell
         setNodeRef={setNodeRef} style={style} isDragging={isDragging} isOver={isOver} blockId={block.id}
         attributes={attributes} listeners={listeners}
-        controls={<BlockControls pageId={pageId} block={block} index={index} listeners={listeners} convertTo={convertTo} />}
+        controls={<BlockControls pageId={pageId} block={block} index={index} listeners={listeners} convertTo={convertTo} askOpen={askOpen} onAskOpenChange={setAskOpen} />}
       >
         <ColumnBlockEditor block={block} onUpdate={(p) => updateBlock(pageId, block.id, p)} depth={1} pageId={pageId} />
       </BlockShell>
@@ -364,7 +370,7 @@ function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerR
       <BlockShell
         setNodeRef={setNodeRef} style={style} isDragging={isDragging} isOver={isOver} blockId={block.id}
         attributes={attributes} listeners={listeners}
-        controls={<BlockControls pageId={pageId} block={block} index={index} listeners={listeners} convertTo={convertTo} />}
+        controls={<BlockControls pageId={pageId} block={block} index={index} listeners={listeners} convertTo={convertTo} askOpen={askOpen} onAskOpenChange={setAskOpen} />}
       >
         <Renderer
           block={block}
@@ -380,7 +386,7 @@ function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerR
     <BlockShell
       setNodeRef={setNodeRef} style={style} isDragging={isDragging} isOver={isOver} blockId={block.id}
       attributes={attributes} listeners={listeners}
-      controls={<BlockControls pageId={pageId} block={block} index={index} listeners={listeners} convertTo={convertTo} />}
+      controls={<BlockControls pageId={pageId} block={block} index={index} listeners={listeners} convertTo={convertTo} askOpen={askOpen} onAskOpenChange={setAskOpen} />}
     >
       <BlockBody
         block={block}
