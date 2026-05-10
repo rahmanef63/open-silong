@@ -1,11 +1,16 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { requireAuth, requireOwned } from "./_shared/auth";
+import { requireAuth, requireWorkspaceAccess } from "./_shared/auth";
 import { rateLimit } from "./_shared/rateLimit";
 import { RATE_LIMITS } from "./_shared/limits";
 import { Id } from "./_generated/dataModel";
-import { getActiveWorkspaceMutation, readActiveWorkspace, rowInActiveWorkspace } from "./_shared/workspace";
+import {
+  getActiveWorkspaceMutation,
+  readActiveWorkspace,
+  databasesInActiveWorkspace,
+  requireActiveWorkspaceWritable,
+} from "./_shared/workspace";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
@@ -19,8 +24,7 @@ export const list = query({
     if (!userId) return [];
     const active = await readActiveWorkspace(ctx, userId);
     if (!active) return [];
-    const all = await ctx.db.query("databases").withIndex("by_user", (q) => q.eq("userId", userId)).collect();
-    return all.filter((d) => rowInActiveWorkspace(d, active, userId));
+    return await databasesInActiveWorkspace(ctx, userId, active);
   },
 });
 
@@ -30,7 +34,7 @@ export const list = query({
 export const trash = mutation({
   args: { dbId: v.string() },
   handler: async (ctx, args) => {
-    await requireOwned(ctx, "databases", args.dbId as Id<"databases">);
+    await requireWorkspaceAccess(ctx, "databases", args.dbId as Id<"databases">, { write: true });
     await ctx.db.patch(args.dbId as Id<"databases">, { trashed: true, updatedAt: Date.now() });
   },
 });
@@ -40,7 +44,7 @@ export const trash = mutation({
 export const restore = mutation({
   args: { dbId: v.string() },
   handler: async (ctx, args) => {
-    await requireOwned(ctx, "databases", args.dbId as Id<"databases">);
+    await requireWorkspaceAccess(ctx, "databases", args.dbId as Id<"databases">, { write: true });
     await ctx.db.patch(args.dbId as Id<"databases">, { trashed: false, updatedAt: Date.now() });
   },
 });
@@ -53,13 +57,17 @@ export const restore = mutation({
 export const permanentlyDelete = mutation({
   args: { dbId: v.string() },
   handler: async (ctx, args) => {
-    const { userId, doc: db } = await requireOwned(ctx, "databases", args.dbId as Id<"databases">);
+    const { doc: db } = await requireWorkspaceAccess(ctx, "databases", args.dbId as Id<"databases">, { write: true });
     const rows = await Promise.all(
       db.rowIds.map((rowId) => ctx.db.get(rowId as Id<"pages">)),
     );
     await Promise.all(
       rows
-        .filter((r): r is NonNullable<typeof r> => !!r && r.userId === userId)
+        .filter((r): r is NonNullable<typeof r> => !!r && (
+          // Same workspace as the database, or legacy unstamped owned by db owner.
+          (r.workspaceId && r.workspaceId === db.workspaceId) ||
+          (!r.workspaceId && !db.workspaceId && r.userId === db.userId)
+        ))
         .map((r) => ctx.db.delete(r._id)),
     );
     await ctx.db.delete(args.dbId as Id<"databases">);
@@ -74,7 +82,7 @@ export const create = mutation({
   handler: async (ctx, args) => {
     const userId = await requireAuth(ctx);
     await rateLimit(ctx, userId, RATE_LIMITS.dbCreate);
-    const active = await getActiveWorkspaceMutation(ctx, userId);
+    const active = await requireActiveWorkspaceWritable(ctx, userId);
     const now = Date.now();
     const titleProp = { id: uid(), name: "Name", type: "text" };
     const statusProp = {
@@ -110,7 +118,7 @@ export const create = mutation({
 export const update = mutation({
   args: { dbId: v.string(), patch: v.any() },
   handler: async (ctx, args) => {
-    await requireOwned(ctx, "databases", args.dbId as Id<"databases">);
+    await requireWorkspaceAccess(ctx, "databases", args.dbId as Id<"databases">, { write: true });
     await ctx.db.patch(args.dbId as Id<"databases">, { ...args.patch, updatedAt: Date.now() });
   },
 });
@@ -123,7 +131,7 @@ export const update = mutation({
 export const addRow = mutation({
   args: { dbId: v.string(), init: v.optional(v.any()), templateId: v.optional(v.string()) },
   handler: async (ctx, args) => {
-    const { userId, doc: db } = await requireOwned(ctx, "databases", args.dbId as Id<"databases">);
+    const { userId, doc: db } = await requireWorkspaceAccess(ctx, "databases", args.dbId as Id<"databases">, { write: true });
     await rateLimit(ctx, userId, RATE_LIMITS.dbAddRow);
     const now = Date.now();
 
@@ -182,8 +190,8 @@ export const addRow = mutation({
 export const deleteRow = mutation({
   args: { dbId: v.string(), rowPageId: v.string() },
   handler: async (ctx, args) => {
-    const { doc: db } = await requireOwned(ctx, "databases", args.dbId as Id<"databases">);
-    await requireOwned(ctx, "pages", args.rowPageId as Id<"pages">);
+    const { doc: db } = await requireWorkspaceAccess(ctx, "databases", args.dbId as Id<"databases">, { write: true });
+    await requireWorkspaceAccess(ctx, "pages", args.rowPageId as Id<"pages">, { write: true });
     await ctx.db.patch(args.rowPageId as Id<"pages">, { trashed: true, updatedAt: Date.now() });
     await ctx.db.patch(args.dbId as Id<"databases">, {
       rowIds: db.rowIds.filter((r: string) => r !== args.rowPageId),
@@ -200,7 +208,7 @@ export const deleteRow = mutation({
 export const setRowValue = mutation({
   args: { dbId: v.string(), rowPageId: v.string(), propId: v.string(), value: v.any() },
   handler: async (ctx, args) => {
-    const { doc: page } = await requireOwned(ctx, "pages", args.rowPageId as Id<"pages">);
+    const { doc: page } = await requireWorkspaceAccess(ctx, "pages", args.rowPageId as Id<"pages">, { write: true });
     const rowProps = { ...(page.rowProps ?? {}), [args.propId]: args.value };
     await ctx.db.patch(args.rowPageId as Id<"pages">, { rowProps, updatedAt: Date.now() });
   },
