@@ -25,6 +25,23 @@ export default defineSchema({
     .index("by_owner", ["ownerId"])
     .index("by_slug", ["slug"]),
 
+  /** Invite codes minted by workspace owners. `code` is a base64url
+   *  random secret (24 bytes). Single-use: `accept` patches
+   *  `acceptedAt` + `acceptedBy`, after which the row is dead. Owner
+   *  can revoke before acceptance via `delete`. Expiry: 14 days from
+   *  creation, enforced in `accept`. */
+  workspaceInvites: defineTable({
+    workspaceId: v.id("workspaces"),
+    code: v.string(),
+    role: v.union(v.literal("editor"), v.literal("viewer")),
+    invitedBy: v.id("users"),
+    createdAt: v.number(),
+    acceptedAt: v.optional(v.number()),
+    acceptedBy: v.optional(v.id("users")),
+  })
+    .index("by_code", ["code"])
+    .index("by_workspace", ["workspaceId"]),
+
   /** workspace ↔ user membership ledger. Auto-seeded with role:"owner"
    *  for the workspace owner. Future invites add role:"editor"|"viewer"
    *  rows. `by_user_workspace` lets `requireWorkspaceMember` resolve
