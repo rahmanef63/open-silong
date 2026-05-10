@@ -83,6 +83,62 @@ in sessions 2–4).
 
 ---
 
+## Session 1.5 — Library polish + recents-per-ws + invites (shipped early)
+
+User feedback after session 1 surfaced three gaps that were small
+enough to fold into a 1.5 patch instead of waiting for session 2:
+
+- **Recents broken after workspace switch**: the `recents` table held
+  one row per user (no workspaceId). Switching workspaces showed
+  recents from the previous workspace, then `byId.get` filtered them
+  out → empty list. Fixed: `convex/recents.ts` now keys rows by
+  (userId, workspaceId) via `findRecentRow` helper, with a fallback
+  branch that adopts the legacy unscoped row under the personal
+  workspace so users don't lose history. Cap lifted 8 → 20.
+
+- **Library Databases tab had no checkbox / no CRUD**: rewrote
+  `DatabasesTable` with Checkbox column + per-row dropdown (Rename
+  via inline input, Change icon via IconPickerPopover, Move to
+  trash). New `DbBulkActionBar` mirrors the page bulk bar (Trash N
+  selected) when the Databases tab is active.
+
+- **Icon picker DRY**: every workspace + database surface that used
+  `WORKSPACE_EMOJIS` or a hardcoded `COMMON_EMOJI` row now uses the
+  page editor's `IconPickerPopover` (emoji + lucide tabs + search +
+  color row + twemoji toggle). Surfaces touched: WorkspaceSwitcher
+  rename + create dialogs, WorkspacesSection create dialog,
+  Settings → Workspace icon field, Library DatabasesTable rows.
+
+Plus the **invite system** (originally session 3) shipped here too,
+because the feedback explicitly asked for "share workspace like
+Notion":
+
+- New `workspaceInvites` table `{workspaceId, code, role:editor|viewer,
+  invitedBy, createdAt, acceptedAt?, acceptedBy?}` w/ `by_code` +
+  `by_workspace` indexes.
+- `convex/invites.ts`: `create` (owner-only, returns base64url code),
+  `lookup` (anonymous-readable preview), `accept` (idempotent;
+  promotes to active workspace), `revoke` (owner-only),
+  `listForWorkspace` (owner-only roster).
+- `app/dashboard/invite/[code]/page.tsx` — accept landing with
+  workspace preview + Accept/Decline buttons.
+- New slice `frontend/slices/workspace-members/MembersDialog.tsx`
+  surfaces members + pending invites + create/copy/revoke. Mounted
+  from both the WorkspaceSwitcher dropdown ("Members & invites…")
+  and the Settings → Workspaces row (Users icon).
+- Single-use codes; 14-day expiry. Email send is intentionally NOT
+  wired — owner copies the link and sends it through their own
+  channel. SMTP wiring deferred until needed.
+
+Score nudge: ~74 → ~76.
+
+**Still owed before session 2**: scope snapshots/recents/notifications/
+files/comments queries to active workspace (recents done; rest
+pending) — invites are now live, so members of a shared workspace
+will see those tables in cross-tenant ways until scoped.
+
+---
+
 ## Session 2 — URL slug routing + remaining query scoping
 
 **Goal:** every URL carries the workspace slug; every Convex query is
