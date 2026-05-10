@@ -162,6 +162,20 @@ export default defineSchema({
     .index("by_user", ["userId"])
     .index("by_lastSeen", ["lastSeenAt"]),
 
+  // === MCP per-user tokens ===
+  mcpTokens: defineTable({
+    userId: v.id("users"),
+    /** SHA-256 hex of the plaintext token. Lookup uses by_hash; plaintext
+     *  is shown to the user only at issue-time. */
+    tokenHash: v.string(),
+    label: v.string(),
+    createdAt: v.number(),
+    lastUsedAt: v.optional(v.number()),
+    revoked: v.boolean(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_hash", ["tokenHash"]),
+
   // === admin: audit log ===
   auditLog: defineTable({
     actorId: v.id("users"),

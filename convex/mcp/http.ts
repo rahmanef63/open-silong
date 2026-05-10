@@ -17,11 +17,13 @@
 import { httpAction } from "../_generated/server";
 import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
+import type { ActionCtx } from "../_generated/server";
 import {
   blockToNotion, blockFromNotion,
   propertyToNotionSchema, propertiesArrayToMap,
   valueToNotion, valueFromNotion,
 } from "../_shared/notionShape";
+import { sha256Hex } from "../_shared/hash";
 
 const ok = (data: unknown, extra?: Record<string, unknown>): Response =>
   new Response(JSON.stringify({ ok: true, data, ...(extra ?? {}) }), {
@@ -35,16 +37,35 @@ const err = (status: number, message: string): Response =>
     headers: { "content-type": "application/json", "access-control-allow-origin": "*" },
   });
 
-/** Validate Bearer token, resolve to userId. Single-tenant cut. */
-function authenticate(req: Request): { userId: Id<"users"> } | { error: Response } {
+/** Validate Bearer token, resolve to userId.
+ *
+ *  Order:
+ *  1. Per-user tokens — plaintext starts with `nsn_`. Look up sha256
+ *     hash via internal query; return user id + token id (for lastUsedAt
+ *     touch).
+ *  2. Env-baked single-tenant token — fallback for legacy/dev setups.
+ */
+async function authenticate(
+  ctx: ActionCtx,
+  req: Request,
+): Promise<{ userId: Id<"users">; tokenId?: Id<"mcpTokens"> } | { error: Response }> {
   const auth = req.headers.get("authorization") ?? "";
+  if (!auth.startsWith("Bearer ")) return { error: err(401, "Missing Bearer token") };
+  const token = auth.slice("Bearer ".length).trim();
+  if (!token) return { error: err(401, "Empty token") };
+
+  if (token.startsWith("nsn_")) {
+    const tokenHash = await sha256Hex(token);
+    const found = await ctx.runQuery(internal.mcp.tokens.lookupByHash, { tokenHash });
+    if (!found) return { error: err(401, "Invalid or revoked token") };
+    return { userId: found.userId, tokenId: found.id };
+  }
+
   const expected = process.env.MCP_API_TOKEN;
   const userIdEnv = process.env.MCP_USER_ID;
   if (!expected || !userIdEnv) {
-    return { error: err(503, "MCP not configured — set MCP_API_TOKEN + MCP_USER_ID on the deployment.") };
+    return { error: err(503, "MCP not configured — issue a per-user token in Settings, or set MCP_API_TOKEN + MCP_USER_ID on the deployment.") };
   }
-  if (!auth.startsWith("Bearer ")) return { error: err(401, "Missing Bearer token") };
-  const token = auth.slice("Bearer ".length).trim();
   if (token !== expected) return { error: err(401, "Invalid token") };
   return { userId: userIdEnv as Id<"users"> };
 }
@@ -127,14 +148,18 @@ interface ToolBody { tool: string; params?: Record<string, unknown> }
 
 export const mcpHandler = httpAction(async (ctx, req) => {
   if (req.method !== "POST") return err(405, "POST only");
-  const auth = authenticate(req);
+  const auth = await authenticate(ctx, req);
   if ("error" in auth) return auth.error;
 
   let body: ToolBody;
   try { body = (await req.json()) as ToolBody; } catch { return err(400, "Invalid JSON body"); }
   if (!body.tool) return err(400, "Missing `tool`");
   const params = body.params ?? {};
-  const { userId } = auth;
+  const { userId, tokenId } = auth;
+  if (tokenId) {
+    // Fire-and-forget; never block the response on the timestamp write.
+    void ctx.runMutation(internal.mcp.tokens.touchLastUsed, { tokenId });
+  }
 
   try {
     switch (body.tool) {

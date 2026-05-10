@@ -17,6 +17,7 @@ import { Choice } from "@/shared/components/forms/Choice";
 import { useDebouncedCommit } from "@/shared/hooks/useDebouncedCommit";
 import { downloadFile, pickFile } from "@/shared/lib/markdown";
 import { reportError } from "@/shared/lib/error";
+import { McpTokensSection } from "./McpTokensSection";
 
 const THEME_OPTIONS = [
   ["light", "Light"], ["dark", "Dark"], ["system", "System"],
@@ -235,6 +236,10 @@ export default function SettingsPage() {
             databases.
           </p>
         </Field>
+      </Section>
+
+      <Section title="MCP tokens">
+        <McpTokensSection />
       </Section>
     </>
   );
