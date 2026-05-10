@@ -5,6 +5,7 @@ import { requireAuth, requireOwned } from "./_shared/auth";
 import { rateLimit } from "./_shared/rateLimit";
 import { RATE_LIMITS } from "./_shared/limits";
 import { Id } from "./_generated/dataModel";
+import { getActiveWorkspaceMutation, readActiveWorkspace, rowInActiveWorkspace } from "./_shared/workspace";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
@@ -16,7 +17,10 @@ export const list = query({
   handler: async (ctx) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) return [];
-    return await ctx.db.query("databases").withIndex("by_user", (q) => q.eq("userId", userId)).collect();
+    const active = await readActiveWorkspace(ctx, userId);
+    if (!active) return [];
+    const all = await ctx.db.query("databases").withIndex("by_user", (q) => q.eq("userId", userId)).collect();
+    return all.filter((d) => rowInActiveWorkspace(d, active, userId));
   },
 });
 
@@ -70,6 +74,7 @@ export const create = mutation({
   handler: async (ctx, args) => {
     const userId = await requireAuth(ctx);
     await rateLimit(ctx, userId, RATE_LIMITS.dbCreate);
+    const active = await getActiveWorkspaceMutation(ctx, userId);
     const now = Date.now();
     const titleProp = { id: uid(), name: "Name", type: "text" };
     const statusProp = {
@@ -83,6 +88,7 @@ export const create = mutation({
     const view = { id: uid(), name: "Table", type: "table", sorts: [], filters: [], search: "" };
     return await ctx.db.insert("databases", {
       userId,
+      workspaceId: active._id,
       name: args.name ?? "Untitled database",
       icon: "🗂️",
       properties: [titleProp, statusProp],
@@ -148,6 +154,7 @@ export const addRow = mutation({
 
     const rowId = await ctx.db.insert("pages", {
       userId,
+      workspaceId: db.workspaceId ?? (await getActiveWorkspaceMutation(ctx, userId))._id,
       parentId: null,
       title: "",
       icon: tpl?.icon ?? "📄",

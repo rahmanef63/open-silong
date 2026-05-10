@@ -8,6 +8,7 @@ import { buildSearchText } from "./features/search/lib";
 import { collectDescendantsFromDocs } from "./_shared/pageTree";
 import { regenAllBlockIds, findDuplicateBlockId, type BlockLike } from "./_shared/blocks";
 import { CHAR_CAPS, COUNT_CAPS, RATE_LIMITS, SHARE_SLUG_RE } from "./_shared/limits";
+import { getActiveWorkspaceMutation, readActiveWorkspace, rowInActiveWorkspace } from "./_shared/workspace";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
@@ -99,7 +100,10 @@ export const list = query({
   handler: async (ctx) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) return [];
-    return await ctx.db.query("pages").withIndex("by_user", (q) => q.eq("userId", userId)).collect();
+    const active = await readActiveWorkspace(ctx, userId);
+    if (!active) return [];
+    const all = await ctx.db.query("pages").withIndex("by_user", (q) => q.eq("userId", userId)).collect();
+    return all.filter((p) => rowInActiveWorkspace(p, active, userId));
   },
 });
 
@@ -130,10 +134,13 @@ export const listMeta = query({
   handler: async (ctx) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) return [];
-    const docs = await ctx.db
+    const active = await readActiveWorkspace(ctx, userId);
+    if (!active) return [];
+    const all = await ctx.db
       .query("pages")
       .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
+    const docs = all.filter((p) => rowInActiveWorkspace(p, active, userId));
     return docs.map((d) => ({
       _id: d._id,
       _creationTime: d._creationTime,
@@ -207,10 +214,12 @@ export const create = mutation({
   handler: async (ctx, args) => {
     const userId = await requireAuth(ctx);
     await rateLimit(ctx, userId, RATE_LIMITS.pagesCreate);
+    const active = await getActiveWorkspaceMutation(ctx, userId);
     const now = Date.now();
     const blocks = [emptyBlock()];
     return await ctx.db.insert("pages", {
       userId,
+      workspaceId: active._id,
       parentId: args.parentId,
       title: args.title ?? "",
       icon: args.icon ?? "📄",
@@ -347,8 +356,10 @@ export const duplicate = mutation({
     const cloned = JSON.parse(JSON.stringify(src.blocks)) as BlockLike[];
     const blocks = regenAllBlockIds(cloned);
     const title = src.title ? `${src.title} (copy)` : "";
+    const active = await getActiveWorkspaceMutation(ctx, userId);
     return await ctx.db.insert("pages", {
       userId,
+      workspaceId: src.workspaceId ?? active._id,
       parentId: src.parentId,
       title,
       icon: src.icon,

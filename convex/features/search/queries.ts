@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { query } from "../../_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { readActiveWorkspace, rowInActiveWorkspace } from "../../_shared/workspace";
 
 const MAX_RESULTS = 20;
 
@@ -11,14 +12,19 @@ export const search = query({
     if (!userId) return { pages: [], databases: [] };
     const trimmed = q.trim();
     if (!trimmed) return { pages: [], databases: [] };
+    const active = await readActiveWorkspace(ctx, userId);
+    if (!active) return { pages: [], databases: [] };
     const cap = Math.min(MAX_RESULTS, limit ?? MAX_RESULTS);
 
-    const pages = await ctx.db
+    const rawPages = await ctx.db
       .query("pages")
       .withSearchIndex("search_content", (b) =>
         b.search("searchText", trimmed).eq("userId", userId).eq("trashed", false),
       )
-      .take(cap);
+      .take(cap * 2);
+    const pages = rawPages
+      .filter((p) => rowInActiveWorkspace(p, active, userId))
+      .slice(0, cap);
 
     // Boost: pages whose title matches query come first (preserve relative order otherwise)
     const ql = trimmed.toLowerCase();
@@ -35,8 +41,10 @@ export const search = query({
       .withSearchIndex("search_name", (b) =>
         b.search("name", trimmed).eq("userId", userId),
       )
-      .take(cap);
-    const databases = dbHits.filter((d) => !d.trashed);
+      .take(cap * 2);
+    const databases = dbHits
+      .filter((d) => !d.trashed && rowInActiveWorkspace(d, active, userId))
+      .slice(0, cap);
 
     return {
       pages: pages.map((p) => ({
