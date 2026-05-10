@@ -115,6 +115,100 @@ clicks Accept. New `workspaceInvites` table indexed by `by_code` +
 — members roster (owner sees emails) + pending invites + role picker
 (editor/viewer) + create/copy/revoke.
 
+## Behavior audit (session 1.7)
+
+Bug found: "Rename current…" in WorkspaceSwitcher patched the personal
+workspace instead of whichever workspace was active. Root cause: the
+frontend `updateWorkspace` helper in `shared/lib/store.tsx` called
+`workspaces.upsert`, and `upsert` resolves the personal workspace via
+`ensurePersonalWorkspace` regardless of viewer's active selection. So
+renaming "Acme Team" silently rewrote the user's personal workspace's
+name + emoji, and Acme stayed unchanged.
+
+Fix: `updateWorkspace` now dispatches per-field to `workspaces.rename`
+and `workspaces.setIcon` against `workspace.id` directly. The two
+mutations carry the owner-only auth gate via `requireWorkspaceMember`,
+so editors/viewers attempting to rename get a clean throw rather than
+a silent partial write.
+
+`workspaces.upsert` is left for back-compat (legacy single-workspace
+callers might still call it). New code should never call it — it is
+intentionally not exposed via the store anymore.
+
+## Tenancy model (FK approach)
+
+Pages and databases reference workspaces via a single FK:
+`pages.workspaceId → workspaces._id` (and same on `databases`,
+`snapshots`, `recents`, `notifications`, `files`). Membership lives
+in a separate `workspaceMembers` join table.
+
+Why direct FK rather than a per-entity ACL table:
+- Convex `by_workspace` index makes workspace-scoped reads O(rows in
+  workspace), not O(rows in app).
+- Atomic writes — no two-table dance to insert a page.
+- Cascades are obvious (delete a workspace → walk by_workspace once).
+- Per-page sharing (session 4) can layer a `pageGrants` table on top
+  WITHOUT changing the workspace FK; grants are an *addition* to
+  workspace membership, not a replacement.
+
+Membership-aware reads/writes go through
+`requireWorkspaceAccess(ctx, table, id, {write?})` (session 1.6).
+Legacy unstamped rows fall back to owner-only via `row.userId === viewer`
+when the active workspace is the viewer's personal one.
+
+## Portability into SuperSpace
+
+Nosion will ship as a feature inside SuperSpace. To keep the workspace
+interface portable, the contract on the frontend `Workspace` type is
+deliberately minimal:
+
+```ts
+interface Workspace {
+  id: string;          // string id (Convex id today; opaque to consumers)
+  name: string;
+  emoji: string;       // emoji|url|lucide:name — DynamicIcon already handles all 3
+  slug?: string;       // url-safe; SuperSpace can choose to wrap this
+  isPersonal?: boolean;
+  role?: "owner" | "editor" | "viewer";
+}
+```
+
+Rules to keep us portable:
+
+1. **No Nosion-specific fields on `Workspace`** — e.g. don't put
+   `defaultPageId` or `wikiRootId` here. Those belong on a per-app
+   config row (`nosionWorkspaceConfig.workspaceId`) so SuperSpace can
+   adopt the same `Workspace` shape for unrelated apps (Sheets,
+   Whiteboard, etc.).
+2. **Roles are an open union** — when SuperSpace introduces
+   `admin` / `guest`, widen the union; existing checks
+   (`role === "owner"`) keep working.
+3. **`id` is opaque** — never branch on convex id format. SuperSpace
+   may switch to UUIDv7 later.
+4. **`emoji` is icon-agnostic** — `DynamicIcon` already accepts
+   `<emoji>`, `lucide:<name>`, or `<https://...png>`. SuperSpace's
+   icon system slots in without breaking the read path.
+5. **Personal workspace is a Nosion convention** — SuperSpace might
+   omit it or model it differently (e.g. a "Drafts" tenant). Treat
+   `isPersonal` as advisory; never make it load-bearing for permission
+   checks.
+6. **Membership is the source of truth** — never trust `workspace.role`
+   on the client to gate writes; always re-check on the server via
+   `requireWorkspaceMember` / `requireWorkspaceAccess`.
+7. **The store API is the abstraction surface**:
+   `useStore() → { workspace, workspaces, setActiveWorkspace,
+   createWorkspace, deleteWorkspace, leaveWorkspace, updateWorkspace }`.
+   When porting, only this surface needs to be re-implemented against
+   the SuperSpace tenancy SDK. The 50+ consumer components stay
+   identical.
+8. **No raw Convex ids in URLs yet** — slug routing (session 2) will
+   give SuperSpace a stable URL contract (`/[wsSlug]/p/<pageId>`)
+   that does not leak the convex id of the workspace.
+
+The sidebar / settings switchers consume only the store contract above
+— they will mount unchanged inside SuperSpace as long as the host
+provides the same `useStore()` shape (or an adapter).
+
 ## What's NOT scoped yet (sessions 2+)
 
 - URL slug routing (`/dashboard/[wsSlug]/...`).
