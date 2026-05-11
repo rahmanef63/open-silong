@@ -238,10 +238,17 @@ export function PageEditor() {
   };
 
   const subpages = childrenOf(page.id);
+  // Prefer the explicit `databaseHostFor` marker — set on host pages
+  // created via "Open as page" so PageEditor doesn't have to inspect
+  // block shape. Fall back to the legacy "only block is a database"
+  // heuristic for older host pages that pre-date the marker.
+  const hostedDbId = page.databaseHostFor?.[0];
   const onlyBlock = page.blocks.length === 1 ? page.blocks[0] : null;
-  const fullPageDb = onlyBlock?.type === "database" && onlyBlock.databaseId
-    ? getDatabase(onlyBlock.databaseId) ?? null
-    : null;
+  const fullPageDb =
+    (hostedDbId ? getDatabase(hostedDbId) : null) ??
+    (onlyBlock?.type === "database" && onlyBlock.databaseId
+      ? getDatabase(onlyBlock.databaseId) ?? null
+      : null);
 
   return (
     <PageCommentsProvider pageId={page.id}>

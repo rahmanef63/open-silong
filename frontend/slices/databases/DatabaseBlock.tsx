@@ -135,16 +135,18 @@ export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block 
   }
 
   // "Open as page": find a dedicated host page for this database, or
-  // create one parented under the current page. A host page is one
-  // whose only block is a database referencing this id (matches the
-  // PageEditor's `fullPageDb` heuristic).
+  // create one parented under the current page. Host detection prefers
+  // the explicit `databaseHostFor` marker; falls back to "only block is
+  // this database" for legacy host pages (matches PageEditor's
+  // `fullPageDb` heuristic).
   const isInline = (() => {
     const host = getPage(pageId);
-    if (!host) return true;
+    if (!host || !db) return true;
+    if (host.databaseHostFor?.includes(db.id)) return false;
     const blocks = host.blocks ?? [];
     if (blocks.length !== 1) return true;
     const only = blocks[0];
-    return !(only.type === "database" && only.databaseId === db?.id);
+    return !(only.type === "database" && only.databaseId === db.id);
   })();
 
   // "Linked" = this inline embed isn't the database's only host. Counts

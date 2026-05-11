@@ -293,6 +293,7 @@ export const update = mutation({
       fullWidth: v.optional(v.boolean()),
       locked: v.optional(v.boolean()),
       rowProps: v.optional(v.any()),
+      databaseHostFor: v.optional(v.array(v.string())),
       // Manual sort uses createdAt as the order key; reorder undo restores it.
       createdAt: v.optional(v.number()),
     }),
