@@ -23,7 +23,7 @@ env, `ADMIN_BOOTSTRAP_EMAILS` env, runtime claim escape hatch).
 |---|---|---|
 | Overview | `OverviewPanel` | `admin.queries.{getOverview,getSignupTrend,getActivityTrend,getTopUsersByContent,getRoleDistribution}` |
 | Users | `UsersPanel` | `admin.queries.listUsersWithProfiles` + `admin.mutations.setUserRole` |
-| Templates | `TemplatesPanel` | `templates.queries.listAll` + `templates.mutations.{seedDefaults,deleteTemplate}` |
+| Templates | `TemplatesPanel` | `templates.queries.listAll` + `templates.mutations.{seedDefaults,upsertTemplate,deleteTemplate}` |
 | Audit log | `AuditLogPanel` | `admin.queries.listAuditLog` |
 | Feedback | `FeedbackPanel` | `feedback.queries.listFeedback` + `feedback.mutations.markResolved` |
 
@@ -84,6 +84,41 @@ Data shape from `listUsersWithProfiles`:
 
 All admin queries/mutations gate via `requireAdminQuery`/`requireAdmin`
 (or `requireSuperAdmin` for sensitive ops). See `convex/_shared/auth.ts`.
+
+## Templates tab
+
+Card-grid library managing `pageTemplates` end-to-end. Layout:
+
+- Toolbar: `+ New template`, `Re-seed defaults`, header counts
+  (total / published / draft / seed).
+- Filters: full-text search (name + category + description), status
+  pills (All / Published / Draft / Seed), category chips (derived
+  from data).
+- Grid: cards grouped by category, 1 / 2 / 3 cols responsive.
+
+Per-card surfaces:
+
+- Icon (via `DynamicIcon`), name, seed / draft badges.
+- Description (2-line clamp).
+- Inline stats: pages · blocks · databases (from
+  `templateStats(json)` in `lib/previewTemplate.ts`).
+- Action row: `Preview` · `Edit` · `Publish` switch · `⋮` menu
+  (Duplicate / Delete). Publish toggle round-trips via
+  `upsertTemplate` (re-sends all existing fields with flipped
+  `isPublished`). Delete is gated for `isSeed: true` rows server-side
+  ("disable lewat unpublish").
+
+Preview dialog (`TemplatePreviewDialog.tsx`):
+
+- Large icon header + badges (seed / published / draft).
+- 4-tile stat grid (Pages · Blocks · Databases · Seed rows).
+- Block-mix chips (block-type histogram).
+- Indented structure tree from `walkTemplateTree(json)` — pages,
+  blocks, embedded databases color-coded.
+- Footer: "Edit template" hops to the editor.
+
+Template editor (`TemplateEditor.tsx`) is unchanged — still JSON +
+side-by-side text summary + `Generate with AI`.
 
 ## Audit log
 
