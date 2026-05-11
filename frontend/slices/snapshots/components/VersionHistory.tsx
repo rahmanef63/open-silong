@@ -8,7 +8,7 @@ import {
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/shared/ui/alert-dialog";
 import { Block, PageSnapshot } from "@/shared/types/domain";
-import { DynamicIcon } from "@/slices/icon-picker";
+import { DynamicIcon } from "@/shared/components/icon-picker";
 
 export function VersionHistory({ pageId, onClose }: { pageId: string; onClose: () => void }) {
   const { snapshotsForPage, restoreSnapshot, getPage } = useStore();

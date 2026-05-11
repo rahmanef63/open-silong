@@ -13,7 +13,7 @@ const CodeBlock = dynamic(
   () => import("@/slices/code-block").then((m) => ({ default: m.CodeBlock })),
   { ssr: false, loading: () => <div className="h-12 rounded bg-muted animate-pulse" /> },
 );
-import { DynamicIcon } from "@/slices/icon-picker";
+import { DynamicIcon } from "@/shared/components/icon-picker";
 import { MARKDOWN_TRIGGERS } from "../lib/markdownTriggers";
 import { SlashMenu } from "../SlashMenu";
 import { getBlockRenderer } from "./registry";

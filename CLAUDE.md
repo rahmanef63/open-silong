@@ -13,6 +13,14 @@ Live: https://nosion.rahmanef.com · Convex: https://api-notion-page-clone.rahma
   via `index.ts` and are consumed directly by `app/` routes.
 - `frontend/shared/{ui,lib,components,types}/` — primitives shared across
   slices.
+  - `shared/components/icon-picker/` — DynamicIcon + IconPickerPopover
+    (promoted from `slices/` 2026-05-11 because it was depended on by
+    40+ files; lives in shared so it's available to consumers porting
+    slices without dragging a peer slice).
+  - `shared/lib/routes.ts` — `ROUTES` (relative, for router-compat) and
+    `ROUTES_ABS` (absolute, for next/navigation). Slices import named
+    routes from here; raw `/dashboard/...` / `/p/...` literals are
+    discouraged in slice code.
 - `convex/` — backend (queries/mutations/actions, schema, auth).
 - `proxy.ts` — Next 16 request boundary (Convex auth optimistic gate, NOT
   the security boundary).

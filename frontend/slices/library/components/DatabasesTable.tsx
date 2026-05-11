@@ -13,7 +13,7 @@ import { Button } from "@/shared/ui/button";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
-import { DynamicIcon, IconPickerPopover } from "@/slices/icon-picker";
+import { DynamicIcon, IconPickerPopover } from "@/shared/components/icon-picker";
 import { formatRelTime } from "@/shared/lib/format";
 import { cn } from "@/shared/lib/utils";
 import type { Database, Page } from "@/shared/types/domain";

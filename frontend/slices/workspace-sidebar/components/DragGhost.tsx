@@ -1,5 +1,5 @@
 import { cn } from "@/shared/lib/utils";
-import { DynamicIcon } from "@/slices/icon-picker";
+import { DynamicIcon } from "@/shared/components/icon-picker";
 import { DENSITY, type DensityConfig } from "../lib/density";
 import type { TreeItem } from "../lib/keyboard";
 

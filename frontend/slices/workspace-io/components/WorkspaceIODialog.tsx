@@ -20,7 +20,7 @@ import { useAsyncError } from "@/shared/hooks/useAsyncError";
 import { useFileUpload } from "@/slices/files/hooks/useFileUpload";
 import { parseFileRef } from "@/slices/files/lib/parse";
 import { buildSelectionExport } from "../lib/buildExport";
-import { DynamicIcon } from "@/slices/icon-picker";
+import { DynamicIcon } from "@/shared/components/icon-picker";
 import { cn } from "@/shared/lib/utils";
 
 export type WorkspaceIOTab = "export" | "import-json" | "import-zip";

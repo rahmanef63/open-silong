@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useStore } from "@/shared/lib/store";
 import { cn } from "@/shared/lib/utils";
-import { DynamicIcon } from "@/slices/icon-picker";
+import { DynamicIcon } from "@/shared/components/icon-picker";
 
 const MAX_RESULTS = 6;
 const TRIGGER_RE = /(?:^|\s)@([\w-]{0,40})$/;

@@ -25,7 +25,7 @@ import {
 } from "@/shared/ui/dialog";
 import { Input } from "@/shared/ui/input";
 import { Button } from "@/shared/ui/button";
-import { IconPickerPopover, DynamicIcon } from "@/slices/icon-picker";
+import { IconPickerPopover, DynamicIcon } from "@/shared/components/icon-picker";
 import { MembersDialog } from "@/slices/workspace-members";
 
 export function WorkspaceSwitcher() {

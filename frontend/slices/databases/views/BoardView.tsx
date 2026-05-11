@@ -14,7 +14,7 @@ import { focusSiblingBySelector, isTextInputTarget } from "@/shared/lib/keyboard
 import { colorClass } from "@/shared/lib/format";
 import { PropertyCell } from "../PropertyCell";
 import { Plus } from "lucide-react";
-import { DynamicIcon } from "@/slices/icon-picker";
+import { DynamicIcon } from "@/shared/components/icon-picker";
 import { getVisibleProps } from "../lib/visibility";
 import { QuickCreateDialog } from "../components/QuickCreateDialog";
 import { useState } from "react";

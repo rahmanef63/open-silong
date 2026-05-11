@@ -7,6 +7,7 @@ import {
   Search, Sparkles, Bot, Inbox, MoreHorizontal,
 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
+import { ROUTES } from "@/shared/lib/routes";
 import { useAdminRole } from "@/slices/admin-panel";
 import { TemplateGalleryDialog } from "@/slices/templates";
 import { AIAgentConsole } from "@/slices/ai-agent";
@@ -36,14 +37,14 @@ export function MobileBottomNav({ onOpenSearch }: Props) {
   const [moreOpen, setMoreOpen] = useState(false);
   const [templatesOpen, setTemplatesOpen] = useState(false);
 
-  const isHome = location.pathname === "/";
-  const isInbox = location.pathname === "/inbox";
+  const isHome = location.pathname === ROUTES.dashboard;
+  const isInbox = location.pathname === ROUTES.inbox;
 
   const slots: Slot[] = [
     { id: "search", icon: Search, label: "Search", active: false, onClick: onOpenSearch },
-    { id: "home", icon: Sparkles, label: "Home", active: isHome, onClick: () => navigate("/") },
+    { id: "home", icon: Sparkles, label: "Home", active: isHome, onClick: () => navigate(ROUTES.dashboard) },
     { id: "ai", icon: Bot, label: "AI", active: aiOpen, onClick: () => setAiOpen(true), primary: true },
-    { id: "inbox", icon: Inbox, label: "Inbox", active: isInbox, onClick: () => navigate("/inbox"), badge: <InboxBadge /> },
+    { id: "inbox", icon: Inbox, label: "Inbox", active: isInbox, onClick: () => navigate(ROUTES.inbox), badge: <InboxBadge /> },
     { id: "more", icon: MoreHorizontal, label: "More", active: moreOpen, onClick: () => setMoreOpen(true) },
   ];
 
@@ -89,7 +90,7 @@ export function MobileBottomNav({ onOpenSearch }: Props) {
       <TemplateGalleryDialog
         open={templatesOpen}
         onOpenChange={setTemplatesOpen}
-        onInstantiated={(rootPageId) => navigate(`/p/${rootPageId}`)}
+        onInstantiated={(rootPageId) => navigate(ROUTES.page(rootPageId))}
       />
       <MoreDrawer
         open={moreOpen}

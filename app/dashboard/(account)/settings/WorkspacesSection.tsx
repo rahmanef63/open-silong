@@ -9,7 +9,7 @@ import { Input } from "@/shared/ui/input";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/shared/ui/dialog";
-import { IconPickerPopover, DynamicIcon } from "@/slices/icon-picker";
+import { IconPickerPopover, DynamicIcon } from "@/shared/components/icon-picker";
 import { MembersDialog } from "@/slices/workspace-members";
 import type { Workspace } from "@/shared/types/domain";
 

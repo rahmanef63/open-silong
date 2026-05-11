@@ -8,7 +8,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { useBlockHistory } from "@/shared/hooks/useBlockHistory";
 import { useNavigate } from "@/shared/lib/router-compat";
 import { DatabaseBlock } from "@/slices/databases/DatabaseBlock";
-import { DynamicIcon } from "@/slices/icon-picker";
+import { DynamicIcon } from "@/shared/components/icon-picker";
 import { ColumnBlockEditor } from "./ColumnBlockEditor";
 import { BlockShell } from "./blocks/BlockShell";
 import { BlockControls } from "./blocks/BlockControls";

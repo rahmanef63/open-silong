@@ -3,6 +3,7 @@
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/shared/ui/drawer";
 import { FileBox, Settings, User, Trash2, ShieldAlert } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
+import { ROUTES, ROUTES_ABS } from "@/shared/lib/routes";
 
 interface Props {
   open: boolean;
@@ -24,9 +25,9 @@ interface Tile {
 export function MoreDrawer({ open, onOpenChange, isAdmin, onNavigate, onOpenTemplates }: Props) {
   const tiles: Tile[] = [
     { id: "templates", icon: FileBox, label: "Templates", hint: "Spin up a starter page", hue: "from-violet-500 to-fuchsia-600", onClick: onOpenTemplates },
-    { id: "profile", icon: User, label: "Profile", hint: "Your account", hue: "from-sky-500 to-blue-600", onClick: () => onNavigate("/profile") },
-    { id: "settings", icon: Settings, label: "Settings", hint: "Theme · density · behaviour", hue: "from-zinc-500 to-zinc-700", onClick: () => onNavigate("/settings") },
-    { id: "trash", icon: Trash2, label: "Trash", hint: "Restore or empty", hue: "from-amber-500 to-orange-600", onClick: () => onNavigate("/trash") },
+    { id: "profile", icon: User, label: "Profile", hint: "Your account", hue: "from-sky-500 to-blue-600", onClick: () => onNavigate(ROUTES.profile) },
+    { id: "settings", icon: Settings, label: "Settings", hint: "Theme · density · behaviour", hue: "from-zinc-500 to-zinc-700", onClick: () => onNavigate(ROUTES.settings) },
+    { id: "trash", icon: Trash2, label: "Trash", hint: "Restore or empty", hue: "from-amber-500 to-orange-600", onClick: () => onNavigate(ROUTES.trash) },
   ];
   if (isAdmin) {
     tiles.push({
@@ -35,7 +36,8 @@ export function MoreDrawer({ open, onOpenChange, isAdmin, onNavigate, onOpenTemp
       label: "Admin",
       hint: "Operational control",
       hue: "from-red-500 to-rose-700",
-      onClick: () => onNavigate("/dashboard/admin"),
+      // Uses absolute path because MobileBottomNav routes this branch through next/navigation's router (the `isExternal` path).
+      onClick: () => onNavigate(ROUTES_ABS.admin, true),
     });
   }
 
