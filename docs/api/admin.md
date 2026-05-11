@@ -17,15 +17,29 @@ env, `ADMIN_BOOTSTRAP_EMAILS` env, runtime claim escape hatch).
 
 ## Tabs
 
-`AdminPanel.tsx` mounts 5 tabs:
+`AdminPanel.tsx` mounts 5 tabs. Every tab exposes a `ViewSwitcher`
+(top-right of the sticky filter bar) for multiple display modes,
+defaulting to **table** everywhere. The choice persists per-tab via
+`localStorage` (`admin-view:<tabId>`). The shared switcher is
+`components/ViewSwitcher.tsx`; per-tab persistence is
+`hooks/useAdminView.ts`.
 
-| Tab | Component | Backed by |
-|---|---|---|
-| Overview | `OverviewPanel` | `admin.queries.{getOverview,getSignupTrend,getActivityTrend,getTopUsersByContent,getRoleDistribution}` |
-| Users | `UsersPanel` | `admin.queries.listUsersWithProfiles` + `admin.mutations.setUserRole` |
-| Templates | `TemplatesPanel` | `templates.queries.listAll` + `templates.mutations.{seedDefaults,upsertTemplate,deleteTemplate}` |
-| Audit log | `AuditLogPanel` | `admin.queries.listAuditLog` |
-| Feedback | `FeedbackPanel` | `feedback.queries.listFeedback` + `feedback.mutations.markResolved` |
+| Tab | Component | Backed by | Views |
+|---|---|---|---|
+| Overview | `OverviewPanel` | `admin.queries.{getOverview,getSignupTrend,getActivityTrend,getTopUsersByContent,getRoleDistribution}` | table · dashboard |
+| Users | `UsersPanel` | `admin.queries.listUsersWithProfiles` + `admin.mutations.setUserRole` | table · gallery · feed |
+| Templates | `TemplatesPanel` | `templates.queries.listAll` + `templates.mutations.{seedDefaults,upsertTemplate,deleteTemplate}` | table · gallery · feed |
+| Audit log | `AuditLogPanel` | `admin.queries.listAuditLog` | table · feed |
+| Feedback | `FeedbackPanel` | `feedback.queries.listFeedback` + `feedback.mutations.markResolved` | table · gallery · feed |
+
+View semantics (consistent across tabs where supported):
+
+- **table** — sortable rows, default.
+- **gallery** — visual cards (avatars / icons / message previews).
+- **feed** — chronological vertical stream grouped by Today /
+  Yesterday / Earlier this week / Last 30 days / Older, via
+  `lib/groupByDate.ts:groupByDateBucket`.
+- **dashboard** — Overview-only; the original KPI-card + chart layout.
 
 ## Overview metrics
 
