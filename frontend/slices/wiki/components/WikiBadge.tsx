@@ -4,7 +4,7 @@ import { BookCheck, BookOpen, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/shared/lib/utils";
 import { reportError } from "@/shared/lib/error";
-import { DynamicIcon } from "@/slices/icon-picker";
+import { DynamicIcon } from "@/shared/components/icon-picker";
 import { useWiki } from "../hooks/useWiki";
 
 interface Props {

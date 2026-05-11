@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/shared/ui/button";
 import { useInstantiateTemplate } from "../hooks/useInstantiateTemplate";
 import { useAsyncError } from "@/shared/hooks/useAsyncError";
-import { DynamicIcon } from "@/slices/icon-picker";
+import { DynamicIcon } from "@/shared/components/icon-picker";
 
 interface Props {
   open: boolean;

@@ -4,7 +4,7 @@ import { Hash, ListChecks, TrendingUp, Calendar as CalIcon, Users } from "lucide
 import { cn } from "@/shared/lib/utils";
 import { colorClass, formatDate } from "@/shared/lib/format";
 import { getVisibleProps } from "../lib/visibility";
-import { DynamicIcon } from "@/slices/icon-picker";
+import { DynamicIcon } from "@/shared/components/icon-picker";
 
 interface Props { db: Database; view: DatabaseViewConfig; rows: Page[]; onOpenRow: (id: string) => void }
 

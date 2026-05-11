@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Switch } from "@/shared/ui/switch";
 import { Page } from "@/shared/types/domain";
 import { useStore } from "@/shared/lib/store";
-import { DynamicIcon } from "@/slices/icon-picker";
+import { DynamicIcon } from "@/shared/components/icon-picker";
 import { Copy, Globe, Lock, ExternalLink, Check } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { toast } from "sonner";

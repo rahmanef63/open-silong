@@ -13,7 +13,7 @@ import { Button } from "@/shared/ui/button";
 import { Badge } from "@/shared/ui/badge";
 import { ScrollArea } from "@/shared/ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/shared/ui/tabs";
-import { DynamicIcon } from "@/slices/icon-picker";
+import { DynamicIcon } from "@/shared/components/icon-picker";
 import { Pencil, Database, FileText, Boxes, Rows3 } from "lucide-react";
 import { walkTemplateTree, templateStats, type TemplateTreeNode } from "../lib/previewTemplate";
 import { TemplatePagePreview } from "./TemplatePagePreview";

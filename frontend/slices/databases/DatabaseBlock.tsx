@@ -1,5 +1,6 @@
 import { lazy, Suspense, useMemo, useState } from "react";
 import { Link, useNavigate } from "@/shared/lib/router-compat";
+import { ROUTES } from "@/shared/lib/routes";
 import { Block, Database, DatabaseViewConfig, DbView, Page, Property, PropertyType } from "@/shared/types/domain";
 import { useStore } from "@/shared/lib/store";
 import { cn } from "@/shared/lib/utils";
@@ -34,7 +35,7 @@ import { Input } from "@/shared/ui/input";
 import { RowDetailSheet } from "@/slices/database-row";
 import { NewRowMenu } from "@/slices/database-templates";
 import { DataMenu } from "@/slices/database-json";
-import { DynamicIcon, IconPickerPopover } from "@/slices/icon-picker";
+import { DynamicIcon, IconPickerPopover } from "@/shared/components/icon-picker";
 import { DatabaseSkeleton } from "@/shared/components/RouteSkeleton";
 import { ErrorBoundary } from "@/shared/components/ErrorBoundary";
 import {
@@ -121,7 +122,7 @@ export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block 
       <div className="rounded-lg border border-dashed border-amber-500/40 bg-amber-500/5 p-6 text-center text-sm">
         <div className="font-medium text-amber-700 dark:text-amber-400">Database moved to Trash</div>
         <div className="mt-1 text-xs text-muted-foreground">
-          Restore from <Link to="/trash" className="underline">Trash</Link> to view it again.
+          Restore from <Link to={ROUTES.trash} className="underline">Trash</Link> to view it again.
         </div>
       </div>
     );
@@ -135,14 +136,18 @@ export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block 
   }
 
   // "Open as page": find a dedicated host page for this database, or
-  // create one parented under the current page. Host detection prefers
-  // the explicit `databaseHostFor` marker; falls back to "only block is
-  // this database" for legacy host pages (matches PageEditor's
-  // `fullPageDb` heuristic).
+  // create one parented under the current page. The button hides only
+  // when the current page's *single* block is this database — i.e.
+  // PageEditor is already rendering it as a full-page DB. This stays
+  // independent of the persisted `databaseHostFor` marker to be robust
+  // against transient sync states (Convex roundtrip lag, optimistic
+  // patches, etc.) — earlier attempts to gate on the marker caused the
+  // button to disappear on inline embeds. The marker is used in
+  // `openAsPage` below for the *lookup* of an existing host, but not
+  // for the visibility check.
   const isInline = (() => {
     const host = getPage(pageId);
     if (!host || !db) return true;
-    if (host.databaseHostFor?.includes(db.id)) return false;
     const blocks = host.blocks ?? [];
     if (blocks.length !== 1) return true;
     const only = blocks[0];
@@ -188,7 +193,7 @@ export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block 
         return only.type === "database" && only.databaseId === db.id;
       });
       if (existing) {
-        navigate(`/p/${existing.id}`);
+        navigate(ROUTES.page(existing.id));
         return;
       }
       const newPage = await createPage(pageId, { title: db.name, icon: db.icon ?? "🗂️" });
@@ -201,7 +206,7 @@ export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block 
         blocks: [{ id: blockId, type: "database", text: "", databaseId: db.id }],
         databaseHostFor: [db.id],
       });
-      navigate(`/p/${newPage.id}`);
+      navigate(ROUTES.page(newPage.id));
     } finally {
       setOpeningAsPage(false);
     }

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useStore } from "@/shared/lib/store";
 import { Page, Property, PropertyType } from "@/shared/types/domain";
 import { PropertyCell } from "@/slices/databases/PropertyCell";
-import { DynamicIcon } from "@/slices/icon-picker";
+import { DynamicIcon } from "@/shared/components/icon-picker";
 import { PROPERTY_TYPE_ICONS, PROPERTY_TYPE_LABELS } from "@/slices/databases/lib/propertyTypeMeta";
 import { cn } from "@/shared/lib/utils";
 import { Plus, ChevronRight, Trash2 } from "lucide-react";

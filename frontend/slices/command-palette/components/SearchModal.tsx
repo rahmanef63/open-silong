@@ -4,7 +4,8 @@ import { Dialog, DialogContent, DialogTitle } from "@/shared/ui/dialog";
 import { useStore } from "@/shared/lib/store";
 import { useSearch } from "@/slices/search";
 import { Search, FileText, Clock, Database as DatabaseIcon, Loader2 } from "lucide-react";
-import { DynamicIcon } from "@/slices/icon-picker";
+import { DynamicIcon } from "@/shared/components/icon-picker";
+import { ROUTES } from "@/shared/lib/routes";
 
 interface Props {
   open: boolean;
@@ -21,11 +22,11 @@ export function SearchModal({ open, onOpenChange }: Props) {
 
   useEffect(() => { if (!open) setQ(""); }, [open]);
 
-  const goPage = (id: string) => { navigate(`/p/${id}`); onOpenChange(false); };
+  const goPage = (id: string) => { navigate(ROUTES.page(id)); onOpenChange(false); };
   const goDb = (id: string) => {
     // Database opens via its host page (full-page DB mode handles render).
     const host = pages.find((p) => p.databaseHostFor?.includes(id));
-    if (host) navigate(`/p/${host.id}`);
+    if (host) navigate(ROUTES.page(host.id));
     onOpenChange(false);
   };
 

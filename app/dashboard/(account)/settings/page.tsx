@@ -10,7 +10,7 @@ import {
   LandingView, PageSort, SidebarDensity, ThemePref, EditorBehavior,
 } from "@/shared/types/domain";
 import { ThemePicker } from "@/slices/theme-presets";
-import { IconPickerPopover, DynamicIcon } from "@/slices/icon-picker";
+import { IconPickerPopover, DynamicIcon } from "@/shared/components/icon-picker";
 import { Field } from "@/shared/components/forms/Field";
 import { Choice } from "@/shared/components/forms/Choice";
 import { useDebouncedCommit } from "@/shared/hooks/useDebouncedCommit";

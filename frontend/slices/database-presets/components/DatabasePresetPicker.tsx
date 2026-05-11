@@ -4,7 +4,7 @@ import {
 } from "@/shared/ui/dropdown-menu";
 import { useStore } from "@/shared/lib/store";
 import { DATABASE_PRESETS } from "../lib/presets";
-import { DynamicIcon } from "@/slices/icon-picker";
+import { DynamicIcon } from "@/shared/components/icon-picker";
 
 interface Props {
   onCreated: (databaseId: string) => void;

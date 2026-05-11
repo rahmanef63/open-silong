@@ -2,7 +2,7 @@
 
 import { useStore } from "@/shared/lib/store";
 import { Trash2, RotateCcw, X, Table2, FileText } from "lucide-react";
-import { DynamicIcon } from "@/slices/icon-picker";
+import { DynamicIcon } from "@/shared/components/icon-picker";
 import { formatDateTime } from "@/shared/lib/format";
 
 export function TrashView() {

@@ -30,7 +30,7 @@ import {
   placeTopLevelGroupAtBlock, appendTopLevelGroupToContainer, topLevelIdsInOrder,
 } from "@/slices/block-selection/lib/multiMove";
 import { PageHeaderSlot } from "@/shared/components/PageHeaderSlot";
-import { IconPickerPopover, DynamicIcon } from "@/slices/icon-picker";
+import { IconPickerPopover, DynamicIcon } from "@/shared/components/icon-picker";
 import { useFullPage } from "./hooks/useFullPage";
 
 const COVERS = [

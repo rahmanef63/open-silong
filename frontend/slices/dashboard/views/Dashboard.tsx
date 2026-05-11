@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "@/shared/lib/router-compat";
 import { useStore } from "@/shared/lib/store";
 import { Plus, Star, Clock, FileText, Table2, Sparkles } from "lucide-react";
-import { DynamicIcon } from "@/slices/icon-picker";
+import { DynamicIcon } from "@/shared/components/icon-picker";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { cn } from "@/shared/lib/utils";
 import { formatRelTime as relTime } from "@/shared/lib/format";

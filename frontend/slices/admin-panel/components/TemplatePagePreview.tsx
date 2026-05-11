@@ -2,7 +2,7 @@
 
 import { Database as DatabaseIcon, ChevronRight } from "lucide-react";
 import { renderInline } from "@/shared/lib/inlineMd";
-import { DynamicIcon } from "@/slices/icon-picker";
+import { DynamicIcon } from "@/shared/components/icon-picker";
 
 /** Render a template's root page (plus child pages) like an actual page
  *  would look — used by the admin preview dialog so reviewers don't have

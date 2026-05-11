@@ -2,7 +2,7 @@ import { memo } from "react";
 import { Link } from "@/shared/lib/router-compat";
 import type { Page } from "@/shared/types/domain";
 import { cn } from "@/shared/lib/utils";
-import { DynamicIcon } from "@/slices/icon-picker";
+import { DynamicIcon } from "@/shared/components/icon-picker";
 import { DENSITY, type DensityConfig } from "../lib/density";
 import { handleSidebarTraversal } from "../lib/keyboard";
 

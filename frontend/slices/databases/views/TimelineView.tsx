@@ -6,7 +6,7 @@ import { focusSiblingBySelector } from "@/shared/lib/keyboard";
 import { colorClass } from "@/shared/lib/format";
 import { QuickCreateDialog } from "../components/QuickCreateDialog";
 import { useStore } from "@/shared/lib/store";
-import { DynamicIcon } from "@/slices/icon-picker";
+import { DynamicIcon } from "@/shared/components/icon-picker";
 
 function msToYMD(ms: number): string {
   const d = new Date(ms);

@@ -3,7 +3,7 @@ import { Maximize2 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { useStore } from "@/shared/lib/store";
 import type { Page } from "@/shared/types/domain";
-import { DynamicIcon } from "@/slices/icon-picker";
+import { DynamicIcon } from "@/shared/components/icon-picker";
 
 interface Props {
   row: Page;

@@ -14,7 +14,7 @@ import { AnalyticsPopover } from "@/slices/analytics";
 import { NotifyMePopover } from "@/slices/notifications";
 import { MentionsPopover } from "@/slices/mentions";
 import { WikiToggleAction } from "@/slices/wiki";
-import { DynamicIcon } from "@/slices/icon-picker";
+import { DynamicIcon } from "@/shared/components/icon-picker";
 import {
   MoreHorizontal, Search, Type, Ruler, MoveHorizontal,
   Link2, ClipboardCopy, Files, ArrowRight, Trash2,

@@ -5,7 +5,7 @@ import { cn } from "@/shared/lib/utils";
 import { getVisibleProps } from "../lib/visibility";
 import { useStore } from "@/shared/lib/store";
 import { Plus, MoreHorizontal, Trash2 } from "lucide-react";
-import { DynamicIcon } from "@/slices/icon-picker";
+import { DynamicIcon } from "@/shared/components/icon-picker";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";

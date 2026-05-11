@@ -6,7 +6,7 @@ import {
 } from "@/shared/ui/dropdown-menu";
 import { ChevronDown, MapPin, Plus, MoreHorizontal, Trash2 } from "lucide-react";
 import { QuickCreateDialog } from "../components/QuickCreateDialog";
-import { DynamicIcon } from "@/slices/icon-picker";
+import { DynamicIcon } from "@/shared/components/icon-picker";
 
 const COLOR_HEX: Record<string, string> = {
   gray: "#6b7280",

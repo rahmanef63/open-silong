@@ -8,7 +8,7 @@ import {
   Popover, PopoverContent, PopoverTrigger,
 } from "@/shared/ui/popover";
 import type { CellProps } from "./types";
-import { DynamicIcon } from "@/slices/icon-picker";
+import { DynamicIcon } from "@/shared/components/icon-picker";
 
 export function RelationCell({ db, prop, row, value, onSet, cellClass }: CellProps) {
   const { pages, databases, updateProperty, addRow } = useStore();

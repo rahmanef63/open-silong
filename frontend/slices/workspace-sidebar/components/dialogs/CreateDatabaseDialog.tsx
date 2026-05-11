@@ -6,7 +6,7 @@ import {
 } from "@/shared/ui/dialog";
 import { Input } from "@/shared/ui/input";
 import { Button } from "@/shared/ui/button";
-import { DynamicIcon, IconPickerPopover } from "@/slices/icon-picker";
+import { DynamicIcon, IconPickerPopover } from "@/shared/components/icon-picker";
 
 const DB_DEFAULT_ICON = "🗂️";
 const DB_QUICK_PICKS = [

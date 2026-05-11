@@ -3,7 +3,7 @@ import { Search } from "lucide-react";
 import { Popover, PopoverAnchor, PopoverContent } from "@/shared/ui/popover";
 import { useStore } from "@/shared/lib/store";
 import { cn } from "@/shared/lib/utils";
-import { DynamicIcon } from "@/slices/icon-picker";
+import { DynamicIcon } from "@/shared/components/icon-picker";
 import { rankDatabases } from "./databasePickerRank";
 
 interface Props {

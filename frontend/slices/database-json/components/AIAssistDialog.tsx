@@ -7,7 +7,7 @@ import {
 import { Button } from "@/shared/ui/button";
 import { useStore } from "@/shared/lib/store";
 import type { Database } from "@/shared/types/domain";
-import { DynamicIcon } from "@/slices/icon-picker";
+import { DynamicIcon } from "@/shared/components/icon-picker";
 import {
   generateDatabase, generateRows, getApiKey, setApiKey, getModel, setModel,
 } from "../lib/ai";

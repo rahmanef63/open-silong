@@ -8,7 +8,7 @@ import { Button } from "@/shared/ui/button";
 import { useStore } from "@/shared/lib/store";
 import { useAsyncError } from "@/shared/hooks/useAsyncError";
 import { applyImport, parseExport, type DatabaseExportV1 } from "../lib/serialize";
-import { DynamicIcon } from "@/slices/icon-picker";
+import { DynamicIcon } from "@/shared/components/icon-picker";
 
 interface Props {
   open: boolean;

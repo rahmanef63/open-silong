@@ -39,7 +39,7 @@ import { TemplatePreviewDialog } from "./TemplatePreviewDialog";
 import { ViewSwitcher, type AdminView } from "./ViewSwitcher";
 import { useAdminView } from "../hooks/useAdminView";
 import type { Doc, Id } from "@convex/_generated/dataModel";
-import { DynamicIcon } from "@/slices/icon-picker";
+import { DynamicIcon } from "@/shared/components/icon-picker";
 import { templateStats } from "../lib/previewTemplate";
 import { groupByDateBucket } from "../lib/groupByDate";
 import { formatRelTime } from "@/shared/lib/format";

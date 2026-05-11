@@ -10,7 +10,7 @@ import {
 } from "@/shared/ui/dropdown-menu";
 import { DENSITY, type DensityConfig } from "../lib/density";
 import { handleTreeKey, type TreeItem } from "../lib/keyboard";
-import { DynamicIcon } from "@/slices/icon-picker";
+import { DynamicIcon } from "@/shared/components/icon-picker";
 
 interface Props {
   item: TreeItem;
