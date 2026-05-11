@@ -12,9 +12,11 @@ import {
 import { Button } from "@/shared/ui/button";
 import { Badge } from "@/shared/ui/badge";
 import { ScrollArea } from "@/shared/ui/scroll-area";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/shared/ui/tabs";
 import { DynamicIcon } from "@/slices/icon-picker";
 import { Pencil, Database, FileText, Boxes, Rows3 } from "lucide-react";
 import { walkTemplateTree, templateStats, type TemplateTreeNode } from "../lib/previewTemplate";
+import { TemplatePagePreview } from "./TemplatePagePreview";
 
 interface Props {
   open: boolean;
@@ -38,7 +40,7 @@ export function TemplatePreviewDialog({ open, onOpenChange, template, onEdit }: 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[88vh] p-0 gap-0 overflow-hidden flex flex-col">
+      <DialogContent className="max-w-4xl max-h-[92vh] p-0 gap-0 overflow-hidden flex flex-col">
         {template && (
           <>
             <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
@@ -67,49 +69,101 @@ export function TemplatePreviewDialog({ open, onOpenChange, template, onEdit }: 
               </div>
             </DialogHeader>
 
-            <ScrollArea className="flex-1">
-              <div className="px-6 py-5 space-y-5">
-                {stats && (
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    <StatTile icon={<FileText className="h-4 w-4" />} label="Pages" value={stats.pages} />
-                    <StatTile icon={<Boxes className="h-4 w-4" />} label="Blocks" value={stats.blocks} />
-                    <StatTile icon={<Database className="h-4 w-4" />} label="Databases" value={stats.databases} />
-                    <StatTile icon={<Rows3 className="h-4 w-4" />} label="Seed rows" value={stats.seedRows} />
-                  </div>
-                )}
+            <Tabs defaultValue="preview" className="flex-1 flex flex-col min-h-0">
+              <div className="px-6 pt-3 pb-0 border-b border-border bg-muted/10">
+                <TabsList className="bg-transparent p-0 h-auto gap-1">
+                  <TabsTrigger
+                    value="preview"
+                    className="data-[state=active]:bg-background data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-foreground rounded-none border-b-2 border-transparent px-3 py-1.5 text-sm"
+                  >
+                    Preview
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="structure"
+                    className="data-[state=active]:bg-background data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-foreground rounded-none border-b-2 border-transparent px-3 py-1.5 text-sm"
+                  >
+                    Structure
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="info"
+                    className="data-[state=active]:bg-background data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-foreground rounded-none border-b-2 border-transparent px-3 py-1.5 text-sm"
+                  >
+                    Info
+                  </TabsTrigger>
+                </TabsList>
+              </div>
 
-                {stats && Object.keys(stats.blockTypes).length > 0 && (
-                  <div>
-                    <SectionLabel>Block mix</SectionLabel>
-                    <div className="flex flex-wrap gap-1.5">
-                      {Object.entries(stats.blockTypes)
-                        .sort((a, b) => b[1] - a[1])
-                        .map(([type, n]) => (
-                          <Badge key={type} variant="outline" className="text-[11px] font-normal">
-                            <span className="text-foreground/80">{type}</span>
-                            <span className="ml-1 text-muted-foreground tabular-nums">×{n}</span>
-                          </Badge>
-                        ))}
+              <TabsContent value="preview" className="flex-1 min-h-0 m-0 data-[state=inactive]:hidden">
+                <ScrollArea className="h-full">
+                  <div className="px-6 py-5">
+                    <TemplatePagePreview json={template.json} />
+                  </div>
+                </ScrollArea>
+              </TabsContent>
+
+              <TabsContent value="structure" className="flex-1 min-h-0 m-0 data-[state=inactive]:hidden">
+                <ScrollArea className="h-full">
+                  <div className="px-6 py-5">
+                    <div className="rounded-lg border border-border bg-muted/20 p-3">
+                      {tree ? (
+                        <TreeNode node={tree} />
+                      ) : (
+                        <div className="text-xs text-muted-foreground italic py-1">
+                          (template JSON has no root page — open the editor to inspect)
+                        </div>
+                      )}
                     </div>
                   </div>
-                )}
+                </ScrollArea>
+              </TabsContent>
 
-                <div>
-                  <SectionLabel>Structure</SectionLabel>
-                  <div className="rounded-lg border border-border bg-muted/20 p-3">
-                    {tree ? (
-                      <TreeNode node={tree} />
-                    ) : (
-                      <div className="text-xs text-muted-foreground italic py-1">
-                        (template JSON has no root page — open the editor to inspect)
+              <TabsContent value="info" className="flex-1 min-h-0 m-0 data-[state=inactive]:hidden">
+                <ScrollArea className="h-full">
+                  <div className="px-6 py-5 space-y-5">
+                    {stats && (
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        <StatTile icon={<FileText className="h-4 w-4" />} label="Pages" value={stats.pages} />
+                        <StatTile icon={<Boxes className="h-4 w-4" />} label="Blocks" value={stats.blocks} />
+                        <StatTile icon={<Database className="h-4 w-4" />} label="Databases" value={stats.databases} />
+                        <StatTile icon={<Rows3 className="h-4 w-4" />} label="Seed rows" value={stats.seedRows} />
                       </div>
                     )}
-                  </div>
-                </div>
-              </div>
-            </ScrollArea>
 
-            <DialogFooter className="px-6 py-3 border-t border-border bg-muted/10">
+                    {stats && Object.keys(stats.blockTypes).length > 0 && (
+                      <div>
+                        <SectionLabel>Block mix</SectionLabel>
+                        <div className="flex flex-wrap gap-1.5">
+                          {Object.entries(stats.blockTypes)
+                            .sort((a, b) => b[1] - a[1])
+                            .map(([type, n]) => (
+                              <Badge key={type} variant="outline" className="text-[11px] font-normal">
+                                <span className="text-foreground/80">{type}</span>
+                                <span className="ml-1 text-muted-foreground tabular-nums">×{n}</span>
+                              </Badge>
+                            ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div>
+                      <SectionLabel>Metadata</SectionLabel>
+                      <dl className="grid grid-cols-[120px_1fr] gap-y-1.5 text-sm">
+                        <dt className="text-muted-foreground">ID</dt>
+                        <dd className="font-mono text-xs truncate">{template._id}</dd>
+                        <dt className="text-muted-foreground">Category</dt>
+                        <dd>{template.category}</dd>
+                        <dt className="text-muted-foreground">Status</dt>
+                        <dd>{template.isPublished ? "Live" : "Draft"}</dd>
+                        <dt className="text-muted-foreground">Origin</dt>
+                        <dd>{template.isSeed ? "Seed (built-in)" : "Custom"}</dd>
+                      </dl>
+                    </div>
+                  </div>
+                </ScrollArea>
+              </TabsContent>
+            </Tabs>
+
+            <DialogFooter className="px-6 py-3 border-t border-border bg-muted/10 shrink-0">
               <Button variant="outline" onClick={() => onOpenChange(false)}>Close</Button>
               {onEdit && (
                 <Button onClick={onEdit}>
