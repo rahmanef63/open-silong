@@ -74,6 +74,12 @@ export default defineSchema({
     isPublic: v.optional(v.boolean()),
     rowOfDatabaseId: v.optional(v.string()),
     rowProps: v.optional(v.any()),
+    /** Set on host pages whose primary content is a single database
+     *  block. Holds the ids of databases this page hosts (today: 1 id;
+     *  array shape keeps room for future split-screen multi-db hosts).
+     *  Stamped by `databases` "Open as page" and by template-instantiated
+     *  database-pages. Lets full-page-DB detection skip walking blocks. */
+    databaseHostFor: v.optional(v.array(v.string())),
     font: v.optional(v.string()),
     smallText: v.optional(v.boolean()),
     fullWidth: v.optional(v.boolean()),
