@@ -11,6 +11,7 @@ import {
 } from "@/shared/ui/dialog";
 import { Button } from "@/shared/ui/button";
 import { Badge } from "@/shared/ui/badge";
+import { ScrollArea } from "@/shared/ui/scroll-area";
 import { DynamicIcon } from "@/slices/icon-picker";
 import { Pencil, Database, FileText, Boxes, Rows3 } from "lucide-react";
 import { walkTemplateTree, templateStats, type TemplateTreeNode } from "../lib/previewTemplate";
@@ -37,62 +38,78 @@ export function TemplatePreviewDialog({ open, onOpenChange, template, onEdit }: 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[88vh] p-0 gap-0 overflow-hidden flex flex-col">
         {template && (
           <>
-            <DialogHeader>
+            <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
               <div className="flex items-start gap-3">
-                <DynamicIcon value={template.icon} className="text-4xl shrink-0" />
+                <div className="shrink-0 h-12 w-12 rounded-lg border border-border bg-background flex items-center justify-center text-3xl">
+                  <DynamicIcon value={template.icon} />
+                </div>
                 <div className="min-w-0 flex-1">
-                  <DialogTitle className="text-xl flex items-center gap-2 flex-wrap">
+                  <DialogTitle className="text-lg flex items-center gap-2 flex-wrap leading-snug">
                     <span className="truncate">{template.name}</span>
-                    {template.isSeed && <Badge variant="secondary" className="text-[10px]">seed</Badge>}
+                    {template.isSeed && (
+                      <Badge variant="secondary" className="text-[10px] h-4 px-1.5">seed</Badge>
+                    )}
                     {template.isPublished ? (
-                      <Badge variant="default" className="text-[10px]">published</Badge>
+                      <Badge variant="outline" className="text-[10px] h-4 px-1.5 border-emerald-500/50 text-emerald-700 dark:text-emerald-400 bg-emerald-500/5">live</Badge>
                     ) : (
-                      <Badge variant="outline" className="text-[10px] border-amber-500/50 text-amber-700 dark:text-amber-400">draft</Badge>
+                      <Badge variant="outline" className="text-[10px] h-4 px-1.5 border-amber-500/50 text-amber-700 dark:text-amber-400 bg-amber-500/5">draft</Badge>
                     )}
                   </DialogTitle>
-                  <DialogDescription className="mt-1">
-                    {template.category}
-                    {template.description ? ` · ${template.description}` : ""}
+                  <DialogDescription className="mt-1 break-words">
+                    <span className="font-medium text-foreground/70">{template.category}</span>
+                    {template.description ? <span className="mx-1.5">·</span> : null}
+                    {template.description}
                   </DialogDescription>
                 </div>
               </div>
             </DialogHeader>
 
-            {stats && (
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <StatTile icon={<FileText className="h-4 w-4" />} label="Pages" value={stats.pages} />
-                <StatTile icon={<Boxes className="h-4 w-4" />} label="Blocks" value={stats.blocks} />
-                <StatTile icon={<Database className="h-4 w-4" />} label="Databases" value={stats.databases} />
-                <StatTile icon={<Rows3 className="h-4 w-4" />} label="Seed rows" value={stats.seedRows} />
-              </div>
-            )}
+            <ScrollArea className="flex-1">
+              <div className="px-6 py-5 space-y-5">
+                {stats && (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <StatTile icon={<FileText className="h-4 w-4" />} label="Pages" value={stats.pages} />
+                    <StatTile icon={<Boxes className="h-4 w-4" />} label="Blocks" value={stats.blocks} />
+                    <StatTile icon={<Database className="h-4 w-4" />} label="Databases" value={stats.databases} />
+                    <StatTile icon={<Rows3 className="h-4 w-4" />} label="Seed rows" value={stats.seedRows} />
+                  </div>
+                )}
 
-            {stats && Object.keys(stats.blockTypes).length > 0 && (
-              <div>
-                <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1.5">Block mix</div>
-                <div className="flex flex-wrap gap-1.5">
-                  {Object.entries(stats.blockTypes)
-                    .sort((a, b) => b[1] - a[1])
-                    .map(([type, n]) => (
-                      <Badge key={type} variant="outline" className="text-[11px]">
-                        {type} <span className="ml-1 text-muted-foreground">×{n}</span>
-                      </Badge>
-                    ))}
+                {stats && Object.keys(stats.blockTypes).length > 0 && (
+                  <div>
+                    <SectionLabel>Block mix</SectionLabel>
+                    <div className="flex flex-wrap gap-1.5">
+                      {Object.entries(stats.blockTypes)
+                        .sort((a, b) => b[1] - a[1])
+                        .map(([type, n]) => (
+                          <Badge key={type} variant="outline" className="text-[11px] font-normal">
+                            <span className="text-foreground/80">{type}</span>
+                            <span className="ml-1 text-muted-foreground tabular-nums">×{n}</span>
+                          </Badge>
+                        ))}
+                    </div>
+                  </div>
+                )}
+
+                <div>
+                  <SectionLabel>Structure</SectionLabel>
+                  <div className="rounded-lg border border-border bg-muted/20 p-3">
+                    {tree ? (
+                      <TreeNode node={tree} />
+                    ) : (
+                      <div className="text-xs text-muted-foreground italic py-1">
+                        (template JSON has no root page — open the editor to inspect)
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-            )}
+            </ScrollArea>
 
-            <div>
-              <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1.5">Structure</div>
-              <div className="rounded-lg border border-border bg-muted/20 p-3 max-h-[40vh] overflow-auto">
-                {tree ? <TreeNode node={tree} /> : <div className="text-xs text-muted-foreground">(invalid template JSON)</div>}
-              </div>
-            </div>
-
-            <DialogFooter>
+            <DialogFooter className="px-6 py-3 border-t border-border bg-muted/10">
               <Button variant="outline" onClick={() => onOpenChange(false)}>Close</Button>
               {onEdit && (
                 <Button onClick={onEdit}>
@@ -107,13 +124,29 @@ export function TemplatePreviewDialog({ open, onOpenChange, template, onEdit }: 
   );
 }
 
-function StatTile({ icon, label, value }: { icon: React.ReactNode; label: string; value: number }) {
+function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="rounded-md border border-border bg-card px-3 py-2 flex items-center gap-2.5">
+    <div className="text-[11px] uppercase tracking-wide font-medium text-muted-foreground mb-2">
+      {children}
+    </div>
+  );
+}
+
+function StatTile({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: number;
+}) {
+  return (
+    <div className="rounded-md border border-border bg-card px-3 py-2.5 flex items-center gap-2.5">
       <div className="text-muted-foreground">{icon}</div>
       <div className="min-w-0">
-        <div className="text-base font-semibold leading-none">{value}</div>
-        <div className="text-[10px] uppercase tracking-wide text-muted-foreground mt-0.5">{label}</div>
+        <div className="text-lg font-semibold leading-none tabular-nums">{value}</div>
+        <div className="text-[10px] uppercase tracking-wide text-muted-foreground mt-1">{label}</div>
       </div>
     </div>
   );
@@ -132,21 +165,21 @@ function TreeNode({ node }: { node: TemplateTreeNode }) {
         ) : node.kind === "database" ? (
           <span className="text-base shrink-0">{node.icon ?? "📊"}</span>
         ) : (
-          <span className="text-muted-foreground/50 shrink-0">·</span>
+          <span className="text-muted-foreground/50 shrink-0 select-none">·</span>
         )}
         <span
           className={
             node.kind === "page"
-              ? "font-medium"
+              ? "font-medium truncate"
               : node.kind === "database"
-                ? "text-blue-600 dark:text-blue-400"
-                : "text-muted-foreground"
+                ? "text-blue-600 dark:text-blue-400 truncate"
+                : "text-muted-foreground truncate"
           }
         >
           {node.label}
         </span>
         {node.detail && (
-          <span className="text-xs text-muted-foreground/80 truncate">{node.detail}</span>
+          <span className="text-xs text-muted-foreground/70 truncate">{node.detail}</span>
         )}
       </div>
       {node.children?.map((c, i) => <TreeNode key={i} node={c} />)}
