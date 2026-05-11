@@ -61,7 +61,7 @@ export { PROPERTY_TYPE_LABELS };
 export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block }) {
   const {
     getDatabase, getPage, pages, updateDatabase, addView, updateView, deleteView,
-    createPage, addBlock, updateBlock,
+    createPage, addBlock, updateBlock, updatePage,
   } = useStore();
   const navigate = useNavigate();
   const [openRowId, setOpenRowId] = useState<string | null>(null);
@@ -170,11 +170,19 @@ export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block 
     if (!db || openingAsPage) return;
     setOpeningAsPage(true);
     try {
+      // Canonical lookup via the explicit host marker, with a legacy
+      // heuristic fallback that ignores empty paragraphs (createPage
+      // seeds an empty paragraph alongside the db block, so older host
+      // pages have 2 blocks, not 1).
       const existing = pages.find((p) => {
         if (p.trashed) return false;
-        const b = p.blocks ?? [];
-        if (b.length !== 1) return false;
-        const only = b[0];
+        if (p.databaseHostFor?.includes(db.id)) return true;
+        const meaningful = (p.blocks ?? []).filter((x) => {
+          if (x.type === "paragraph" && !(x.text ?? "").trim()) return false;
+          return true;
+        });
+        if (meaningful.length !== 1) return false;
+        const only = meaningful[0];
         return only.type === "database" && only.databaseId === db.id;
       });
       if (existing) {
@@ -184,6 +192,13 @@ export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block 
       const newPage = await createPage(pageId, { title: db.name, icon: db.icon ?? "🗂️" });
       const blockId = await addBlock(newPage.id, 0, "database");
       updateBlock(newPage.id, blockId, { databaseId: db.id });
+      // Make this the canonical host page: only the db block, plus the
+      // databaseHostFor marker so future "Open as page" finds it via a
+      // cheap field lookup instead of a structural heuristic.
+      updatePage(newPage.id, {
+        blocks: [{ id: blockId, type: "database", text: "", databaseId: db.id }],
+        databaseHostFor: [db.id],
+      });
       navigate(`/p/${newPage.id}`);
     } finally {
       setOpeningAsPage(false);
