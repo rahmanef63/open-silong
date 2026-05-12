@@ -55,8 +55,29 @@ Ignore its grades. `audit-bp.sh` itself is fine.
 - Outside dashboard (auth, marketing, /share): plain `next/link` + `useRouter`.
 - Dashboard routes today: `/dashboard`, `/dashboard/library`,
   `/dashboard/admin`, `/dashboard/inbox`, `/dashboard/trash`,
-  `/dashboard/settings`, `/dashboard/profile`, `/dashboard/p/:id`.
+  `/dashboard/settings`, `/dashboard/profile`,
+  `/dashboard/p/:id` (pages), `/dashboard/db/:id` (databases).
   `/admin` legacy URL redirects to `/dashboard/admin`.
+
+## Pages vs databases (2026-05-12 refactor)
+
+- **Pages** (`/dashboard/p/:id`) — have blocks. Rendered by `PageEditor`.
+  Rows of a database are pages (with `rowOfDatabaseId` set).
+- **Databases** (`/dashboard/db/:id`) — have rows + property schema +
+  views. First-class routable entities. Rendered by `DatabasePage`
+  which wraps `DatabaseBlock` with `fullPage`.
+- Databases can be EMBEDDED in a page's block stream as a `database`
+  block (inline view, all view types supported). The "Open as page"
+  button on inline embeds navigates to `/db/:id`.
+- The legacy `databaseHostFor` field on pages (a marker saying "this
+  page is the canonical home of database X") is deprecated. PageEditor
+  detects legacy host pages (marker present OR single-DB-block
+  heuristic) and `router.replace(ROUTES.database(dbId))`. Data is
+  not mutated — the marker is a redirect hint only. Pages whose
+  referenced DB is missing/trashed skip the redirect so the user can
+  recover the page.
+- Do not create new pages with `databaseHostFor`. `DatabaseBlock`'s
+  openAsPage navigates only.
 
 ## Deploy
 
@@ -145,6 +166,9 @@ blocks gets rewritten via `convex/_shared/idRemap.ts:rewriteMentions`.
 - Portability audit + status:
   `docs/audit/2026-05-11-portability.md` (findings) +
   `docs/audit/2026-05-12-portability-status.md` (10/10 closed).
+- Database route refactor (pages vs databases split):
+  `docs/audit/2026-05-12-database-route-refactor.md` — porting
+  playbook + provider stack + gotchas for downstream agents.
 
 ## Slice portability
 
