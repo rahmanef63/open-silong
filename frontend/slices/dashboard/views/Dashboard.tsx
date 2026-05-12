@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "@/shared/lib/router";
 import { useStore } from "@/shared/lib/store";
 import { Plus, Star, Clock, FileText, Table2, Sparkles } from "lucide-react";
-import { DynamicIcon } from "@/shared/components/icon-picker";
+import { DynamicIcon, DEFAULT_DATABASE_ICON } from "@/shared/components/icon-picker";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { cn } from "@/shared/lib/utils";
 import { formatRelTime as relTime } from "@/shared/lib/format";
@@ -56,7 +56,7 @@ export function Dashboard() {
             subtitle="Track and organize rows"
             onClick={async () => {
               const [p, db] = await Promise.all([
-                createPage(null, { title: "Untitled database", icon: "🗂️" }),
+                createPage(null, { title: "Untitled database", icon: DEFAULT_DATABASE_ICON }),
                 createDatabase("Untitled database"),
               ]);
               const blockId = await addBlock(p.id, 0, "database");
@@ -111,7 +111,7 @@ export function Dashboard() {
                     key={db.id}
                     className="flex items-center gap-3 px-4 py-3"
                   >
-                    <DynamicIcon value={db.icon} className="text-lg" fallback="🗂️" />
+                    <DynamicIcon value={db.icon} className="text-lg" fallback={DEFAULT_DATABASE_ICON} />
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-sm font-medium">{db.name}</div>
                       <div className="text-xs text-muted-foreground">

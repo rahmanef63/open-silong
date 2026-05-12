@@ -7,9 +7,9 @@ import {
 } from "@/shared/ui/dialog";
 import { Input } from "@/shared/ui/input";
 import { Button } from "@/shared/ui/button";
-import { ALL_EMOJIS, DynamicIcon, IconPickerPopover } from "@/shared/components/icon-picker";
+import { ALL_EMOJIS, DynamicIcon, IconPickerPopover, DEFAULT_PAGE_ICON } from "@/shared/components/icon-picker";
 
-const DEFAULT_ICON = "📄";
+const DEFAULT_ICON = DEFAULT_PAGE_ICON;
 
 interface Props {
   open: boolean;

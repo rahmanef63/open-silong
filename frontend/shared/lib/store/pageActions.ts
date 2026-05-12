@@ -3,6 +3,7 @@ import { useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import type { Block, BlockType, Page, Preferences } from "@/shared/types/domain";
 import { guardMut, guardMutVoid } from "./mutationGuard";
+import { DEFAULT_PAGE_ICON } from "@/shared/components/icon-picker";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
@@ -69,7 +70,7 @@ export function usePageActions({ pages, pageMap, preferences, snapshotIfNeeded, 
       return {
         id, parentId,
         title: opts.title ?? "",
-        icon: opts.icon ?? "📄",
+        icon: opts.icon ?? DEFAULT_PAGE_ICON,
         cover: null,
         blocks: [{ id: uid(), type: "paragraph", text: "" }],
         favorite: false, trashed: false,
@@ -143,7 +144,7 @@ export function usePageActions({ pages, pageMap, preferences, snapshotIfNeeded, 
       const newId = await guardMut("duplicatePage", mutDuplicatePage({ pageId: id }));
       if (!newId) return undefined;
       const now = Date.now();
-      return { id: newId, parentId: null, title: "", icon: "📄", cover: null, blocks: [], favorite: false, trashed: false, createdAt: now, updatedAt: now };
+      return { id: newId, parentId: null, title: "", icon: DEFAULT_PAGE_ICON, cover: null, blocks: [], favorite: false, trashed: false, createdAt: now, updatedAt: now };
     },
     [mutDuplicatePage],
   );

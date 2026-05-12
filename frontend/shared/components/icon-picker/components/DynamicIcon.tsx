@@ -29,18 +29,31 @@ interface Props {
  *   - emoji (twemoji)  → <img> from jsDelivr CDN, fallback to native
  *   - emoji (native)   → OS font glyph in a span
  *  Backwards-compat with all existing emoji-only icon strings.
+ *  Fallback accepts either an emoji glyph or a lucide:Name string — it's
+ *  parsed the same way as `value` so consumers can pass either format.
  *  Memoized: re-renders only when `value` or styling-affecting props change. */
 function DynamicIconImpl({ value, className, fallback = "📄", title, forceNative }: Props) {
-  const parsed = React.useMemo(() => parseIconValue(value), [value]);
+  // When the stored value is empty, fall through to parsing the fallback so
+  // a `lucide:FileText` fallback renders as the lucide SVG (not the literal
+  // string). parseIconValue treats empty/null as kind="emoji" with empty
+  // glyph, so we explicitly check that case here.
+  const effective = React.useMemo(() => {
+    const primary = parseIconValue(value);
+    if (primary.kind === "emoji" && !primary.emoji) {
+      return parseIconValue(fallback);
+    }
+    return primary;
+  }, [value, fallback]);
+  const parsed = effective;
   const [style] = useIconStyle();
   const useTwemoji = style === "twemoji" && !forceNative;
 
   // Hooks MUST run in the same order every render. Compute these unconditionally
   // even when the lucide branch will be taken — toggling between lucide and
   // emoji icons must not change hook count (was React error #300).
-  const glyph = parsed.kind === "emoji" ? parsed.emoji : fallback;
+  const glyph = parsed.kind === "emoji" ? parsed.emoji : "";
   const url = React.useMemo(
-    () => (useTwemoji && parsed.kind !== "lucide" ? twemojiUrl(glyph) : null),
+    () => (useTwemoji && parsed.kind === "emoji" && glyph ? twemojiUrl(glyph) : null),
     [useTwemoji, glyph, parsed.kind],
   );
 

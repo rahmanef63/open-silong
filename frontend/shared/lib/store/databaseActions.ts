@@ -6,6 +6,7 @@ import type {
 } from "@/shared/types/domain";
 import { applyMirrorToInverse, planRelationMirror } from "@/slices/databases/lib/relationMirror";
 import { defaultPropName } from "@/slices/databases/lib/propertyTypeMeta";
+import { DEFAULT_DATABASE_ICON, DEFAULT_ROW_ICON } from "@/shared/components/icon-picker";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 const SELECT_COLORS = ["gray", "brown", "orange", "yellow", "green", "blue", "purple", "pink", "red"];
@@ -33,7 +34,7 @@ export function useDatabaseActions({ databaseMap, pageMap, pushStructuralAction 
     async (name = "Untitled database"): Promise<Database> => {
       const id = await mutCreateDatabase({ name });
       const now = Date.now();
-      return { id, name, icon: "🗂️", properties: [], rowIds: [], views: [], activeViewId: "", createdAt: now, updatedAt: now };
+      return { id, name, icon: DEFAULT_DATABASE_ICON, properties: [], rowIds: [], views: [], activeViewId: "", createdAt: now, updatedAt: now };
     },
     [mutCreateDatabase],
   );
@@ -214,7 +215,7 @@ export function useDatabaseActions({ databaseMap, pageMap, pushStructuralAction 
     async (dbId: string, init: Partial<Page> = {}, templateId?: string): Promise<Page> => {
       const rowId = await mutAddRow({ dbId, init, templateId });
       const now = Date.now();
-      return { id: rowId, parentId: null, title: "", icon: "📄", cover: null, blocks: [], favorite: false, trashed: false, rowOfDatabaseId: dbId, rowProps: {}, createdAt: now, updatedAt: now };
+      return { id: rowId, parentId: null, title: "", icon: DEFAULT_ROW_ICON, cover: null, blocks: [], favorite: false, trashed: false, rowOfDatabaseId: dbId, rowProps: {}, createdAt: now, updatedAt: now };
     },
     [mutAddRow],
   );

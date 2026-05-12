@@ -258,7 +258,7 @@ export const create = mutation({
       workspaceId: active._id,
       parentId: args.parentId,
       title: args.title ?? "",
-      icon: args.icon ?? "📄",
+      icon: args.icon ?? "lucide:FileText",
       cover: null,
       blocks,
       favorite: false,
