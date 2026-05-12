@@ -10,7 +10,10 @@ import "./globals.css";
 
 const inter = Inter({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  // Single variable font file covers every weight 100-900 — saves the
+  // multi-weight preload bandwidth and silences the "preloaded but not
+  // used within a few seconds" browser warning that fires when one
+  // weight's woff2 isn't touched in first paint.
   variable: "--font-inter",
   display: "swap",
 });
