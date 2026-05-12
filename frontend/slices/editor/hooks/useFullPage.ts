@@ -30,5 +30,9 @@ export function useFullPage(id: string | null | undefined): Page | null | undefi
     locked: doc.locked,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
+    databaseHostFor: doc.databaseHostFor,
+    shareSlug: doc.shareSlug,
+    shareIndexable: doc.shareIndexable,
+    wiki: doc.wiki,
   };
 }

@@ -26,11 +26,17 @@ export function RowDetailDialog({ pageId, onOpenChange, headerExtras }: Props) {
   return (
     <Dialog open={!!pageId} onOpenChange={onOpenChange}>
       <DialogContent
-        className="p-0 max-w-3xl w-[95vw] h-[85vh] gap-0 flex flex-col overflow-hidden"
+        className="p-0 max-w-3xl w-[95vw] h-[85vh] gap-0 flex flex-col overflow-hidden [&>button.absolute]:hidden"
       >
         <DialogTitle className="sr-only">{title}</DialogTitle>
         <DialogDescription className="sr-only">Row detail</DialogDescription>
-        {pageId && <RowDetailBody pageId={pageId} headerExtras={headerExtras} />}
+        {pageId && (
+          <RowDetailBody
+            pageId={pageId}
+            headerExtras={headerExtras}
+            onClose={() => onOpenChange(false)}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );

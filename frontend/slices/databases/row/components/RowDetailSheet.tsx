@@ -18,10 +18,19 @@ export function RowDetailSheet({ pageId, onOpenChange, headerExtras }: Props) {
 
   return (
     <Sheet open={!!pageId} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="sm:max-w-2xl w-full p-0 flex flex-col gap-0">
+      <SheetContent
+        side="right"
+        className="sm:max-w-2xl w-full p-0 flex flex-col gap-0 [&>button.absolute]:hidden"
+      >
         <SheetTitle className="sr-only">{title}</SheetTitle>
         <SheetDescription className="sr-only">Row detail</SheetDescription>
-        {pageId && <RowDetailBody pageId={pageId} headerExtras={headerExtras} />}
+        {pageId && (
+          <RowDetailBody
+            pageId={pageId}
+            headerExtras={headerExtras}
+            onClose={() => onOpenChange(false)}
+          />
+        )}
       </SheetContent>
     </Sheet>
   );

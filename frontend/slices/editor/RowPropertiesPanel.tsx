@@ -109,7 +109,21 @@ export function RowPropertiesPanel({ page }: { page: Page }) {
 
   if (!page.rowOfDatabaseId) return null;
   const db = getDatabase(page.rowOfDatabaseId);
-  if (!db) return null;
+  if (!db) {
+    // Database is loading or has been deleted. Render a skeleton so the
+    // page doesn't appear missing its preview header — the row body
+    // (blocks) still renders below.
+    return (
+      <div className="mb-6 rounded-lg border border-border bg-card overflow-hidden">
+        <div className="h-8 border-b border-border/40 bg-muted/30 animate-pulse" />
+        <div className="h-8 border-b border-border/40 bg-muted/20 animate-pulse" />
+        <div className="h-8 border-b border-border/40 bg-muted/10 animate-pulse" />
+        <div className="px-3 py-2 text-xs text-muted-foreground/70 italic">
+          Loading database properties…
+        </div>
+      </div>
+    );
+  }
 
   const visibleProps = db.properties.filter((p) => !p.hidden);
   const previewProps = visibleProps.slice(0, PREVIEW_COUNT);
