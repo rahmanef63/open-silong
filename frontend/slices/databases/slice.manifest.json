@@ -23,7 +23,8 @@
       "ui/popover",
       "ui/select",
       "ui/sheet",
-      "ui/switch"
+      "ui/switch",
+      "ui/tooltip"
     ],
     "slices": [
       "comments",
