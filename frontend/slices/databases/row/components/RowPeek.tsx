@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
 import { useNavigate } from "@/shared/lib/router";
 import { ROUTES } from "@/shared/lib/routes";
 import { useRowOpenMode, type RowOpenMode } from "../lib/useRowOpenMode";
@@ -11,44 +10,44 @@ import { RowDetailDialog } from "./RowDetailDialog";
 interface Props {
   pageId: string | null;
   onOpenChange: (open: boolean) => void;
+  /** When false, hide the "Open as full page" button in the switcher —
+   *  used when the caller's host page is already the full-page database
+   *  view, so navigating a row as page creates an awkward sibling-page
+   *  jump. Defaults to true (inline DB embeds). */
+  showOpenAsPage?: boolean;
 }
 
 /**
- * Unified row-peek entry. Reads the per-user "row open mode" preference
- * (sheet | dialog | page) and renders the matching surface. Switching
- * mode mid-peek keeps the same row open in the new surface; switching to
- * "page" closes the peek and navigates to /p/:id.
+ * Row peek controller. Clicking a row always opens in the user's
+ * persisted *default* surface (sheet or dialog). The switcher inside
+ * the peek lets the user:
+ *   • flip between sheet ↔ dialog (and persist that as the new default)
+ *   • one-shot "open as full page" (navigate to /p/<id> without
+ *     touching the persisted default)
  *
- * Use this from DatabaseBlock (and anywhere else that needs to peek a
- * row) instead of mounting RowDetailSheet directly.
+ * Row click never bypasses the peek to navigate directly — that was the
+ * earlier behaviour and surprised users who had toggled "page" once.
  */
-export function RowPeek({ pageId, onOpenChange }: Props) {
+export function RowPeek({ pageId, onOpenChange, showOpenAsPage = true }: Props) {
   const [mode, setMode] = useRowOpenMode();
   const navigate = useNavigate();
 
-  // If the user's persisted preference is "page", clicking a row should
-  // navigate immediately instead of opening any modal.
-  useEffect(() => {
-    if (!pageId || mode !== "page") return;
+  const handlePickMode = (next: RowOpenMode) => setMode(next);
+  const handleOpenAsPage = () => {
+    if (!pageId) return;
     onOpenChange(false);
     navigate(ROUTES.page(pageId));
-  }, [pageId, mode, navigate, onOpenChange]);
-
-  const handleSwitch = (next: RowOpenMode) => {
-    if (next === "page") {
-      if (pageId) {
-        onOpenChange(false);
-        navigate(ROUTES.page(pageId));
-      }
-      setMode(next);
-      return;
-    }
-    setMode(next);
   };
 
-  const switcher = <RowOpenModeSwitcher mode={mode} onChange={handleSwitch} />;
+  const switcher = (
+    <RowOpenModeSwitcher
+      mode={mode}
+      onPickMode={handlePickMode}
+      onOpenAsPage={handleOpenAsPage}
+      showPage={showOpenAsPage}
+    />
+  );
 
-  if (mode === "page") return null;
   if (mode === "dialog") {
     return <RowDetailDialog pageId={pageId} onOpenChange={onOpenChange} headerExtras={switcher} />;
   }
