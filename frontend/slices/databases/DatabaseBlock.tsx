@@ -176,14 +176,8 @@ export function DatabaseBlock({
   })();
 
   function openAsPage() {
-    const TAG = "[openAsPage]";
-    if (!db) {
-      console.warn(TAG, "aborted: no db on block", { pageId, blockDbId: block.databaseId });
-      return;
-    }
-    const route = ROUTES.database(db.id);
-    console.log(TAG, "navigating to /db/", { dbId: db.id, dbName: db.name, route });
-    navigate(route);
+    if (!db) return;
+    navigate(ROUTES.database(db.id));
   }
 
   const ViewComponent = (

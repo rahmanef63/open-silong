@@ -144,12 +144,7 @@ export function PageEditor() {
   useEffect(() => {
     if (!legacyHostDbId) return;
     const db = getDatabase(legacyHostDbId);
-    if (!db) return; // db not loaded yet — re-runs when store updates
-    if (db.trashed) return; // let user see the page so they can recover
-    console.log("[PageEditor] legacy host page → redirecting to /db/", {
-      pageId: page?.id,
-      dbId: legacyHostDbId,
-    });
+    if (!db || db.trashed) return; // wait for store or let user recover
     navigate(ROUTES.database(legacyHostDbId), { replace: true });
   }, [legacyHostDbId, page?.id, getDatabase, navigate]);
 
@@ -506,7 +501,7 @@ const HeaderBreadcrumbs = React.memo(HeaderBreadcrumbsImpl, (a, b) =>
 );
 
 function HeaderBreadcrumbsImpl({ page }: { page: Page }) {
-  const { getPage, pages } = useStore();
+  const { getPage, getDatabase } = useStore();
   const navigate = useNavigate();
   const crumbs = React.useMemo(() => {
     const out: Page[] = [];
@@ -518,28 +513,33 @@ function HeaderBreadcrumbsImpl({ page }: { page: Page }) {
     return out;
   }, [page, getPage]);
 
-  const dbHostPage = React.useMemo(
-    () => page.rowOfDatabaseId
-      ? pages.find((p) => !p.trashed && p.databaseHostFor?.includes(page.rowOfDatabaseId!))
-      : undefined,
-    [page.rowOfDatabaseId, pages],
-  );
-
-  const finalCrumbs =
-    dbHostPage && !crumbs.some((c) => c.id === dbHostPage.id)
-      ? [dbHostPage, ...crumbs]
-      : crumbs;
+  // For row-pages (page.rowOfDatabaseId set), prepend a breadcrumb to
+  // the parent database's full-page view (/db/[id]). Replaces the old
+  // host-page-lookup logic.
+  const parentDb = page.rowOfDatabaseId ? getDatabase(page.rowOfDatabaseId) : null;
 
   return (
     <nav className="flex items-center gap-1 text-sm min-w-0 overflow-hidden">
-      {finalCrumbs.map((c, i) => (
+      {parentDb && (
+        <>
+          <button
+            onClick={() => navigate(ROUTES.database(parentDb.id))}
+            className="flex items-center gap-1.5 rounded px-1.5 py-1 hover:bg-accent min-w-0 text-muted-foreground"
+          >
+            <DynamicIcon value={parentDb.icon} className="text-sm" />
+            <span className="truncate max-w-[160px]">{parentDb.name || "Untitled database"}</span>
+          </button>
+          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+        </>
+      )}
+      {crumbs.map((c, i) => (
         <div key={c.id} className="flex items-center gap-1 min-w-0">
           {i > 0 && <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />}
           <button
-            onClick={() => navigate(`/p/${c.id}`)}
+            onClick={() => navigate(ROUTES.page(c.id))}
             className={cn(
               "flex items-center gap-1.5 rounded px-1.5 py-1 hover:bg-accent min-w-0",
-              i === finalCrumbs.length - 1 ? "text-foreground" : "text-muted-foreground"
+              i === crumbs.length - 1 ? "text-foreground" : "text-muted-foreground"
             )}
           >
             <DynamicIcon value={c.icon} className="text-sm" />

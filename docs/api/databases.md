@@ -344,3 +344,71 @@ When a property is deleted from `properties[]`, the client (in
    {scope: "databases.<op>", max, windowMs})` on bulk-write
    operations (e.g. CSV import row inserts) — already done in
    `convex/import/zip.ts` and `convex/import/workspace.ts`.
+
+---
+
+## Frontend rendering
+
+Databases are first-class routable entities as of 2026-05-12.
+
+### Route: `/dashboard/db/[id]`
+
+Rendered by `frontend/slices/databases/DatabasePage.tsx`. The component:
+- Resolves the database via `useStore().getDatabase(id)`
+- Pushes the id into recents (mirroring how PageEditor handles `/p/:id`)
+- Builds a synthetic `Block` (`type: "database"`, `databaseId: id`)
+- Renders `<DatabaseBlock pageId="" block={synthetic} fullPage />`
+
+The synthetic block is a render-time vehicle only — it is never written
+to a page. `pageId=""` is intentional; full-page mode skips inline /
+linked detection (you're already at the canonical surface).
+
+### DatabaseBlock props
+
+```ts
+function DatabaseBlock({ pageId, block, fullPage }: {
+  pageId: string;       // host page id when embedded; "" for full-page
+  block: Block;         // either a real block from a page or synthetic
+  fullPage?: boolean;   // hides "Open as page" button, forces canonical
+});
+```
+
+When `fullPage` is true:
+- `isInline` is forced to `false`
+- "Open as page" maximize button is hidden
+- Row peek's `showOpenAsPage` is also hidden (no awkward sibling-page jump)
+
+### Legacy `databaseHostFor` marker (deprecated)
+
+Pages used to host a database via a `databaseHostFor: [dbId]` marker
+and a single `database` block in their `blocks[]`. PageEditor still
+detects this shape (explicit marker OR pre-marker single-block
+heuristic) and **redirects to `/dashboard/db/[dbId]`** via
+`router.replace`. Data is not mutated; the marker is a one-way
+redirect hint.
+
+Edge case: if the referenced DB is missing or trashed, the redirect
+is skipped and the page renders normally — so users can recover
+orphaned content (e.g. the bug where Personal CRM lost its DB block
+but kept the marker, leaving an inaccessible empty page).
+
+### Linking to a database
+
+Always use `ROUTES.database(id)` (relative — `/db/:id`) or
+`ROUTES_ABS.database(id)` (absolute — `/dashboard/db/:id`). Do not
+look up host pages.
+
+Consumers updated to use the route directly:
+- `slices/workspace-sidebar/components/DatabaseSidebarRow`
+- `slices/library/views/LibraryView.openDatabase`
+- `slices/command-palette/CommandPalette` + `SearchModal`
+- `slices/editor/RowPropertiesPanel` (breadcrumb back to database)
+- `slices/databases/DatabaseBlock.openAsPage` (single navigate call)
+
+### Inline embed → full-page transition
+
+User clicks the maximize button on a `database` block inside a page →
+`openAsPage` runs `navigate(ROUTES.database(db.id))`. There is no
+host-page creation, no `databaseHostFor` stamp, no `addBlock` /
+`updateBlock` / `updatePage` chain. The DB is already canonical; the
+button just navigates to the canonical surface.
