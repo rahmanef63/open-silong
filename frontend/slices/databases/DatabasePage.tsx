@@ -1,0 +1,115 @@
+"use client";
+
+import { useEffect, useMemo } from "react";
+import { useParams, useNavigate } from "@/shared/lib/router";
+import { ROUTES } from "@/shared/lib/routes";
+import { useStore } from "@/shared/lib/store";
+import { DatabaseBlock } from "./DatabaseBlock";
+import { DatabaseSkeleton } from "@/shared/components/RouteSkeleton";
+import { PageHeaderSlot } from "@/shared/components/PageHeaderSlot";
+import { DynamicIcon } from "@/shared/components/icon-picker";
+import { DEFAULT_DATABASE_ICON } from "@/shared/components/icon-picker";
+import type { Block } from "@/shared/types/domain";
+
+/**
+ * Full-page database route. Renders a database as a first-class entity
+ * — NOT inside a host page. The legacy "host page" concept (a regular
+ * page whose only block was a database, marked via databaseHostFor) is
+ * deprecated as of 2026-05-12. Databases live at /dashboard/db/[id].
+ *
+ * Why split: pages have blocks, databases have rows. They're different
+ * shapes that don't compose. Putting a database inside a page-as-block
+ * created edge cases where the host page's blocks could be deleted,
+ * leaving the marker pointing at an empty page — exactly the bug that
+ * triggered this refactor.
+ */
+export function DatabasePage() {
+  const { id } = useParams<{ id: string }>();
+  const { getDatabase, pushRecent } = useStore();
+  const navigate = useNavigate();
+  const db = id ? getDatabase(id) : undefined;
+
+  // Echo opens into the recents stack so the dashboard / search reflect
+  // recent activity for full-page DB visits, mirroring how PageEditor
+  // does it for /p/<id>.
+  useEffect(() => {
+    if (id) pushRecent(id);
+  }, [id, pushRecent]);
+
+  // Synthetic block — DatabaseBlock's prop shape is page-block-oriented,
+  // but here we have a dbId directly. The block is never written to
+  // anything; it's a render-time vehicle only.
+  const block: Block = useMemo(
+    () => ({ id: `__fullpage_${id}__`, type: "database", text: "", databaseId: id ?? "" }),
+    [id],
+  );
+
+  if (!id) {
+    return (
+      <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+        No database id.
+      </div>
+    );
+  }
+
+  if (db === undefined) {
+    // Loading — store hasn't resolved this DB yet.
+    return <DatabaseSkeleton />;
+  }
+
+  if (db === null) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center gap-3 text-sm text-muted-foreground">
+        <div>Database not found.</div>
+        <button
+          type="button"
+          onClick={() => navigate(ROUTES.dashboard)}
+          className="rounded-md border border-border px-3 py-1.5 hover:bg-accent"
+        >
+          Back to dashboard
+        </button>
+      </div>
+    );
+  }
+
+  if (db.trashed) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center gap-3 text-sm">
+        <div className="font-medium text-amber-700 dark:text-amber-400">
+          Database is in Trash
+        </div>
+        <button
+          type="button"
+          onClick={() => navigate(ROUTES.trash)}
+          className="rounded-md border border-border px-3 py-1.5 hover:bg-accent"
+        >
+          Open Trash
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex h-full flex-col overflow-hidden">
+      <PageHeaderSlot
+        left={
+          <div className="flex items-center gap-1.5 min-w-0">
+            <DynamicIcon
+              value={db.icon}
+              fallback={DEFAULT_DATABASE_ICON}
+              className="text-base shrink-0"
+            />
+            <span className="truncate text-sm font-medium">
+              {db.name || "Untitled database"}
+            </span>
+          </div>
+        }
+      />
+      <div className="flex-1 overflow-y-auto scrollbar-thin">
+        <div className="mx-auto max-w-none px-4 sm:px-6 md:px-12 pt-6 pb-12">
+          <DatabaseBlock pageId="" block={block} fullPage />
+        </div>
+      </div>
+    </div>
+  );
+}

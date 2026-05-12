@@ -1,5 +1,5 @@
-import { useMemo } from "react";
 import { useNavigate } from "@/shared/lib/router";
+import { ROUTES } from "@/shared/lib/routes";
 import { MoreHorizontal, Table2, Trash2 } from "lucide-react";
 import { useStore } from "@/shared/lib/store";
 import type { Database } from "@/shared/types/domain";
@@ -15,12 +15,8 @@ interface Props {
 }
 
 export function DatabaseSidebarRow({ db, density }: Props) {
-  const { trashDatabase, pages } = useStore();
+  const { trashDatabase } = useStore();
   const navigate = useNavigate();
-  const host = useMemo(
-    () => pages.find((p) => !p.trashed && p.databaseHostFor?.includes(db.id)),
-    [pages, db.id],
-  );
   return (
     <div
       className={cn(
@@ -29,10 +25,9 @@ export function DatabaseSidebarRow({ db, density }: Props) {
       )}
     >
       <button
-        onClick={() => host && navigate(`/p/${host.id}`)}
+        onClick={() => navigate(ROUTES.database(db.id))}
         className="flex flex-1 min-w-0 items-center gap-1.5 text-left"
-        disabled={!host}
-        title={host ? `Open ${host.title || "page"}` : "No host page"}
+        title={`Open ${db.name || "database"}`}
       >
         <Table2 className={cn("shrink-0 text-muted-foreground", density.actionIcon)} />
         <span className="flex-1 truncate">{db.name}</span>
@@ -49,11 +44,9 @@ export function DatabaseSidebarRow({ db, density }: Props) {
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          {host && (
-            <DropdownMenuItem onClick={() => navigate(`/p/${host.id}`)}>
-              Open host page
-            </DropdownMenuItem>
-          )}
+          <DropdownMenuItem onClick={() => navigate(ROUTES.database(db.id))}>
+            Open database
+          </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem className="text-destructive" onClick={() => trashDatabase(db.id)}>
             <Trash2 className="mr-2 h-3.5 w-3.5" /> Move to trash

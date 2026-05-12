@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useNavigate } from "@/shared/lib/router";
+import { ROUTES } from "@/shared/lib/routes";
 import { useStore } from "@/shared/lib/store";
 import { Database, Page, Property, PropertyType } from "@/shared/types/domain";
 import { PropertyCell } from "@/slices/databases/PropertyCell";
@@ -103,7 +105,8 @@ function PropertyRow({
 }
 
 export function RowPropertiesPanel({ page }: { page: Page }) {
-  const { getDatabase, addProperty, pages } = useStore();
+  const { getDatabase, addProperty } = useStore();
+  const navigate = useNavigate();
   const [addOpen, setAddOpen] = useState(false);
   const [expanded, setExpanded] = useState(false);
 
@@ -130,25 +133,21 @@ export function RowPropertiesPanel({ page }: { page: Page }) {
   const restProps = visibleProps.slice(PREVIEW_COUNT);
   const hasRest = restProps.length > 0;
 
-  const dbPage = pages.find(
-    (p) => !p.trashed && p.databaseHostFor?.includes(page.rowOfDatabaseId!),
-  );
-
+  // Breadcrumb back to the database. With the /db/[id] route databases
+  // are first-class — no host-page lookup needed.
   return (
     <div className="mb-6">
-      {dbPage && (
-        <div className="flex items-center gap-1 text-xs text-muted-foreground mb-3">
-          <button
-            onClick={() => window.history.back()}
-            className="flex items-center gap-1 hover:text-foreground transition-colors"
-          >
-            <DynamicIcon value={dbPage.icon} className="text-sm" />
-            <span>{dbPage.title || "Untitled"}</span>
-          </button>
-          <ChevronRight className="h-3 w-3 shrink-0" />
-          <span className="text-foreground">{page.title || "Untitled"}</span>
-        </div>
-      )}
+      <div className="flex items-center gap-1 text-xs text-muted-foreground mb-3">
+        <button
+          onClick={() => navigate(ROUTES.database(db.id))}
+          className="flex items-center gap-1 hover:text-foreground transition-colors"
+        >
+          <DynamicIcon value={db.icon} className="text-sm" />
+          <span>{db.name || "Untitled database"}</span>
+        </button>
+        <ChevronRight className="h-3 w-3 shrink-0" />
+        <span className="text-foreground">{page.title || "Untitled"}</span>
+      </div>
 
       <div className="rounded-lg border border-border bg-card overflow-hidden">
         {visibleProps.length === 0 && (

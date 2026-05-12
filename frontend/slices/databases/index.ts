@@ -1,4 +1,5 @@
 export { DatabaseBlock, PROPERTY_TYPE_LABELS } from "./DatabaseBlock";
+export { DatabasePage } from "./DatabasePage";
 
 // Row sub-namespace (formerly @/slices/database-row)
 export {

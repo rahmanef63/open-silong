@@ -98,10 +98,7 @@ export function CommandPalette() {
         {!query && databases.length > 0 && (
           <CommandGroup heading="Databases">
             {databases.slice(0, MAX_PAGES).map((d) => (
-              <CommandItem key={d.id} value={`db:${d.name}:${d.id}`} onSelect={run(() => {
-                const host = pages.find((p) => !p.trashed && p.databaseHostFor?.includes(d.id));
-                if (host) navigate(ROUTES.page(host.id));
-              })}>
+              <CommandItem key={d.id} value={`db:${d.name}:${d.id}`} onSelect={run(() => navigate(ROUTES.database(d.id)))}>
                 <DbIcon className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
                 <span className="flex-1 truncate">{d.name}</span>
                 <span className="text-[10px] text-muted-foreground">{d.rowIds.length} rows</span>

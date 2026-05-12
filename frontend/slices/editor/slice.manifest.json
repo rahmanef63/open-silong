@@ -12,6 +12,7 @@
       "lib/inlineMd",
       "lib/markdown",
       "lib/router",
+      "lib/routes",
       "lib/store",
       "lib/utils",
       "providers",
