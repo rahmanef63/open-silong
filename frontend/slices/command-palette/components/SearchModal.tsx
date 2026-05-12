@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "@/shared/lib/router";
-import { Dialog, DialogContent, DialogTitle } from "@/shared/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/shared/ui/dialog";
 import { useStore } from "@/shared/lib/store";
 import { useSearch } from "@/slices/search";
 import { Search, FileText, Clock, Database as DatabaseIcon, Loader2 } from "lucide-react";
@@ -32,6 +32,9 @@ export function SearchModal({ open, onOpenChange }: Props) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="p-0 overflow-hidden max-w-xl gap-0 top-[20%] translate-y-0">
         <DialogTitle className="sr-only">Search workspace</DialogTitle>
+        <DialogDescription className="sr-only">
+          Search pages and databases by title.
+        </DialogDescription>
         <div className="flex items-center gap-3 px-4 py-3 border-b border-border">
           <Search className="h-4 w-4 text-muted-foreground" />
           <input

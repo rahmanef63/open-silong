@@ -20,6 +20,11 @@ const fraunces = Fraunces({
   weight: ["500", "600", "700"],
   variable: "--font-fraunces",
   display: "swap",
+  // Opt-in only — applied per-page via `font: "serif"` user setting and
+  // a handful of marketing surfaces. Preloading it on every route burns
+  // bandwidth + trips the "preloaded but not used" browser warning on
+  // typical sans-only pages (dashboard, inbox, settings, …).
+  preload: false,
 });
 
 export const metadata: Metadata = {
