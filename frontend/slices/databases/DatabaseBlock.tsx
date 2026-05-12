@@ -32,7 +32,7 @@ import { FilterBuilder } from "./FilterBuilder";
 import { SortBuilder } from "./SortBuilder";
 import { ViewOptions } from "./ViewOptions";
 import { Input } from "@/shared/ui/input";
-import { RowDetailSheet } from "./row";
+import { RowPeek } from "./row";
 import { NewRowMenu } from "@/slices/database-templates";
 import { DataMenu } from "@/slices/database-json";
 import { DynamicIcon, IconPickerPopover } from "@/shared/components/icon-picker";
@@ -380,7 +380,7 @@ export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block 
           </Suspense>
         </ErrorBoundary>
       </RowSelectionProvider>
-      <RowDetailSheet pageId={openRowId} onOpenChange={(o) => !o && setOpenRowId(null)} />
+      <RowPeek pageId={openRowId} onOpenChange={(o) => !o && setOpenRowId(null)} />
     </div>
   );
 }

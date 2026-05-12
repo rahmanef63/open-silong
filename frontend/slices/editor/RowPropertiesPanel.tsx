@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useStore } from "@/shared/lib/store";
-import { Page, Property, PropertyType } from "@/shared/types/domain";
+import { Database, Page, Property, PropertyType } from "@/shared/types/domain";
 import { PropertyCell } from "@/slices/databases/PropertyCell";
 import { DynamicIcon } from "@/shared/components/icon-picker";
 import { PROPERTY_TYPE_ICONS, PROPERTY_TYPE_LABELS } from "@/slices/databases/lib/propertyTypeMeta";
 import { cn } from "@/shared/lib/utils";
-import { Plus, ChevronRight, Trash2 } from "lucide-react";
+import { Plus, ChevronRight, ChevronDown, ChevronUp, Trash2 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
@@ -77,24 +77,51 @@ function PropertyNameCell({
   );
 }
 
+/** How many visible properties show in the always-rendered preview strip
+ *  before the rest collapse behind the accordion toggle. Notion-style. */
+const PREVIEW_COUNT = 4;
+
+function PropertyRow({
+  db,
+  prop,
+  row,
+}: {
+  db: Database;
+  prop: Property;
+  row: Page;
+}) {
+  return (
+    <div className="flex items-start border-b border-border/40 last:border-0 min-h-[32px]">
+      <div className="text-xs text-muted-foreground flex items-center gap-1.5 px-2 py-1.5 shrink-0 border-r border-border/40 w-40">
+        <PropertyNameCell dbId={db.id} prop={prop} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <PropertyCell db={db} prop={prop} row={row} compact />
+      </div>
+    </div>
+  );
+}
+
 export function RowPropertiesPanel({ page }: { page: Page }) {
   const { getDatabase, addProperty, pages } = useStore();
   const [addOpen, setAddOpen] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
   if (!page.rowOfDatabaseId) return null;
   const db = getDatabase(page.rowOfDatabaseId);
   if (!db) return null;
 
   const visibleProps = db.properties.filter((p) => !p.hidden);
+  const previewProps = visibleProps.slice(0, PREVIEW_COUNT);
+  const restProps = visibleProps.slice(PREVIEW_COUNT);
+  const hasRest = restProps.length > 0;
 
-  // Find parent database page for breadcrumb navigation
   const dbPage = pages.find(
     (p) => !p.trashed && p.databaseHostFor?.includes(page.rowOfDatabaseId!),
   );
 
   return (
     <div className="mb-6">
-      {/* Back to database breadcrumb */}
       {dbPage && (
         <div className="flex items-center gap-1 text-xs text-muted-foreground mb-3">
           <button
@@ -109,7 +136,6 @@ export function RowPropertiesPanel({ page }: { page: Page }) {
         </div>
       )}
 
-      {/* Properties panel */}
       <div className="rounded-lg border border-border bg-card overflow-hidden">
         {visibleProps.length === 0 && (
           <div className="px-3 py-4 text-xs text-muted-foreground text-center">
@@ -117,29 +143,28 @@ export function RowPropertiesPanel({ page }: { page: Page }) {
           </div>
         )}
 
-        {visibleProps.map((prop) => (
-          <div
-            key={prop.id}
-            className="flex items-start border-b border-border/40 last:border-0 min-h-[32px]"
-          >
-            {/* Left: property name column */}
-            <div
-              className={cn(
-                "text-xs text-muted-foreground flex items-center gap-1.5 px-2 py-1.5 shrink-0 border-r border-border/40",
-                "w-40"
-              )}
-            >
-              <PropertyNameCell dbId={db.id} prop={prop} />
-            </div>
-
-            {/* Right: property value column */}
-            <div className="flex-1 min-w-0">
-              <PropertyCell db={db} prop={prop} row={page} compact />
-            </div>
-          </div>
+        {previewProps.map((prop) => (
+          <PropertyRow key={prop.id} db={db} prop={prop} row={page} />
         ))}
 
-        {/* Add property footer */}
+        {hasRest && expanded && restProps.map((prop) => (
+          <PropertyRow key={prop.id} db={db} prop={prop} row={page} />
+        ))}
+
+        {hasRest && (
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            aria-expanded={expanded}
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground px-3 py-2 w-full transition-colors border-t border-border/40"
+          >
+            {expanded
+              ? <ChevronUp className="h-3.5 w-3.5" />
+              : <ChevronDown className="h-3.5 w-3.5" />}
+            {expanded ? "Hide" : `Show ${restProps.length} more`} {restProps.length === 1 ? "property" : "properties"}
+          </button>
+        )}
+
         <div className="border-t border-border/40">
           <DropdownMenu open={addOpen} onOpenChange={setAddOpen}>
             <DropdownMenuTrigger asChild>
