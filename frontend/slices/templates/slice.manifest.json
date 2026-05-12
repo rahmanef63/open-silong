@@ -1,0 +1,17 @@
+{
+  "name": "templates",
+  "description": "",
+  "deps": {
+    "shared": [
+      "components/icon-picker",
+      "hooks/useAsyncError",
+      "ui/button",
+      "ui/dialog"
+    ],
+    "slices": [],
+    "convex": [
+      "_generated"
+    ]
+  },
+  "notes": ""
+}

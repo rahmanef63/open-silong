@@ -1,0 +1,43 @@
+{
+  "name": "editor",
+  "description": "",
+  "deps": {
+    "shared": [
+      "components/PageHeaderSlot",
+      "components/icon-picker",
+      "hooks/useAsyncError",
+      "hooks/useBlockHistory",
+      "lib/error",
+      "lib/format",
+      "lib/inlineMd",
+      "lib/markdown",
+      "lib/router",
+      "lib/store",
+      "lib/utils",
+      "providers",
+      "types",
+      "types/domain",
+      "ui/button",
+      "ui/checkbox",
+      "ui/dropdown-menu",
+      "ui/popover",
+      "ui/switch"
+    ],
+    "slices": [
+      "analytics",
+      "backlinks",
+      "block-selection",
+      "comments",
+      "databases",
+      "mentions",
+      "notifications",
+      "sharing",
+      "snapshots",
+      "wiki"
+    ],
+    "convex": [
+      "_generated"
+    ]
+  },
+  "notes": ""
+}

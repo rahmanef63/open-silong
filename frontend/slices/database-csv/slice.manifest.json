@@ -1,0 +1,20 @@
+{
+  "name": "database-csv",
+  "description": "",
+  "deps": {
+    "shared": [
+      "hooks/useAsyncError",
+      "lib/error",
+      "lib/store",
+      "types/domain",
+      "ui/button",
+      "ui/dialog",
+      "ui/dropdown-menu"
+    ],
+    "slices": [
+      "databases"
+    ],
+    "convex": []
+  },
+  "notes": ""
+}

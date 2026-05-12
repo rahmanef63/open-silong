@@ -1,0 +1,14 @@
+{
+  "name": "simple-table",
+  "description": "",
+  "deps": {
+    "shared": [
+      "lib/store",
+      "lib/utils",
+      "types"
+    ],
+    "slices": [],
+    "convex": []
+  },
+  "notes": ""
+}

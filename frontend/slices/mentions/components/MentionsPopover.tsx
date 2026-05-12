@@ -1,5 +1,5 @@
 import { AtSign } from "lucide-react";
-import { useNavigate } from "@/shared/lib/router-compat";
+import { useNavigate } from "@/shared/lib/router";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
 import { useStore } from "@/shared/lib/store";
 import { useMentions } from "../hooks/useMentions";

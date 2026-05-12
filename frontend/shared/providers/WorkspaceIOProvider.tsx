@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useMemo, useState } from "react";
-import { WorkspaceIODialog, type WorkspaceIOTab } from "./components/WorkspaceIODialog";
+import { WorkspaceIODialog, type WorkspaceIOTab } from "@/slices/workspace-io/components/WorkspaceIODialog";
 
 interface OpenOpts {
   tab?: WorkspaceIOTab;

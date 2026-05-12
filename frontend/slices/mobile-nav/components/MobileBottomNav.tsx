@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useLocation, useNavigate } from "@/shared/lib/router-compat";
+import { useLocation, useNavigate } from "@/shared/lib/router";
 import { useRouter } from "next/navigation";
 import {
   Search, Sparkles, Bot, Inbox, MoreHorizontal,

@@ -1,0 +1,17 @@
+{
+  "name": "ai-agent",
+  "description": "",
+  "deps": {
+    "shared": [
+      "lib/utils",
+      "ui/button",
+      "ui/sheet",
+      "ui/textarea"
+    ],
+    "slices": [],
+    "convex": [
+      "_generated"
+    ]
+  },
+  "notes": ""
+}

@@ -1,0 +1,14 @@
+{
+  "name": "files",
+  "description": "",
+  "deps": {
+    "shared": [
+      "lib/utils"
+    ],
+    "slices": [],
+    "convex": [
+      "_generated"
+    ]
+  },
+  "notes": ""
+}

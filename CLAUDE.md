@@ -17,10 +17,25 @@ Live: https://nosion.rahmanef.com · Convex: https://api-notion-page-clone.rahma
     (promoted from `slices/` 2026-05-11 because it was depended on by
     40+ files; lives in shared so it's available to consumers porting
     slices without dragging a peer slice).
-  - `shared/lib/routes.ts` — `ROUTES` (relative, for router-compat) and
-    `ROUTES_ABS` (absolute, for next/navigation). Slices import named
-    routes from here; raw `/dashboard/...` / `/p/...` literals are
-    discouraged in slice code.
+  - `shared/lib/routes.ts` — `ROUTES` (relative, for `@/shared/lib/router`)
+    and `ROUTES_ABS` (absolute, for `next/navigation`). Slices import
+    named routes from here; raw `/dashboard/...` / `/p/...` literals
+    are discouraged in slice code.
+  - `shared/lib/router/` — portable router primitives. Wrap layouts
+    with `<RouterProvider basename="/dashboard">`; slices use
+    `useNavigate` / `useLocation` / `Link` / `Navigate` / `useParams`
+    from `@/shared/lib/router`. Old `router-compat.tsx` is now a thin
+    re-export. Downstream consumers can mount slices under any prefix
+    by changing the `basename` prop.
+  - `shared/providers/` — cross-cutting providers shared across
+    slices. Currently exports `WorkspaceIOProvider` / `useWorkspaceIO`
+    (moved out of `slices/workspace-io/` 2026-05-12; old slice index
+    re-exports for back compat).
+  - `shared/lib/store/hooks.ts` — per-domain selector hooks
+    (`usePages`, `useDatabases`, `useBlocks`, `useWorkspaces`,
+    `usePreferences`, …) over the monolithic `useStore()`. Opt-in;
+    old `useStore()` keeps working. Re-exported from
+    `@/shared/lib/store`.
 - `convex/` — backend (queries/mutations/actions, schema, auth).
 - `proxy.ts` — Next 16 request boundary (Convex auth optimistic gate, NOT
   the security boundary).
@@ -31,10 +46,12 @@ Ignore its grades. `audit-bp.sh` itself is fine.
 
 ## Navigation
 
-- Inside dashboard: `useRouter()` + `usePathname()` from `next/navigation`,
-  prefix with `BASE = "/dashboard"`. See `AppSidebar.tsx`'s `path()` for the
-  pattern. The legacy `@/shared/lib/router-compat` shim still exists for
-  large untouched files; new code should use `next/navigation` directly.
+- Inside dashboard: prefer `useNavigate` / `useLocation` / `Link` from
+  `@/shared/lib/router`. The dashboard wraps with `<RouterProvider
+  basename="/dashboard">` so basename stripping/prepending is automatic.
+  Raw `useRouter()` + `usePathname()` from `next/navigation` is fine
+  for one-offs — combine with `ROUTES_ABS.*` for those call-sites.
+  See `AppSidebar.tsx`'s `path()` for an example.
 - Outside dashboard (auth, marketing, /share): plain `next/link` + `useRouter`.
 - Dashboard routes today: `/dashboard`, `/dashboard/library`,
   `/dashboard/admin`, `/dashboard/inbox`, `/dashboard/trash`,
@@ -125,6 +142,18 @@ blocks gets rewritten via `convex/_shared/idRemap.ts:rewriteMentions`.
 - Cache Components deferral: `docs/audit/cache-components.md`.
 - Modularity / DRY / docs-freshness audit:
   `docs/audit/2026-05-09-modularity-audit.md`.
+- Portability audit + status:
+  `docs/audit/2026-05-11-portability.md` (findings) +
+  `docs/audit/2026-05-12-portability-status.md` (10/10 closed).
+
+## Slice portability
+
+- Each `frontend/slices/<name>/` carries a `slice.manifest.json`
+  declaring its `deps.shared` / `deps.slices` / `deps.convex`.
+  Regenerate via `node scripts/generate-slice-manifests.mjs`.
+- Port a slice with `node scripts/copy-slice.mjs <slice> --to <dest>` —
+  recursively copies the slice + every declared dep, prints next-steps
+  checklist (RouterProvider basename, env vars, schema deltas).
 
 ## Feature surfaces (per-slice index)
 

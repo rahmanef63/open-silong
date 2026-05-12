@@ -1,0 +1,12 @@
+{
+  "name": "equation",
+  "description": "",
+  "deps": {
+    "shared": [
+      "lib/error"
+    ],
+    "slices": [],
+    "convex": []
+  },
+  "notes": ""
+}

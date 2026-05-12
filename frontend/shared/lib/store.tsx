@@ -331,3 +331,21 @@ export function useStore() {
   if (!c) throw new Error("useStore must be used inside StoreProvider");
   return c;
 }
+
+// Per-domain selector hooks — opt-in narrower API over the monolithic
+// useStore(). See ./store/hooks.ts.
+export {
+  useUser,
+  usePreferences,
+  useWorkspaces,
+  usePages,
+  useRecents,
+  useBlocks,
+  useDatabases,
+  useDatabaseProperties,
+  useDatabaseRows,
+  useDatabaseViews,
+  useSnapshotsStore,
+  useUndoRedo,
+  useAuth,
+} from "./store/hooks";

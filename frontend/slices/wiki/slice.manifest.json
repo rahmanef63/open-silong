@@ -1,0 +1,17 @@
+{
+  "name": "wiki",
+  "description": "",
+  "deps": {
+    "shared": [
+      "components/icon-picker",
+      "lib/error",
+      "lib/store",
+      "lib/utils"
+    ],
+    "slices": [],
+    "convex": [
+      "_generated"
+    ]
+  },
+  "notes": ""
+}

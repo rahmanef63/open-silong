@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { Link } from "@/shared/lib/router-compat";
+import { Link } from "@/shared/lib/router";
 import type { Page } from "@/shared/types/domain";
 import { cn } from "@/shared/lib/utils";
 import { DynamicIcon } from "@/shared/components/icon-picker";

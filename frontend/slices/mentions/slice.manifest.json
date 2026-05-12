@@ -1,0 +1,15 @@
+{
+  "name": "mentions",
+  "description": "",
+  "deps": {
+    "shared": [
+      "lib/router",
+      "lib/store",
+      "types/domain",
+      "ui/popover"
+    ],
+    "slices": [],
+    "convex": []
+  },
+  "notes": ""
+}

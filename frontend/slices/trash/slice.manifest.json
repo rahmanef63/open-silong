@@ -1,0 +1,14 @@
+{
+  "name": "trash",
+  "description": "",
+  "deps": {
+    "shared": [
+      "components/icon-picker",
+      "lib/format",
+      "lib/store"
+    ],
+    "slices": [],
+    "convex": []
+  },
+  "notes": ""
+}

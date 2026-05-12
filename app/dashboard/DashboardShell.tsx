@@ -9,7 +9,8 @@ import { TooltipProvider } from "@/shared/ui/tooltip";
 import { Toaster } from "@/shared/ui/toaster";
 import { Toaster as Sonner } from "@/shared/ui/sonner";
 import { StoreProvider } from "@/shared/lib/store";
-import { WorkspaceIOProvider } from "@/slices/workspace-io";
+import { RouterProvider } from "@/shared/lib/router";
+import { WorkspaceIOProvider } from "@/shared/providers";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/shared/ui/sidebar";
 import { Separator } from "@/shared/ui/separator";
 import {
@@ -96,6 +97,7 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
         <Toaster />
         <Sonner />
         <AuthGuard>
+          <RouterProvider basename="/dashboard">
           <StoreProvider>
             <WorkspaceIOProvider>
             <Suspense fallback={null}>
@@ -160,6 +162,7 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
             <MobileBottomNav onOpenSearch={() => setSearchOpen(true)} />
             </WorkspaceIOProvider>
           </StoreProvider>
+          </RouterProvider>
         </AuthGuard>
       </TooltipProvider>
     </ErrorBoundary>

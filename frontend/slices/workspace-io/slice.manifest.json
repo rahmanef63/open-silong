@@ -1,0 +1,28 @@
+{
+  "name": "workspace-io",
+  "description": "",
+  "deps": {
+    "shared": [
+      "components/icon-picker",
+      "hooks/useAsyncError",
+      "lib/markdown",
+      "lib/store",
+      "lib/utils",
+      "providers/WorkspaceIOProvider",
+      "types/domain",
+      "ui/button",
+      "ui/dialog",
+      "ui/input",
+      "ui/label",
+      "ui/switch",
+      "ui/tabs"
+    ],
+    "slices": [
+      "files"
+    ],
+    "convex": [
+      "_generated"
+    ]
+  },
+  "notes": ""
+}

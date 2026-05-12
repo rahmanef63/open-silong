@@ -1,0 +1,15 @@
+{
+  "name": "backlinks",
+  "description": "",
+  "deps": {
+    "shared": [
+      "lib/router",
+      "lib/store",
+      "lib/utils",
+      "types/domain"
+    ],
+    "slices": [],
+    "convex": []
+  },
+  "notes": ""
+}

@@ -1,0 +1,17 @@
+{
+  "name": "snapshots",
+  "description": "",
+  "deps": {
+    "shared": [
+      "components/icon-picker",
+      "lib/format",
+      "lib/store",
+      "lib/utils",
+      "types/domain",
+      "ui/alert-dialog"
+    ],
+    "slices": [],
+    "convex": []
+  },
+  "notes": ""
+}

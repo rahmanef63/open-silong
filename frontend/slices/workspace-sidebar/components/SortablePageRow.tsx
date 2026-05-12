@@ -1,5 +1,5 @@
 import { memo, useState } from "react";
-import { Link, useLocation, useNavigate } from "@/shared/lib/router-compat";
+import { Link, useLocation, useNavigate } from "@/shared/lib/router";
 import { ChevronRight, Copy, GripVertical, MoreHorizontal, Pencil, Plus, Star, Trash2 } from "lucide-react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";

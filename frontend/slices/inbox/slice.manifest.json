@@ -1,0 +1,16 @@
+{
+  "name": "inbox",
+  "description": "",
+  "deps": {
+    "shared": [
+      "lib/format",
+      "lib/router",
+      "lib/utils"
+    ],
+    "slices": [],
+    "convex": [
+      "_generated"
+    ]
+  },
+  "notes": ""
+}

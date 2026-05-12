@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "@/shared/lib/router-compat";
+import { useNavigate } from "@/shared/lib/router";
 import { useStore } from "@/shared/lib/store";
 import { Plus, Star, Clock, FileText, Table2, Sparkles } from "lucide-react";
 import { DynamicIcon } from "@/shared/components/icon-picker";

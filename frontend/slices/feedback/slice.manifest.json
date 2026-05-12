@@ -1,0 +1,17 @@
+{
+  "name": "feedback",
+  "description": "",
+  "deps": {
+    "shared": [
+      "ui/button",
+      "ui/dialog",
+      "ui/label",
+      "ui/textarea"
+    ],
+    "slices": [],
+    "convex": [
+      "_generated"
+    ]
+  },
+  "notes": ""
+}

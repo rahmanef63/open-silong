@@ -1,0 +1,34 @@
+{
+  "name": "workspace-sidebar",
+  "description": "",
+  "deps": {
+    "shared": [
+      "components/icon-picker",
+      "hooks/useAsyncError",
+      "lib/keyboard",
+      "lib/router",
+      "lib/store",
+      "lib/utils",
+      "providers",
+      "types/domain",
+      "ui/alert-dialog",
+      "ui/avatar",
+      "ui/button",
+      "ui/dialog",
+      "ui/dropdown-menu",
+      "ui/input",
+      "ui/sidebar",
+      "ui/skeleton"
+    ],
+    "slices": [
+      "admin-panel",
+      "ai-agent",
+      "feedback",
+      "inbox",
+      "templates",
+      "workspace-members"
+    ],
+    "convex": []
+  },
+  "notes": ""
+}
