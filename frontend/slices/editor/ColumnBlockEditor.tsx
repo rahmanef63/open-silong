@@ -105,7 +105,7 @@ function ColumnDivider({
     const startRight = widths[leftIdx + 1];
     const combined = startLeft + startRight;
 
-    let next = [...widths];
+    const next = [...widths];
     const onMove = (ev: PointerEvent) => {
       const deltaPct = ((ev.clientX - startX) / rect.width) * 100;
       let l = startLeft + deltaPct;

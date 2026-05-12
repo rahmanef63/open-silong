@@ -238,7 +238,7 @@ export function Marquee({
       document.body.style.userSelect = "";
       document.body.style.cursor = "";
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [containerRef]);
 
   if (!rect || !containerRef.current) return null;

@@ -200,7 +200,7 @@ export function sanitizeError(err: unknown): SanitizedError {
  *  console gets the raw error for debugging. */
 export function logError(scope: string, err: unknown, extra?: Record<string, unknown>): void {
   if (typeof process !== "undefined" && process.env?.NODE_ENV === "production") return;
-  // eslint-disable-next-line no-console
+   
   console.error(`[${scope}]`, err, extra ?? "");
 }
 

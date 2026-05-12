@@ -56,7 +56,7 @@ export const search = query({
         b.search("name", trimmed).eq("workspaceId", active._id),
       )
       .take(cap * 2);
-    let dbHits = dbWsHits;
+    const dbHits = dbWsHits;
     if (active.isPersonal && (active.ownerId ?? active.userId) === userId) {
       const legacyDbs = await ctx.db
         .query("databases")
