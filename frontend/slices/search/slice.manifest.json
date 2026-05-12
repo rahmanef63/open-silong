@@ -1,0 +1,12 @@
+{
+  "name": "search",
+  "description": "",
+  "deps": {
+    "shared": [],
+    "slices": [],
+    "convex": [
+      "_generated"
+    ]
+  },
+  "notes": ""
+}

@@ -1,0 +1,17 @@
+{
+  "name": "comments",
+  "description": "",
+  "deps": {
+    "shared": [
+      "lib/format",
+      "lib/store",
+      "lib/utils",
+      "ui/popover"
+    ],
+    "slices": [],
+    "convex": [
+      "_generated"
+    ]
+  },
+  "notes": ""
+}

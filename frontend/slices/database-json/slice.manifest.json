@@ -1,0 +1,21 @@
+{
+  "name": "database-json",
+  "description": "",
+  "deps": {
+    "shared": [
+      "components/icon-picker",
+      "hooks/useAsyncError",
+      "lib/error",
+      "lib/store",
+      "types/domain",
+      "ui/button",
+      "ui/dialog",
+      "ui/dropdown-menu"
+    ],
+    "slices": [
+      "database-csv"
+    ],
+    "convex": []
+  },
+  "notes": ""
+}

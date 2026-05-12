@@ -1,5 +1,5 @@
 import { useCallback, useRef } from "react";
-import { useNavigate } from "@/shared/lib/router-compat";
+import { useNavigate } from "@/shared/lib/router";
 import {
   DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent,
 } from "@dnd-kit/core";

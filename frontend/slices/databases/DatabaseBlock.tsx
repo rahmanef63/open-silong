@@ -1,5 +1,5 @@
 import { lazy, Suspense, useMemo, useState } from "react";
-import { Link, useNavigate } from "@/shared/lib/router-compat";
+import { Link, useNavigate } from "@/shared/lib/router";
 import { ROUTES } from "@/shared/lib/routes";
 import { Block, Database, DatabaseViewConfig, DbView, Page, Property, PropertyType } from "@/shared/types/domain";
 import { useStore } from "@/shared/lib/store";
@@ -32,7 +32,7 @@ import { FilterBuilder } from "./FilterBuilder";
 import { SortBuilder } from "./SortBuilder";
 import { ViewOptions } from "./ViewOptions";
 import { Input } from "@/shared/ui/input";
-import { RowDetailSheet } from "@/slices/database-row";
+import { RowDetailSheet } from "./row";
 import { NewRowMenu } from "@/slices/database-templates";
 import { DataMenu } from "@/slices/database-json";
 import { DynamicIcon, IconPickerPopover } from "@/shared/components/icon-picker";
@@ -40,7 +40,7 @@ import { DatabaseSkeleton } from "@/shared/components/RouteSkeleton";
 import { ErrorBoundary } from "@/shared/components/ErrorBoundary";
 import {
   RowSelectionProvider, RowSelectionToolbar, RowSelectionKeyboard,
-} from "@/slices/database-row-selection";
+} from "./row-selection";
 
 const VIEW_META: Record<DbView, { icon: any; label: string }> = {
   table: { icon: Table2, label: "Table" },

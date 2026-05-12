@@ -1,0 +1,20 @@
+{
+  "name": "sharing",
+  "description": "",
+  "deps": {
+    "shared": [
+      "components/icon-picker",
+      "hooks/useAsyncError",
+      "lib/store",
+      "types/domain",
+      "ui/button",
+      "ui/dialog",
+      "ui/switch"
+    ],
+    "slices": [],
+    "convex": [
+      "_generated"
+    ]
+  },
+  "notes": ""
+}

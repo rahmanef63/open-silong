@@ -1,0 +1,20 @@
+{
+  "name": "mobile-nav",
+  "description": "",
+  "deps": {
+    "shared": [
+      "lib/router",
+      "lib/routes",
+      "lib/utils",
+      "ui/drawer"
+    ],
+    "slices": [
+      "admin-panel",
+      "ai-agent",
+      "inbox",
+      "templates"
+    ],
+    "convex": []
+  },
+  "notes": ""
+}

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "@/shared/lib/router-compat";
+import { useNavigate } from "@/shared/lib/router";
 import { Dialog, DialogContent, DialogTitle } from "@/shared/ui/dialog";
 import { useStore } from "@/shared/lib/store";
 import { useSearch } from "@/slices/search";

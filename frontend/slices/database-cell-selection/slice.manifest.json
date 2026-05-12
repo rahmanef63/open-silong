@@ -1,0 +1,12 @@
+{
+  "name": "database-cell-selection",
+  "description": "",
+  "deps": {
+    "shared": [
+      "lib/utils"
+    ],
+    "slices": [],
+    "convex": []
+  },
+  "notes": ""
+}

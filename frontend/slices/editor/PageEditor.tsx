@@ -1,6 +1,6 @@
 import * as React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useNavigate, useParams } from "@/shared/lib/router-compat";
+import { useNavigate, useParams } from "@/shared/lib/router";
 import { useStore } from "@/shared/lib/store";
 import { Page } from "@/shared/types/domain";
 import { BlockEditor } from "./BlockEditor";

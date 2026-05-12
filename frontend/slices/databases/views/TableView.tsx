@@ -19,11 +19,11 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
   DropdownMenuSeparator, DropdownMenuLabel, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger,
 } from "@/shared/ui/dropdown-menu";
-import { AddColumnHeader, AddRowFooter, InlineRowTitle } from "@/slices/database-row";
+import { AddColumnHeader, AddRowFooter, InlineRowTitle } from "../row";
 import { useDragFill, SelectableCell, type FillSource } from "@/slices/database-cell-selection";
 import {
   RowMarqueeOverlay, useRowSelection, useRowSelectionOptional,
-} from "@/slices/database-row-selection";
+} from "../row-selection";
 import { getVisibleProps } from "../lib/visibility";
 import { ColumnHeaderMenu } from "../components/ColumnHeaderMenu";
 import { calcLabel, computeCalc } from "../lib/calcAggregate";

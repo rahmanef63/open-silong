@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import dynamic from "next/dynamic";
-import { useNavigate } from "@/shared/lib/router-compat";
+import { useNavigate } from "@/shared/lib/router";
 import { FileText, GripVertical } from "lucide-react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";

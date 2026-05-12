@@ -1,0 +1,19 @@
+{
+  "name": "dashboard",
+  "description": "",
+  "deps": {
+    "shared": [
+      "components/icon-picker",
+      "lib/format",
+      "lib/router",
+      "lib/store",
+      "lib/utils",
+      "ui/skeleton"
+    ],
+    "slices": [
+      "templates"
+    ],
+    "convex": []
+  },
+  "notes": ""
+}

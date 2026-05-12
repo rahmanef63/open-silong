@@ -1,0 +1,31 @@
+{
+  "name": "admin-panel",
+  "description": "",
+  "deps": {
+    "shared": [
+      "components/icon-picker",
+      "lib/format",
+      "lib/inlineMd",
+      "lib/utils",
+      "ui/badge",
+      "ui/button",
+      "ui/dialog",
+      "ui/dropdown-menu",
+      "ui/input",
+      "ui/label",
+      "ui/responsive-alert-dialog",
+      "ui/scroll-area",
+      "ui/skeleton",
+      "ui/switch",
+      "ui/table",
+      "ui/tabs",
+      "ui/textarea",
+      "ui/tooltip"
+    ],
+    "slices": [],
+    "convex": [
+      "_generated"
+    ]
+  },
+  "notes": ""
+}

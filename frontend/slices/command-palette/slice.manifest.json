@@ -1,0 +1,20 @@
+{
+  "name": "command-palette",
+  "description": "",
+  "deps": {
+    "shared": [
+      "components/icon-picker",
+      "lib/router",
+      "lib/routes",
+      "lib/store",
+      "ui/command",
+      "ui/dialog"
+    ],
+    "slices": [
+      "database-presets",
+      "search"
+    ],
+    "convex": []
+  },
+  "notes": ""
+}

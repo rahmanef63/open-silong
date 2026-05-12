@@ -1,0 +1,15 @@
+{
+  "name": "database-presets",
+  "description": "",
+  "deps": {
+    "shared": [
+      "components/icon-picker",
+      "lib/store",
+      "types/domain",
+      "ui/dropdown-menu"
+    ],
+    "slices": [],
+    "convex": []
+  },
+  "notes": ""
+}

@@ -1,0 +1,12 @@
+{
+  "name": "code-block",
+  "description": "",
+  "deps": {
+    "shared": [
+      "ui/dropdown-menu"
+    ],
+    "slices": [],
+    "convex": []
+  },
+  "notes": ""
+}

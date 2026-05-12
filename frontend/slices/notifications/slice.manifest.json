@@ -1,0 +1,13 @@
+{
+  "name": "notifications",
+  "description": "",
+  "deps": {
+    "shared": [
+      "lib/utils",
+      "ui/popover"
+    ],
+    "slices": [],
+    "convex": []
+  },
+  "notes": ""
+}

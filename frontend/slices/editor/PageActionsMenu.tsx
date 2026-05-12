@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "@/shared/lib/router-compat";
+import { useNavigate } from "@/shared/lib/router";
 import { useStore } from "@/shared/lib/store";
 import { Page, PageFont } from "@/shared/types/domain";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 import { FONT_OPTIONS } from "./page-actions/fonts";
 import { RowButton, Row, ToggleRow, SectionLabel } from "./page-actions/MenuRows";
-import { useWorkspaceIO } from "@/slices/workspace-io";
+import { useWorkspaceIO } from "@/shared/providers";
 import { FileJson, FileArchive } from "lucide-react";
 
 interface Props {

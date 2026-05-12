@@ -1,0 +1,24 @@
+{
+  "name": "library",
+  "description": "",
+  "deps": {
+    "shared": [
+      "components/icon-picker",
+      "hooks/useAsyncError",
+      "lib/error",
+      "lib/format",
+      "lib/store",
+      "lib/utils",
+      "providers",
+      "types/domain",
+      "ui/button",
+      "ui/checkbox",
+      "ui/dropdown-menu",
+      "ui/input",
+      "ui/tabs"
+    ],
+    "slices": [],
+    "convex": []
+  },
+  "notes": ""
+}
