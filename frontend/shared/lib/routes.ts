@@ -30,6 +30,11 @@ export const ROUTES = {
   settings: "/settings",
   profile: "/profile",
   page: (id: string) => `/p/${id}`,
+  /** Full-page database view. Databases are first-class entities; this
+   *  route renders the DB directly without going through a "host page"
+   *  that embeds it as a block. The legacy databaseHostFor marker is
+   *  deprecated as of 2026-05-12. */
+  database: (id: string) => `/db/${id}`,
   share: (id: string) => `/share/${id}`,
   invite: (code: string) => `/invite/${code}`,
 } as const;
@@ -46,6 +51,7 @@ export const ROUTES_ABS = {
   settings: `${BASE}/settings`,
   profile: `${BASE}/profile`,
   page: (id: string) => `${BASE}/p/${id}`,
+  database: (id: string) => `${BASE}/db/${id}`,
   share: (id: string) => `/share/${id}`,
   invite: (code: string) => `${BASE}/invite/${code}`,
 } as const;

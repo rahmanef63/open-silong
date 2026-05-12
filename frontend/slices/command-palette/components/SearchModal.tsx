@@ -24,9 +24,7 @@ export function SearchModal({ open, onOpenChange }: Props) {
 
   const goPage = (id: string) => { navigate(ROUTES.page(id)); onOpenChange(false); };
   const goDb = (id: string) => {
-    // Database opens via its host page (full-page DB mode handles render).
-    const host = pages.find((p) => p.databaseHostFor?.includes(id));
-    if (host) navigate(ROUTES.page(host.id));
+    navigate(ROUTES.database(id));
     onOpenChange(false);
   };
 

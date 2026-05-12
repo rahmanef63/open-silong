@@ -1,6 +1,7 @@
 import * as React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "@/shared/lib/router";
+import { ROUTES } from "@/shared/lib/routes";
 import { useStore } from "@/shared/lib/store";
 import { Page } from "@/shared/types/domain";
 import { BlockEditor } from "./BlockEditor";
@@ -238,17 +239,33 @@ export function PageEditor() {
   };
 
   const subpages = childrenOf(page.id);
-  // Prefer the explicit `databaseHostFor` marker — set on host pages
-  // created via "Open as page" so PageEditor doesn't have to inspect
-  // block shape. Fall back to the legacy "only block is a database"
-  // heuristic for older host pages that pre-date the marker.
+  // Legacy: pages used to host databases via a `databaseHostFor` marker
+  // (the "full-page database" concept). That's deprecated as of
+  // 2026-05-12 — databases now live at /dashboard/db/[id] directly.
+  // When a viewer lands on a legacy host page, redirect them to the
+  // canonical /db/ route. Pre-marker host pages (single database block,
+  // no other content) get the same treatment for clean migration.
   const hostedDbId = page.databaseHostFor?.[0];
   const onlyBlock = page.blocks.length === 1 ? page.blocks[0] : null;
-  const fullPageDb =
-    (hostedDbId ? getDatabase(hostedDbId) : null) ??
+  const legacyHostDbId =
+    hostedDbId ??
     (onlyBlock?.type === "database" && onlyBlock.databaseId
-      ? getDatabase(onlyBlock.databaseId) ?? null
-      : null);
+      ? onlyBlock.databaseId
+      : undefined);
+  useEffect(() => {
+    if (!legacyHostDbId) return;
+    const db = getDatabase(legacyHostDbId);
+    if (!db) return; // db not loaded yet — wait
+    if (db.trashed) return; // let user see the page so they know
+    console.log("[PageEditor] legacy host page → redirecting to /db/", {
+      pageId: page.id,
+      dbId: legacyHostDbId,
+    });
+    navigate(ROUTES.database(legacyHostDbId), { replace: true });
+  }, [legacyHostDbId, page.id, getDatabase, navigate]);
+  // Render nothing while the redirect lands.
+  const fullPageDb = legacyHostDbId ? getDatabase(legacyHostDbId) : null;
+  if (fullPageDb && !fullPageDb.trashed) return null;
 
   return (
     <PageCommentsProvider pageId={page.id}>

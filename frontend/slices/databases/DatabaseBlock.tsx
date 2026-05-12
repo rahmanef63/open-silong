@@ -59,14 +59,23 @@ const VIEW_META: Record<DbView, { icon: any; label: string }> = {
 import { PROPERTY_TYPE_LABELS, PROPERTY_TYPES } from "./lib/propertyTypeMeta";
 export { PROPERTY_TYPE_LABELS };
 
-export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block }) {
+export function DatabaseBlock({
+  pageId,
+  block,
+  fullPage = false,
+}: {
+  pageId: string;
+  block: Block;
+  /** When true, render as the full-page database view: hides the
+   *  "Open as page" button and treats the surface as the canonical
+   *  home of the DB (no host page concept). Used by `/dashboard/db/[id]`. */
+  fullPage?: boolean;
+}) {
   const {
     getDatabase, getPage, pages, updateDatabase, addView, updateView, deleteView,
-    createPage, addBlock, updateBlock, updatePage,
   } = useStore();
   const navigate = useNavigate();
   const [openRowId, setOpenRowId] = useState<string | null>(null);
-  const [openingAsPage, setOpeningAsPage] = useState(false);
 
   const db = block.databaseId ? getDatabase(block.databaseId) : undefined;
   const view = db ? db.views.find(v => v.id === db.activeViewId) ?? db.views[0] : undefined;
@@ -135,28 +144,21 @@ export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block 
     );
   }
 
-  // "Open as page": find a dedicated host page for this database, or
-  // create one parented under the current page. The button hides only
-  // when the current page's *single* block is this database — i.e.
-  // PageEditor is already rendering it as a full-page DB. This stays
-  // independent of the persisted `databaseHostFor` marker to be robust
-  // against transient sync states (Convex roundtrip lag, optimistic
-  // patches, etc.) — earlier attempts to gate on the marker caused the
-  // button to disappear on inline embeds. The marker is used in
-  // `openAsPage` below for the *lookup* of an existing host, but not
-  // for the visibility check.
-  const isInline = (() => {
-    const host = getPage(pageId);
-    if (!host || !db) return true;
-    const blocks = host.blocks ?? [];
-    if (blocks.length !== 1) return true;
-    const only = blocks[0];
-    return !(only.type === "database" && only.databaseId === db.id);
-  })();
+  // "Inline" means this DatabaseBlock is embedded in a regular page's
+  // block stream. The full-page DB route (`/dashboard/db/[id]`) sets
+  // `fullPage`, which forces isInline=false so the "Open as page"
+  // button is hidden (you're already there).
+  //
+  // Databases are first-class entities. They live at `/db/[id]`, not in
+  // host pages. The legacy "host page" concept (a page that contained
+  // a single database block + `databaseHostFor` marker) is deprecated —
+  // openAsPage now just navigates to the canonical /db/ route.
+  const isInline = fullPage ? false : true;
 
-  // "Linked" = this inline embed isn't the database's only host. Counts
-  // host blocks across every page (cheap on small workspaces; cost grows
-  // linearly with page count, fine for v1).
+  // "Linked" = this inline embed appears in more than one place. Counts
+  // database blocks across every page; if there's more than one
+  // occurrence of THIS dbId in any block stream, the embed is "linked"
+  // (a reference, not the sole renderer).
   const isLinked = (() => {
     if (!isInline || !db) return false;
     let hosts = 0;
@@ -173,115 +175,15 @@ export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block 
     return false;
   })();
 
-  async function openAsPage() {
+  function openAsPage() {
     const TAG = "[openAsPage]";
     if (!db) {
       console.warn(TAG, "aborted: no db on block", { pageId, blockDbId: block.databaseId });
       return;
     }
-    if (openingAsPage) {
-      console.warn(TAG, "aborted: already in-flight for", db.id);
-      return;
-    }
-    setOpeningAsPage(true);
-    const t0 = performance.now();
-    console.log(TAG, "start", {
-      dbId: db.id,
-      dbName: db.name,
-      callerPageId: pageId,
-      pagesTotal: pages.length,
-      pagesNonTrashed: pages.filter((p) => !p.trashed).length,
-    });
-    try {
-      // Canonical lookup via the explicit host marker, with a legacy
-      // heuristic fallback that ignores empty paragraphs (createPage
-      // seeds an empty paragraph alongside the db block, so older host
-      // pages have 2 blocks, not 1).
-      let matchKind: "marker" | "heuristic" | null = null;
-      const existing = pages.find((p) => {
-        if (p.trashed) return false;
-        if (p.databaseHostFor?.includes(db.id)) {
-          matchKind = "marker";
-          return true;
-        }
-        const meaningful = (p.blocks ?? []).filter((x) => {
-          if (x.type === "paragraph" && !(x.text ?? "").trim()) return false;
-          return true;
-        });
-        if (meaningful.length !== 1) return false;
-        const only = meaningful[0];
-        if (only.type === "database" && only.databaseId === db.id) {
-          matchKind = "heuristic";
-          return true;
-        }
-        return false;
-      });
-
-      if (existing) {
-        console.log(TAG, "found existing host", {
-          hostId: existing.id,
-          matchKind,
-          hostTitle: existing.title,
-          hostBlocksCount: existing.blocks?.length,
-          hostHasMarker: !!existing.databaseHostFor?.includes(db.id),
-        });
-        const route = ROUTES.page(existing.id);
-        console.log(TAG, "navigating to existing", route);
-        navigate(route);
-        return;
-      }
-
-      console.log(TAG, "no existing host found — creating new one", {
-        parentId: pageId,
-        title: db.name,
-        icon: db.icon ?? "(default)",
-      });
-
-      const newPage = await createPage(pageId, {
-        title: db.name,
-        icon: db.icon ?? DEFAULT_DATABASE_ICON,
-      });
-      console.log(TAG, "createPage ✓", { newPageId: newPage.id, returned: newPage });
-
-      const blockId = await addBlock(newPage.id, 0, "database");
-      console.log(TAG, "addBlock ✓", { pageId: newPage.id, blockId });
-
-      updateBlock(newPage.id, blockId, { databaseId: db.id });
-      console.log(TAG, "updateBlock fire-and-forget (databaseId set)", { blockId });
-
-      // Make this the canonical host page: only the db block, plus the
-      // databaseHostFor marker so future "Open as page" finds it via a
-      // cheap field lookup instead of a structural heuristic.
-      const patch = {
-        blocks: [{ id: blockId, type: "database" as const, text: "", databaseId: db.id }],
-        databaseHostFor: [db.id],
-      };
-      updatePage(newPage.id, patch);
-      console.log(TAG, "updatePage fire-and-forget (stamp host marker)", {
-        pageId: newPage.id,
-        patch,
-      });
-
-      const route = ROUTES.page(newPage.id);
-      console.log(TAG, "navigating to new host", route, {
-        elapsedMs: Math.round(performance.now() - t0),
-      });
-      navigate(route);
-    } catch (err) {
-      console.error(TAG, "FAILED — exception thrown", {
-        dbId: db.id,
-        dbName: db.name,
-        err,
-        message: (err as Error)?.message,
-        stack: (err as Error)?.stack,
-        elapsedMs: Math.round(performance.now() - t0),
-      });
-      // Re-throw to surface in DevTools "Uncaught (in promise)" too — easier
-      // to spot than a silent console.error.
-      throw err;
-    } finally {
-      setOpeningAsPage(false);
-    }
+    const route = ROUTES.database(db.id);
+    console.log(TAG, "navigating to /db/", { dbId: db.id, dbName: db.name, route });
+    navigate(route);
   }
 
   const ViewComponent = (
@@ -319,10 +221,9 @@ export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block 
             <button
               type="button"
               onClick={openAsPage}
-              disabled={openingAsPage}
               title="Open as page"
               aria-label="Open database as page"
-              className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground transition disabled:opacity-50"
+              className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground transition"
             >
               <Maximize2 className="h-3.5 w-3.5" />
             </button>

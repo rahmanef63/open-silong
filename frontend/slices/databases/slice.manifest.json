@@ -5,6 +5,7 @@
     "shared": [
       "components/ErrorBoundary",
       "components/Marquee",
+      "components/PageHeaderSlot",
       "components/RouteSkeleton",
       "components/icon-picker",
       "lib/format",

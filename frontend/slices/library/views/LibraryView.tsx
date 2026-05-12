@@ -118,10 +118,9 @@ export function LibraryView() {
     router.push(`/dashboard/p/${id}`);
   }
 
-  /** Databases live on their host page — find it; otherwise no-op. */
+  /** Databases are first-class entities — direct route. */
   function openDatabase(id: string) {
-    const host = pages.find((p) => !p.trashed && p.databaseHostFor?.includes(id));
-    if (host) router.push(`/dashboard/p/${host.id}`);
+    router.push(`/dashboard/db/${id}`);
   }
 
   function openSource(kind: "page" | "database", id: string) {
