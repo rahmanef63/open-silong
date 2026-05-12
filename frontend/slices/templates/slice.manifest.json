@@ -5,6 +5,8 @@
     "shared": [
       "components/icon-picker",
       "hooks/useAsyncError",
+      "lib/inlineMd",
+      "lib/utils",
       "ui/button",
       "ui/dialog"
     ],

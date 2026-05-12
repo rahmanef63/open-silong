@@ -8,7 +8,7 @@ import {
 import {
   SortableContext, verticalListSortingStrategy, sortableKeyboardCoordinates,
 } from "@dnd-kit/sortable";
-import { Plus } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { useStore } from "@/shared/lib/store";
 import { BlockEditor } from "@/slices/editor/BlockEditor";
 import { RowPropertiesPanel } from "@/slices/editor/RowPropertiesPanel";
@@ -21,6 +21,8 @@ interface Props {
   pageId: string;
   /** Header strip (above title) — typically the mode switcher. */
   headerExtras?: ReactNode;
+  /** Called when user clicks the explicit close button in the header. */
+  onClose?: () => void;
 }
 
 /**
@@ -30,7 +32,7 @@ interface Props {
  *
  * Renders nothing while the page query is loading.
  */
-export function RowDetailBody({ pageId, headerExtras }: Props) {
+export function RowDetailBody({ pageId, headerExtras, onClose }: Props) {
   const { updatePage, addBlock, reorderBlocks } = useStore();
   const fullPage = useFullPage(pageId);
   const page = fullPage ?? undefined;
@@ -72,10 +74,22 @@ export function RowDetailBody({ pageId, headerExtras }: Props) {
 
   return (
     <PageCommentsProvider pageId={page.id}>
-      {headerExtras !== undefined && (
-        <header className="flex items-center justify-between gap-2 border-b border-border px-4 py-2 shrink-0">
-          <span className="text-xs text-muted-foreground">Row peek</span>
-          {headerExtras}
+      {(headerExtras !== undefined || onClose) && (
+        <header className="flex items-center justify-between gap-3 border-b border-border px-3 py-2 shrink-0">
+          <span className="text-xs text-muted-foreground shrink-0">Row peek</span>
+          <div className="flex items-center gap-2 shrink-0">
+            {headerExtras}
+            {onClose && (
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Close"
+                className="h-6 w-6 grid place-items-center rounded text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
         </header>
       )}
       <div className="flex-1 overflow-y-auto scrollbar-thin px-6 md:px-10 py-8">

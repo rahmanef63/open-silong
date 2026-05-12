@@ -15,8 +15,8 @@ import { ScrollArea } from "@/shared/ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/shared/ui/tabs";
 import { DynamicIcon } from "@/shared/components/icon-picker";
 import { Pencil, Database, FileText, Boxes, Rows3 } from "lucide-react";
-import { walkTemplateTree, templateStats, type TemplateTreeNode } from "../lib/previewTemplate";
-import { TemplatePagePreview } from "./TemplatePagePreview";
+import { walkTemplateTree, templateStats, type TemplateTreeNode } from "@/slices/templates/lib/previewTemplate";
+import { TemplatePagePreview } from "@/slices/templates/components/TemplatePagePreview";
 
 interface Props {
   open: boolean;

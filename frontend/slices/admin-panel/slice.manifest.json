@@ -5,7 +5,6 @@
     "shared": [
       "components/icon-picker",
       "lib/format",
-      "lib/inlineMd",
       "lib/utils",
       "ui/badge",
       "ui/button",
@@ -22,7 +21,9 @@
       "ui/textarea",
       "ui/tooltip"
     ],
-    "slices": [],
+    "slices": [
+      "templates"
+    ],
     "convex": [
       "_generated"
     ]
