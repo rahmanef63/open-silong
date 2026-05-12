@@ -126,6 +126,33 @@ export function PageEditor() {
     refs.current.get(target.id)?.focus();
   }, []);
 
+  // Legacy host-page redirect — pages stamped with `databaseHostFor` (or
+  // pre-marker single-DB-block heuristic) used to be how full-page DBs
+  // rendered. Deprecated 2026-05-12; databases live at /dashboard/db/[id].
+  // Effect must run on every render, so compute the candidate dbId here
+  // (using optional chaining since `page` may be undefined) and bail
+  // inside the effect body when conditions aren't met.
+  const legacyHostDbId = (() => {
+    const hosted = page?.databaseHostFor?.[0];
+    if (hosted) return hosted;
+    const onlyBlock = page?.blocks.length === 1 ? page.blocks[0] : null;
+    if (onlyBlock?.type === "database" && onlyBlock.databaseId) {
+      return onlyBlock.databaseId;
+    }
+    return undefined;
+  })();
+  useEffect(() => {
+    if (!legacyHostDbId) return;
+    const db = getDatabase(legacyHostDbId);
+    if (!db) return; // db not loaded yet — re-runs when store updates
+    if (db.trashed) return; // let user see the page so they can recover
+    console.log("[PageEditor] legacy host page → redirecting to /db/", {
+      pageId: page?.id,
+      dbId: legacyHostDbId,
+    });
+    navigate(ROUTES.database(legacyHostDbId), { replace: true });
+  }, [legacyHostDbId, page?.id, getDatabase, navigate]);
+
   if (fullPage === undefined) {
     return <PageEditorSkeleton />;
   }
@@ -239,31 +266,9 @@ export function PageEditor() {
   };
 
   const subpages = childrenOf(page.id);
-  // Legacy: pages used to host databases via a `databaseHostFor` marker
-  // (the "full-page database" concept). That's deprecated as of
-  // 2026-05-12 — databases now live at /dashboard/db/[id] directly.
-  // When a viewer lands on a legacy host page, redirect them to the
-  // canonical /db/ route. Pre-marker host pages (single database block,
-  // no other content) get the same treatment for clean migration.
-  const hostedDbId = page.databaseHostFor?.[0];
-  const onlyBlock = page.blocks.length === 1 ? page.blocks[0] : null;
-  const legacyHostDbId =
-    hostedDbId ??
-    (onlyBlock?.type === "database" && onlyBlock.databaseId
-      ? onlyBlock.databaseId
-      : undefined);
-  useEffect(() => {
-    if (!legacyHostDbId) return;
-    const db = getDatabase(legacyHostDbId);
-    if (!db) return; // db not loaded yet — wait
-    if (db.trashed) return; // let user see the page so they know
-    console.log("[PageEditor] legacy host page → redirecting to /db/", {
-      pageId: page.id,
-      dbId: legacyHostDbId,
-    });
-    navigate(ROUTES.database(legacyHostDbId), { replace: true });
-  }, [legacyHostDbId, page.id, getDatabase, navigate]);
-  // Render nothing while the redirect lands.
+  // Suppress flash of legacy host page while the redirect (above)
+  // navigates to /db/[id]. If the referenced DB exists and isn't
+  // trashed, render nothing here.
   const fullPageDb = legacyHostDbId ? getDatabase(legacyHostDbId) : null;
   if (fullPageDb && !fullPageDb.trashed) return null;
 
