@@ -30,7 +30,7 @@ import {
   placeTopLevelGroupAtBlock, appendTopLevelGroupToContainer, topLevelIdsInOrder,
 } from "@/slices/block-selection/lib/multiMove";
 import { PageHeaderSlot } from "@/shared/components/PageHeaderSlot";
-import { IconPickerPopover, DynamicIcon } from "@/shared/components/icon-picker";
+import { IconPickerPopover, DynamicIcon, DEFAULT_PAGE_ICON } from "@/shared/components/icon-picker";
 import { useFullPage } from "./hooks/useFullPage";
 
 const COVERS = [
@@ -283,7 +283,7 @@ export function PageEditor() {
             <IconPickerPopover
               value={page.icon}
               onChange={(next) => { updatePage(page.id, { icon: next }); setIconPick(false); }}
-              onClear={() => { updatePage(page.id, { icon: "📄" }); setIconPick(false); }}
+              onClear={() => { updatePage(page.id, { icon: DEFAULT_PAGE_ICON }); setIconPick(false); }}
               open={iconPick}
               onOpenChange={setIconPick}
             >

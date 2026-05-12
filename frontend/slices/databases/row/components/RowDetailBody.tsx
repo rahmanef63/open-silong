@@ -13,7 +13,7 @@ import { useStore } from "@/shared/lib/store";
 import { BlockEditor } from "@/slices/editor/BlockEditor";
 import { RowPropertiesPanel } from "@/slices/editor/RowPropertiesPanel";
 import { PageCommentsProvider } from "@/slices/comments";
-import { DynamicIcon, IconPickerPopover } from "@/shared/components/icon-picker";
+import { DynamicIcon, IconPickerPopover, DEFAULT_ROW_ICON } from "@/shared/components/icon-picker";
 import { useFullPage } from "@/slices/editor/hooks/useFullPage";
 import type { Block } from "@/shared/types/domain";
 
@@ -97,7 +97,7 @@ export function RowDetailBody({ pageId, headerExtras, onClose }: Props) {
           <IconPickerPopover
             value={page.icon}
             onChange={(next) => updatePage(page.id, { icon: next })}
-            onClear={() => updatePage(page.id, { icon: "📄" })}
+            onClear={() => updatePage(page.id, { icon: DEFAULT_ROW_ICON })}
           >
             <button
               type="button"

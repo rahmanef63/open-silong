@@ -2,7 +2,7 @@
 
 import { useStore } from "@/shared/lib/store";
 import { Trash2, RotateCcw, X, Table2, FileText } from "lucide-react";
-import { DynamicIcon } from "@/shared/components/icon-picker";
+import { DynamicIcon, DEFAULT_DATABASE_ICON } from "@/shared/components/icon-picker";
 import { formatDateTime } from "@/shared/lib/format";
 
 export function TrashView() {
@@ -88,7 +88,7 @@ export function TrashView() {
                 <ul className="rounded-xl border border-border bg-card divide-y divide-border">
                   {trashedDatabases.map((db) => (
                     <li key={db.id} className="flex items-center gap-3 px-4 py-3">
-                      <DynamicIcon value={db.icon} className="text-lg" fallback="🗂️" />
+                      <DynamicIcon value={db.icon} className="text-lg" fallback={DEFAULT_DATABASE_ICON} />
                       <div className="min-w-0 flex-1">
                         <div className="truncate text-sm font-medium">{db.name || "Untitled database"}</div>
                         <div className="text-xs text-muted-foreground">

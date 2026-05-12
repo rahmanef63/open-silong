@@ -35,7 +35,7 @@ import { Input } from "@/shared/ui/input";
 import { RowPeek } from "./row";
 import { NewRowMenu } from "@/slices/database-templates";
 import { DataMenu } from "@/slices/database-json";
-import { DynamicIcon, IconPickerPopover } from "@/shared/components/icon-picker";
+import { DynamicIcon, IconPickerPopover, DEFAULT_DATABASE_ICON } from "@/shared/components/icon-picker";
 import { DatabaseSkeleton } from "@/shared/components/RouteSkeleton";
 import { ErrorBoundary } from "@/shared/components/ErrorBoundary";
 import {
@@ -174,39 +174,111 @@ export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block 
   })();
 
   async function openAsPage() {
-    if (!db || openingAsPage) return;
+    const TAG = "[openAsPage]";
+    if (!db) {
+      console.warn(TAG, "aborted: no db on block", { pageId, blockDbId: block.databaseId });
+      return;
+    }
+    if (openingAsPage) {
+      console.warn(TAG, "aborted: already in-flight for", db.id);
+      return;
+    }
     setOpeningAsPage(true);
+    const t0 = performance.now();
+    console.log(TAG, "start", {
+      dbId: db.id,
+      dbName: db.name,
+      callerPageId: pageId,
+      pagesTotal: pages.length,
+      pagesNonTrashed: pages.filter((p) => !p.trashed).length,
+    });
     try {
       // Canonical lookup via the explicit host marker, with a legacy
       // heuristic fallback that ignores empty paragraphs (createPage
       // seeds an empty paragraph alongside the db block, so older host
       // pages have 2 blocks, not 1).
+      let matchKind: "marker" | "heuristic" | null = null;
       const existing = pages.find((p) => {
         if (p.trashed) return false;
-        if (p.databaseHostFor?.includes(db.id)) return true;
+        if (p.databaseHostFor?.includes(db.id)) {
+          matchKind = "marker";
+          return true;
+        }
         const meaningful = (p.blocks ?? []).filter((x) => {
           if (x.type === "paragraph" && !(x.text ?? "").trim()) return false;
           return true;
         });
         if (meaningful.length !== 1) return false;
         const only = meaningful[0];
-        return only.type === "database" && only.databaseId === db.id;
+        if (only.type === "database" && only.databaseId === db.id) {
+          matchKind = "heuristic";
+          return true;
+        }
+        return false;
       });
+
       if (existing) {
-        navigate(ROUTES.page(existing.id));
+        console.log(TAG, "found existing host", {
+          hostId: existing.id,
+          matchKind,
+          hostTitle: existing.title,
+          hostBlocksCount: existing.blocks?.length,
+          hostHasMarker: !!existing.databaseHostFor?.includes(db.id),
+        });
+        const route = ROUTES.page(existing.id);
+        console.log(TAG, "navigating to existing", route);
+        navigate(route);
         return;
       }
-      const newPage = await createPage(pageId, { title: db.name, icon: db.icon ?? "🗂️" });
+
+      console.log(TAG, "no existing host found — creating new one", {
+        parentId: pageId,
+        title: db.name,
+        icon: db.icon ?? "(default)",
+      });
+
+      const newPage = await createPage(pageId, {
+        title: db.name,
+        icon: db.icon ?? DEFAULT_DATABASE_ICON,
+      });
+      console.log(TAG, "createPage ✓", { newPageId: newPage.id, returned: newPage });
+
       const blockId = await addBlock(newPage.id, 0, "database");
+      console.log(TAG, "addBlock ✓", { pageId: newPage.id, blockId });
+
       updateBlock(newPage.id, blockId, { databaseId: db.id });
+      console.log(TAG, "updateBlock fire-and-forget (databaseId set)", { blockId });
+
       // Make this the canonical host page: only the db block, plus the
       // databaseHostFor marker so future "Open as page" finds it via a
       // cheap field lookup instead of a structural heuristic.
-      updatePage(newPage.id, {
-        blocks: [{ id: blockId, type: "database", text: "", databaseId: db.id }],
+      const patch = {
+        blocks: [{ id: blockId, type: "database" as const, text: "", databaseId: db.id }],
         databaseHostFor: [db.id],
+      };
+      updatePage(newPage.id, patch);
+      console.log(TAG, "updatePage fire-and-forget (stamp host marker)", {
+        pageId: newPage.id,
+        patch,
       });
-      navigate(ROUTES.page(newPage.id));
+
+      const route = ROUTES.page(newPage.id);
+      console.log(TAG, "navigating to new host", route, {
+        elapsedMs: Math.round(performance.now() - t0),
+      });
+      navigate(route);
+    } catch (err) {
+      console.error(TAG, "FAILED — exception thrown", {
+        dbId: db.id,
+        dbName: db.name,
+        err,
+        message: (err as Error)?.message,
+        stack: (err as Error)?.stack,
+        elapsedMs: Math.round(performance.now() - t0),
+      });
+      // Re-throw to surface in DevTools "Uncaught (in promise)" too — easier
+      // to spot than a silent console.error.
+      throw err;
     } finally {
       setOpeningAsPage(false);
     }
@@ -232,10 +304,10 @@ export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block 
           <IconPickerPopover
             value={db.icon}
             onChange={(next) => updateDatabase(db.id, { icon: next })}
-            onClear={() => updateDatabase(db.id, { icon: "🗂️" })}
+            onClear={() => updateDatabase(db.id, { icon: DEFAULT_DATABASE_ICON })}
           >
             <button type="button" className="rounded hover:bg-accent p-0.5 text-base leading-none" aria-label="Change database icon">
-              <DynamicIcon value={db.icon} fallback="🗂️" />
+              <DynamicIcon value={db.icon} fallback={DEFAULT_DATABASE_ICON} />
             </button>
           </IconPickerPopover>
           <input
@@ -514,13 +586,13 @@ function DatabaseMenu({ db, view, rows }: { db: Database; view: DatabaseViewConf
         <IconPickerPopover
           value={db.icon}
           onChange={(next) => updateDatabase(db.id, { icon: next })}
-          onClear={() => updateDatabase(db.id, { icon: "🗂️" })}
+          onClear={() => updateDatabase(db.id, { icon: DEFAULT_DATABASE_ICON })}
         >
           <button
             type="button"
             className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs hover:bg-accent"
           >
-            <DynamicIcon value={db.icon} className="text-base h-3.5 w-3.5" fallback="🗂️" />
+            <DynamicIcon value={db.icon} className="text-base h-3.5 w-3.5" fallback={DEFAULT_DATABASE_ICON} />
             Change icon
           </button>
         </IconPickerPopover>
