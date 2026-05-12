@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from "react";
 
-export type RowOpenMode = "sheet" | "dialog" | "page";
+/** The two surfaces that can be the user's *default* on row-click.
+ *  "page" is intentionally NOT persistable — it's a one-shot navigation
+ *  action triggered from the switcher inside an already-open peek. */
+export type RowOpenMode = "sheet" | "dialog";
 
 const KEY = "db:row-open-mode";
 const DEFAULT: RowOpenMode = "sheet";
@@ -11,13 +14,21 @@ function readMode(): RowOpenMode {
   if (typeof window === "undefined") return DEFAULT;
   try {
     const v = localStorage.getItem(KEY);
-    if (v === "sheet" || v === "dialog" || v === "page") return v;
+    if (v === "sheet" || v === "dialog") return v;
+    // Migrate legacy "page" preference back to the safe default. Earlier
+    // versions persisted "page" as a default, which caused row-clicks to
+    // navigate straight to /p/<id> with no peek. Reset on read.
+    if (v === "page") {
+      try { localStorage.setItem(KEY, DEFAULT); } catch {}
+      return DEFAULT;
+    }
   } catch {}
   return DEFAULT;
 }
 
-/** Per-user preference for how clicking a database row opens its detail.
- *  Persisted to localStorage; cross-tab sync via the `storage` event. */
+/** Persisted per-user default for how clicking a database row opens its
+ *  detail. Only "sheet" or "dialog" — "page" is a one-shot action, not a
+ *  persistable default. Cross-tab sync via the `storage` event. */
 export function useRowOpenMode(): [RowOpenMode, (m: RowOpenMode) => void] {
   const [mode, setMode] = useState<RowOpenMode>(DEFAULT);
 

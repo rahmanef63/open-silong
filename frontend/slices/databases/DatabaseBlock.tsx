@@ -380,7 +380,11 @@ export function DatabaseBlock({ pageId, block }: { pageId: string; block: Block 
           </Suspense>
         </ErrorBoundary>
       </RowSelectionProvider>
-      <RowPeek pageId={openRowId} onOpenChange={(o) => !o && setOpenRowId(null)} />
+      <RowPeek
+        pageId={openRowId}
+        onOpenChange={(o) => !o && setOpenRowId(null)}
+        showOpenAsPage={isInline}
+      />
     </div>
   );
 }
