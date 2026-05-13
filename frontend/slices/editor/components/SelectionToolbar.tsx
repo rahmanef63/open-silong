@@ -8,45 +8,9 @@ import { api } from "@convex/_generated/api";
 import { cn } from "@/shared/lib/utils";
 import { reportError } from "@/shared/lib/error";
 import { stripMd } from "@/shared/lib/inlineMd";
-
-type Mark = "bold" | "italic" | "strike" | "code" | "link";
-
-type AIPreset = "improve" | "shorter" | "longer" | "grammar" | "translate";
-
-const AI_PROMPTS: Record<AIPreset, { label: string; system: string; build: (sel: string) => string }> = {
-  improve: {
-    label: "Improve writing",
-    system: "Rewrite the user's text to read more clearly and concisely while preserving meaning. Output only the rewritten text — no commentary, no quotes, no markdown wrappers.",
-    build: (s) => s,
-  },
-  shorter: {
-    label: "Make shorter",
-    system: "Shorten the user's text while preserving its meaning. Output only the shortened text — no commentary.",
-    build: (s) => s,
-  },
-  longer: {
-    label: "Make longer",
-    system: "Expand the user's text with relevant detail while preserving its meaning. Output only the expanded text — no commentary.",
-    build: (s) => s,
-  },
-  grammar: {
-    label: "Fix grammar & spelling",
-    system: "Correct grammar and spelling in the user's text. Preserve voice, meaning, and formatting. Output only the corrected text — no commentary.",
-    build: (s) => s,
-  },
-  translate: {
-    label: "Translate to English",
-    system: "Translate the user's text to English. If it is already English, translate to Indonesian instead. Output only the translation — no commentary.",
-    build: (s) => s,
-  },
-};
-
-const WRAP: Record<Exclude<Mark, "link">, [string, string]> = {
-  bold: ["**", "**"],
-  italic: ["_", "_"],
-  strike: ["~~", "~~"],
-  code: ["`", "`"],
-};
+import { AI_PROMPTS, WRAP, type AIPreset, type Mark } from "./selection-toolbar/types";
+import { closestContentEditable, replaceRange } from "./selection-toolbar/range";
+import { Btn } from "./selection-toolbar/Btn";
 
 /** Floating toolbar over a text selection inside any contentEditable.
  *  Wraps the selected text with markdown markers in-place. The editor
@@ -223,43 +187,4 @@ export function SelectionToolbar() {
       </div>
     </div>
   );
-}
-
-function Btn({ children, label, onClick }: { children: React.ReactNode; label: string; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      title={label}
-      aria-label={label}
-      onClick={onClick}
-      className="inline-flex h-7 w-7 items-center justify-center rounded text-muted-foreground hover:bg-accent hover:text-foreground"
-    >
-      {children}
-    </button>
-  );
-}
-
-function closestContentEditable(node: Node | null): HTMLElement | null {
-  let cur: Node | null = node;
-  while (cur) {
-    if (cur instanceof HTMLElement && cur.isContentEditable) return cur;
-    cur = cur.parentNode;
-  }
-  return null;
-}
-
-function replaceRange(range: Range, text: string, host: HTMLElement) {
-  range.deleteContents();
-  range.insertNode(document.createTextNode(text));
-  // Collapse caret to end of inserted text so the user can keep typing.
-  const sel = window.getSelection();
-  if (sel) {
-    sel.removeAllRanges();
-    const r = document.createRange();
-    r.setStartAfter(host.lastChild ?? host);
-    r.collapse(true);
-    sel.addRange(r);
-  }
-  // Trigger React's onInput so the editor saves.
-  host.dispatchEvent(new InputEvent("input", { bubbles: true, cancelable: true, inputType: "insertText" }));
 }
