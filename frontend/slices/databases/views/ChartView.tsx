@@ -1,66 +1,12 @@
 import { useMemo } from "react";
-import {
-  BarChart, Bar, LineChart, Line, AreaChart, Area, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, LabelList, Label,
-} from "recharts";
-import { ChartAggregate, ChartKind, Database, DatabaseViewConfig, Page, Property } from "@/shared/types/domain";
+import { ChartAggregate, ChartKind, Database, DatabaseViewConfig, Page } from "@/shared/types/domain";
 import { useStore } from "@/shared/lib/store";
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
-} from "@/shared/ui/dropdown-menu";
-import { BarChart3, LineChart as LineIcon, AreaChart as AreaIcon, PieChart as PieIcon, Donut, ChevronDown } from "lucide-react";
-import { cn } from "@/shared/lib/utils";
+import { PALETTES, KIND_META, AGG_LABEL } from "./chart/constants";
+import { labelFor, aggregate } from "./chart/data";
+import { Picker } from "./chart/parts";
+import { ChartCanvas } from "./chart/ChartCanvas";
 
 interface Props { db: Database; view: DatabaseViewConfig; rows: Page[]; onOpenRow: (id: string) => void }
-
-const PALETTES: Record<string, string[]> = {
-  warm: ["#f97316", "#ef4444", "#eab308", "#f43f5e", "#ec4899", "#dc2626", "#fb923c", "#facc15"],
-  cool: ["#3b82f6", "#06b6d4", "#10b981", "#6366f1", "#0ea5e9", "#14b8a6", "#22d3ee", "#3aa6ff"],
-  rainbow: ["#f97316", "#3b82f6", "#10b981", "#a855f7", "#ec4899", "#eab308", "#06b6d4", "#ef4444", "#84cc16", "#6366f1"],
-  mono: ["#0f172a", "#334155", "#475569", "#64748b", "#94a3b8", "#cbd5e1", "#e2e8f0", "#f1f5f9"],
-};
-
-const KIND_META: Record<ChartKind, { icon: any; label: string }> = {
-  bar: { icon: BarChart3, label: "Bar" },
-  line: { icon: LineIcon, label: "Line" },
-  area: { icon: AreaIcon, label: "Area" },
-  pie: { icon: PieIcon, label: "Pie" },
-  donut: { icon: Donut, label: "Donut" },
-};
-
-const AGG_LABEL: Record<ChartAggregate, string> = {
-  count: "Count", sum: "Sum", avg: "Average", min: "Min", max: "Max",
-};
-
-function labelFor(prop: Property | undefined, raw: any): string {
-  if (raw === undefined || raw === null || raw === "") return "—";
-  if (!prop) return String(raw);
-  if (prop.type === "select" || prop.type === "status") {
-    const opt = prop.options?.find(o => o.id === raw);
-    return opt?.name ?? "—";
-  }
-  if (prop.type === "multi_select") {
-    const ids = Array.isArray(raw) ? raw : [];
-    if (ids.length === 0) return "—";
-    return ids.map(id => prop.options?.find(o => o.id === id)?.name ?? "—").join(", ");
-  }
-  if (prop.type === "checkbox") return raw ? "Checked" : "Unchecked";
-  if (prop.type === "date") return (raw as any)?.date ?? "—";
-  if (prop.type === "number") return Number.isFinite(raw) ? String(raw) : "—";
-  if (Array.isArray(raw)) return raw.length ? raw.join(", ") : "—";
-  return String(raw);
-}
-
-function aggregate(values: number[], agg: ChartAggregate): number {
-  if (!values.length) return 0;
-  switch (agg) {
-    case "count": return values.length;
-    case "sum": return values.reduce((a, b) => a + b, 0);
-    case "avg": return values.reduce((a, b) => a + b, 0) / values.length;
-    case "min": return Math.min(...values);
-    case "max": return Math.max(...values);
-  }
-}
 
 export function ChartView({ db, view, rows }: Props) {
   const { updateView } = useStore();
@@ -132,60 +78,7 @@ export function ChartView({ db, view, rows }: Props) {
   }, [rows, xProp, yProp, agg, decimals, sortBy, sortDir, topN]);
 
   const numProps = db.properties.filter(p => p.type === "number");
-  const xCandidates = db.properties; // any column is valid as a category
-
-  const renderChart = () => {
-    if (!xProp) return <Empty msg="Pick a category property" />;
-    if (!data.length) return <Empty msg="No data yet" />;
-
-    if (kind === "pie" || kind === "donut") {
-      const inner = kind === "donut" ? 56 : 0;
-      return (
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Tooltip />
-            {showLegend && <Legend />}
-            <Pie data={data} dataKey="value" nameKey="name" outerRadius="75%" innerRadius={inner} label={showValues}>
-              {data.map((_, i) => <Cell key={i} fill={palette[i % palette.length]} />)}
-            </Pie>
-          </PieChart>
-        </ResponsiveContainer>
-      );
-    }
-    const Wrapper = kind === "line" ? LineChart : kind === "area" ? AreaChart : BarChart;
-    const bottomMargin = xLabel ? 28 : 12;
-    const leftMargin = yLabel ? 18 : 0;
-    return (
-      <ResponsiveContainer width="100%" height="100%">
-        <Wrapper data={data} margin={{ top: 12, right: 12, left: leftMargin, bottom: bottomMargin }}>
-          {showGrid && <CartesianGrid strokeDasharray="3 3" className="stroke-border" />}
-          <XAxis dataKey="name" tick={{ fontSize: 11 }} interval={0} angle={data.length > 8 ? -25 : 0} textAnchor={data.length > 8 ? "end" : "middle"} height={data.length > 8 ? 60 : 30}>
-            {xLabel && <Label value={xLabel} position="insideBottom" offset={-12} className="fill-muted-foreground" style={{ fontSize: 11 }} />}
-          </XAxis>
-          <YAxis tick={{ fontSize: 11 }} allowDecimals={decimals > 0}>
-            {yLabel && <Label value={yLabel} position="insideLeft" angle={-90} className="fill-muted-foreground" style={{ fontSize: 11, textAnchor: "middle" }} />}
-          </YAxis>
-          <Tooltip />
-          {showLegend && <Legend />}
-          {kind === "bar" && (
-            <Bar dataKey="value" fill={palette[0]} radius={[4, 4, 0, 0]}>
-              {showValues && <LabelList dataKey="value" position="top" style={{ fontSize: 10 }} />}
-            </Bar>
-          )}
-          {kind === "line" && (
-            <Line type="monotone" dataKey="value" stroke={palette[0]} strokeWidth={2} dot>
-              {showValues && <LabelList dataKey="value" position="top" style={{ fontSize: 10 }} />}
-            </Line>
-          )}
-          {kind === "area" && (
-            <Area type="monotone" dataKey="value" stroke={palette[0]} fill={palette[0]} fillOpacity={0.25}>
-              {showValues && <LabelList dataKey="value" position="top" style={{ fontSize: 10 }} />}
-            </Area>
-          )}
-        </Wrapper>
-      </ResponsiveContainer>
-    );
-  };
+  const xCandidates = db.properties;
 
   return (
     <div className="p-3 space-y-3">
@@ -227,44 +120,19 @@ export function ChartView({ db, view, rows }: Props) {
         <h3 className="text-sm font-semibold text-foreground">{chartTitle}</h3>
       )}
       <div className="rounded-lg border border-border bg-card p-2" style={{ height: heightPx }}>
-        {renderChart()}
+        <ChartCanvas
+          kind={kind}
+          data={data}
+          palette={palette}
+          showGrid={showGrid}
+          showLegend={showLegend}
+          showValues={showValues}
+          decimals={decimals}
+          xLabel={xLabel}
+          yLabel={yLabel}
+          hasXProp={!!xProp}
+        />
       </div>
     </div>
-  );
-}
-
-function Empty({ msg }: { msg: string }) {
-  return (
-    <div className="flex h-full items-center justify-center text-sm text-muted-foreground">{msg}</div>
-  );
-}
-
-function Picker({ label, icon: Icon, value, items }: {
-  label: string; icon?: any; value: string;
-  items: { id: string; label: string; icon?: any; onClick: () => void }[];
-}) {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button className={cn(
-          "flex items-center gap-1 rounded-md border border-border bg-card px-2 py-1 hover:bg-accent",
-        )}>
-          <span className="text-muted-foreground">{label}:</span>
-          {Icon && <Icon className="h-3 w-3" />}
-          <span className="font-medium">{value}</span>
-          <ChevronDown className="h-3 w-3 text-muted-foreground" />
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start">
-        <DropdownMenuLabel className="text-xs">{label}</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        {items.map(it => (
-          <DropdownMenuItem key={it.id} onClick={it.onClick}>
-            {it.icon && <it.icon className="mr-2 h-3.5 w-3.5" />}
-            {it.label}
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
   );
 }

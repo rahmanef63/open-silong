@@ -1,19 +1,20 @@
 "use client";
 
 import * as React from "react";
-import { Search, Smile, Shapes, Trash2, Shuffle, Image as ImageIcon } from "lucide-react";
+import { Search } from "lucide-react";
 import { Input } from "@/shared/ui/input";
-import { Button } from "@/shared/ui/button";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/shared/ui/tabs";
+import { Tabs, TabsContent } from "@/shared/ui/tabs";
 import { ScrollArea } from "@/shared/ui/scroll-area";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
 import { cn } from "@/shared/lib/utils";
 import { EMOJI_GROUPS, ALL_EMOJIS } from "../lib/emoji-catalog";
 import { LUCIDE_GROUPS, ALL_LUCIDE } from "../lib/lucide-catalog";
-import { ICON_COLORS } from "../lib/colors";
 import { lucideValue, parseIconValue, withColor } from "../lib/parse";
 import { useIconStyle } from "../lib/style-pref";
 import { DynamicIcon } from "./DynamicIcon";
+import { Grid, EmojiCell, LucideCell, Empty } from "./picker-parts/cells";
+import { PickerToolbar } from "./picker-parts/Toolbar";
+import { ColorRow } from "./picker-parts/ColorRow";
 
 interface IconPickerInlineProps {
   value: string | null | undefined;
@@ -68,80 +69,14 @@ export function IconPickerInline({ value, onChange, onClear, className }: IconPi
   return (
     <div className={cn("w-full space-y-3", className)}>
       <Tabs value={tab} onValueChange={setTab} className="w-full">
-        <div className="flex items-center gap-2">
-          <TabsList className="h-8">
-            <TabsTrigger value="emoji" className="h-7 text-xs gap-1">
-              <Smile className="h-3.5 w-3.5" /> Emoji
-            </TabsTrigger>
-            <TabsTrigger value="lucide" className="h-7 text-xs gap-1">
-              <Shapes className="h-3.5 w-3.5" /> Icons
-            </TabsTrigger>
-          </TabsList>
-          <div className="ml-auto flex items-center gap-1">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="h-7 px-2 text-xs"
-              onClick={() => setIconStyle(iconStyle === "twemoji" ? "native" : "twemoji")}
-              title={iconStyle === "twemoji" ? "Switch to native emoji" : "Switch to Twemoji (Notion-style)"}
-            >
-              <ImageIcon className="h-3.5 w-3.5" />
-              <span className="ml-1 hidden sm:inline">{iconStyle === "twemoji" ? "Twemoji" : "Native"}</span>
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="h-7 px-2 text-xs"
-              onClick={pickRandom}
-              title="Random"
-            >
-              <Shuffle className="h-3.5 w-3.5" />
-            </Button>
-            {onClear && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-7 px-2 text-xs text-muted-foreground"
-                onClick={onClear}
-                title="Remove icon"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </Button>
-            )}
-          </div>
-        </div>
+        <PickerToolbar
+          iconStyle={iconStyle}
+          onToggleStyle={() => setIconStyle(iconStyle === "twemoji" ? "native" : "twemoji")}
+          onRandom={pickRandom}
+          onClear={onClear}
+        />
 
-        {/* Color row */}
-        <div className="mt-2 flex items-center gap-1.5">
-          <span className="text-[10px] uppercase tracking-wider text-muted-foreground mr-1">Color</span>
-          {ICON_COLORS.map((c) => {
-            const isSelected =
-              (c.hex === "" && !currentColor) ||
-              (c.hex !== "" && currentColor?.toLowerCase() === c.hex.toLowerCase());
-            return (
-              <button
-                key={c.id}
-                type="button"
-                onClick={() => pickColor(c.hex)}
-                className={cn(
-                  "h-5 w-5 rounded-full border transition",
-                  isSelected ? "ring-2 ring-foreground/60 ring-offset-1 ring-offset-background" : "hover:scale-110",
-                )}
-                style={{
-                  backgroundColor: c.hex || "transparent",
-                  borderColor: c.hex ? c.hex : "var(--border)",
-                }}
-                title={c.label}
-                aria-label={`Color: ${c.label}`}
-              >
-                {!c.hex && <span className="block text-[10px] leading-none">∅</span>}
-              </button>
-            );
-          })}
-        </div>
+        <ColorRow currentColor={currentColor} onPick={pickColor} />
 
         <div className="relative mt-2">
           <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
@@ -252,49 +187,5 @@ export function IconPickerPopover({
         <IconPickerInline value={value} onChange={onChange} onClear={onClear} />
       </PopoverContent>
     </Popover>
-  );
-}
-
-function Grid({ children }: { children: React.ReactNode }) {
-  return <div className="grid grid-cols-8 gap-1">{children}</div>;
-}
-
-function EmojiCell({ emoji, active, onClick }: { emoji: string; active: boolean; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "flex h-8 w-8 items-center justify-center rounded text-lg leading-none transition",
-        active ? "bg-brand/15 ring-1 ring-brand" : "hover:bg-accent",
-      )}
-      title={emoji}
-    >
-      <DynamicIcon value={emoji} className="text-lg" />
-    </button>
-  );
-}
-
-function LucideCell({ name, color, active, onClick }: { name: string; color: string | undefined; active: boolean; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "flex h-8 w-8 items-center justify-center rounded transition",
-        active ? "bg-brand/15 ring-1 ring-brand" : "hover:bg-accent",
-      )}
-      title={name}
-    >
-      <DynamicIcon value={lucideValue(name, color)} className="text-base" />
-    </button>
-  );
-}
-
-function Empty() {
-  return (
-    <div className="col-span-full py-6 text-center text-xs text-muted-foreground">
-      No matches.
-    </div>
   );
 }
