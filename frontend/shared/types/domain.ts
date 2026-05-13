@@ -269,7 +269,7 @@ export type PropertyValue =
   | boolean
   | null
   | string[] // multi_select option ids, person ids, relation ids, or mock files
-  | { date?: string };
+  | { date?: string; end?: string }; // date prop: `date` = start (or single), `end` = optional range end (YYYY-MM-DD)
 
 export type DbView =
   | "table" | "board" | "list" | "gallery" | "calendar" | "timeline"

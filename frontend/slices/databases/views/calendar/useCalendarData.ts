@@ -24,11 +24,15 @@ export function useRowsByDate(rows: Page[], dateProp: ReturnType<typeof useCalen
     const m = new Map<string, Page[]>();
     if (!dateProp) return m;
     for (const r of rows) {
-      const startStr = (r.rowProps?.[dateProp.id] as any)?.date;
+      const startVal = r.rowProps?.[dateProp.id] as { date?: string; end?: string } | undefined;
+      const startStr = startVal?.date;
       if (!startStr) continue;
       const start = parseYMD(startStr);
       if (!start) continue;
-      const endStr = endProp ? (r.rowProps?.[endProp.id] as any)?.date : undefined;
+      // Prefer explicit endProp; fall back to start property's own `end` field.
+      const endStr = endProp
+        ? (r.rowProps?.[endProp.id] as { date?: string } | undefined)?.date
+        : startVal?.end;
       const end = endStr ? parseYMD(endStr) : start;
       if (!end || end < start) {
         const key = ymd(start);

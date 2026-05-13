@@ -53,8 +53,12 @@ export function TimelineView({ db, view, rows, onOpenRow }: Props) {
     if (!dateProp) return [];
     return rows
       .map((r) => {
-        const startStr = (r.rowProps?.[dateProp.id] as any)?.date;
-        const endStr = endProp ? (r.rowProps?.[endProp.id] as any)?.date : null;
+        const startVal = r.rowProps?.[dateProp.id] as { date?: string; end?: string } | undefined;
+        const startStr = startVal?.date;
+        // Prefer explicit endProp; fall back to start property's own `end` field.
+        const endStr = endProp
+          ? (r.rowProps?.[endProp.id] as { date?: string } | undefined)?.date
+          : startVal?.end;
         if (!startStr) return null;
         const startMs = toMs(startStr);
         const endMs = endStr ? toMs(endStr) : startMs;
@@ -152,11 +156,22 @@ export function TimelineView({ db, view, rows, onOpenRow }: Props) {
                       } else if (mode === "end") {
                         nextEndMs = Math.max(item.endMs + deltaDays * DAY_MS, item.startMs);
                       }
-                      if (mode === "move" || mode === "start") {
-                        setRowValue(db.id, row.id, dateProp.id, { date: msToYMD(nextStartMs) });
-                      }
-                      if ((mode === "move" || mode === "end") && endProp) {
-                        setRowValue(db.id, row.id, endProp.id, { date: msToYMD(nextEndMs) });
+                      const newStartStr = msToYMD(nextStartMs);
+                      const newEndStr = msToYMD(nextEndMs);
+                      if (endProp) {
+                        if (mode === "move" || mode === "start") {
+                          setRowValue(db.id, row.id, dateProp.id, { date: newStartStr });
+                        }
+                        if (mode === "move" || mode === "end") {
+                          setRowValue(db.id, row.id, endProp.id, { date: newEndStr });
+                        }
+                      } else {
+                        // No separate endProp — write both start and end into the start property.
+                        const cur = row.rowProps?.[dateProp.id] as { date?: string; end?: string } | undefined;
+                        const next: { date?: string; end?: string } = { ...cur };
+                        if (mode === "move" || mode === "start") next.date = newStartStr;
+                        if (mode === "move" || mode === "end") next.end = newEndStr;
+                        setRowValue(db.id, row.id, dateProp.id, next);
                       }
                     }}
                   />
