@@ -94,6 +94,14 @@ Ignore its grades. `audit-bp.sh` itself is fine.
 After every commit, push to `origin/main` without asking. Always create
 new commits, never amend.
 
+## SSOT — rahman-shared adopted (2026-05-13, commit 8238969)
+
+- `pnpm add rahman-shared@^0.2.0` — kitab npm utils
+- `frontend/shared/lib/utils.ts` is a 1-line re-export from `rahman-shared/lib/utils` — DO NOT inline cn back
+- `next.config.mjs` has `transpilePackages: ["rahman-shared"]` (Turbopack TS hint, REQUIRED)
+- 165 `@/shared/lib/utils` import sites continue working — only resolution chain changed
+- Bump via `pnpm update rahman-shared`. Skill `/use-adopt-rahman-shared` codifies pattern
+
 ## Feature flags / discipline
 
 - Server Actions: every `"use server"` performs authn + authz; never return
