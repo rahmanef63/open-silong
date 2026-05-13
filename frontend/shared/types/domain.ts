@@ -261,6 +261,16 @@ export interface Property {
   /** ─── Button (type === "button") ──────────────────────────── */
   buttonLabel?: string;
   buttonActions?: ButtonAction[];
+
+  /** ─── Date (type === "date") ──────────────────────────────── */
+  /** Display format for dates in cells. Default: "full". */
+  dateFormat?: "full" | "short" | "mdy" | "dmy" | "ymd" | "relative";
+  /** Clock format when `dateIncludeTime` is on. Default: "12h". */
+  timeFormat?: "12h" | "24h";
+  /** When true, cells render a time alongside the date. */
+  dateIncludeTime?: boolean;
+  /** Reminder offset before the date. "none" = no reminder. */
+  dateNotification?: "none" | "at_time" | "5m" | "10m" | "30m" | "1h" | "1d" | "2d";
 }
 
 export type PropertyValue =
@@ -269,7 +279,9 @@ export type PropertyValue =
   | boolean
   | null
   | string[] // multi_select option ids, person ids, relation ids, or mock files
-  | { date?: string; end?: string }; // date prop: `date` = start (or single), `end` = optional range end (YYYY-MM-DD)
+  | { date?: string; end?: string; time?: string; endTime?: string };
+  // date prop: `date`/`time` = start; `end`/`endTime` = optional range end.
+  // `date`/`end` are YYYY-MM-DD; `time`/`endTime` are HH:mm (24h) regardless of display timeFormat.
 
 export type DbView =
   | "table" | "board" | "list" | "gallery" | "calendar" | "timeline"

@@ -9,6 +9,7 @@ import { RelationConfig } from "./property-config/RelationConfig";
 import { RollupConfig } from "./property-config/RollupConfig";
 import { ButtonConfig } from "./property-config/ButtonConfig";
 import { FormulaConfig, UniqueIdConfig, PlaceConfig, SelectConfig } from "./property-config/misc";
+import { DateConfig } from "./property-config/DateConfig";
 
 interface Props {
   db: Database;
@@ -76,6 +77,7 @@ export function PropertyConfigPanel({ db, prop, onClose, immutableType }: Props)
       )}
 
       {prop.type === "number" && <NumberConfig db={db} prop={prop} />}
+      {prop.type === "date" && <DateConfig db={db} prop={prop} updateProperty={updateProperty} />}
       {prop.type === "relation" && (
         <RelationConfig
           db={db}

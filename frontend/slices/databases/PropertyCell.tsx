@@ -10,6 +10,7 @@ import { FormulaCell } from "./property-cells/FormulaCell";
 import { NumberCell } from "./property-cells/NumberCell";
 import { SelectCell, MultiSelectCell } from "./property-cell/SelectCell";
 import { ButtonCell } from "./property-cell/ButtonCell";
+import { DateCell } from "./property-cell/DateCell";
 
 interface Props {
   db: Database;
@@ -63,28 +64,8 @@ export function PropertyCell({ db, prop, row, compact = false }: Props) {
         </div>
       );
     case "date": {
-      const dv = typeof value === "object" && value && ("date" in value || "end" in value) ? value : null;
-      const start = dv?.date ?? "";
-      const end = dv?.end ?? "";
-      return (
-        <div className={cn(cellClass, "flex items-center gap-1 px-1")}>
-          <input
-            type="date"
-            value={start}
-            onChange={(e) => set({ date: e.target.value || undefined, end: end || undefined })}
-            className="bg-transparent outline-none rounded hover:bg-accent/50 px-1 py-0.5 min-w-0 flex-1"
-          />
-          <span className="text-muted-foreground text-xs">→</span>
-          <input
-            type="date"
-            value={end}
-            min={start || undefined}
-            onChange={(e) => set({ date: start || undefined, end: e.target.value || undefined })}
-            placeholder="End"
-            className="bg-transparent outline-none rounded hover:bg-accent/50 px-1 py-0.5 min-w-0 flex-1 text-muted-foreground"
-          />
-        </div>
-      );
+      const dv = typeof value === "object" && value && !Array.isArray(value) ? value : null;
+      return <DateCell db={db} prop={prop} rowId={row.id} value={dv} cellClass={cellClass} />;
     }
     case "select":
     case "status":
