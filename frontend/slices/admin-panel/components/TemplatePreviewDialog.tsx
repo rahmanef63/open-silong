@@ -2,21 +2,18 @@
 
 import { useMemo } from "react";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/shared/ui/dialog";
 import { Button } from "@/shared/ui/button";
 import { Badge } from "@/shared/ui/badge";
 import { ScrollArea } from "@/shared/ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/shared/ui/tabs";
 import { DynamicIcon } from "@/shared/components/icon-picker";
-import { Pencil, Database, FileText, Boxes, Rows3 } from "lucide-react";
-import { walkTemplateTree, templateStats, type TemplateTreeNode } from "@/slices/templates/lib/previewTemplate";
+import { Pencil } from "lucide-react";
+import { walkTemplateTree, templateStats } from "@/slices/templates/lib/previewTemplate";
 import { TemplatePagePreview } from "@/slices/templates/components/TemplatePagePreview";
+import { TreeNode } from "./template-preview/parts";
+import { InfoTab } from "./template-preview/InfoTab";
 
 interface Props {
   open: boolean;
@@ -119,46 +116,7 @@ export function TemplatePreviewDialog({ open, onOpenChange, template, onEdit }: 
 
               <TabsContent value="info" className="flex-1 min-h-0 m-0 data-[state=inactive]:hidden">
                 <ScrollArea className="h-full">
-                  <div className="px-6 py-5 space-y-5">
-                    {stats && (
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                        <StatTile icon={<FileText className="h-4 w-4" />} label="Pages" value={stats.pages} />
-                        <StatTile icon={<Boxes className="h-4 w-4" />} label="Blocks" value={stats.blocks} />
-                        <StatTile icon={<Database className="h-4 w-4" />} label="Databases" value={stats.databases} />
-                        <StatTile icon={<Rows3 className="h-4 w-4" />} label="Seed rows" value={stats.seedRows} />
-                      </div>
-                    )}
-
-                    {stats && Object.keys(stats.blockTypes).length > 0 && (
-                      <div>
-                        <SectionLabel>Block mix</SectionLabel>
-                        <div className="flex flex-wrap gap-1.5">
-                          {Object.entries(stats.blockTypes)
-                            .sort((a, b) => b[1] - a[1])
-                            .map(([type, n]) => (
-                              <Badge key={type} variant="outline" className="text-[11px] font-normal">
-                                <span className="text-foreground/80">{type}</span>
-                                <span className="ml-1 text-muted-foreground tabular-nums">×{n}</span>
-                              </Badge>
-                            ))}
-                        </div>
-                      </div>
-                    )}
-
-                    <div>
-                      <SectionLabel>Metadata</SectionLabel>
-                      <dl className="grid grid-cols-[120px_1fr] gap-y-1.5 text-sm">
-                        <dt className="text-muted-foreground">ID</dt>
-                        <dd className="font-mono text-xs truncate">{template._id}</dd>
-                        <dt className="text-muted-foreground">Category</dt>
-                        <dd>{template.category}</dd>
-                        <dt className="text-muted-foreground">Status</dt>
-                        <dd>{template.isPublished ? "Live" : "Draft"}</dd>
-                        <dt className="text-muted-foreground">Origin</dt>
-                        <dd>{template.isSeed ? "Seed (built-in)" : "Custom"}</dd>
-                      </dl>
-                    </div>
-                  </div>
+                  <InfoTab stats={stats} template={template} />
                 </ScrollArea>
               </TabsContent>
             </Tabs>
@@ -175,68 +133,5 @@ export function TemplatePreviewDialog({ open, onOpenChange, template, onEdit }: 
         )}
       </DialogContent>
     </Dialog>
-  );
-}
-
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="text-[11px] uppercase tracking-wide font-medium text-muted-foreground mb-2">
-      {children}
-    </div>
-  );
-}
-
-function StatTile({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: number;
-}) {
-  return (
-    <div className="rounded-md border border-border bg-card px-3 py-2.5 flex items-center gap-2.5">
-      <div className="text-muted-foreground">{icon}</div>
-      <div className="min-w-0">
-        <div className="text-lg font-semibold leading-none tabular-nums">{value}</div>
-        <div className="text-[10px] uppercase tracking-wide text-muted-foreground mt-1">{label}</div>
-      </div>
-    </div>
-  );
-}
-
-function TreeNode({ node }: { node: TemplateTreeNode }) {
-  const indent = node.depth * 14;
-  return (
-    <div>
-      <div
-        className="flex items-baseline gap-1.5 text-sm leading-relaxed"
-        style={{ paddingLeft: indent }}
-      >
-        {node.kind === "page" ? (
-          <span className="text-base shrink-0">{node.icon ?? "📄"}</span>
-        ) : node.kind === "database" ? (
-          <span className="text-base shrink-0">{node.icon ?? "📊"}</span>
-        ) : (
-          <span className="text-muted-foreground/50 shrink-0 select-none">·</span>
-        )}
-        <span
-          className={
-            node.kind === "page"
-              ? "font-medium truncate"
-              : node.kind === "database"
-                ? "text-blue-600 dark:text-blue-400 truncate"
-                : "text-muted-foreground truncate"
-          }
-        >
-          {node.label}
-        </span>
-        {node.detail && (
-          <span className="text-xs text-muted-foreground/70 truncate">{node.detail}</span>
-        )}
-      </div>
-      {node.children?.map((c, i) => <TreeNode key={i} node={c} />)}
-    </div>
   );
 }
