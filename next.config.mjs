@@ -20,6 +20,7 @@ process.env.NEXT_PUBLIC_BUILD_ID = BUILD_ID;
 const nextConfig = {
   output: "standalone",
   reactStrictMode: true,
+  transpilePackages: ["rahman-shared"],
   generateBuildId: () => BUILD_ID,
   images: {
     // Convex storage URLs (ctx.storage.getUrl) live on the Convex API host —
