@@ -4,17 +4,11 @@ import * as React from "react";
 import { useStore } from "@/shared/lib/store";
 import { cn } from "@/shared/lib/utils";
 import { DynamicIcon } from "@/shared/components/icon-picker";
+import { walkBack } from "./mention-typeahead/dom";
+import { insertMention, type State } from "./mention-typeahead/insert";
 
 const MAX_RESULTS = 6;
 const TRIGGER_RE = /(?:^|\s)@([\w-]{0,40})$/;
-
-interface State {
-  ce: HTMLElement;
-  /** Range covering the `@query` substring — used to replace on insert. */
-  range: Range;
-  query: string;
-  pos: { x: number; y: number };
-}
 
 /** Inline `@` mention typeahead. Scans backward from the caret on every
  *  input; when it finds `[start-of-string|whitespace]@<word>`, opens a
@@ -42,12 +36,10 @@ export function MentionTypeahead() {
     function onInput(e: Event) {
       const target = e.target as HTMLElement | null;
       if (!target || !target.isContentEditable) return;
-      // Skip the page-title input; it isn't contentEditable but be safe.
       const sel = window.getSelection();
       if (!sel || sel.rangeCount === 0) return;
       const caret = sel.getRangeAt(0);
       if (!caret.collapsed) return;
-      // Build the text from start-of-block to caret.
       const probe = document.createRange();
       probe.selectNodeContents(target);
       probe.setEnd(caret.endContainer, caret.endOffset);
@@ -58,8 +50,6 @@ export function MentionTypeahead() {
         return;
       }
       const query = m[1];
-      // Build a Range covering the `@query` substring so insertion can
-      // replace it cleanly. Walk backward from caret by query.length + 1.
       const start = walkBack(target, caret.endContainer, caret.endOffset, query.length + 1);
       if (!start) return;
       const range = document.createRange();
@@ -87,7 +77,6 @@ export function MentionTypeahead() {
     };
   }, []);
 
-  // Keyboard nav while popover is open
   React.useEffect(() => {
     if (!state) return;
     function onKey(e: KeyboardEvent) {
@@ -145,65 +134,4 @@ export function MentionTypeahead() {
       ))}
     </div>
   );
-}
-
-function insertMention(state: State, page: { id: string; title: string; icon: string }) {
-  const label = page.title || "Untitled";
-  // Markdown link form — inlineMd parses [label](url) into an <a>.
-  const text = `[${label}](/dashboard/p/${page.id}) `;
-  state.range.deleteContents();
-  state.range.insertNode(document.createTextNode(text));
-  // Collapse caret to end of inserted text.
-  const sel = window.getSelection();
-  if (sel) {
-    sel.removeAllRanges();
-    const r = document.createRange();
-    r.setStartAfter(state.ce.lastChild ?? state.ce);
-    r.collapse(true);
-    sel.addRange(r);
-  }
-  state.ce.dispatchEvent(new InputEvent("input", { bubbles: true, cancelable: true, inputType: "insertText" }));
-}
-
-/** Walk backward from `(node, offset)` by `count` characters. Returns the
- *  resulting node + offset, or null if the walk falls off the front. */
-function walkBack(
-  root: HTMLElement,
-  node: Node,
-  offset: number,
-  count: number,
-): { node: Node; offset: number } | null {
-  let curNode: Node | null = node;
-  let curOffset = offset;
-  let remaining = count;
-  while (curNode) {
-    const len = curNode.nodeType === 3 ? (curNode.textContent ?? "").length : 0;
-    if (curNode.nodeType === 3 && curOffset >= remaining) {
-      return { node: curNode, offset: curOffset - remaining };
-    }
-    if (curNode.nodeType === 3) {
-      remaining -= curOffset;
-    }
-    // Step to previous text node within root.
-    const prev = previousLeaf(curNode, root);
-    if (!prev) return null;
-    curNode = prev;
-    curOffset = prev.nodeType === 3 ? (prev.textContent ?? "").length : 0;
-    void len;
-  }
-  return null;
-}
-
-function previousLeaf(node: Node, root: HTMLElement): Node | null {
-  if (node === root) return null;
-  let cur: Node | null = node;
-  while (cur && cur !== root) {
-    if (cur.previousSibling) {
-      let p: Node = cur.previousSibling;
-      while (p.lastChild) p = p.lastChild;
-      return p;
-    }
-    cur = cur.parentNode;
-  }
-  return null;
 }
