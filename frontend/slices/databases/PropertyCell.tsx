@@ -1,16 +1,15 @@
 import { Database, Page, Property, PropertyValue } from "@/shared/types/domain";
 import { useStore } from "@/shared/lib/store";
 import { cn } from "@/shared/lib/utils";
-import { colorClass, formatRelTime } from "@/shared/lib/format";
-import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
+import { formatRelTime } from "@/shared/lib/format";
 import { Checkbox } from "@/shared/ui/checkbox";
-import { X } from "lucide-react";
 import { RelationCell } from "./property-cells/RelationCell";
 import { FilesCell } from "./property-cells/FilesCell";
 import { RollupCell } from "./property-cells/RollupCell";
 import { FormulaCell } from "./property-cells/FormulaCell";
-import { OptionRow, AddOption } from "./property-cells/SelectOptionRow";
 import { NumberCell } from "./property-cells/NumberCell";
+import { SelectCell, MultiSelectCell } from "./property-cell/SelectCell";
+import { ButtonCell } from "./property-cell/ButtonCell";
 
 interface Props {
   db: Database;
@@ -32,7 +31,7 @@ export function PropertyCell({ db, prop, row, compact = false }: Props) {
       return (
         <input
           value={(value as string) ?? ""}
-          onChange={e => set(e.target.value)}
+          onChange={(e) => set(e.target.value)}
           placeholder="-"
           className={cn(cellClass, "w-full bg-transparent outline-none px-2 py-1 rounded hover:bg-accent/50 focus:bg-accent/50")}
         />
@@ -52,7 +51,7 @@ export function PropertyCell({ db, prop, row, compact = false }: Props) {
       return (
         <input
           value={(value as string) ?? ""}
-          onChange={e => set(e.target.value)}
+          onChange={(e) => set(e.target.value)}
           placeholder="-"
           className={cn(cellClass, "w-full bg-transparent outline-none px-2 py-1 rounded hover:bg-accent/50 text-brand")}
         />
@@ -68,78 +67,15 @@ export function PropertyCell({ db, prop, row, compact = false }: Props) {
         <input
           type="date"
           value={typeof value === "object" && value && "date" in value ? value.date ?? "" : ""}
-          onChange={e => set({ date: e.target.value })}
+          onChange={(e) => set({ date: e.target.value })}
           className={cn(cellClass, "w-full bg-transparent outline-none px-2 py-1 rounded hover:bg-accent/50")}
         />
       );
     case "select":
-    case "status": {
-      const selectedId = value as string | null;
-      const opt = prop.options?.find(o => o.id === selectedId);
-      return (
-        <Popover>
-          <PopoverTrigger asChild>
-            <button className={cn(cellClass, "w-full text-left px-2 py-1 rounded hover:bg-accent/50")}>
-              {opt
-                ? <span className={cn("inline-flex items-center rounded-full border px-2 py-0.5 text-xs", colorClass(opt.color))}>{opt.name}</span>
-                : <span className="text-muted-foreground">-</span>}
-            </button>
-          </PopoverTrigger>
-          <PopoverContent className="w-64 p-1">
-            <div className="space-y-0.5 max-h-60 overflow-y-auto">
-              {prop.options?.map(o => (
-                <OptionRow
-                  key={o.id}
-                  db={db}
-                  propId={prop.id}
-                  option={o}
-                  selected={o.id === selectedId}
-                  onSelect={() => set(o.id === selectedId ? null : o.id)}
-                />
-              ))}
-              <button onClick={() => set(null)} className="flex w-full items-center px-2 py-1 rounded hover:bg-accent text-xs text-muted-foreground">
-                <X className="mr-1 h-3 w-3" /> Clear
-              </button>
-            </div>
-            <AddOption db={db} propId={prop.id} />
-          </PopoverContent>
-        </Popover>
-      );
-    }
-    case "multi_select": {
-      const ids = (value as string[]) ?? [];
-      const selected = prop.options?.filter(o => ids.includes(o.id)) ?? [];
-      return (
-        <Popover>
-          <PopoverTrigger asChild>
-            <button className={cn(cellClass, "w-full text-left px-2 py-1 rounded hover:bg-accent/50 flex flex-wrap gap-1")}>
-              {selected.length === 0 && <span className="text-muted-foreground">-</span>}
-              {selected.map(o => (
-                <span key={o.id} className={cn("inline-flex items-center rounded-full border px-2 py-0.5 text-xs", colorClass(o.color))}>{o.name}</span>
-              ))}
-            </button>
-          </PopoverTrigger>
-          <PopoverContent className="w-64 p-1">
-            <div className="max-h-60 overflow-y-auto space-y-0.5">
-              {prop.options?.map(o => {
-                const on = ids.includes(o.id);
-                return (
-                  <OptionRow
-                    key={o.id}
-                    db={db}
-                    propId={prop.id}
-                    option={o}
-                    selected={on}
-                    onSelect={() => set(on ? ids.filter(x => x !== o.id) : [...ids, o.id])}
-                  />
-                );
-              })}
-            </div>
-            <AddOption db={db} propId={prop.id} />
-          </PopoverContent>
-        </Popover>
-      );
-    }
+    case "status":
+      return <SelectCell db={db} prop={prop} value={value} onSet={set} cellClass={cellClass} />;
+    case "multi_select":
+      return <MultiSelectCell db={db} prop={prop} value={value} onSet={set} cellClass={cellClass} />;
     case "person":
       return (
         <button onClick={() => set([user.id])} className={cn(cellClass, "w-full text-left px-2 py-1 rounded hover:bg-accent/50")}>
@@ -189,33 +125,4 @@ export function PropertyCell({ db, prop, row, compact = false }: Props) {
         />
       );
   }
-}
-
-function ButtonCell({ prop, row }: { prop: Property; row: Page }) {
-  const label = prop.buttonLabel || "Run";
-  const actions = prop.buttonActions ?? [];
-  const onClick = () => {
-    for (const a of actions) {
-      if (a.kind === "open_url") {
-        if (typeof window !== "undefined") window.open(a.url, "_blank", "noopener,noreferrer");
-      } else if (a.kind === "open_page") {
-        if (typeof window !== "undefined") window.location.href = `/dashboard/p/${a.pageId}`;
-      } else if (a.kind === "show_confirmation") {
-        if (typeof window !== "undefined") window.alert(a.message);
-      }
-      // edit_property action runner: requires store ref; deferred.
-      void row;
-    }
-  };
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={actions.length === 0}
-      className="m-1 inline-flex items-center gap-1 rounded-md border border-border bg-card px-2 py-0.5 text-xs hover:bg-accent disabled:opacity-50"
-      title={actions.length === 0 ? "Configure actions in Edit property" : label}
-    >
-      {label}
-    </button>
-  );
 }
