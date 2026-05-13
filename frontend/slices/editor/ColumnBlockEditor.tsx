@@ -4,7 +4,7 @@ import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { Block, BlockType } from "@/shared/types/domain";
 import { cn } from "@/shared/lib/utils";
 import { Plus } from "lucide-react";
-import { NestedBlock } from "./blocks/NestedBlock";
+import { nestedRegistry } from "./blocks/nestedRegistry";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 const MIN_COL = 10;
@@ -59,20 +59,23 @@ function ColumnPane({
     >
       <div className="space-y-0.5 min-h-10">
         <SortableContext items={blocks.map((b) => b.id)} strategy={verticalListSortingStrategy}>
-          {blocks.map((b, i) => (
-            <NestedBlock
-              key={b.id}
-              block={b}
-              depth={depth}
-              pageId={pageId}
-              onUpdate={(patch) => onUpdate(b.id, patch)}
-              onAddAfter={(type) => onAdd(i, type)}
-              onDelete={() => onDelete(b.id)}
-              onFocusNext={() => focusBlock(i + 1)}
-              onFocusPrev={() => focusBlock(i - 1)}
-              registerRef={registerRef}
-            />
-          ))}
+          {blocks.map((b, i) => {
+            const NestedBlock = nestedRegistry.Nested!;
+            return (
+              <NestedBlock
+                key={b.id}
+                block={b}
+                depth={depth}
+                pageId={pageId}
+                onUpdate={(patch: Partial<Block>) => onUpdate(b.id, patch)}
+                onAddAfter={(type: BlockType) => onAdd(i, type)}
+                onDelete={() => onDelete(b.id)}
+                onFocusNext={() => focusBlock(i + 1)}
+                onFocusPrev={() => focusBlock(i - 1)}
+                registerRef={registerRef}
+              />
+            );
+          })}
         </SortableContext>
       </div>
       <button

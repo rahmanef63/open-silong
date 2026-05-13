@@ -1,8 +1,9 @@
 import { useNavigate } from "@/shared/lib/router";
 import { Check, Trash2 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
+import { formatRelTime } from "@/shared/lib/format";
 import type { Notification } from "../types";
-import { KIND_ICON, relTime } from "../lib/format";
+import { KIND_ICON } from "../lib/format";
 
 interface Props {
   note: Notification;
@@ -51,7 +52,7 @@ export function NotificationRow({ note, onMarkRead, onRemove }: Props) {
               <span>{note.actorName}</span>
             </span>
           )}
-          <span>{relTime(note.createdAt)}</span>
+          <span>{formatRelTime(note.createdAt)}</span>
         </div>
       </div>
       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
