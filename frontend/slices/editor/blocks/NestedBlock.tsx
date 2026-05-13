@@ -21,6 +21,7 @@ import { bgColorClass, colorClass } from "../lib/colors";
 import { ColumnBlockEditor } from "../ColumnBlockEditor";
 import { ToggleContent } from "./ToggleBlock";
 import { DatabaseBlock } from "@/slices/databases/DatabaseBlock";
+import { nestedRegistry } from "./nestedRegistry";
 
 interface Props {
   block: Block;
@@ -306,3 +307,5 @@ export function NestedBlock({
     </div>
   );
 }
+
+nestedRegistry.Nested = NestedBlock;

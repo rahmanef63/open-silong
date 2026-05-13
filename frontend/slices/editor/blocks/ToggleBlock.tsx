@@ -7,7 +7,7 @@ import { useStore } from "@/shared/lib/store";
 import { cn } from "@/shared/lib/utils";
 import { BlockShell } from "./BlockShell";
 import { BlockControls } from "./BlockControls";
-import { NestedBlock } from "./NestedBlock";
+import { nestedRegistry } from "./nestedRegistry";
 import { bgColorClass, colorClass } from "../lib/colors";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -84,35 +84,38 @@ export function ToggleContent({
       {!collapsed && (
         <div className="ml-5 mt-1 border-l-2 border-border/60 pl-3 space-y-0.5">
           <SortableContext items={children.map((c) => c.id)} strategy={verticalListSortingStrategy}>
-            {children.map((child, ci) => (
-              <NestedBlock
-                key={child.id}
-                block={child}
-                depth={depth}
-                pageId={pageId}
-                onUpdate={(patch) => {
-                  setChildren(children.map((c, j) => (j === ci ? { ...c, ...patch } : c)));
-                }}
-                onDelete={() => {
-                  setChildren(children.filter((_, j) => j !== ci));
-                }}
-                onAddAfter={(type) => {
-                  const nb: Block = { id: uid(), type: type ?? "paragraph", text: "" };
-                  const nc = [...children];
-                  nc.splice(ci + 1, 0, nb);
-                  setChildren(nc);
-                  setTimeout(() => document.querySelector<HTMLElement>(`[data-block-id="${nb.id}"]`)?.focus(), 30);
-                }}
-                onFocusNext={() => {
-                  const next = children[ci + 1];
-                  if (next) document.querySelector<HTMLElement>(`[data-block-id="${next.id}"]`)?.focus();
-                }}
-                onFocusPrev={() => {
-                  const prev = children[ci - 1];
-                  if (prev) document.querySelector<HTMLElement>(`[data-block-id="${prev.id}"]`)?.focus();
-                }}
-              />
-            ))}
+            {children.map((child, ci) => {
+              const NestedBlock = nestedRegistry.Nested!;
+              return (
+                <NestedBlock
+                  key={child.id}
+                  block={child}
+                  depth={depth}
+                  pageId={pageId}
+                  onUpdate={(patch: Partial<Block>) => {
+                    setChildren(children.map((c, j) => (j === ci ? { ...c, ...patch } : c)));
+                  }}
+                  onDelete={() => {
+                    setChildren(children.filter((_, j) => j !== ci));
+                  }}
+                  onAddAfter={(type: BlockType) => {
+                    const nb: Block = { id: uid(), type: type ?? "paragraph", text: "" };
+                    const nc = [...children];
+                    nc.splice(ci + 1, 0, nb);
+                    setChildren(nc);
+                    setTimeout(() => document.querySelector<HTMLElement>(`[data-block-id="${nb.id}"]`)?.focus(), 30);
+                  }}
+                  onFocusNext={() => {
+                    const next = children[ci + 1];
+                    if (next) document.querySelector<HTMLElement>(`[data-block-id="${next.id}"]`)?.focus();
+                  }}
+                  onFocusPrev={() => {
+                    const prev = children[ci - 1];
+                    if (prev) document.querySelector<HTMLElement>(`[data-block-id="${prev.id}"]`)?.focus();
+                  }}
+                />
+              );
+            })}
           </SortableContext>
           <button
             onClick={addChild}

@@ -8,7 +8,3 @@ export const KIND_ICON: Record<NotificationKind, typeof Bell> = {
   system: Bell,
   update: Sparkles,
 };
-
-// Re-export so existing `from "../lib/format"` imports keep working;
-// canonical implementation lives in shared/lib/format.
-export { formatRelTime as relTime } from "@/shared/lib/format";

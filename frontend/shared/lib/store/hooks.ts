@@ -11,7 +11,7 @@
  * re-renders. The win is API clarity + per-domain copyability.
  */
 
-import { useStore } from "../store";
+import { useStore } from "./context";
 
 export function useUser() {
   const s = useStore();

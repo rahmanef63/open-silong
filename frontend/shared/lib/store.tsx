@@ -1,19 +1,21 @@
 import {
-  createContext, useContext, useEffect, useMemo, useState, type ReactNode,
+  useEffect, useMemo, useState, type ReactNode,
   useCallback,
 } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { api } from "../../../convex/_generated/api";
 import type {
-  Block, BlockType, Page, Workspace, UserProfile, Preferences, Database,
-  DatabaseViewConfig, Property, PropertyType, PropertyValue, PageSnapshot, SelectOption,
+  Page, Workspace, UserProfile, Preferences, Database,
 } from "@/shared/types/domain";
 import { seedUser } from "@/shared/lib/seed";
+import { Ctx, useStore, type StoreCtx } from "./store/context";
 import { useHistoryStack } from "./store/history";
 import { useSnapshots } from "./store/snapshots";
 import { usePageActions } from "./store/pageActions";
 import { useDatabaseActions } from "./store/databaseActions";
+
+export { useStore };
 
 function toPage(doc: any): Page {
   return {
@@ -44,89 +46,6 @@ function toDatabase(doc: any): Database {
     trashed: !!doc.trashed,
   };
 }
-
-interface StoreCtx {
-  user: UserProfile;
-  updateUser: (patch: Partial<UserProfile>) => void;
-  preferences: Preferences;
-  updatePreferences: (patch: Partial<Preferences>) => void;
-  workspace: Workspace;
-  updateWorkspace: (patch: Partial<Workspace>) => void;
-  /** All workspaces the viewer is a member of (incl. personal). */
-  workspaces: Workspace[];
-  /** Switch the active workspace; triggers a refetch of pages/databases. */
-  setActiveWorkspace: (workspaceId: string) => Promise<void>;
-  /** Create a new (non-personal) workspace and switch to it. */
-  createWorkspace: (name: string, emoji?: string) => Promise<string>;
-  /** Owner-only delete; refused for personal workspace. */
-  deleteWorkspace: (workspaceId: string) => Promise<void>;
-  /** Member leaves; refused for owner. */
-  leaveWorkspace: (workspaceId: string) => Promise<void>;
-  pages: Page[];
-  recents: string[];
-  getPage: (id: string) => Page | undefined;
-  childrenOf: (parentId: string | null) => Page[];
-  createPage: (parentId?: string | null, opts?: Partial<Page>) => Promise<Page>;
-  updatePage: (id: string, patch: Partial<Page>) => void;
-  movePage: (id: string, newParentId: string | null) => void;
-  reorderPages: (parentId: string | null, orderedIds: string[]) => void;
-  reorderRootPages: (orderedIds: string[]) => void;
-  deletePage: (id: string) => void;
-  restorePage: (id: string) => void;
-  permanentlyDelete: (id: string) => void;
-  duplicatePage: (id: string) => Promise<Page | undefined>;
-  toggleFavorite: (id: string) => void;
-  togglePublic: (id: string) => void;
-  addBlock: (pageId: string, afterIndex: number, type?: BlockType, init?: Partial<Block>) => Promise<string>;
-  updateBlock: (pageId: string, blockId: string, patch: Partial<Block>) => void;
-  deleteBlock: (pageId: string, blockId: string) => void;
-  duplicateBlock: (pageId: string, blockId: string) => string | undefined;
-  moveBlock: (pageId: string, fromIndex: number, toIndex: number) => void;
-  reorderBlocks: (pageId: string, orderedIds: string[]) => void;
-  setBlockType: (pageId: string, blockId: string, type: BlockType) => void;
-  replaceBlock: (pageId: string, blockId: string, next: Block) => void;
-  pushRecent: (id: string) => void;
-  trash: Page[];
-  search: (q: string) => Page[];
-  saving: boolean;
-  /** True while initial pages/databases queries haven't resolved. Use for
-   *  skeleton placeholders in sidebar/dashboard. */
-  isInitialLoading: boolean;
-  databases: Database[];
-  trashedDatabases: Database[];
-  getDatabase: (id: string) => Database | undefined;
-  createDatabase: (name?: string) => Promise<Database>;
-  updateDatabase: (id: string, patch: Partial<Database>) => void;
-  trashDatabase: (id: string) => void;
-  restoreDatabase: (id: string) => void;
-  permanentlyDeleteDatabase: (id: string) => void;
-  addDatabaseFromTable: (input: { headerRow: string[]; bodyRows: string[][] }) => Promise<string | null>;
-  addProperty: (dbId: string, type: PropertyType, name?: string) => Property;
-  updateProperty: (dbId: string, propId: string, patch: Partial<Property>) => void;
-  deleteProperty: (dbId: string, propId: string) => void;
-  reorderProperties: (dbId: string, orderedIds: string[]) => void;
-  addSelectOption: (dbId: string, propId: string, name: string, color?: string) => SelectOption;
-  updateSelectOption: (dbId: string, propId: string, optId: string, patch: Partial<SelectOption>) => void;
-  deleteSelectOption: (dbId: string, propId: string, optId: string) => void;
-  addRow: (dbId: string, init?: Partial<Page>, templateId?: string) => Promise<Page>;
-  deleteRow: (dbId: string, rowPageId: string) => void;
-  reorderRows: (dbId: string, orderedIds: string[]) => void;
-  setRowValue: (dbId: string, rowPageId: string, propId: string, value: PropertyValue) => void;
-  setRelationTwoWay: (dbId: string, propId: string, on: boolean, name?: string) => string | undefined;
-  addView: (dbId: string, view: Omit<DatabaseViewConfig, "id">) => DatabaseViewConfig;
-  updateView: (dbId: string, viewId: string, patch: Partial<DatabaseViewConfig>) => void;
-  deleteView: (dbId: string, viewId: string) => void;
-  snapshots: PageSnapshot[];
-  snapshotsForPage: (pageId: string) => PageSnapshot[];
-  restoreSnapshot: (snapshotId: string) => void;
-  undo: () => void;
-  redo: () => void;
-  canUndo: boolean;
-  canRedo: boolean;
-  signOut: () => void;
-}
-
-const Ctx = createContext<StoreCtx | null>(null);
 
 export function StoreProvider({ children }: { children: ReactNode }) {
   const { signOut: authSignOut } = useAuthActions();
@@ -324,12 +243,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
-}
-
-export function useStore() {
-  const c = useContext(Ctx);
-  if (!c) throw new Error("useStore must be used inside StoreProvider");
-  return c;
 }
 
 // Per-domain selector hooks — opt-in narrower API over the monolithic
