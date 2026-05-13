@@ -62,15 +62,30 @@ export function PropertyCell({ db, prop, row, compact = false }: Props) {
           <Checkbox checked={!!value} onCheckedChange={(v) => set(!!v)} />
         </div>
       );
-    case "date":
+    case "date": {
+      const dv = typeof value === "object" && value && ("date" in value || "end" in value) ? value : null;
+      const start = dv?.date ?? "";
+      const end = dv?.end ?? "";
       return (
-        <input
-          type="date"
-          value={typeof value === "object" && value && "date" in value ? value.date ?? "" : ""}
-          onChange={(e) => set({ date: e.target.value })}
-          className={cn(cellClass, "w-full bg-transparent outline-none px-2 py-1 rounded hover:bg-accent/50")}
-        />
+        <div className={cn(cellClass, "flex items-center gap-1 px-1")}>
+          <input
+            type="date"
+            value={start}
+            onChange={(e) => set({ date: e.target.value || undefined, end: end || undefined })}
+            className="bg-transparent outline-none rounded hover:bg-accent/50 px-1 py-0.5 min-w-0 flex-1"
+          />
+          <span className="text-muted-foreground text-xs">→</span>
+          <input
+            type="date"
+            value={end}
+            min={start || undefined}
+            onChange={(e) => set({ date: start || undefined, end: e.target.value || undefined })}
+            placeholder="End"
+            className="bg-transparent outline-none rounded hover:bg-accent/50 px-1 py-0.5 min-w-0 flex-1 text-muted-foreground"
+          />
+        </div>
       );
+    }
     case "select":
     case "status":
       return <SelectCell db={db} prop={prop} value={value} onSet={set} cellClass={cellClass} />;

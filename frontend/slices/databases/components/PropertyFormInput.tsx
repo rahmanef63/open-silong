@@ -77,14 +77,22 @@ export function PropertyFormInput({
       return <Input type="email" value={(value as string) ?? ""} onChange={e => onChange(e.target.value)} />;
     case "phone":
       return <Input type="tel" value={(value as string) ?? ""} onChange={e => onChange(e.target.value)} />;
-    case "date":
+    case "date": {
+      const dv = typeof value === "object" && value && ("date" in value || "end" in value) ? value : null;
+      const start = dv?.date ?? "";
+      const end = dv?.end ?? "";
+      const commit = (s: string, eN: string) => {
+        if (!s && !eN) onChange(null);
+        else onChange({ date: s || undefined, end: eN || undefined });
+      };
       return (
-        <Input
-          type="date"
-          value={typeof value === "object" && value && "date" in value ? value.date ?? "" : ""}
-          onChange={e => onChange(e.target.value ? { date: e.target.value } : null)}
-        />
+        <div className="flex items-center gap-1">
+          <Input type="date" value={start} onChange={(e) => commit(e.target.value, end)} />
+          <span className="text-muted-foreground text-xs">→</span>
+          <Input type="date" value={end} min={start || undefined} onChange={(e) => commit(start, e.target.value)} placeholder="End" />
+        </div>
       );
+    }
     case "checkbox":
       return (
         <div className="flex items-center gap-2 pt-1">
