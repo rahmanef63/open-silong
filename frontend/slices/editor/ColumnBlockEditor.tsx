@@ -4,7 +4,7 @@ import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { Block, BlockType } from "@/shared/types/domain";
 import { cn } from "@/shared/lib/utils";
 import { Plus } from "lucide-react";
-import { nestedRegistry } from "./blocks/nestedRegistry";
+import { requireNested } from "./blocks/nestedRegistry";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 const MIN_COL = 10;
@@ -60,7 +60,7 @@ function ColumnPane({
       <div className="space-y-0.5 min-h-10">
         <SortableContext items={blocks.map((b) => b.id)} strategy={verticalListSortingStrategy}>
           {blocks.map((b, i) => {
-            const NestedBlock = nestedRegistry.Nested!;
+            const NestedBlock = requireNested();
             return (
               <NestedBlock
                 key={b.id}

@@ -13,6 +13,11 @@ import { BlockBody } from "./blocks/BlockBody";
 import { DatabasePicker } from "./blocks/DatabasePicker";
 import { ToggleBlock } from "./blocks/ToggleBlock";
 import { getBlockRenderer } from "./blocks/registry";
+// Side-effect import: NestedBlock self-registers into nestedRegistry on
+// module load. Without this, columns / toggle blocks render with
+// `nestedRegistry.Nested = undefined` (React error #130). Late-binding
+// registry pattern intentionally avoids direct mutual imports.
+import "./blocks/NestedBlock";
 import { useBlockDecorate } from "./block-editor/useBlockDecorate";
 import { runSlashSelect } from "./block-editor/slashHandler";
 import { handleBlockKeyDown } from "./block-editor/keyboardHandler";
