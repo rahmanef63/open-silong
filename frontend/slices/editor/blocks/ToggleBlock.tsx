@@ -7,7 +7,7 @@ import { useStore } from "@/shared/lib/store";
 import { cn } from "@/shared/lib/utils";
 import { BlockShell } from "./BlockShell";
 import { BlockControls } from "./BlockControls";
-import { nestedRegistry } from "./nestedRegistry";
+import { requireNested } from "./nestedRegistry";
 import { bgColorClass, colorClass } from "../lib/colors";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -85,7 +85,7 @@ export function ToggleContent({
         <div className="ml-5 mt-1 border-l-2 border-border/60 pl-3 space-y-0.5">
           <SortableContext items={children.map((c) => c.id)} strategy={verticalListSortingStrategy}>
             {children.map((child, ci) => {
-              const NestedBlock = nestedRegistry.Nested!;
+              const NestedBlock = requireNested();
               return (
                 <NestedBlock
                   key={child.id}
