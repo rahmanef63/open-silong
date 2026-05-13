@@ -1,40 +1,32 @@
-import { useMemo, useState, useRef } from "react";
-import { Database, DatabaseViewConfig, Page, Property } from "@/shared/types/domain";
+import { useMemo, useState } from "react";
+import { Database, DatabaseViewConfig, Page } from "@/shared/types/domain";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { focusSiblingBySelector } from "@/shared/lib/keyboard";
-import { colorClass } from "@/shared/lib/format";
 import { QuickCreateDialog } from "../components/QuickCreateDialog";
 import { useStore } from "@/shared/lib/store";
 import { DynamicIcon } from "@/shared/components/icon-picker";
-
-function msToYMD(ms: number): string {
-  const d = new Date(ms);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
+import { DAY_MS, makeBarStyle, msToYMD, toMs } from "./timeline/utils";
+import { TimelineBar } from "./timeline/TimelineBar";
+import { TimelineHeader } from "./timeline/HeaderRow";
 
 interface Props { db: Database; view: DatabaseViewConfig; rows: Page[]; onOpenRow: (id: string) => void }
-
-const DAY_MS = 86400000;
-
-function toMs(dateStr: string): number {
-  return new Date(dateStr + "T00:00:00").getTime();
-}
 
 export function TimelineView({ db, view, rows, onOpenRow }: Props) {
   const { setRowValue } = useStore();
   const [quickOpen, setQuickOpen] = useState(false);
   const dateProp =
-    db.properties.find(p => p.id === view.timelineStartProp && p.type === "date")
-    ?? db.properties.find(p => p.type === "date");
+    db.properties.find((p) => p.id === view.timelineStartProp && p.type === "date")
+    ?? db.properties.find((p) => p.type === "date");
   const endProp =
-    db.properties.find(p => p.id === view.timelineEndProp && p.type === "date" && p.id !== dateProp?.id)
-    ?? db.properties.find(p => p.type === "date" && p.id !== dateProp?.id);
-  const colorProp = db.properties.find(p => p.id === view.timelineColorByProp && (p.type === "select" || p.type === "status"));
+    db.properties.find((p) => p.id === view.timelineEndProp && p.type === "date" && p.id !== dateProp?.id)
+    ?? db.properties.find((p) => p.type === "date" && p.id !== dateProp?.id);
+  const colorProp = db.properties.find((p) => p.id === view.timelineColorByProp && (p.type === "select" || p.type === "status"));
 
   const zoom = view.timelineZoom ?? "month";
   const CELL_W = zoom === "day" ? 64 : zoom === "week" ? 40 : zoom === "quarter" ? 14 : 32;
   const DAYS = zoom === "day" ? 14 : zoom === "week" ? 28 : zoom === "quarter" ? 90 : 28;
+  const LABEL_W = 160;
 
   const now = new Date();
   const [startOffset, setStartOffset] = useState(0);
@@ -44,11 +36,11 @@ export function TimelineView({ db, view, rows, onOpenRow }: Props) {
     d.setDate(d.getDate() - d.getDay() + startOffset * 7);
     d.setHours(0, 0, 0, 0);
     return d;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startOffset]);
   const days = useMemo(() => Array.from({ length: DAYS }, (_, i) => {
-    const d = new Date(weekStart.getTime() + i * DAY_MS);
-    return d;
-  }), [weekStart]);
+    return new Date(weekStart.getTime() + i * DAY_MS);
+  }), [weekStart, DAYS]);
 
   const rangeStart = weekStart.getTime();
   const rangeEnd = rangeStart + DAYS * DAY_MS;
@@ -57,11 +49,10 @@ export function TimelineView({ db, view, rows, onOpenRow }: Props) {
   const todayOffset = todayMs - rangeStart;
   const todayPx = todayOffset >= 0 ? Math.floor(todayOffset / DAY_MS) * CELL_W : -1;
 
-  // items with at least a start date
   const items = useMemo(() => {
     if (!dateProp) return [];
     return rows
-      .map(r => {
+      .map((r) => {
         const startStr = (r.rowProps?.[dateProp.id] as any)?.date;
         const endStr = endProp ? (r.rowProps?.[endProp.id] as any)?.date : null;
         if (!startStr) return null;
@@ -72,26 +63,15 @@ export function TimelineView({ db, view, rows, onOpenRow }: Props) {
       .filter((x): x is NonNullable<typeof x> => !!x);
   }, [rows, dateProp, endProp]);
 
-  const itemsInView = items.filter(x => x.endMs >= rangeStart && x.startMs < rangeEnd);
-
-  const getBarStyle = (x: { startMs: number; endMs: number }) => {
-    const left = Math.max(0, Math.floor((x.startMs - rangeStart) / DAY_MS)) * CELL_W;
-    const rawRight = Math.floor((x.endMs - rangeStart) / DAY_MS + 1) * CELL_W;
-    const right = Math.min(DAYS * CELL_W, rawRight);
-    const width = Math.max(CELL_W, right - left);
-    return { left, width };
-  };
-
-  const LABEL_W = 160;
+  const getBarStyle = makeBarStyle(rangeStart, DAYS, CELL_W);
 
   return (
     <div className="p-3 overflow-x-auto">
-      {/* Nav */}
       <div className="flex items-center gap-2 mb-3">
-        <button onClick={() => setStartOffset(o => o - 4)} className="rounded p-1 hover:bg-accent text-muted-foreground">
+        <button onClick={() => setStartOffset((o) => o - 4)} className="rounded p-1 hover:bg-accent text-muted-foreground">
           <ChevronLeft className="h-4 w-4" />
         </button>
-        <button onClick={() => setStartOffset(o => o + 4)} className="rounded p-1 hover:bg-accent text-muted-foreground">
+        <button onClick={() => setStartOffset((o) => o + 4)} className="rounded p-1 hover:bg-accent text-muted-foreground">
           <ChevronRight className="h-4 w-4" />
         </button>
         {startOffset !== 0 && (
@@ -113,54 +93,22 @@ export function TimelineView({ db, view, rows, onOpenRow }: Props) {
         </button>
       </div>
 
-      {/* Grid */}
       <div style={{ minWidth: LABEL_W + DAYS * CELL_W }}>
-        {/* Header row: days */}
-        <div className="flex border-b border-border bg-muted/30">
-          <div style={{ width: LABEL_W }} className="shrink-0 text-[10px] text-muted-foreground px-2 py-1 border-r border-border">
-            Name
-          </div>
-          <div className="relative flex" style={{ width: DAYS * CELL_W }}>
-            {days.map((d, i) => {
-              const isToday = d.getTime() === todayMs;
-              const isWeekStart = d.getDay() === 0;
-              return (
-                <div
-                  key={i}
-                  style={{ width: CELL_W }}
-                  className={cn(
-                    "shrink-0 border-r border-border/50 px-0.5 py-1 text-[9px] text-center",
-                    isToday ? "bg-brand/10 text-brand font-bold" : "text-muted-foreground",
-                    isWeekStart && "border-r-border"
-                  )}
-                >
-                  {d.getDate()}
-                  {(i === 0 || d.getDate() === 1) && (
-                    <div className="text-[8px] leading-none mt-0.5 opacity-70">
-                      {d.toLocaleString("default", { month: "short" })}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-            {/* Today indicator */}
-            {todayPx >= 0 && todayPx < DAYS * CELL_W && (
-              <div
-                className="absolute top-0 bottom-0 w-px bg-brand/60 pointer-events-none z-10"
-                style={{ left: todayPx + CELL_W / 2 }}
-              />
-            )}
-          </div>
-        </div>
+        <TimelineHeader
+          days={days}
+          cellW={CELL_W}
+          todayMs={todayMs}
+          todayPx={todayPx}
+          daysCount={DAYS}
+          labelW={LABEL_W}
+        />
 
-        {/* Rows */}
-        {rows.map(row => {
-          const item = items.find(x => x.row.id === row.id);
+        {rows.map((row) => {
+          const item = items.find((x) => x.row.id === row.id);
           const bar = item ? getBarStyle(item) : null;
           const inView = item && (item.endMs >= rangeStart && item.startMs < rangeEnd);
           return (
             <div key={row.id} className="flex border-b border-border/50 hover:bg-muted/20 group" style={{ minHeight: 32 }}>
-              {/* Label */}
               <button
                 style={{ width: LABEL_W }}
                 onClick={() => onOpenRow(row.id)}
@@ -176,9 +124,7 @@ export function TimelineView({ db, view, rows, onOpenRow }: Props) {
                 <DynamicIcon value={row.icon} className="text-sm" />
                 <span className="truncate">{row.title || "Untitled"}</span>
               </button>
-              {/* Bar area */}
               <div className="relative flex-1" style={{ width: DAYS * CELL_W }}>
-                {/* Day grid lines */}
                 {days.map((d, i) => (
                   <div
                     key={i}
@@ -186,7 +132,6 @@ export function TimelineView({ db, view, rows, onOpenRow }: Props) {
                     style={{ left: i * CELL_W, width: CELL_W }}
                   />
                 ))}
-                {/* Bar */}
                 {bar && inView && item && (
                   <TimelineBar
                     row={row}
@@ -197,7 +142,6 @@ export function TimelineView({ db, view, rows, onOpenRow }: Props) {
                     onOpenRow={onOpenRow}
                     onShift={(deltaDays, mode) => {
                       if (!dateProp || deltaDays === 0) return;
-                      // Clamp so start <= end at all times.
                       let nextStartMs = item.startMs;
                       let nextEndMs = item.endMs;
                       if (mode === "move") {
@@ -217,7 +161,6 @@ export function TimelineView({ db, view, rows, onOpenRow }: Props) {
                     }}
                   />
                 )}
-                {/* No-date indicator */}
                 {!item && (
                   <div className="absolute inset-y-0 flex items-center px-2">
                     <span className="text-[10px] text-muted-foreground/40">—</span>
@@ -239,94 +182,6 @@ export function TimelineView({ db, view, rows, onOpenRow }: Props) {
         onOpenChange={setQuickOpen}
         prefill={dateProp ? { [dateProp.id]: { date: new Date().toISOString().slice(0, 10) } } : undefined}
         onCreated={onOpenRow}
-      />
-    </div>
-  );
-}
-
-function TimelineBar({
-  row, item, bar, cellW, colorProp, onOpenRow, onShift,
-}: {
-  row: Page;
-  item: { startMs: number; endMs: number };
-  bar: { left: number; width: number };
-  cellW: number;
-  colorProp: Property | undefined;
-  onOpenRow: (id: string) => void;
-  onShift: (deltaDays: number, mode: "move" | "start" | "end") => void;
-}) {
-  const draggingRef = useRef<{ mode: "move" | "start" | "end"; startX: number; lastDelta: number } | null>(null);
-  const movedRef = useRef(false);
-
-  const colorOpt = colorProp
-    ? colorProp.options?.find((o: any) => o.id === row.rowProps?.[colorProp.id])
-    : null;
-  const tone = colorOpt?.color
-    ? colorClass(colorOpt.color)
-    : "bg-brand/70 hover:bg-brand text-white";
-
-  const beginDrag = (e: React.PointerEvent<HTMLElement>, mode: "move" | "start" | "end") => {
-    e.stopPropagation();
-    e.preventDefault();
-    (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
-    draggingRef.current = { mode, startX: e.clientX, lastDelta: 0 };
-    movedRef.current = false;
-  };
-  const onPointerMove = (e: React.PointerEvent<HTMLElement>) => {
-    const st = draggingRef.current;
-    if (!st) return;
-    const delta = Math.round((e.clientX - st.startX) / cellW);
-    if (delta !== st.lastDelta) {
-      movedRef.current = true;
-      st.lastDelta = delta;
-    }
-  };
-  const onPointerUp = (e: React.PointerEvent<HTMLElement>) => {
-    const st = draggingRef.current;
-    draggingRef.current = null;
-    (e.currentTarget as HTMLElement).releasePointerCapture?.(e.pointerId);
-    if (!st) return;
-    if (st.lastDelta !== 0) onShift(st.lastDelta, st.mode);
-    setTimeout(() => { movedRef.current = false; }, 0);
-  };
-
-  return (
-    <div
-      className={cn(
-        "absolute top-1 h-6 rounded-full text-[10px] font-medium truncate flex items-center transition z-10 border select-none",
-        "cursor-grab active:cursor-grabbing",
-        tone,
-      )}
-      style={{ left: bar.left, width: bar.width }}
-      onPointerDown={(e) => beginDrag(e, "move")}
-      onPointerMove={onPointerMove}
-      onPointerUp={onPointerUp}
-      onClick={() => { if (!movedRef.current) onOpenRow(row.id); }}
-      onKeyDown={(e) => {
-        if (e.key === "ArrowDown" || e.key === "ArrowUp") {
-          e.preventDefault();
-          focusSiblingBySelector(e.currentTarget, "[data-db-nav-item]", e.key === "ArrowDown" ? 1 : -1);
-        }
-      }}
-      tabIndex={0}
-      role="button"
-      data-db-nav-item
-      title={colorOpt?.name ?? "Drag to move · Drag edges to resize"}
-    >
-      <div
-        className="absolute left-0 top-0 bottom-0 w-1.5 cursor-ew-resize hover:bg-black/20 rounded-l-full"
-        onPointerDown={(e) => beginDrag(e, "start")}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-      />
-      <span className="px-2 truncate flex-1 pointer-events-none">
-        {bar.width > 40 && (row.title || "Untitled")}
-      </span>
-      <div
-        className="absolute right-0 top-0 bottom-0 w-1.5 cursor-ew-resize hover:bg-black/20 rounded-r-full"
-        onPointerDown={(e) => beginDrag(e, "end")}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
       />
     </div>
   );

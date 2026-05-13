@@ -1,17 +1,18 @@
 import { getErrorMessage } from "@/shared/lib/error";
 import { useState } from "react";
-import { AlertCircle, Check, Key, Sparkles } from "lucide-react";
+import { AlertCircle, Check, Sparkles } from "lucide-react";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/shared/ui/dialog";
 import { Button } from "@/shared/ui/button";
 import { useStore } from "@/shared/lib/store";
 import type { Database } from "@/shared/types/domain";
-import { DynamicIcon } from "@/shared/components/icon-picker";
 import {
   generateDatabase, generateRows, getApiKey, setApiKey, getModel, setModel,
 } from "../lib/ai";
 import { applyAIRows, applyImport, type AIRowDraft, type DatabaseExportV1 } from "../lib/serialize";
+import { ApiKeyPanel } from "./ai-assist/ApiKeyPanel";
+import { DbPreview, RowsPreview } from "./ai-assist/Preview";
 
 interface Props {
   /** Optional: when present, "Generate rows" mode appends to this database. */
@@ -41,17 +42,13 @@ export function AIAssistDialog({ db, open, onOpenChange, onImported }: Props) {
     setPrompt(""); setBusy(false); setError(null); setGenDb(null); setGenRows(null); setDone(null);
   };
 
-  const persistKey = () => {
-    setApiKey(apiKey); setModel(model);
-  };
-
   const onGenerate = async () => {
     setError(null);
     setGenDb(null); setGenRows(null); setDone(null);
     if (!apiKey) { setError("Add your Anthropic API key first."); setShowKey(true); return; }
     if (!prompt.trim()) { setError("Describe what you want."); return; }
     setBusy(true);
-    persistKey();
+    setApiKey(apiKey); setModel(model);
     try {
       if (mode === "database") {
         const j = await generateDatabase(prompt, apiKey);
@@ -103,7 +100,6 @@ export function AIAssistDialog({ db, open, onOpenChange, onImported }: Props) {
           </DialogDescription>
         </DialogHeader>
 
-        {/* Mode switcher */}
         <div className="flex items-center gap-1 rounded-md bg-muted p-1 text-xs">
           <button
             type="button"
@@ -123,7 +119,6 @@ export function AIAssistDialog({ db, open, onOpenChange, onImported }: Props) {
           </button>
         </div>
 
-        {/* Prompt */}
         {!done && (
           <div className="space-y-2">
             <textarea
@@ -149,70 +144,20 @@ export function AIAssistDialog({ db, open, onOpenChange, onImported }: Props) {
           </div>
         )}
 
-        {/* API key */}
         {!done && (
-          <div className="rounded-md border border-border p-2 text-xs">
-            <button
-              type="button"
-              onClick={() => setShowKey((x) => !x)}
-              className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground"
-            >
-              <Key className="h-3 w-3" />
-              {apiKey ? "Anthropic API key set · click to edit" : "Add Anthropic API key"}
-            </button>
-            {showKey && (
-              <div className="mt-2 space-y-1.5">
-                <input
-                  type="password"
-                  placeholder="sk-ant-..."
-                  value={apiKey}
-                  onChange={(e) => setLocalApiKey(e.target.value)}
-                  className="h-8 w-full rounded border border-border bg-background px-2 font-mono text-xs"
-                />
-                <input
-                  type="text"
-                  placeholder="claude-sonnet-4-6"
-                  value={model}
-                  onChange={(e) => setLocalModel(e.target.value)}
-                  className="h-8 w-full rounded border border-border bg-background px-2 font-mono text-[11px]"
-                />
-                <div className="text-[10px] text-muted-foreground">
-                  Stored only in this browser (localStorage). Calls go directly to Anthropic.
-                </div>
-              </div>
-            )}
-          </div>
+          <ApiKeyPanel
+            apiKey={apiKey}
+            onApiKeyChange={setLocalApiKey}
+            model={model}
+            onModelChange={setLocalModel}
+            showKey={showKey}
+            onToggleShow={() => setShowKey((x) => !x)}
+          />
         )}
 
-        {/* Preview */}
-        {genDb && !done && (
-          <div className="max-h-64 overflow-y-auto rounded-md bg-muted/50 p-3 text-xs">
-            <div className="mb-1 flex items-center gap-1 text-sm font-medium">
-              <DynamicIcon value={genDb.database.icon} className="text-base" fallback="🗂️" /> {genDb.database.name}
-            </div>
-            <div className="text-muted-foreground">
-              {genDb.database.properties.length} properties · {genDb.database.views.length} views · {genDb.rows.length} rows
-            </div>
-            <ul className="mt-2 space-y-0.5 text-[11px] text-muted-foreground">
-              {genDb.database.properties.slice(0, 12).map((p) => (
-                <li key={p.id}>· {p.name} <span className="opacity-60">({p.type}{p.type === "formula" && p.formulaExpression ? ` = ${p.formulaExpression}` : ""})</span></li>
-              ))}
-            </ul>
-          </div>
-        )}
-        {genRows && !done && (
-          <div className="max-h-64 overflow-y-auto rounded-md bg-muted/50 p-3 text-xs">
-            <div className="mb-1 text-sm font-medium">{genRows.length} rows generated</div>
-            <ul className="space-y-0.5 text-[11px] text-muted-foreground">
-              {genRows.slice(0, 8).map((r, i) => (
-                <li key={i} className="flex items-center gap-1">· <DynamicIcon value={r.icon} className="text-sm" /> {r.title}</li>
-              ))}
-              {genRows.length > 8 && <li className="opacity-60">… +{genRows.length - 8} more</li>}
-            </ul>
-          </div>
-        )}
+        {genDb && !done && <DbPreview genDb={genDb} />}
+        {genRows && !done && <RowsPreview genRows={genRows} />}
 
-        {/* Result */}
         {done && (
           <div className="rounded-md border border-green-500/30 bg-green-500/10 p-4 text-center text-sm">
             <Check className="mx-auto h-6 w-6 text-green-600 mb-2" />

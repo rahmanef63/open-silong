@@ -1,24 +1,16 @@
 import { Database, DatabaseViewConfig, Page, Property, SelectOption } from "@/shared/types/domain";
 import { useStore } from "@/shared/lib/store";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
-  DndContext, useDraggable, useDroppable, PointerSensor, useSensor, useSensors, DragEndEvent, KeyboardSensor,
+  DndContext, PointerSensor, useSensor, useSensors, DragEndEvent, KeyboardSensor,
 } from "@dnd-kit/core";
 import {
-  SortableContext, useSortable, horizontalListSortingStrategy, sortableKeyboardCoordinates,
+  SortableContext, horizontalListSortingStrategy, sortableKeyboardCoordinates,
 } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import { GripVertical } from "lucide-react";
-import { cn } from "@/shared/lib/utils";
-import { focusSiblingBySelector, isTextInputTarget } from "@/shared/lib/keyboard";
-import { colorClass } from "@/shared/lib/format";
-import { PropertyCell } from "../PropertyCell";
-import { Plus } from "lucide-react";
-import { DynamicIcon } from "@/shared/components/icon-picker";
 import { getVisibleProps } from "../lib/visibility";
 import { QuickCreateDialog } from "../components/QuickCreateDialog";
-import { useState } from "react";
 import type { PropertyValue } from "@/shared/types/domain";
+import { BoardColumn } from "./board/BoardColumn";
 
 interface Props { db: Database; view: DatabaseViewConfig; rows: Page[]; onOpenRow: (id: string) => void }
 
@@ -26,24 +18,29 @@ export function BoardView({ db, view, rows, onOpenRow }: Props) {
   const { setRowValue, updateView } = useStore();
   const [quickOpen, setQuickOpen] = useState(false);
   const [quickPrefill, setQuickPrefill] = useState<Record<string, PropertyValue>>({});
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
 
   const groupProp: Property | undefined = useMemo(() => {
-    return db.properties.find(p => p.id === view.groupBy)
-      ?? db.properties.find(p => p.type === "status" || p.type === "select");
+    return db.properties.find((p) => p.id === view.groupBy)
+      ?? db.properties.find((p) => p.type === "status" || p.type === "select");
   }, [db.properties, view.groupBy]);
 
   if (!groupProp || !groupProp.options) {
     return (
       <div className="p-6 text-sm text-muted-foreground">
         Board view needs a Select or Status property.{" "}
-        <button onClick={() => {/* opens settings via PropertiesMenu in toolbar */}} className="underline">Add one in Properties.</button>
+        <button onClick={() => { /* opens settings via PropertiesMenu in toolbar */ }} className="underline">
+          Add one in Properties.
+        </button>
       </div>
     );
   }
 
   const colorByProp = view.boardColorByProp
-    ? db.properties.find(p => p.id === view.boardColorByProp)
+    ? db.properties.find((p) => p.id === view.boardColorByProp)
     : undefined;
   const cardSize = view.boardCardSize ?? "medium";
   const cardPadding = cardSize === "small" ? "p-2" : cardSize === "large" ? "p-4" : "p-3";
@@ -63,17 +60,17 @@ export function BoardView({ db, view, rows, onOpenRow }: Props) {
   });
 
   let columns: { id: string | null; option?: SelectOption; rows: Page[] }[] = [
-    ...sortedOptions.map(o => ({
+    ...sortedOptions.map((o) => ({
       id: o.id, option: o,
-      rows: rows.filter(r => r.rowProps?.[groupProp.id] === o.id),
+      rows: rows.filter((r) => r.rowProps?.[groupProp.id] === o.id),
     })),
-    { id: null, rows: rows.filter(r => !r.rowProps?.[groupProp.id]) },
+    { id: null, rows: rows.filter((r) => !r.rowProps?.[groupProp.id]) },
   ];
   if (view.boardHideEmptyGroups) {
-    columns = columns.filter(c => c.rows.length > 0);
+    columns = columns.filter((c) => c.rows.length > 0);
   }
 
-  const sortableIds = columns.map(c => `colsort_${c.id ?? "null"}`);
+  const sortableIds = columns.map((c) => `colsort_${c.id ?? "null"}`);
 
   const onDragEnd = (e: DragEndEvent) => {
     const { active, over } = e;
@@ -81,7 +78,6 @@ export function BoardView({ db, view, rows, onOpenRow }: Props) {
     const activeId = String(active.id);
     const overId = String(over.id);
 
-    // Column reorder — both ids prefixed `colsort_`.
     if (activeId.startsWith("colsort_") && overId.startsWith("colsort_")) {
       if (activeId === overId) return;
       const fromKey = activeId.slice("colsort_".length);
@@ -89,16 +85,13 @@ export function BoardView({ db, view, rows, onOpenRow }: Props) {
       const fromIdx = sortableIds.indexOf(activeId);
       const toIdx = sortableIds.indexOf(overId);
       if (fromIdx === -1 || toIdx === -1) return;
-      // Skip persisting null-column moves — boardColumnOrder only tracks
-      // option ids; the "no value" column is always virtual at the tail.
       if (fromKey === "null" || toKey === "null") return;
-      const next = sortedOptions.map(o => o.id);
+      const next = sortedOptions.map((o) => o.id);
       next.splice(toIdx, 0, next.splice(fromIdx, 1)[0]);
       updateView(db.id, view.id, { boardColumnOrder: next });
       return;
     }
 
-    // Card → column drop (existing path).
     const colId = overId.startsWith("col_") ? overId.slice(4) : null;
     setRowValue(db.id, activeId, groupProp.id, colId === "null" || colId === null ? null : colId);
   };
@@ -116,7 +109,7 @@ export function BoardView({ db, view, rows, onOpenRow }: Props) {
             onCreated={onOpenRow}
             title="Add to board"
           />
-          {columns.map(col => (
+          {columns.map((col) => (
             <BoardColumn key={col.id ?? "none"} db={db} col={col} groupProp={groupProp}
               cardPadding={cardPadding} cardSpacing={cardSpacing}
               colorByProp={colorByProp} cardPropIds={cardPropIds}
@@ -124,124 +117,12 @@ export function BoardView({ db, view, rows, onOpenRow }: Props) {
               onAdd={() => {
                 setQuickPrefill({ [groupProp.id]: col.id ?? null });
                 setQuickOpen(true);
-              }} onOpen={onOpenRow} />
+              }}
+              onOpen={onOpenRow}
+            />
           ))}
         </div>
       </SortableContext>
     </DndContext>
-  );
-}
-
-function BoardColumn({ db, col, groupProp, onAdd, onOpen, cardPadding, cardSpacing, colorByProp, cardPropIds, viewVisible }: any) {
-  // Sortable identity for column reorder — keep separate from `col_*` drop
-  // target so cards continue to drop into columns without triggering a sort.
-  const sortable = useSortable({ id: `colsort_${col.id ?? "null"}`, disabled: col.id === null });
-  const drop = useDroppable({ id: `col_${col.id ?? "null"}` });
-  const setRefs = (el: HTMLElement | null) => {
-    sortable.setNodeRef(el);
-    drop.setNodeRef(el);
-  };
-  const style = {
-    transform: CSS.Transform.toString(sortable.transform),
-    transition: sortable.transition,
-  };
-  return (
-    <div
-      ref={setRefs}
-      style={style}
-      className={cn(
-        "w-64 shrink-0 rounded-lg bg-muted/40 p-2 transition",
-        drop.isOver && "ring-2 ring-brand bg-muted/70",
-        sortable.isDragging && "opacity-50",
-      )}
-    >
-      <div className="flex items-center justify-between px-1 mb-2">
-        <div className="flex items-center gap-2">
-          {col.id !== null && (
-            <button
-              {...sortable.attributes}
-              {...sortable.listeners}
-              aria-label="Reorder column"
-              className="rounded p-0.5 text-muted-foreground hover:bg-accent cursor-grab active:cursor-grabbing"
-            >
-              <GripVertical className="h-3 w-3" />
-            </button>
-          )}
-          {col.option ? (
-            <span className={cn("inline-flex items-center rounded-full border px-2 py-0.5 text-xs", colorClass(col.option.color))}>{col.option.name}</span>
-          ) : (
-            <span className="text-xs text-muted-foreground">No {groupProp.name}</span>
-          )}
-          <span className="text-xs text-muted-foreground">{col.rows.length}</span>
-        </div>
-        <button onClick={onAdd} className="rounded p-1 hover:bg-accent text-muted-foreground"><Plus className="h-3 w-3" /></button>
-      </div>
-      <div className={cardSpacing}>
-        {col.rows.map((r: Page) => (
-          <BoardCard
-            key={r.id} row={r} db={db}
-            onOpen={() => onOpen(r.id)}
-            cardPadding={cardPadding}
-            colorByProp={colorByProp}
-            cardPropIds={cardPropIds}
-            viewVisible={viewVisible}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function BoardCard({ row, db, onOpen, cardPadding, colorByProp, cardPropIds, viewVisible }: any) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: row.id });
-  const visibleSet = new Set<string>((viewVisible as Property[]).map((p) => p.id));
-  const visibleProps: Property[] = cardPropIds?.length
-    ? cardPropIds
-        .map((id: string) => db.properties.find((p: Property) => p.id === id))
-        .filter((p: Property | undefined): p is Property => !!p && visibleSet.has(p.id))
-    : (viewVisible as Property[]).filter((p) => p.type !== "text").slice(0, 3);
-  const colorOpt: { color?: string } | null = colorByProp
-    ? colorByProp.options?.find((o: any) => o.id === row.rowProps?.[colorByProp.id]) ?? null
-    : null;
-  const accentBar = colorOpt?.color
-    ? cn("border-l-4", colorClass(colorOpt.color).split(" ").find((c) => c.startsWith("border-")) ?? "")
-    : "";
-  const onKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
-    if (isTextInputTarget(e.target)) return;
-    if (e.target !== e.currentTarget) return;
-    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
-      e.preventDefault();
-      focusSiblingBySelector(e.currentTarget, "[data-db-nav-item]", e.key === "ArrowDown" ? 1 : -1);
-      return;
-    }
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      onOpen();
-    }
-  };
-  return (
-    <div
-      ref={setNodeRef}
-      {...attributes} {...listeners}
-      style={{ transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined }}
-      onClick={onOpen}
-      onKeyDown={onKeyDown}
-      tabIndex={0}
-      role="button"
-      data-db-nav-item
-      className={cn("rounded-md bg-card border border-border shadow-soft cursor-grab active:cursor-grabbing hover:border-border-strong transition", cardPadding, accentBar, isDragging && "opacity-50")}
-    >
-      <div className="flex items-center gap-1.5 text-sm font-medium mb-1">
-        <DynamicIcon value={row.icon} className="text-sm" />
-        <span className="truncate">{row.title || "Untitled"}</span>
-      </div>
-      <div className="flex flex-wrap gap-1 -mx-1">
-        {visibleProps.map((p: Property) => (
-          <div key={p.id} onClick={(e) => e.stopPropagation()} className="text-xs">
-            <PropertyCell db={db} prop={p} row={row} compact />
-          </div>
-        ))}
-      </div>
-    </div>
   );
 }
