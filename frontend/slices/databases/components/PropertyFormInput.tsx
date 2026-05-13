@@ -6,6 +6,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
 import { cn } from "@/shared/lib/utils";
 import { colorClass } from "@/shared/lib/format";
 import { X } from "lucide-react";
+import { DatePicker } from "../property-cell/date-cell/DatePicker";
 
 /** Property types that can't be edited from a form (computed / system fields). */
 export const READ_ONLY_PROPERTY_TYPES: PropertyType[] = [
@@ -78,19 +79,15 @@ export function PropertyFormInput({
     case "phone":
       return <Input type="tel" value={(value as string) ?? ""} onChange={e => onChange(e.target.value)} />;
     case "date": {
-      const dv = typeof value === "object" && value && ("date" in value || "end" in value) ? value : null;
-      const start = dv?.date ?? "";
-      const end = dv?.end ?? "";
-      const commit = (s: string, eN: string) => {
-        if (!s && !eN) onChange(null);
-        else onChange({ date: s || undefined, end: eN || undefined });
-      };
+      const dv = typeof value === "object" && value && !Array.isArray(value) ? value : null;
       return (
-        <div className="flex items-center gap-1">
-          <Input type="date" value={start} onChange={(e) => commit(e.target.value, end)} />
-          <span className="text-muted-foreground text-xs">→</span>
-          <Input type="date" value={end} min={start || undefined} onChange={(e) => commit(start, e.target.value)} placeholder="End" />
-        </div>
+        <DatePicker
+          value={dv}
+          prop={prop}
+          onChange={onChange}
+          triggerClass="h-9 border border-border bg-background"
+          emptyPlaceholder="Select a date"
+        />
       );
     }
     case "checkbox":
