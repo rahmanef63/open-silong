@@ -1,0 +1,115 @@
+import type { KeyboardEvent } from "react";
+import type { Block, BlockType } from "@/shared/types/domain";
+import { decorateInPlace } from "../lib/inlineDecorator";
+import { DECORATE_TYPES } from "./decorateTypes";
+
+interface History {
+  undo: (cur: string) => string | null;
+  redo: (cur: string) => string | null;
+}
+
+interface Deps {
+  pageId: string;
+  block: Block;
+  index: number;
+  total: number;
+  slashOpen: boolean;
+  history: History;
+  setAskOpen: (o: boolean) => void;
+  convertTo: (t: BlockType) => void;
+  duplicateBlock: (pageId: string, blockId: string) => string | undefined;
+  addBlock: (pageId: string, after: number, type?: BlockType) => Promise<string | undefined>;
+  deleteBlock: (pageId: string, blockId: string) => void;
+  setBlockType: (pageId: string, blockId: string, type: BlockType) => void;
+  updateBlock: (pageId: string, blockId: string, patch: Partial<Block>) => void;
+  focusByOffset: (blockId: string, delta: number) => void;
+}
+
+/** Apply undo/redo result: write into DOM + decorate + persist. */
+function applyHistoryText(el: HTMLElement, block: Block, txt: string, deps: Deps) {
+  el.innerText = txt;
+  if (DECORATE_TYPES.has(block.type)) decorateInPlace(el, txt);
+  deps.updateBlock(deps.pageId, block.id, { text: txt });
+}
+
+export async function handleBlockKeyDown(e: KeyboardEvent<HTMLElement>, deps: Deps) {
+  const { block, pageId, index, total, slashOpen, history, setAskOpen, convertTo, duplicateBlock, addBlock, deleteBlock, setBlockType, focusByOffset } = deps;
+  const meta = e.metaKey || e.ctrlKey;
+  const el = e.currentTarget as HTMLElement;
+
+  if (slashOpen && ["ArrowDown", "ArrowUp", "Enter", "Escape"].includes(e.key)) return;
+
+  // ----- shortcuts -----
+  if (meta && e.key.toLowerCase() === "j") {
+    e.preventDefault();
+    setAskOpen(true);
+    return;
+  }
+  if (meta && e.altKey && (e.key === "1" || e.key === "2" || e.key === "3")) {
+    e.preventDefault();
+    convertTo(("h" + e.key) as BlockType);
+    return;
+  }
+  if (meta && e.shiftKey && e.key === "7") { e.preventDefault(); convertTo("todo"); return; }
+  if (meta && e.shiftKey && e.key === "8") { e.preventDefault(); convertTo("bullet"); return; }
+  if (meta && e.key.toLowerCase() === "d") {
+    e.preventDefault();
+    const newId = duplicateBlock(pageId, block.id);
+    if (newId) setTimeout(() => document.querySelector<HTMLElement>(`[data-block-id="${newId}"]`)?.focus(), 0);
+    return;
+  }
+  if (meta && e.shiftKey && e.key.toLowerCase() === "z") {
+    e.preventDefault();
+    const txt = history.redo(el.innerText);
+    if (txt !== null) applyHistoryText(el, block, txt, deps);
+    return;
+  }
+  if (meta && e.key.toLowerCase() === "y") {
+    e.preventDefault();
+    const txt = history.redo(el.innerText);
+    if (txt !== null) applyHistoryText(el, block, txt, deps);
+    return;
+  }
+  if (meta && e.key.toLowerCase() === "z") {
+    e.preventDefault();
+    const txt = history.undo(el.innerText);
+    if (txt !== null) applyHistoryText(el, block, txt, deps);
+    return;
+  }
+
+  // ----- editing flow -----
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    const next: BlockType =
+      block.type === "todo" ? "todo" :
+      block.type === "bullet" || block.type === "numbered" ? block.type :
+      "paragraph";
+    const newId = await addBlock(pageId, index, next);
+    setTimeout(() => document.querySelector<HTMLElement>(`[data-block-id="${newId}"]`)?.focus(), 0);
+    return;
+  }
+  if (e.key === "Backspace" && el.innerText === "") {
+    e.preventDefault();
+    if (total > 1) {
+      const blockId = block.id;
+      deleteBlock(pageId, blockId);
+      setTimeout(() => focusByOffset(blockId, -1), 0);
+    } else if (block.type !== "paragraph") {
+      setBlockType(pageId, block.id, "paragraph");
+    }
+    return;
+  }
+  if (e.key === "Tab") {
+    e.preventDefault();
+    const cur = parseInt(el.dataset.indent ?? "0", 10);
+    const newIndent = e.shiftKey ? Math.max(0, cur - 1) : Math.min(4, cur + 1);
+    el.dataset.indent = String(newIndent);
+    el.style.marginLeft = `${newIndent * 20}px`;
+    return;
+  }
+  if (e.key === "ArrowDown" && (window.getSelection()?.focusOffset ?? 0) === el.innerText.length) {
+    focusByOffset(block.id, 1);
+  } else if (e.key === "ArrowUp" && (window.getSelection()?.focusOffset ?? 0) === 0) {
+    focusByOffset(block.id, -1);
+  }
+}
