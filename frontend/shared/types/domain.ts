@@ -428,6 +428,9 @@ export interface DatabaseViewConfig {
   formSlug?: string;
 }
 
+/** UI-level lock — gates property/view structural edits in the
+ *  frontend. Backend doesn't enforce (workspace owner can override
+ *  via direct API). Matches Notion's "Lock database" UX. */
 export interface Database {
   id: string;
   name: string;
@@ -447,6 +450,9 @@ export interface Database {
   defaultTemplateId?: string | null;
   /** Sub-items relation property id (parent → children) */
   subItemsParentPropId?: string | null;
+  /** UI lock — prevents property / view structural edits in the
+   *  frontend. Backend doesn't enforce (admin override). */
+  locked?: boolean;
   /** Soft-delete flag */
   trashed?: boolean;
 }

@@ -2,7 +2,7 @@ import { useStore } from "@/shared/lib/store";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
-import { Plus, Maximize2, Link2 } from "lucide-react";
+import { Plus, Maximize2, Link2, Lock } from "lucide-react";
 import { DynamicIcon, IconPickerPopover, DEFAULT_DATABASE_ICON } from "@/shared/components/icon-picker";
 import { ViewTab } from "./ViewTab";
 import { DatabaseMenu } from "./DatabaseMenu";
@@ -67,6 +67,14 @@ export function DatabaseHeaderBar({
             <Link2 className="h-3 w-3" /> linked
           </span>
         )}
+        {db.locked && (
+          <span
+            title="Database is locked — property and view structural edits are gated. Toggle in the database menu."
+            className="ml-1 inline-flex items-center gap-1 rounded-full border border-amber-500/40 bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-400"
+          >
+            <Lock className="h-3 w-3" /> locked
+          </span>
+        )}
       </div>
       <div className="flex items-center gap-1 max-w-full overflow-x-auto scrollbar-thin">
         {db.views.map((v) => (
@@ -94,7 +102,12 @@ export function DatabaseHeaderBar({
         ))}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="rounded p-1 hover:bg-accent text-muted-foreground" aria-label="Add view" title="Add view">
+            <button
+              className="rounded p-1 hover:bg-accent text-muted-foreground disabled:opacity-40 disabled:cursor-not-allowed"
+              aria-label="Add view"
+              title={db.locked ? "Database locked — unlock to add views" : "Add view"}
+              disabled={db.locked}
+            >
               <Plus className="h-3.5 w-3.5" />
             </button>
           </DropdownMenuTrigger>

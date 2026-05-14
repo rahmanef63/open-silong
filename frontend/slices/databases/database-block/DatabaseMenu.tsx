@@ -4,7 +4,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
   DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger,
 } from "@/shared/ui/dropdown-menu";
-import { MoreHorizontal, Pencil, Trash2, Eye, EyeOff, Settings2, Plus, Copy } from "lucide-react";
+import { MoreHorizontal, Pencil, Trash2, Eye, EyeOff, Settings2, Plus, Copy, Lock, Unlock, Network } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { DynamicIcon, IconPickerPopover, DEFAULT_DATABASE_ICON } from "@/shared/components/icon-picker";
 import { ViewOptions } from "../ViewOptions";
@@ -54,8 +54,24 @@ export function DatabaseMenu({ db, view, rows }: { db: Database; view: DatabaseV
           className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs hover:bg-accent"
           title="Clone structure (properties + views) — rows are NOT copied"
         >
-          <Copy className="h-3.5 w-3.5" /> Duplicate database (structure)
+          <Copy className="h-3.5 w-3.5" /> Duplicate (structure only)
         </button>
+        <button
+          onClick={() => duplicateDatabase(db.id, { includeRows: true })}
+          className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs hover:bg-accent"
+          title="Clone structure + deep-copy rows (capped at 5000)"
+        >
+          <Copy className="h-3.5 w-3.5" /> Duplicate with rows
+        </button>
+        <button
+          onClick={() => updateDatabase(db.id, { locked: !db.locked })}
+          className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs hover:bg-accent"
+          title={db.locked ? "Unlock — allow property/view edits" : "Lock — prevent property/view edits"}
+        >
+          {db.locked ? <Unlock className="h-3.5 w-3.5" /> : <Lock className="h-3.5 w-3.5" />}
+          {db.locked ? "Unlock database" : "Lock database"}
+        </button>
+        <SubItemsPicker db={db} />
         <button
           onClick={() => {
             if (window.confirm(`Move "${db.name}" to Trash? Rows are kept and can be restored.`)) {
@@ -79,6 +95,55 @@ export function DatabaseMenu({ db, view, rows }: { db: Database; view: DatabaseV
         </div>
       </PopoverContent>
     </Popover>
+  );
+}
+
+function SubItemsPicker({ db }: { db: Database }) {
+  const { updateDatabase } = useStore();
+  // A property is eligible as the sub-items parent if it's a self-relation
+  // (or a generic relation that the user has set to point at this db).
+  // The "all rows" legacy variant (no relationDatabaseId) is treated as
+  // pointing to all dbs and is eligible too.
+  const eligible = db.properties.filter(
+    (p) => p.type === "relation" &&
+      (p.relationDatabaseId === db.id || p.relationDatabaseId == null),
+  );
+  const current = db.subItemsParentPropId
+    ? eligible.find((p) => p.id === db.subItemsParentPropId) ?? null
+    : null;
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs hover:bg-accent"
+          title="Designate a self-relation property to display rows as a tree (sub-items)"
+        >
+          <Network className="h-3.5 w-3.5" />
+          Sub-items: <span className="text-muted-foreground truncate">{current?.name ?? "off"}</span>
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-60">
+        <DropdownMenuLabel className="text-xs">Use as parent → sub-items relation</DropdownMenuLabel>
+        <DropdownMenuItem onClick={() => updateDatabase(db.id, { subItemsParentPropId: null })}>
+          <span className={cn(!current && "text-brand")}>Off</span>
+        </DropdownMenuItem>
+        {eligible.length === 0 ? (
+          <div className="px-2 py-2 text-[11px] text-muted-foreground italic">
+            Add a relation property pointing at this database to enable sub-items.
+          </div>
+        ) : (
+          eligible.map((p) => (
+            <DropdownMenuItem
+              key={p.id}
+              onClick={() => updateDatabase(db.id, { subItemsParentPropId: p.id })}
+            >
+              <span className={cn(current?.id === p.id && "text-brand")}>{p.name}</span>
+            </DropdownMenuItem>
+          ))
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 

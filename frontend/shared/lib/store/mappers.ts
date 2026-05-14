@@ -26,6 +26,7 @@ export function toDatabase(doc: any): Database {
     templates: doc.templates,
     defaultTemplateId: doc.defaultTemplateId ?? null,
     subItemsParentPropId: doc.subItemsParentPropId ?? null,
+    locked: !!doc.locked,
     trashed: !!doc.trashed,
   };
 }

@@ -18,6 +18,7 @@ export function useDbCrud({ databaseMap }: Args) {
   const mutRestoreDatabase = useMutation(api.databases.restore);
   const mutPermanentlyDeleteDatabase = useMutation(api.databases.permanentlyDelete);
   const mutAddRow = useMutation(api.databases.addRow);
+  const mutDuplicateWithRows = useMutation(api.databases.duplicateWithRows);
 
   const getDatabase = useCallback((id: string) => databaseMap.get(id), [databaseMap]);
 
@@ -60,11 +61,12 @@ export function useDbCrud({ databaseMap }: Args) {
     [mutCreateDatabase, mutUpdateDatabase, mutAddRow],
   );
 
-  /** Structure-only duplicate — clones properties + views + active-view
-   *  with full id-remapping. Rows are NOT copied (deep page-clone needs
-   *  a backend action — track as follow-up). */
+  /** Duplicate a database. Default = structure-only (properties + views
+   *  + active-view, full id-remap). Pass `{ includeRows: true }` to
+   *  also deep-copy rows server-side via the `duplicateWithRows`
+   *  mutation (capped at 5000 rows). */
   const duplicateDatabase = useCallback(
-    async (id: string): Promise<string | null> => {
+    async (id: string, opts: { includeRows?: boolean } = {}): Promise<string | null> => {
       const src = databaseMap.get(id);
       if (!src) return null;
       const dbId = await mutCreateDatabase({ name: `${src.name} copy` });
@@ -116,9 +118,12 @@ export function useDbCrud({ databaseMap }: Args) {
       const srcActiveIdx = src.views.findIndex((v) => v.id === src.activeViewId);
       const activeViewId = srcActiveIdx >= 0 ? views[srcActiveIdx].id : views[0]?.id ?? "";
       await mutUpdateDatabase({ dbId, patch: { properties, views, activeViewId } });
+      if (opts.includeRows && src.rowIds.length > 0) {
+        await mutDuplicateWithRows({ srcDbId: id, targetDbId: dbId });
+      }
       return dbId;
     },
-    [databaseMap, mutCreateDatabase, mutUpdateDatabase],
+    [databaseMap, mutCreateDatabase, mutUpdateDatabase, mutDuplicateWithRows],
   );
 
   const trashDatabase = useCallback((id: string) => { mutTrashDatabase({ dbId: id }); }, [mutTrashDatabase]);

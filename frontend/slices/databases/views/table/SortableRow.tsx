@@ -1,6 +1,6 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, MoreHorizontal, Trash2 } from "lucide-react";
+import { GripVertical, MoreHorizontal, Trash2, ChevronRight, ChevronDown } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { focusSiblingBySelector, isTextInputTarget } from "@/shared/lib/keyboard";
 import {
@@ -15,6 +15,7 @@ import { RowCheckbox } from "./Checkboxes";
 export function SortableRow({
   row, rowIndex, db, visibleProps, onOpen, onDelete, autoEdit, onAutoEditConsumed,
   selectedCell, onSelectCell, fill, wrap, rowHeightClass,
+  treeEnabled = false, depth = 0, hasChildren = false, expanded = true, onToggleExpand,
 }: any) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: row.id });
   const rowSel = useRowSelectionOptional();
@@ -62,7 +63,30 @@ export function SortableRow({
             wrap ? "whitespace-normal break-words" : "truncate",
           )}>
             {i === 0 ? (
-              <InlineRowTitle row={row} onOpen={onOpen} autoEdit={autoEdit} onAutoEditConsumed={onAutoEditConsumed} />
+              <div className="flex items-stretch flex-1 min-w-0">
+                {treeEnabled && (
+                  <div
+                    className="flex items-center shrink-0"
+                    style={{ paddingLeft: `${depth * 16}px` }}
+                  >
+                    {hasChildren ? (
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); onToggleExpand?.(); }}
+                        aria-label={expanded ? "Collapse sub-items" : "Expand sub-items"}
+                        className="h-5 w-5 grid place-items-center text-muted-foreground hover:bg-accent rounded"
+                      >
+                        {expanded
+                          ? <ChevronDown className="h-3.5 w-3.5" />
+                          : <ChevronRight className="h-3.5 w-3.5" />}
+                      </button>
+                    ) : (
+                      <span aria-hidden className="h-5 w-5 inline-block" />
+                    )}
+                  </div>
+                )}
+                <InlineRowTitle row={row} onOpen={onOpen} autoEdit={autoEdit} onAutoEditConsumed={onAutoEditConsumed} />
+              </div>
             ) : (
               <SelectableCell
                 rowId={row.id}
