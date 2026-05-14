@@ -13,6 +13,8 @@ import { VIEW_COMPONENTS } from "./database-block/lazyViews";
 import { useDatabaseRows, useFilteredRows, useIsLinked } from "./database-block/useFilteredRows";
 import { DatabaseHeaderBar } from "./database-block/HeaderBar";
 import { DatabaseToolbar } from "./database-block/Toolbar";
+import { mergeViewOverrides, splitViewPatch } from "./database-block/effectiveView";
+import type { DatabaseViewConfig } from "@/shared/types/domain";
 
 import { PROPERTY_TYPE_LABELS } from "./lib/propertyTypeMeta";
 export { PROPERTY_TYPE_LABELS };
@@ -30,6 +32,7 @@ export function DatabaseBlock({
   fullPage?: boolean;
 }) {
   const { getDatabase, pages, updateBlock, updateDatabase } = useStore();
+  const { updateView } = useStore();
   const navigate = useNavigate();
   const [openRowId, setOpenRowId] = useState<string | null>(null);
 
@@ -37,7 +40,10 @@ export function DatabaseBlock({
   // Linked-view per-block override: prefer block.activeViewId so two
   // linked instances of the same DB can show different view tabs.
   const activeViewId = block.activeViewId ?? db?.activeViewId;
-  const view = db ? db.views.find((v) => v.id === activeViewId) ?? db.views[0] : undefined;
+  const sourceView = db ? db.views.find((v) => v.id === activeViewId) ?? db.views[0] : undefined;
+  // Effective view = source DB view + per-block overrides (filters,
+  // sorts, hiddenProps, frozenProps, groupBy, search, tableCalcs).
+  const view = sourceView ? mergeViewOverrides(sourceView, block) : undefined;
   const rows = useDatabaseRows(db, pages);
   const filtered = useFilteredRows(rows, view);
 
@@ -55,6 +61,29 @@ export function DatabaseBlock({
   const onActivateView = (viewId: string) => {
     if (isInline) updateBlock(pageId, block.id, { activeViewId: viewId });
     else if (db) updateDatabase(db.id, { activeViewId: viewId });
+  };
+
+  // View-config writes split: non-structural fields (filter / sort /
+  // hidden / frozen / groupBy / search / tableCalcs) override per-block
+  // when linked; structural (rename / view-type / chart-axis / etc.)
+  // always write to the DB. Full-page mode writes everything to the DB.
+  const writeView = (viewId: string, patch: Partial<DatabaseViewConfig>) => {
+    if (!isInline) {
+      if (db) updateView(db.id, viewId, patch);
+      return;
+    }
+    const { override, direct } = splitViewPatch(patch);
+    if (Object.keys(direct).length > 0 && db) {
+      updateView(db.id, viewId, direct);
+    }
+    if (Object.keys(override).length > 0) {
+      const prev = block.viewOverrides?.[viewId] ?? {};
+      const nextOverrides = {
+        ...(block.viewOverrides ?? {}),
+        [viewId]: { ...prev, ...override },
+      };
+      updateBlock(pageId, block.id, { viewOverrides: nextOverrides });
+    }
   };
 
   if (block.databaseId && !db) {
@@ -96,15 +125,16 @@ export function DatabaseBlock({
         onOpenAsPage={openAsPage}
         activeViewId={activeViewId}
         onActivateView={onActivateView}
+        writeView={writeView}
       />
-      <DatabaseToolbar db={db} view={view} />
+      <DatabaseToolbar db={db} view={view} writeView={writeView} />
 
       <RowSelectionProvider rowOrder={filtered.map((r) => r.id)}>
         <RowSelectionToolbar databaseId={db.id} />
         <RowSelectionKeyboard databaseId={db.id} />
         <ErrorBoundary>
           <Suspense fallback={<DatabaseSkeleton />}>
-            <ViewComponent db={db} view={view} rows={filtered} onOpenRow={setOpenRowId} />
+            <ViewComponent db={db} view={view} rows={filtered} onOpenRow={setOpenRowId} writeView={writeView} />
           </Suspense>
         </ErrorBoundary>
       </RowSelectionProvider>

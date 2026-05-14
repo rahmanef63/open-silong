@@ -18,6 +18,7 @@ export function DatabaseHeaderBar({
   onOpenAsPage,
   activeViewId,
   onActivateView,
+  writeView,
 }: {
   db: Database;
   view: DatabaseViewConfig;
@@ -29,6 +30,8 @@ export function DatabaseHeaderBar({
   activeViewId?: string;
   /** Caller decides whether to write to block (linked) or db (canonical). */
   onActivateView: (viewId: string) => void;
+  /** Per-block view writer for non-structural fields. */
+  writeView: (viewId: string, patch: Partial<DatabaseViewConfig>) => void;
 }) {
   const { updateDatabase, addView, updateView, deleteView } = useStore();
   return (
@@ -129,7 +132,7 @@ export function DatabaseHeaderBar({
             })}
           </DropdownMenuContent>
         </DropdownMenu>
-        <DatabaseMenu db={db} view={view} rows={rows} />
+        <DatabaseMenu db={db} view={view} rows={rows} writeView={writeView} />
       </div>
     </div>
   );

@@ -6,7 +6,15 @@ import type { Database, DatabaseViewConfig, Property } from "@/shared/types/doma
 import { PROPERTY_TYPE_ICONS, PROPERTY_TYPE_LABELS } from "../../lib/propertyTypeMeta";
 import { ColumnHeaderMenu } from "../../components/ColumnHeaderMenu";
 
-export function SortableHeader({ prop, db, view, index }: { prop: Property; db: Database; view: DatabaseViewConfig; index: number }) {
+export function SortableHeader({
+  prop, db, view, index, writeView,
+}: {
+  prop: Property;
+  db: Database;
+  view: DatabaseViewConfig;
+  index: number;
+  writeView?: (viewId: string, patch: Partial<DatabaseViewConfig>) => void;
+}) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: prop.id });
   const TypeIcon = PROPERTY_TYPE_ICONS[prop.type];
   const isFrozen = view.frozenPropIds?.includes(prop.id) ?? false;
@@ -29,6 +37,7 @@ export function SortableHeader({ prop, db, view, index }: { prop: Property; db: 
         view={view}
         prop={prop}
         index={index}
+        writeView={writeView}
         trigger={
           <button
             className="flex-1 text-left truncate text-xs hover:text-foreground min-w-0"

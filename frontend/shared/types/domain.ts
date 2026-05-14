@@ -38,6 +38,21 @@ export interface Block {
    *  fighting over `db.activeViewId`. Falls back to the DB's own
    *  activeViewId when unset. */
   activeViewId?: string;
+  /** Per-block view-config overrides. Maps view-id → partial config
+   *  that overlays the source view's filter/sort/hidden/etc. Lets
+   *  linked-view instances customise without polluting the source DB.
+   *  Only "non-structural" fields override here (filters, sorts,
+   *  hiddenPropIds, frozenPropIds, search, tableCalcs, groupBy);
+   *  rename / delete / view-type changes still write to the DB. */
+  viewOverrides?: Record<string, Partial<{
+    filters: unknown[];
+    sorts: unknown[];
+    groupBy: string | undefined;
+    search: string;
+    hiddenPropIds: string[];
+    frozenPropIds: string[];
+    tableCalcs: Record<string, string>;
+  }>>;
   /** for columns2/columns3: array of column block arrays */
   columns?: Block[][];
   /** for toggle: child blocks */

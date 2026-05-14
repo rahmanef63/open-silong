@@ -12,7 +12,14 @@ import { DataMenu } from "@/slices/database-json";
 import { PROPERTY_TYPE_LABELS, PROPERTY_TYPES } from "../lib/propertyTypeMeta";
 import type { Database, DatabaseViewConfig, Page, Property } from "@/shared/types/domain";
 
-export function DatabaseMenu({ db, view, rows }: { db: Database; view: DatabaseViewConfig; rows: Page[] }) {
+export function DatabaseMenu({
+  db, view, rows, writeView,
+}: {
+  db: Database;
+  view: DatabaseViewConfig;
+  rows: Page[];
+  writeView: (viewId: string, patch: Partial<DatabaseViewConfig>) => void;
+}) {
   const { updateDatabase, trashDatabase, duplicateDatabase } = useStore();
   return (
     <Popover>
@@ -86,7 +93,7 @@ export function DatabaseMenu({ db, view, rows }: { db: Database; view: DatabaseV
         <div className="px-2 py-1 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">This view</div>
         <div className="px-1 flex flex-col gap-0.5">
           <ViewOptions db={db} view={view} />
-          <PropertiesMenu db={db} view={view} />
+          <PropertiesMenu db={db} view={view} writeView={writeView} />
         </div>
         <div className="my-1 border-t border-border" />
         <div className="px-2 py-1 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Data</div>
@@ -147,17 +154,23 @@ function SubItemsPicker({ db }: { db: Database }) {
   );
 }
 
-function PropertiesMenu({ db, view }: { db: Database; view: DatabaseViewConfig }) {
-  const { updateView, deleteProperty, addProperty } = useStore();
+function PropertiesMenu({
+  db, view, writeView,
+}: {
+  db: Database;
+  view: DatabaseViewConfig;
+  writeView: (viewId: string, patch: Partial<DatabaseViewConfig>) => void;
+}) {
+  const { deleteProperty, addProperty } = useStore();
   const hidden = new Set(view.hiddenPropIds ?? []);
   const toggle = (pid: string) => {
     const next = new Set(hidden);
     if (next.has(pid)) next.delete(pid);
     else next.add(pid);
-    updateView(db.id, view.id, { hiddenPropIds: [...next] });
+    writeView(view.id, { hiddenPropIds: [...next] });
   };
-  const showAll = () => updateView(db.id, view.id, { hiddenPropIds: [] });
-  const hideAll = () => updateView(db.id, view.id, { hiddenPropIds: db.properties.map((p) => p.id) });
+  const showAll = () => writeView(view.id, { hiddenPropIds: [] });
+  const hideAll = () => writeView(view.id, { hiddenPropIds: db.properties.map((p) => p.id) });
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>

@@ -17,9 +17,15 @@ import { SortableHeader } from "./table/SortableHeader";
 import { SortableRow } from "./table/SortableRow";
 import { CalcFooter } from "./table/CalcFooter";
 
-interface ViewProps { db: Database; view: DatabaseViewConfig; rows: Page[]; onOpenRow: (id: string) => void }
+interface ViewProps {
+  db: Database;
+  view: DatabaseViewConfig;
+  rows: Page[];
+  onOpenRow: (id: string) => void;
+  writeView?: (viewId: string, patch: Partial<DatabaseViewConfig>) => void;
+}
 
-export function TableView({ db, view, rows, onOpenRow }: ViewProps) {
+export function TableView({ db, view, rows, onOpenRow, writeView }: ViewProps) {
   const { reorderProperties, reorderRows, addRow, deleteRow, setRowValue } = useStore();
   const wrap = !!view.tableWrapCells;
   const rowHeight = view.tableRowHeight ?? "medium";
@@ -90,7 +96,7 @@ export function TableView({ db, view, rows, onOpenRow }: ViewProps) {
           <div className="min-w-full">
             <div className="flex border-b border-border bg-muted/30 text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
               <HeaderCheckboxGutter rowIds={rowIds} />
-              {visibleProps.map((p, i) => <SortableHeader key={p.id} prop={p} db={db} view={view} index={i} />)}
+              {visibleProps.map((p, i) => <SortableHeader key={p.id} prop={p} db={db} view={view} index={i} writeView={writeView} />)}
               <AddColumnHeader dbId={db.id} />
             </div>
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onRowEnd}>
