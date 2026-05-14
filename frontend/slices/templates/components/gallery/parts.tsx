@@ -10,6 +10,8 @@ export interface TemplateMeta {
   icon: string;
   category: string;
   description?: string | null;
+  /** Promotional images — admin-curated URLs. First = hero thumb. */
+  images?: string[];
 }
 
 const CATEGORY_TINTS: Array<[string, string]> = [
@@ -66,6 +68,7 @@ export function TemplateCard({
   onSelect: () => void;
 }) {
   const [bg, fg] = tintFor(tpl.category);
+  const hero = tpl.images?.[0];
   return (
     <button
       type="button"
@@ -78,16 +81,29 @@ export function TemplateCard({
           : "border-border hover:border-foreground/40 hover:shadow-md hover:-translate-y-0.5",
       )}
     >
-      <div className={cn("relative h-32 bg-gradient-to-br grid place-items-center", bg)}>
-        <div className={cn("text-5xl leading-none drop-shadow-sm", fg)}>
-          <DynamicIcon value={tpl.icon} />
-        </div>
+      <div className={cn("relative h-32 grid place-items-center overflow-hidden", !hero && "bg-gradient-to-br", !hero && bg)}>
+        {hero ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={hero}
+            alt=""
+            loading="lazy"
+            className="absolute inset-0 h-full w-full object-cover transition-transform group-hover:scale-105"
+          />
+        ) : (
+          <div className={cn("text-5xl leading-none drop-shadow-sm", fg)}>
+            <DynamicIcon value={tpl.icon} />
+          </div>
+        )}
         <span className="absolute top-2 right-2 rounded-full bg-background/80 backdrop-blur px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
           Free
         </span>
       </div>
       <div className="px-3 py-2.5 flex flex-col gap-1 min-h-[64px]">
-        <div className="text-sm font-semibold truncate">{tpl.name}</div>
+        <div className="text-sm font-semibold truncate flex items-center gap-1.5">
+          <span className="text-base leading-none shrink-0"><DynamicIcon value={tpl.icon} /></span>
+          <span className="truncate">{tpl.name}</span>
+        </div>
         <div className="text-[11px] text-muted-foreground truncate">{tpl.category}</div>
       </div>
     </button>
@@ -101,16 +117,18 @@ export function FeaturedBanner({
   onSelect: () => void;
 }) {
   const [bg, fg] = tintFor(tpl.name);
+  const hero = tpl.images?.[0];
   return (
     <button
       type="button"
       onClick={onSelect}
       className={cn(
-        "group relative flex items-stretch rounded-2xl overflow-hidden border border-border bg-gradient-to-br text-left transition-all hover:shadow-lg",
-        bg,
+        "group relative flex items-stretch rounded-2xl overflow-hidden border border-border text-left transition-all hover:shadow-lg",
+        !hero && "bg-gradient-to-br",
+        !hero && bg,
       )}
     >
-      <div className="flex-1 p-5 flex flex-col justify-between min-h-[180px]">
+      <div className="flex-1 p-5 flex flex-col justify-between min-h-[180px] z-10">
         <div>
           <span className="inline-block rounded-md bg-background/70 backdrop-blur px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground mb-2">
             Featured
@@ -124,9 +142,21 @@ export function FeaturedBanner({
         </div>
         <span className="text-[11px] text-muted-foreground">{tpl.category}</span>
       </div>
-      <div className={cn("w-32 grid place-items-center text-6xl shrink-0", fg)}>
-        <DynamicIcon value={tpl.icon} />
-      </div>
+      {hero ? (
+        <div className="relative w-44 shrink-0 overflow-hidden">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={hero}
+            alt=""
+            loading="lazy"
+            className="absolute inset-0 h-full w-full object-cover transition-transform group-hover:scale-105"
+          />
+        </div>
+      ) : (
+        <div className={cn("w-32 grid place-items-center text-6xl shrink-0", fg)}>
+          <DynamicIcon value={tpl.icon} />
+        </div>
+      )}
     </button>
   );
 }

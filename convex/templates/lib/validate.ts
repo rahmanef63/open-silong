@@ -122,6 +122,10 @@ export const TemplateJsonSchema = z.object({
   icon: z.string().min(1),
   category: z.string().min(1).max(60),
   description: z.string().max(500).optional(),
+  /** Promotional images for the gallery — first item is the hero thumbnail
+   *  shown on cards + featured banners. Rest render in the detail-view
+   *  accordion. URLs only; admin-curated. */
+  images: z.array(z.string().url().max(2048)).max(10).optional(),
   page: TplPageSchema,
 });
 

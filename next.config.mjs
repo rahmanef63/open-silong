@@ -89,7 +89,10 @@ const nextConfig = {
       "form-action 'self'",
       "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://accounts.google.com",
       "style-src 'self' 'unsafe-inline'",
-      `img-src 'self' data: blob: https://cdn.jsdelivr.net https://images.unsplash.com https://avatars.githubusercontent.com https://lh3.googleusercontent.com https://${convexHost}`,
+      // Admin-curated template gallery images can come from any HTTPS origin —
+      // broaden img-src to https: rather than re-list each host. Other surfaces
+      // still go through next/image which has its own remotePatterns gate.
+      `img-src 'self' data: blob: https:`,
       "font-src 'self' data:",
       `connect-src 'self' https://${convexHost} wss://${convexHost} https://www.google-analytics.com https://accounts.google.com`,
       "frame-src 'self' https://accounts.google.com",

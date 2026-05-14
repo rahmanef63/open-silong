@@ -40,6 +40,7 @@ export function TemplateEditor({ templateId, onClose }: Props) {
   const [icon, setIcon] = useState("📝");
   const [category, setCategory] = useState("General");
   const [description, setDescription] = useState("");
+  const [images, setImages] = useState<string[]>([]);
   const [isPublished, setIsPublished] = useState(false);
   const [jsonText, setJsonText] = useState(JSON.stringify(BLANK_JSON, null, 2));
   const [saving, setSaving] = useState(false);
@@ -51,6 +52,7 @@ export function TemplateEditor({ templateId, onClose }: Props) {
       setIcon(existing.icon);
       setCategory(existing.category);
       setDescription(existing.description ?? "");
+      setImages((existing as { images?: string[] }).images ?? []);
       setIsPublished(existing.isPublished);
       setJsonText(JSON.stringify(existing.json, null, 2));
     }
@@ -77,6 +79,7 @@ export function TemplateEditor({ templateId, onClose }: Props) {
         id: templateId ?? undefined,
         name, icon, category,
         description: description || undefined,
+        images: images.map((u) => u.trim()).filter(Boolean),
         json: parsed.value,
         isPublished,
       });
@@ -131,6 +134,57 @@ export function TemplateEditor({ templateId, onClose }: Props) {
         <Input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Category" className="md:col-span-1" />
       </div>
       <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Description (optional)" />
+
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <Label className="text-xs uppercase text-muted-foreground">
+            Gallery images <span className="normal-case text-muted-foreground/60">— first is hero thumbnail</span>
+          </Label>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() => setImages((xs) => (xs.length >= 10 ? xs : [...xs, ""]))}
+            disabled={images.length >= 10}
+          >
+            + Add image
+          </Button>
+        </div>
+        {images.length === 0 && (
+          <div className="text-xs text-muted-foreground italic px-1">
+            No images yet — click "Add image" to paste HTTPS URLs (max 10).
+          </div>
+        )}
+        <div className="flex flex-col gap-2">
+          {images.map((url, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <span className="text-[10px] tabular-nums text-muted-foreground w-6 text-right">{i + 1}</span>
+              <Input
+                value={url}
+                onChange={(e) => {
+                  const next = [...images];
+                  next[i] = e.target.value;
+                  setImages(next);
+                }}
+                placeholder="https://…"
+                className="flex-1 font-mono text-xs"
+              />
+              {url && /^https?:\/\//i.test(url) && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={url} alt="" className="h-8 w-12 rounded border border-border object-cover bg-muted/20" />
+              )}
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={() => setImages(images.filter((_, j) => j !== i))}
+              >
+                ×
+              </Button>
+            </div>
+          ))}
+        </div>
+      </div>
 
       <div className="grid md:grid-cols-2 gap-3">
         <div>

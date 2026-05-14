@@ -19,6 +19,7 @@ export const listPublished = query({
       icon: d.icon,
       category: d.category,
       description: d.description ?? null,
+      images: d.images ?? [],
       isSeed: d.isSeed,
     }));
   },
