@@ -1,7 +1,15 @@
 name: Deploy Convex
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - "convex/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/convex-deploy.yml"
   workflow_dispatch:
+
 concurrency:
   group: convex-deploy
   cancel-in-progress: false
