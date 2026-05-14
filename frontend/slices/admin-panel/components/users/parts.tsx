@@ -1,11 +1,21 @@
+import Image from "next/image";
 import { Badge } from "@/shared/ui/badge";
 import type { User } from "./types";
 
 export function Avatar({ user, large }: { user: User; large?: boolean }) {
   const size = large ? "h-10 w-10" : "h-6 w-6";
+  const px = large ? 40 : 24;
   if (user.image) {
-    // eslint-disable-next-line @next/next/no-img-element
-    return <img src={user.image} alt="" className={`${size} rounded-full shrink-0`} />;
+    return (
+      <Image
+        src={user.image}
+        alt=""
+        width={px}
+        height={px}
+        unoptimized
+        className={`${size} rounded-full shrink-0 object-cover`}
+      />
+    );
   }
   return (
     <div className={`${size} shrink-0 grid place-items-center rounded-full bg-muted text-xs uppercase`}>

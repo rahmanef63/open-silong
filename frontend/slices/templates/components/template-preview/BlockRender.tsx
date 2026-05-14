@@ -1,3 +1,4 @@
+import Image from "next/image";
 import type { TemplateBlock, TemplateDb } from "./types";
 import { renderInlineOrPlaceholder } from "./inline";
 import { DatabaseStub } from "./DatabaseStub";
@@ -71,8 +72,15 @@ export function BlockRender({ b, databases }: { b: TemplateBlock; databases: Tem
       );
     case "image":
       return b.url ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={b.url} alt={b.caption ?? ""} className="rounded-md border border-border max-h-72 object-contain" />
+        <Image
+          src={b.url}
+          alt={b.caption ?? ""}
+          width={1200}
+          height={800}
+          unoptimized
+          sizes="(max-width: 768px) 100vw, 768px"
+          className="rounded-md border border-border max-h-72 w-auto h-auto object-contain"
+        />
       ) : (
         <BlockStub type="image" />
       );
