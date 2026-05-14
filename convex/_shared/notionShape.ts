@@ -38,7 +38,7 @@
  *             reverse side we don't reconstruct it, the round-trip
  *             is paragraph→paragraph for foreign callers.)
  *
- *  Property types: 22 of Notion's 23 (no `verification` yet).
+ *  Property types: 23 of Notion's 23 (full parity).
  */
 
 // ─── Common types ──────────────────────────────────────────────────
@@ -443,6 +443,7 @@ const NOSION_TO_NOTION_PROP_TYPE: Record<string, string> = {
   unique_id: "unique_id",
   button: "button",
   place: "place",
+  verification: "verification",
 };
 
 const NOTION_TO_NOSION_PROP_TYPE: Record<string, string> = Object.fromEntries(
@@ -586,7 +587,8 @@ export function propertiesMapToArray(map: Record<string, NotionPropertySchemaEnt
 
 export type NosionPropertyValue =
   | string | number | boolean | null
-  | string[] | { date?: string };
+  | string[] | { date?: string }
+  | { verified: boolean; by?: string; at?: number };
 
 export interface NotionPropertyValue {
   id?: string;
@@ -650,6 +652,19 @@ export function valueToNotion(value: NosionPropertyValue, prop: PropertyLike): N
     case "unique_id":
       out.unique_id = typeof value === "string" || typeof value === "number" ? { number: Number(value), prefix: prop.uniqueIdPrefix ?? null } : null;
       break;
+    case "verification": {
+      const v = (value && typeof value === "object" && !Array.isArray(value) && "verified" in value)
+        ? (value as { verified: boolean; by?: string; at?: number })
+        : null;
+      out.verification = v
+        ? {
+            state: v.verified ? "verified" : "unverified",
+            verified_by: v.by ? { object: "user", id: v.by } : null,
+            date: v.at ? { start: new Date(v.at).toISOString(), end: null, time_zone: null } : null,
+          }
+        : { state: "unverified", verified_by: null, date: null };
+      break;
+    }
     default:
       out[ntype] = value as unknown;
   }
@@ -692,6 +707,20 @@ export function valueFromNotion(nv: NotionPropertyValue, prop: PropertyLike): No
       return ((nv.relation as Array<{ id: string }>) ?? []).map((r) => r.id);
     case "unique_id":
       return (nv.unique_id as { number?: number } | null)?.number ?? null;
+    case "verification": {
+      const v = nv.verification as {
+        state?: string;
+        verified_by?: { id?: string } | null;
+        date?: { start?: string } | null;
+      } | null;
+      if (!v) return null;
+      const at = v.date?.start ? Date.parse(v.date.start) : undefined;
+      return {
+        verified: v.state === "verified",
+        by: v.verified_by?.id,
+        at: Number.isFinite(at) ? at : undefined,
+      };
+    }
     default:
       return null;
   }

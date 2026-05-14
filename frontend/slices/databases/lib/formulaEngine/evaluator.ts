@@ -120,6 +120,8 @@ function propertyValueToFormulaValue(
       return typeof v === "number" ? num(v) : Number.isFinite(Number(v)) ? num(Number(v)) : NULL_VALUE;
     case "checkbox":
       return bool(v === true);
+    case "verification":
+      return bool(typeof v === "object" && v !== null && "verified" in v && !!v.verified);
     case "date":
       return typeof v === "object" && "date" in v && v.date ? date(v.date) : NULL_VALUE;
     case "select":

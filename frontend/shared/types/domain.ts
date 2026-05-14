@@ -184,7 +184,8 @@ export type PropertyType =
   | "last_edited_by"
   | "unique_id"
   | "button"
-  | "place";
+  | "place"
+  | "verification";
 
 /** Calculate aggregate for the table footer. Mirrors Notion's
  *  per-type set; UI gates which aggregates are valid for which
@@ -300,7 +301,9 @@ export type PropertyValue =
   | boolean
   | null
   | string[] // multi_select option ids, person ids, relation ids, or mock files
-  | { date?: string; end?: string; time?: string; endTime?: string };
+  | { date?: string; end?: string; time?: string; endTime?: string }
+  /** verification prop: `verified` flag + audit (by user id, at epoch ms). */
+  | { verified: boolean; by?: string; at?: number };
   // date prop: `date`/`time` = start; `end`/`endTime` = optional range end.
   // `date`/`end` are YYYY-MM-DD; `time`/`endTime` are HH:mm (24h) regardless of display timeFormat.
 

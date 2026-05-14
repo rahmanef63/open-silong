@@ -14,7 +14,7 @@ export const READ_ONLY_PROPERTY_TYPES: PropertyType[] = [
   "last_edited_time", "last_edited_by", "unique_id",
 ];
 /** Property types that don't yet have a form-friendly editor. */
-export const UNSUPPORTED_FORM_TYPES: PropertyType[] = ["relation", "files"];
+export const UNSUPPORTED_FORM_TYPES: PropertyType[] = ["relation", "files", "verification"];
 
 export function isFormableProperty(p: Property): boolean {
   return !READ_ONLY_PROPERTY_TYPES.includes(p.type) && !UNSUPPORTED_FORM_TYPES.includes(p.type);
@@ -79,7 +79,7 @@ export function PropertyFormInput({
     case "phone":
       return <Input type="tel" value={(value as string) ?? ""} onChange={e => onChange(e.target.value)} />;
     case "date": {
-      const dv = typeof value === "object" && value && !Array.isArray(value) ? value : null;
+      const dv = typeof value === "object" && value && !Array.isArray(value) && "date" in value ? value : null;
       return (
         <DatePicker
           value={dv}
