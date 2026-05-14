@@ -47,17 +47,29 @@ function ColumnPane({
     onColumnsChange(colIndex, next.length ? next : [{ id: uid(), type: "paragraph", text: "" }]);
   };
 
+  // Empty-pane click → focus the last block in this column (or add one if
+  // the pane is empty). Without this, clicks landing in pane padding/gutters
+  // bubble up and feel like nothing happened — users perceive it as the
+  // column container "swallowing" the click.
+  const onPaneClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target !== e.currentTarget && !(e.target as HTMLElement).hasAttribute("data-col-pane-body")) return;
+    const last = blocks[blocks.length - 1];
+    if (last) refs.current.get(last.id)?.focus();
+    else onAdd(-1);
+  };
+
   return (
     <div
       ref={setNodeRef}
       data-col-pane
       style={{ flex: `0 0 ${widthPct}%` }}
+      onClick={onPaneClick}
       className={cn(
-        "min-w-0 px-3 first:pl-0 last:pr-0 group/col rounded transition-colors",
+        "min-w-0 px-3 first:pl-0 last:pr-0 group/col rounded transition-colors cursor-text",
         isOver && "bg-brand/15 ring-2 ring-brand ring-inset",
       )}
     >
-      <div className="space-y-0.5 min-h-10">
+      <div data-col-pane-body className="space-y-0.5 min-h-10">
         <SortableContext items={blocks.map((b) => b.id)} strategy={verticalListSortingStrategy}>
           {blocks.map((b, i) => {
             const NestedBlock = requireNested();

@@ -82,7 +82,18 @@ export function ToggleContent({
         />
       </div>
       {!collapsed && (
-        <div className="ml-5 mt-1 border-l-2 border-border/60 pl-3 space-y-0.5">
+        <div
+          className="ml-5 mt-1 border-l-2 border-border/60 pl-3 space-y-0.5 cursor-text"
+          onClick={(e) => {
+            if (e.target !== e.currentTarget) return;
+            const last = children[children.length - 1];
+            if (last) {
+              document.querySelector<HTMLElement>(`[data-block-id="${last.id}"]`)?.focus();
+            } else {
+              addChild();
+            }
+          }}
+        >
           <SortableContext items={children.map((c) => c.id)} strategy={verticalListSortingStrategy}>
             {children.map((child, ci) => {
               const NestedBlock = requireNested();
