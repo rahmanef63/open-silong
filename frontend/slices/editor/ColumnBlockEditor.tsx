@@ -3,10 +3,10 @@ import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { Block, BlockType } from "@/shared/types/domain";
 import { cn } from "@/shared/lib/utils";
+import { uid } from "@/shared/lib/uid";
 import { Plus } from "lucide-react";
 import { requireNested } from "./blocks/nestedRegistry";
 
-const uid = () => Math.random().toString(36).slice(2, 10);
 const MIN_COL = 10;
 
 /** One column pane */

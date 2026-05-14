@@ -1,8 +1,7 @@
 import type { FormEvent, KeyboardEvent } from "react";
 import type { Block, BlockType } from "@/shared/types/domain";
+import { uid } from "@/shared/lib/uid";
 import { MARKDOWN_TRIGGERS } from "../../lib/markdownTriggers";
-
-const uid = () => Math.random().toString(36).slice(2, 10);
 
 interface InputDeps {
   block: Block;

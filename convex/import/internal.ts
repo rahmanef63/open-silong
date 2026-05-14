@@ -2,8 +2,7 @@ import { internalMutation, type MutationCtx } from "../_generated/server";
 import { v } from "convex/values";
 import { buildSearchText } from "../features/search/lib";
 import type { Id } from "../_generated/dataModel";
-
-const uid = () => Math.random().toString(36).slice(2, 10);
+import { uid } from "../_shared/uid";
 
 async function insertDb(
   ctx: MutationCtx,

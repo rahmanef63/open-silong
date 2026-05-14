@@ -12,6 +12,8 @@
  *  `columns`, `text`, `caption`, `tableRows`).
  */
 
+import { uid } from "./uid";
+
 export interface BlockLike {
   id?: string;
   text?: string;
@@ -21,8 +23,6 @@ export interface BlockLike {
   tableRows?: string[][];
   [key: string]: unknown;
 }
-
-const uid = () => Math.random().toString(36).slice(2, 10);
 
 /** Recursively regenerate block ids across `children` and `columns`.
  *  Returns a structurally identical tree with fresh ids — every

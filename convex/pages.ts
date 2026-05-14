@@ -14,8 +14,7 @@ import {
   pagesInActiveWorkspace,
   requireActiveWorkspaceWritable,
 } from "./_shared/workspace";
-
-const uid = () => Math.random().toString(36).slice(2, 10);
+import { uid } from "./_shared/uid";
 
 function emptyBlock() {
   return { id: uid(), type: "paragraph", text: "" };

@@ -16,8 +16,7 @@ import { mutation, query } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
 import { rateLimit } from "../_shared/rateLimit";
 import { RATE_LIMITS } from "../_shared/limits";
-
-const uid = () => Math.random().toString(36).slice(2, 10);
+import { uid } from "../_shared/uid";
 
 interface FormViewLite {
   id: string;

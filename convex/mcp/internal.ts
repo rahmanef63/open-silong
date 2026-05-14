@@ -19,8 +19,7 @@ import type { Id } from "../_generated/dataModel";
 import { buildSearchText } from "../features/search/lib";
 import { regenAllBlockIds, type BlockLike } from "../_shared/blocks";
 import { CHAR_CAPS, COUNT_CAPS } from "../_shared/limits";
-
-const uid = () => Math.random().toString(36).slice(2, 10);
+import { uid } from "../_shared/uid";
 
 // ─── Read ──────────────────────────────────────────────────────────
 

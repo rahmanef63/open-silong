@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 import { useAction } from "convex/react";
 import { api } from "@convex/_generated/api";
+import { uid } from "@/shared/lib/uid";
 import { findSlash } from "../lib/slashCommands";
 
 export interface ChatMessage {
@@ -9,8 +10,6 @@ export interface ChatMessage {
   content: string;
   createdAt: number;
 }
-
-const nano = () => Math.random().toString(36).slice(2, 10);
 
 export function useAIChat() {
   const complete = useAction(api.ai.chat.complete);
@@ -27,7 +26,7 @@ export function useAIChat() {
       : { userPrompt: context ? `${context}\n\n---\nQuestion: ${input}` : input };
 
     const userMsg: ChatMessage = {
-      id: nano(),
+      id: uid(),
       role: "user",
       content: input,
       createdAt: Date.now(),
@@ -45,7 +44,7 @@ export function useAIChat() {
         system: built.system,
       });
       setMessages((prev) => [...prev, {
-        id: nano(),
+        id: uid(),
         role: "assistant",
         content: r.text,
         createdAt: Date.now(),

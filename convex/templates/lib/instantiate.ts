@@ -1,10 +1,9 @@
 import type { MutationCtx } from "../../_generated/server";
 import type { Id } from "../../_generated/dataModel";
+import { uid } from "../../_shared/uid";
 import type {
   TemplateJson, TplBlockT, TplDatabaseT, TplPageT, TplViewT,
 } from "./validate";
-
-const nano = () => Math.random().toString(36).slice(2, 10);
 
 /** Recursively build a Nosion block from a template block.
  *  Handles `columns: TplBlock[][]` (for columns2/3) and
@@ -16,7 +15,7 @@ function buildBlock(
   pageMap: Map<string, Id<"pages">>,
 ): Record<string, unknown> {
   const out: Record<string, unknown> = {
-    id: nano(),
+    id: uid(),
     type: b.type,
     text: b.text ?? "",
   };
@@ -238,7 +237,7 @@ export async function instantiateTemplate(
         title: typeof titleVal === "string" ? titleVal : (titleVal != null ? String(titleVal) : ""),
         icon: "📄",
         cover: null,
-        blocks: [{ id: nano(), type: "paragraph", text: "" }],
+        blocks: [{ id: uid(), type: "paragraph", text: "" }],
         favorite: false,
         trashed: false,
         isPublic: false,

@@ -5,6 +5,8 @@
  * code, divider, images. Anything fancier falls back to paragraph.
  */
 
+import { uid } from "../_shared/uid";
+
 export type BlockOut = {
   id: string;
   type:
@@ -18,7 +20,6 @@ export type BlockOut = {
   caption?: string;
 };
 
-const uid = () => Math.random().toString(36).slice(2, 10);
 const mk = (type: BlockOut["type"], text = "", extra: Partial<BlockOut> = {}): BlockOut =>
   ({ id: uid(), type, text, ...extra });
 

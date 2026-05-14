@@ -11,8 +11,7 @@ import {
   databasesInActiveWorkspace,
   requireActiveWorkspaceWritable,
 } from "./_shared/workspace";
-
-const uid = () => Math.random().toString(36).slice(2, 10);
+import { uid } from "./_shared/uid";
 
 /** Owner-only full list. Includes `properties[]`, `views[]`,
  *  `rowIds[]`, `templates[]`. Acceptable to ship in full because
