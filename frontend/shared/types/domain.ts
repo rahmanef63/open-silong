@@ -32,6 +32,12 @@ export interface Block {
   lang?: string;
   pageId?: string;
   databaseId?: string;
+  /** Per-block active view selection for linked database views. When a
+   *  block of type "database" references a DB embedded in multiple
+   *  places, this lets each instance show a different tab without
+   *  fighting over `db.activeViewId`. Falls back to the DB's own
+   *  activeViewId when unset. */
+  activeViewId?: string;
   /** for columns2/columns3: array of column block arrays */
   columns?: Block[][];
   /** for toggle: child blocks */

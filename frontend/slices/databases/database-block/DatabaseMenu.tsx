@@ -4,7 +4,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
   DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger,
 } from "@/shared/ui/dropdown-menu";
-import { MoreHorizontal, Pencil, Trash2, Eye, EyeOff, Settings2, Plus } from "lucide-react";
+import { MoreHorizontal, Pencil, Trash2, Eye, EyeOff, Settings2, Plus, Copy } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { DynamicIcon, IconPickerPopover, DEFAULT_DATABASE_ICON } from "@/shared/components/icon-picker";
 import { ViewOptions } from "../ViewOptions";
@@ -13,7 +13,7 @@ import { PROPERTY_TYPE_LABELS, PROPERTY_TYPES } from "../lib/propertyTypeMeta";
 import type { Database, DatabaseViewConfig, Page, Property } from "@/shared/types/domain";
 
 export function DatabaseMenu({ db, view, rows }: { db: Database; view: DatabaseViewConfig; rows: Page[] }) {
-  const { updateDatabase, trashDatabase } = useStore();
+  const { updateDatabase, trashDatabase, duplicateDatabase } = useStore();
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -49,6 +49,13 @@ export function DatabaseMenu({ db, view, rows }: { db: Database; view: DatabaseV
             Change icon
           </button>
         </IconPickerPopover>
+        <button
+          onClick={() => duplicateDatabase(db.id)}
+          className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs hover:bg-accent"
+          title="Clone structure (properties + views) — rows are NOT copied"
+        >
+          <Copy className="h-3.5 w-3.5" /> Duplicate database (structure)
+        </button>
         <button
           onClick={() => {
             if (window.confirm(`Move "${db.name}" to Trash? Rows are kept and can be restored.`)) {

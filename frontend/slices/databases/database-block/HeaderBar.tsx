@@ -16,6 +16,8 @@ export function DatabaseHeaderBar({
   isInline,
   isLinked,
   onOpenAsPage,
+  activeViewId,
+  onActivateView,
 }: {
   db: Database;
   view: DatabaseViewConfig;
@@ -23,6 +25,10 @@ export function DatabaseHeaderBar({
   isInline: boolean;
   isLinked: boolean;
   onOpenAsPage: () => void;
+  /** Source-of-truth active view id (block override or db default). */
+  activeViewId?: string;
+  /** Caller decides whether to write to block (linked) or db (canonical). */
+  onActivateView: (viewId: string) => void;
 }) {
   const { updateDatabase, addView, updateView, deleteView } = useStore();
   return (
@@ -68,21 +74,21 @@ export function DatabaseHeaderBar({
             key={v.id}
             db={db}
             v={v}
-            active={v.id === db.activeViewId}
-            onActivate={() => updateDatabase(db.id, { activeViewId: v.id })}
+            active={v.id === activeViewId}
+            onActivate={() => onActivateView(v.id)}
             onRename={(name) => updateView(db.id, v.id, { name })}
             onDuplicate={() => {
               const { id: _id, ...rest } = v;
               void _id;
               const cloned = structuredClone(rest);
               const nv = addView(db.id, { ...cloned, name: `${v.name} copy` });
-              updateDatabase(db.id, { activeViewId: nv.id });
+              onActivateView(nv.id);
             }}
             onDelete={() => {
               if (db.views.length <= 1) return;
               const next = db.views.find((x) => x.id !== v.id);
               deleteView(db.id, v.id);
-              if (next && v.id === db.activeViewId) updateDatabase(db.id, { activeViewId: next.id });
+              if (next && v.id === activeViewId) onActivateView(next.id);
             }}
           />
         ))}
@@ -101,7 +107,7 @@ export function DatabaseHeaderBar({
                   key={t}
                   onClick={() => {
                     const nv = addView(db.id, { name: M.label, type: t, sorts: [], filters: [], search: "" });
-                    updateDatabase(db.id, { activeViewId: nv.id });
+                    onActivateView(nv.id);
                   }}
                 >
                   <M.icon className="mr-2 h-3.5 w-3.5" /> {M.label}
