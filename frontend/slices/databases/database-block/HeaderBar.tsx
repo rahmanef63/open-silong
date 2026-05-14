@@ -101,6 +101,7 @@ export function DatabaseHeaderBar({
               deleteView(db.id, v.id);
               if (next && v.id === activeViewId) onActivateView(next.id);
             }}
+            onToggleLock={() => updateView(db.id, v.id, { locked: !v.locked })}
           />
         ))}
         <DropdownMenu>

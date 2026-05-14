@@ -5,16 +5,17 @@ import {
 import type { DatabaseViewConfig } from "@/shared/types/domain";
 
 export function SortSubmenu({
-  propId, sorts, onSet,
+  propId, sorts, onSet, disabled,
 }: {
   propId: string;
   sorts: DatabaseViewConfig["sorts"];
   onSet: (next: DatabaseViewConfig["sorts"]) => void;
+  disabled?: boolean;
 }) {
   const sorted = sorts.find((s) => s.propertyId === propId);
   return (
     <DropdownMenuSub>
-      <DropdownMenuSubTrigger>
+      <DropdownMenuSubTrigger disabled={disabled} className={disabled ? "opacity-60" : undefined}>
         <ArrowUpDown className="mr-2 h-3.5 w-3.5" /> Sort
         {sorted && <span className="ml-auto text-[10px] text-brand">{sorted.direction}</span>}
       </DropdownMenuSubTrigger>
