@@ -12,7 +12,7 @@
 import {
   Type, Hash, ChevronDown, Tags, Circle, Calendar, User, CheckSquare,
   Link2, Mail, Phone, Paperclip, ArrowUpRight, Sigma, Calculator, Clock,
-  UserCheck, Fingerprint, MousePointer, MapPin,
+  UserCheck, Fingerprint, MousePointer, MapPin, ShieldCheck,
   type LucideIcon,
 } from "lucide-react";
 import type { PropertyType } from "@/shared/types/domain";
@@ -20,7 +20,7 @@ import type { PropertyType } from "@/shared/types/domain";
 export type PropertyTypeCategory =
   | "text" | "numeric" | "option" | "date" | "people"
   | "boolean" | "contact" | "media" | "relational" | "computed"
-  | "system" | "automation" | "location";
+  | "system" | "automation" | "location" | "wiki";
 
 export interface PropertyTypeMeta {
   /** UI label shown in menus + headers. */
@@ -62,6 +62,7 @@ export const PROPERTY_TYPE_META: Record<PropertyType, PropertyTypeMeta> = {
   unique_id:        { label: "Unique ID",        icon: Fingerprint,  defaultName: "ID",           category: "system",      apiName: "unique_id",       readOnlyValue: true },
   button:           { label: "Button",           icon: MousePointer, defaultName: "Action",       category: "automation",  apiName: "button" },
   place:            { label: "Place",            icon: MapPin,       defaultName: "Place",        category: "location",    apiName: "place" },
+  verification:     { label: "Verification",     icon: ShieldCheck,  defaultName: "Verified",     category: "wiki",        apiName: "verification" },
 };
 
 /** Convenience derived maps (computed once at module-load). */

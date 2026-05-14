@@ -10,7 +10,7 @@ const ALL_TYPES: PropertyType[] = [
   "date", "person", "checkbox", "url", "email", "phone",
   "files", "relation", "rollup", "formula",
   "created_time", "created_by", "last_edited_time", "last_edited_by",
-  "unique_id", "button", "place",
+  "unique_id", "button", "place", "verification",
 ];
 
 describe("propertyTypeMeta — coverage", () => {
@@ -51,6 +51,7 @@ describe("propertyTypeMeta — semantic invariants", () => {
     expect(PROPERTY_TYPE_META.person.apiName).toBe("people");
     expect(PROPERTY_TYPE_META.button.apiName).toBe("button");
     expect(PROPERTY_TYPE_META.place.apiName).toBe("place");
+    expect(PROPERTY_TYPE_META.verification.apiName).toBe("verification");
   });
 
   it("category buckets are populated", () => {

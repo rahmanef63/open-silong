@@ -11,6 +11,7 @@ import { NumberCell } from "./property-cells/NumberCell";
 import { SelectCell, MultiSelectCell } from "./property-cell/SelectCell";
 import { ButtonCell } from "./property-cell/ButtonCell";
 import { DateCell } from "./property-cell/DateCell";
+import { VerificationCell } from "./property-cell/VerificationCell";
 
 interface Props {
   db: Database;
@@ -64,7 +65,7 @@ export function PropertyCell({ db, prop, row, compact = false }: Props) {
         </div>
       );
     case "date": {
-      const dv = typeof value === "object" && value && !Array.isArray(value) ? value : null;
+      const dv = typeof value === "object" && value && !Array.isArray(value) && "date" in value ? value : null;
       return <DateCell db={db} prop={prop} rowId={row.id} value={dv} cellClass={cellClass} />;
     }
     case "select":
@@ -120,5 +121,7 @@ export function PropertyCell({ db, prop, row, compact = false }: Props) {
           className={cn(cellClass, "w-full bg-transparent outline-none px-2 py-1 rounded hover:bg-accent/50")}
         />
       );
+    case "verification":
+      return <VerificationCell value={value} onSet={set} cellClass={cellClass} />;
   }
 }

@@ -47,6 +47,8 @@ export function validCalcs(prop: Property): CalcKind[] {
     case "place":
     case "url": case "email": case "phone":
       return [...COMMON];
+    case "verification":
+      return ["count_all", "count_values", "checked", "unchecked", "percent_checked", "percent_unchecked"];
     default:
       return COMMON;
   }
@@ -61,7 +63,15 @@ const isEmpty = (v: PropertyValue | undefined): boolean => {
   if (typeof v === "string") return v.length === 0;
   if (Array.isArray(v)) return v.length === 0;
   if (typeof v === "object" && "date" in v) return !v.date;
+  if (typeof v === "object" && "verified" in v) return false;
   return false;
+};
+
+/** Coerce raw checkbox value or verification object → boolean. */
+const toBool = (v: PropertyValue | undefined): boolean | null => {
+  if (v === true || v === false) return v;
+  if (typeof v === "object" && v && "verified" in v) return !!v.verified;
+  return null;
 };
 
 const toNumber = (v: PropertyValue | undefined): number | null => {
@@ -134,14 +144,14 @@ export function computeCalc(rows: Page[], prop: Property, calc: CalcKind): strin
       return "";
     }
 
-    case "checked": return String(filled.filter((v) => v === true).length);
-    case "unchecked": return String(filled.filter((v) => v === false).length + empty);
+    case "checked": return String(filled.filter((v) => toBool(v) === true).length);
+    case "unchecked": return String(filled.filter((v) => toBool(v) === false).length + empty);
     case "percent_checked": {
-      const c = filled.filter((v) => v === true).length;
+      const c = filled.filter((v) => toBool(v) === true).length;
       return total ? `${Math.round((c / total) * 100)}%` : "";
     }
     case "percent_unchecked": {
-      const u = filled.filter((v) => v === false).length + empty;
+      const u = filled.filter((v) => toBool(v) === false).length + empty;
       return total ? `${Math.round((u / total) * 100)}%` : "";
     }
 
