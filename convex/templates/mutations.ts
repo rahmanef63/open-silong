@@ -13,25 +13,27 @@ export const upsertTemplate = mutation({
     icon: v.string(),
     category: v.string(),
     description: v.optional(v.string()),
+    images: v.optional(v.array(v.string())),
     json: v.any(),
     isPublished: v.boolean(),
   },
-  handler: async (ctx, { id, name, icon, category, description, json, isPublished }) => {
+  handler: async (ctx, { id, name, icon, category, description, images, json, isPublished }) => {
     const actorId = await requireAdmin(ctx);
     // Validate JSON shape + cross-refs
     validateTemplate(json);
+    const safeImages = (images ?? []).filter((u) => /^https?:\/\//i.test(u)).slice(0, 10);
     const now = Date.now();
     if (id) {
       const existing = await ctx.db.get(id);
       if (!existing) throw new Error("Template tidak ditemukan");
       await ctx.db.patch(id, {
-        name, icon, category, description, json, isPublished, updatedAt: now,
+        name, icon, category, description, images: safeImages, json, isPublished, updatedAt: now,
       });
       await logAuditEventInternal(ctx, actorId, "template.upsert", String(id), { name });
       return id;
     }
     const newId = await ctx.db.insert("pageTemplates", {
-      name, icon, category, description, json, isPublished,
+      name, icon, category, description, images: safeImages, json, isPublished,
       isSeed: false,
       createdBy: actorId,
       createdAt: now,
@@ -95,6 +97,8 @@ export const seedDefaults = mutation({
           icon: tpl.icon,
           category: tpl.category,
           description: tpl.description,
+          // Don't overwrite admin-curated images with empty seed list on re-seed.
+          ...(tpl.images && tpl.images.length > 0 ? { images: tpl.images } : {}),
           json: tpl,
           updatedAt: now,
         });
@@ -105,6 +109,7 @@ export const seedDefaults = mutation({
           icon: tpl.icon,
           category: tpl.category,
           description: tpl.description,
+          images: tpl.images,
           json: tpl,
           createdBy: actorId,
           isPublished: true,

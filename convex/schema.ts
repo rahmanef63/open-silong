@@ -288,6 +288,8 @@ export default defineSchema({
     icon: v.string(),
     category: v.string(),
     description: v.optional(v.string()),
+    /** Promotional images — first is hero thumb, rest in detail accordion. */
+    images: v.optional(v.array(v.string())),
     json: v.any(),                          // TemplateJson — validated server-side on upsert
     createdBy: v.id("users"),
     isPublished: v.boolean(),
