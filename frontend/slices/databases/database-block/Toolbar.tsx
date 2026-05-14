@@ -1,4 +1,3 @@
-import { useStore } from "@/shared/lib/store";
 import { Input } from "@/shared/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
 import {
@@ -11,8 +10,15 @@ import { SortBuilder } from "../SortBuilder";
 import { NewRowMenu } from "@/slices/database-templates";
 import type { Database, DatabaseViewConfig } from "@/shared/types/domain";
 
-export function DatabaseToolbar({ db, view }: { db: Database; view: DatabaseViewConfig }) {
-  const { updateView } = useStore();
+interface ToolbarProps {
+  db: Database;
+  view: DatabaseViewConfig;
+  /** Caller decides whether non-structural writes go to block.viewOverrides
+   *  (linked) or directly to db.views (canonical). */
+  writeView: (viewId: string, patch: Partial<DatabaseViewConfig>) => void;
+}
+
+export function DatabaseToolbar({ db, view, writeView }: ToolbarProps) {
   const activeFilters = (view.filters ?? []).length;
   const activeSorts = (view.sorts ?? []).length;
   return (
@@ -21,7 +27,7 @@ export function DatabaseToolbar({ db, view }: { db: Database; view: DatabaseView
         <Search className="h-3.5 w-3.5 shrink-0" />
         <Input
           value={view.search ?? ""}
-          onChange={(e) => updateView(db.id, view.id, { search: e.target.value })}
+          onChange={(e) => writeView(view.id, { search: e.target.value })}
           placeholder="Search rows…"
           className="h-7 text-xs border-0 bg-transparent shadow-none px-1 focus-visible:ring-0 max-w-48"
         />
@@ -39,7 +45,7 @@ export function DatabaseToolbar({ db, view }: { db: Database; view: DatabaseView
             </button>
           </PopoverTrigger>
           <PopoverContent align="end" className="p-0 w-auto">
-            <FilterBuilder db={db} view={view} />
+            <FilterBuilder db={db} view={view} writeView={writeView} />
           </PopoverContent>
         </Popover>
 
@@ -55,11 +61,11 @@ export function DatabaseToolbar({ db, view }: { db: Database; view: DatabaseView
             </button>
           </PopoverTrigger>
           <PopoverContent align="end" className="p-0 w-auto">
-            <SortBuilder db={db} view={view} />
+            <SortBuilder db={db} view={view} writeView={writeView} />
           </PopoverContent>
         </Popover>
 
-        {view.type === "board" && <GroupByButton db={db} view={view} />}
+        {view.type === "board" && <GroupByButton db={db} view={view} writeView={writeView} />}
 
         <NewRowMenu db={db} onCreated={() => { /* row appears inline; user clicks Open to peek */ }} />
       </div>
@@ -67,8 +73,7 @@ export function DatabaseToolbar({ db, view }: { db: Database; view: DatabaseView
   );
 }
 
-function GroupByButton({ db, view }: { db: Database; view: DatabaseViewConfig }) {
-  const { updateView } = useStore();
+function GroupByButton({ db, view, writeView }: ToolbarProps) {
   const groupProps = db.properties.filter((p) => p.type === "select" || p.type === "status");
   const current = db.properties.find((p) => p.id === view.groupBy) ?? groupProps[0];
 
@@ -83,7 +88,7 @@ function GroupByButton({ db, view }: { db: Database; view: DatabaseViewConfig })
       <DropdownMenuContent align="end">
         <DropdownMenuLabel className="text-xs">Group by</DropdownMenuLabel>
         {groupProps.map((p) => (
-          <DropdownMenuItem key={p.id} onClick={() => updateView(db.id, view.id, { groupBy: p.id })}>
+          <DropdownMenuItem key={p.id} onClick={() => writeView(view.id, { groupBy: p.id })}>
             {current?.id === p.id && <Check className="mr-2 h-3.5 w-3.5" />}
             {(!current || current.id !== p.id) && <span className="mr-2 w-3.5" />}
             {p.name}

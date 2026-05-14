@@ -24,17 +24,27 @@ interface Props {
   prop: Property;
   index: number;
   trigger: React.ReactNode;
+  /** Per-block view writer. When provided, filter/sort/hidden/calc edits
+   *  route through here so linked-view blocks get independent state. */
+  writeView?: (viewId: string, patch: Partial<DatabaseViewConfig>) => void;
 }
 
 /** Notion-style column header menu.
  *  16 items: Edit · Change type · AI Autofill · Filter · Sort · Group ·
  *  Calculate · Freeze · Hide · Wrap · Duplicate · Insert L · Insert R ·
  *  Move L · Move R · Delete. */
-export function ColumnHeaderMenu({ db, view, prop, index, trigger }: Props) {
+export function ColumnHeaderMenu({ db, view, prop, index, trigger, writeView }: Props) {
   const {
     updateProperty, deleteProperty, duplicateProperty, addProperty,
     reorderProperties, updateView,
   } = useStore();
+  // Route view-config writes through writeView when caller provides it
+  // (linked DB blocks). Falls back to direct db write for callers that
+  // didn't plumb (admin / row detail panel etc.).
+  const writeViewLocal = (patch: Partial<DatabaseViewConfig>) => {
+    if (writeView) writeView(view.id, patch);
+    else updateView(db.id, view.id, patch);
+  };
 
   const locked = !!db.locked;
   const isFrozen = view.frozenPropIds?.includes(prop.id) ?? false;
@@ -50,7 +60,7 @@ export function ColumnHeaderMenu({ db, view, prop, index, trigger }: Props) {
     const next = list.includes(prop.id)
       ? list.filter((id) => id !== prop.id)
       : [...list, prop.id];
-    updateView(db.id, view.id, { [key]: next });
+    writeViewLocal({ [key]: next });
   };
 
   const insertAt = (offset: -1 | 1) => {
@@ -76,21 +86,23 @@ export function ColumnHeaderMenu({ db, view, prop, index, trigger }: Props) {
 
   const seedFilter = () => {
     const op = inferFilterOp(prop.type);
-    updateView(db.id, view.id, {
+    writeViewLocal({
       filters: [...view.filters, { propertyId: prop.id, op, value: "" }],
     });
   };
 
   const groupBy = () => {
     if (prop.type !== "select" && prop.type !== "status") return;
-    updateView(db.id, view.id, { type: "board", groupBy: prop.id });
+    // type change is structural — keep on db; groupBy is per-block.
+    updateView(db.id, view.id, { type: "board" });
+    writeViewLocal({ groupBy: prop.id });
   };
 
   const setCalc = (c: CalcKind) => {
     const calcs = { ...(view.tableCalcs ?? {}) };
     if (c === "none") delete calcs[prop.id];
     else calcs[prop.id] = c;
-    updateView(db.id, view.id, { tableCalcs: calcs });
+    writeViewLocal({ tableCalcs: calcs });
   };
 
   return (
@@ -131,7 +143,7 @@ export function ColumnHeaderMenu({ db, view, prop, index, trigger }: Props) {
         <SortSubmenu
           propId={prop.id}
           sorts={view.sorts}
-          onSet={(next) => updateView(db.id, view.id, { sorts: next })}
+          onSet={(next) => writeViewLocal({ sorts: next })}
         />
 
         <DropdownMenuItem

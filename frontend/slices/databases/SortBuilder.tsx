@@ -1,13 +1,17 @@
 import { Database, DatabaseSort, DatabaseViewConfig } from "@/shared/types/domain";
-import { useStore } from "@/shared/lib/store";
 import { Plus, X, ArrowUp, ArrowDown } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
 
-export function SortBuilder({ db, view }: { db: Database; view: DatabaseViewConfig }) {
-  const { updateView } = useStore();
+interface Props {
+  db: Database;
+  view: DatabaseViewConfig;
+  writeView: (viewId: string, patch: Partial<DatabaseViewConfig>) => void;
+}
+
+export function SortBuilder({ db, view, writeView }: Props) {
   const sorts = view.sorts ?? [];
 
-  const setSorts = (next: DatabaseSort[]) => updateView(db.id, view.id, { sorts: next });
+  const setSorts = (next: DatabaseSort[]) => writeView(view.id, { sorts: next });
 
   const addSort = () => {
     const prop = db.properties.find(p => !sorts.some(s => s.propertyId === p.id));
