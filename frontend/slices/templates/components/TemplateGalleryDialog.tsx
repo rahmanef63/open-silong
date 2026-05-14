@@ -10,8 +10,7 @@ import { useInstantiateTemplate } from "../hooks/useInstantiateTemplate";
 import { useAsyncError } from "@/shared/hooks/useAsyncError";
 import { ArrowLeft, Boxes, X } from "lucide-react";
 import type { TemplateMeta } from "./gallery/parts";
-import { CategorySidebar } from "./gallery/Sidebar";
-import { TemplateGrid } from "./gallery/Grid";
+import { Discover } from "./gallery/Discover";
 import { PreviewPane } from "./gallery/PreviewPane";
 
 interface Props {
@@ -37,7 +36,6 @@ export function TemplateGalleryDialog({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [pending, setPending] = useState(false);
-  const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false);
 
   const selectedFull = useQuery(
     api.templates.queries.getOne,
@@ -83,15 +81,16 @@ export function TemplateGalleryDialog({
     if (r) {
       onOpenChange(false);
       setSelectedId(null);
-      setMobilePreviewOpen(false);
       onInstantiated?.(r.rootPageId);
     }
   };
 
+  const inDetail = selected !== null;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="p-0 max-w-6xl w-[96vw] h-[88vh] gap-0 flex flex-col overflow-hidden [&>button.absolute]:hidden"
+        className="p-0 max-w-7xl w-[96vw] h-[92vh] gap-0 flex flex-col overflow-hidden [&>button.absolute]:hidden"
       >
         <DialogTitle className="sr-only">Templates</DialogTitle>
         <DialogDescription className="sr-only">
@@ -99,23 +98,26 @@ export function TemplateGalleryDialog({
         </DialogDescription>
 
         <header className="flex items-center gap-3 border-b border-border px-4 py-2.5 shrink-0">
-          {mobilePreviewOpen && (
+          {inDetail ? (
             <button
               type="button"
-              onClick={() => setMobilePreviewOpen(false)}
-              className="md:hidden h-8 w-8 grid place-items-center rounded text-muted-foreground hover:bg-accent hover:text-foreground"
-              aria-label="Back to list"
+              onClick={() => setSelectedId(null)}
+              className="h-8 px-2 flex items-center gap-1.5 rounded text-muted-foreground hover:bg-accent hover:text-foreground text-sm"
+              aria-label="Back to gallery"
             >
               <ArrowLeft className="h-4 w-4" />
+              <span className="hidden sm:inline">Templates</span>
             </button>
+          ) : (
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <Boxes className="h-4 w-4 text-brand shrink-0" />
+              <span className="font-semibold text-sm">Templates</span>
+              <span className="text-xs text-muted-foreground truncate hidden sm:inline">
+                · marketplace for new pages
+              </span>
+            </div>
           )}
-          <div className="flex items-center gap-2 min-w-0 flex-1">
-            <Boxes className="h-4 w-4 text-brand shrink-0" />
-            <span className="font-semibold text-sm">Templates</span>
-            <span className="text-xs text-muted-foreground truncate">
-              · pick a starter for a new page
-            </span>
-          </div>
+          <div className="flex-1" />
           <button
             type="button"
             onClick={() => onOpenChange(false)}
@@ -126,33 +128,29 @@ export function TemplateGalleryDialog({
           </button>
         </header>
 
-        <div className="flex-1 min-h-0 flex flex-col md:flex-row overflow-hidden">
-          <CategorySidebar
-            totalCount={list?.length ?? 0}
-            categories={categories}
-            activeCategory={activeCategory}
-            onPick={setActiveCategory}
-            mobilePreviewOpen={mobilePreviewOpen}
-          />
-          <TemplateGrid
-            list={list}
-            filtered={filtered}
-            search={search}
-            onSearchChange={setSearch}
-            selectedId={selectedId}
-            onSelect={(id) => { setSelectedId(id); setMobilePreviewOpen(true); }}
-            mobilePreviewOpen={mobilePreviewOpen}
-          />
+        {inDetail ? (
           <PreviewPane
             selected={selected}
             selectedJson={selectedJson}
             selectedLoading={selectedLoading}
             pending={pending}
-            mobilePreviewOpen={mobilePreviewOpen}
-            onCancel={() => { setSelectedId(null); setMobilePreviewOpen(false); }}
+            onCancel={() => setSelectedId(null)}
             onUse={handleUse}
           />
-        </div>
+        ) : (
+          <Discover
+            list={list}
+            filtered={filtered}
+            search={search}
+            onSearchChange={setSearch}
+            totalCount={list?.length ?? 0}
+            categories={categories}
+            activeCategory={activeCategory}
+            onPickCategory={setActiveCategory}
+            selectedId={selectedId}
+            onSelect={(id) => setSelectedId(id)}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );
