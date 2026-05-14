@@ -39,6 +39,7 @@ export function useDatabaseActions({ databaseMap, pageMap, pushStructuralAction 
     createDatabase: dbCrud.createDatabase,
     updateDatabase: dbCrud.updateDatabase,
     addDatabaseFromTable: dbCrud.addDatabaseFromTable,
+    duplicateDatabase: dbCrud.duplicateDatabase,
     trashDatabase: dbCrud.trashDatabase,
     restoreDatabase: dbCrud.restoreDatabase,
     permanentlyDeleteDatabase: dbCrud.permanentlyDeleteDatabase,

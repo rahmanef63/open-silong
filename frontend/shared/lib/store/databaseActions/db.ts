@@ -60,6 +60,67 @@ export function useDbCrud({ databaseMap }: Args) {
     [mutCreateDatabase, mutUpdateDatabase, mutAddRow],
   );
 
+  /** Structure-only duplicate — clones properties + views + active-view
+   *  with full id-remapping. Rows are NOT copied (deep page-clone needs
+   *  a backend action — track as follow-up). */
+  const duplicateDatabase = useCallback(
+    async (id: string): Promise<string | null> => {
+      const src = databaseMap.get(id);
+      if (!src) return null;
+      const dbId = await mutCreateDatabase({ name: `${src.name} copy` });
+      const idMap = new Map<string, string>();
+      const cloneProp = (p: Property): Property => {
+        const nid = uid();
+        idMap.set(p.id, nid);
+        return {
+          ...p,
+          id: nid,
+          options: p.options?.map((o) => ({ ...o, id: uid() })),
+          relationInversePropertyId: undefined,
+        };
+      };
+      const properties = src.properties.map(cloneProp);
+      const remapId = (x?: string | null) => (x ? idMap.get(x) ?? x : x);
+      const remapList = (xs?: string[]) => xs?.map((x) => idMap.get(x) ?? x);
+      const cloneView = (v: DatabaseViewConfig): DatabaseViewConfig => ({
+        ...structuredClone(v),
+        id: uid(),
+        sorts: v.sorts.map((s) => ({ ...s, propertyId: idMap.get(s.propertyId) ?? s.propertyId })),
+        filters: v.filters.map((f) => ({ ...f, propertyId: idMap.get(f.propertyId) ?? f.propertyId })),
+        hiddenPropIds: remapList(v.hiddenPropIds),
+        frozenPropIds: remapList(v.frozenPropIds),
+        boardCardProps: remapList(v.boardCardProps),
+        galleryCardProps: remapList(v.galleryCardProps),
+        listSummaryProps: remapList(v.listSummaryProps),
+        feedSummaryProps: remapList(v.feedSummaryProps),
+        formRequiredProps: remapList(v.formRequiredProps),
+        formShownProps: remapList(v.formShownProps),
+        dashboardKPIs: remapList(v.dashboardKPIs),
+        dashboardBreakdowns: remapList(v.dashboardBreakdowns),
+        groupBy: remapId(v.groupBy ?? undefined) ?? undefined,
+        boardColorByProp: remapId(v.boardColorByProp ?? undefined) ?? undefined,
+        galleryCoverProp: remapId(v.galleryCoverProp ?? undefined) ?? undefined,
+        calendarDateProp: remapId(v.calendarDateProp ?? undefined) ?? undefined,
+        calendarEndProp: remapId(v.calendarEndProp ?? undefined) ?? undefined,
+        calendarColorByProp: remapId(v.calendarColorByProp ?? undefined) ?? undefined,
+        timelineStartProp: remapId(v.timelineStartProp ?? undefined) ?? undefined,
+        timelineEndProp: remapId(v.timelineEndProp ?? undefined) ?? undefined,
+        timelineColorByProp: remapId(v.timelineColorByProp ?? undefined) ?? undefined,
+        chartXProp: remapId(v.chartXProp ?? undefined) ?? undefined,
+        chartYProp: remapId(v.chartYProp ?? undefined) ?? undefined,
+        mapLatProp: remapId(v.mapLatProp ?? undefined) ?? undefined,
+        mapLngProp: remapId(v.mapLngProp ?? undefined) ?? undefined,
+        mapPinColorProp: remapId(v.mapPinColorProp ?? undefined) ?? undefined,
+      });
+      const views = src.views.map(cloneView);
+      const srcActiveIdx = src.views.findIndex((v) => v.id === src.activeViewId);
+      const activeViewId = srcActiveIdx >= 0 ? views[srcActiveIdx].id : views[0]?.id ?? "";
+      await mutUpdateDatabase({ dbId, patch: { properties, views, activeViewId } });
+      return dbId;
+    },
+    [databaseMap, mutCreateDatabase, mutUpdateDatabase],
+  );
+
   const trashDatabase = useCallback((id: string) => { mutTrashDatabase({ dbId: id }); }, [mutTrashDatabase]);
   const restoreDatabase = useCallback((id: string) => { mutRestoreDatabase({ dbId: id }); }, [mutRestoreDatabase]);
   const permanentlyDeleteDatabase = useCallback(
@@ -69,6 +130,7 @@ export function useDbCrud({ databaseMap }: Args) {
 
   return {
     getDatabase, createDatabase, updateDatabase, addDatabaseFromTable,
+    duplicateDatabase,
     trashDatabase, restoreDatabase, permanentlyDeleteDatabase,
     mutUpdateDatabase,
   };

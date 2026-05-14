@@ -90,6 +90,7 @@ export function useDatabases() {
     restoreDatabase: s.restoreDatabase,
     permanentlyDeleteDatabase: s.permanentlyDeleteDatabase,
     addDatabaseFromTable: s.addDatabaseFromTable,
+    duplicateDatabase: s.duplicateDatabase,
   };
 }
 

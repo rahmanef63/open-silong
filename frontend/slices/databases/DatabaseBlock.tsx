@@ -18,7 +18,7 @@ import { PROPERTY_TYPE_LABELS } from "./lib/propertyTypeMeta";
 export { PROPERTY_TYPE_LABELS };
 
 export function DatabaseBlock({
-  pageId: _pageId,
+  pageId,
   block,
   fullPage = false,
 }: {
@@ -29,13 +29,15 @@ export function DatabaseBlock({
    *  home of the DB (no host page concept). Used by `/dashboard/db/[id]`. */
   fullPage?: boolean;
 }) {
-  void _pageId;
-  const { getDatabase, pages } = useStore();
+  const { getDatabase, pages, updateBlock, updateDatabase } = useStore();
   const navigate = useNavigate();
   const [openRowId, setOpenRowId] = useState<string | null>(null);
 
   const db = block.databaseId ? getDatabase(block.databaseId) : undefined;
-  const view = db ? db.views.find((v) => v.id === db.activeViewId) ?? db.views[0] : undefined;
+  // Linked-view per-block override: prefer block.activeViewId so two
+  // linked instances of the same DB can show different view tabs.
+  const activeViewId = block.activeViewId ?? db?.activeViewId;
+  const view = db ? db.views.find((v) => v.id === activeViewId) ?? db.views[0] : undefined;
   const rows = useDatabaseRows(db, pages);
   const filtered = useFilteredRows(rows, view);
 
@@ -46,6 +48,14 @@ export function DatabaseBlock({
   // marker) is deprecated — openAsPage navigates to /db/.
   const isInline = fullPage ? false : true;
   const isLinked = useIsLinked(db, pages, isInline);
+
+  // Inline / linked instances persist active-view to the block; the
+  // canonical (full-page) view writes to the database so its default
+  // is shared across the workspace.
+  const onActivateView = (viewId: string) => {
+    if (isInline) updateBlock(pageId, block.id, { activeViewId: viewId });
+    else if (db) updateDatabase(db.id, { activeViewId: viewId });
+  };
 
   if (block.databaseId && !db) {
     return <DatabaseSkeleton />;
@@ -84,6 +94,8 @@ export function DatabaseBlock({
         isInline={isInline}
         isLinked={isLinked}
         onOpenAsPage={openAsPage}
+        activeViewId={activeViewId}
+        onActivateView={onActivateView}
       />
       <DatabaseToolbar db={db} view={view} />
 
