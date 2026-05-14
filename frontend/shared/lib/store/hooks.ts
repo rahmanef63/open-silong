@@ -97,6 +97,7 @@ export function useDatabaseProperties() {
   const s = useStore();
   return {
     addProperty: s.addProperty,
+    duplicateProperty: s.duplicateProperty,
     updateProperty: s.updateProperty,
     deleteProperty: s.deleteProperty,
     reorderProperties: s.reorderProperties,

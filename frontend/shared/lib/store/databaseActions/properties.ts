@@ -29,6 +29,37 @@ export function usePropertyActions({ databaseMap, mutUpdateDatabase, pushStructu
     [databaseMap, mutUpdateDatabase],
   );
 
+  const duplicateProperty = useCallback(
+    (dbId: string, propId: string): Property | null => {
+      const db = databaseMap.get(dbId);
+      if (!db) return null;
+      const src = db.properties.find((p) => p.id === propId);
+      if (!src) return null;
+      // Fresh ids on cloned select/multi/status options so the duplicate
+      // owns them outright — relabelling one column doesn't drag the other.
+      const clonedOptions = src.options?.map((o) => ({ ...o, id: uid() }));
+      const clone: Property = {
+        ...src,
+        id: uid(),
+        name: `${src.name} copy`,
+        options: clonedOptions,
+        // Drop relation inverse linkage on duplicate — the duplicate is a
+        // new endpoint that the target db doesn't know about. Author can
+        // re-enable twoWay manually.
+        relationInversePropertyId: undefined,
+      };
+      const srcIdx = db.properties.findIndex((p) => p.id === propId);
+      const properties = [
+        ...db.properties.slice(0, srcIdx + 1),
+        clone,
+        ...db.properties.slice(srcIdx + 1),
+      ];
+      mutUpdateDatabase({ dbId, patch: { properties } });
+      return clone;
+    },
+    [databaseMap, mutUpdateDatabase],
+  );
+
   const updateProperty = useCallback(
     (dbId: string, propId: string, patch: Partial<Property>) => {
       const db = databaseMap.get(dbId);
@@ -146,7 +177,7 @@ export function usePropertyActions({ databaseMap, mutUpdateDatabase, pushStructu
   );
 
   return {
-    addProperty, updateProperty, deleteProperty, reorderProperties,
+    addProperty, duplicateProperty, updateProperty, deleteProperty, reorderProperties,
     addSelectOption, updateSelectOption, deleteSelectOption,
   };
 }
