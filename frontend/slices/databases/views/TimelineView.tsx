@@ -9,6 +9,7 @@ import { DynamicIcon } from "@/shared/components/icon-picker";
 import { DAY_MS, makeBarStyle, msToYMD, toMs } from "./timeline/utils";
 import { TimelineBar } from "./timeline/TimelineBar";
 import { TimelineHeader } from "./timeline/HeaderRow";
+import { TimelineDependencies } from "./timeline/Dependencies";
 
 interface Props { db: Database; view: DatabaseViewConfig; rows: Page[]; onOpenRow: (id: string) => void }
 
@@ -22,6 +23,11 @@ export function TimelineView({ db, view, rows, onOpenRow }: Props) {
     db.properties.find((p) => p.id === view.timelineEndProp && p.type === "date" && p.id !== dateProp?.id)
     ?? db.properties.find((p) => p.type === "date" && p.id !== dateProp?.id);
   const colorProp = db.properties.find((p) => p.id === view.timelineColorByProp && (p.type === "select" || p.type === "status"));
+  // Dependency arrows: explicit configured prop, else first self-relation
+  // prop pointing back at this DB.
+  const depProp =
+    db.properties.find((p) => p.id === view.timelineDependencyProp && p.type === "relation" && p.relationDatabaseId === db.id)
+    ?? db.properties.find((p) => p.type === "relation" && p.relationDatabaseId === db.id);
 
   const zoom = view.timelineZoom ?? "month";
   const CELL_W = zoom === "day" ? 64 : zoom === "week" ? 40 : zoom === "quarter" ? 14 : 32;
@@ -68,6 +74,13 @@ export function TimelineView({ db, view, rows, onOpenRow }: Props) {
   }, [rows, dateProp, endProp]);
 
   const getBarStyle = makeBarStyle(rangeStart, DAYS, CELL_W);
+  const ROW_H = 32;
+  const rowIndex = useMemo(() => {
+    const m = new Map<string, number>();
+    rows.forEach((r, i) => m.set(r.id, i));
+    return m;
+  }, [rows]);
+  const totalH = rows.length * ROW_H;
 
   return (
     <div className="p-3 overflow-x-auto">
@@ -107,6 +120,19 @@ export function TimelineView({ db, view, rows, onOpenRow }: Props) {
           labelW={LABEL_W}
         />
 
+        <div className="relative">
+        {depProp && (
+          <TimelineDependencies
+            items={items.filter((it) => it.endMs >= rangeStart && it.startMs < rangeEnd)}
+            rowIndex={rowIndex}
+            getBarStyle={getBarStyle}
+            depProp={depProp}
+            rowHeight={ROW_H}
+            labelW={LABEL_W}
+            width={LABEL_W + DAYS * CELL_W}
+            height={totalH}
+          />
+        )}
         {rows.map((row) => {
           const item = items.find((x) => x.row.id === row.id);
           const bar = item ? getBarStyle(item) : null;
@@ -189,6 +215,7 @@ export function TimelineView({ db, view, rows, onOpenRow }: Props) {
         {rows.length === 0 && (
           <div className="p-4 text-sm text-muted-foreground text-center">No rows.</div>
         )}
+        </div>
       </div>
       <QuickCreateDialog
         db={db}

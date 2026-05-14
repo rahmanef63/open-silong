@@ -411,6 +411,11 @@ export interface DatabaseViewConfig {
   timelineEndProp?: string;
   timelineZoom?: "day" | "week" | "month" | "quarter";
   timelineColorByProp?: string;
+  /** Self-relation property id used to draw dependency arrows.
+   *  Each row's value is an array of predecessor row ids (rows that
+   *  must complete before this one starts). Auto-detects the first
+   *  self-relation prop when unset. */
+  timelineDependencyProp?: string;
 
   // ─── Chart view (additional) ─────────────────────────
   chartShowLegend?: boolean;
