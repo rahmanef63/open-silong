@@ -5,6 +5,12 @@ import { requireAdminQuery } from "../_shared/auth";
 
 const DAY_MS = 86_400_000;
 
+/** Safety cap on full-table scans in admin analytics. Prevents OOM /
+ *  function-time-budget blowouts once a table grows past Convex's per-
+ *  query row limit (~32k). Numbers above this are silently truncated;
+ *  the admin UI labels metrics as "first {ADMIN_SCAN_CAP}" when relevant. */
+const ADMIN_SCAN_CAP = 25_000;
+
 /** Read-only: returns role for the current user, or "user" if not bootstrapped /
  *  not signed in. Used by frontend to gate the Admin nav entry.
  *
@@ -24,7 +30,7 @@ export const getMyRole = query({
       .withIndex("by_user", (q) => q.eq("userId", userId))
       .unique();
     const role = (profile?.role ?? "user") as "superadmin" | "admin" | "user";
-    const allProfiles = await ctx.db.query("userProfiles").collect();
+    const allProfiles = await ctx.db.query("userProfiles").take(ADMIN_SCAN_CAP);
     const hasSuperAdmin = allProfiles.some((p) => p.role === "superadmin");
     return {
       role,
@@ -40,14 +46,14 @@ export const getOverview = query({
     await requireAdminQuery(ctx);
     const [users, profiles, workspaces, pages, databases, files, comments, notifications] =
       await Promise.all([
-        ctx.db.query("users").collect(),
-        ctx.db.query("userProfiles").collect(),
-        ctx.db.query("workspaces").collect(),
-        ctx.db.query("pages").collect(),
-        ctx.db.query("databases").collect(),
-        ctx.db.query("files").collect(),
-        ctx.db.query("comments").collect(),
-        ctx.db.query("notifications").collect(),
+        ctx.db.query("users").take(ADMIN_SCAN_CAP),
+        ctx.db.query("userProfiles").take(ADMIN_SCAN_CAP),
+        ctx.db.query("workspaces").take(ADMIN_SCAN_CAP),
+        ctx.db.query("pages").take(ADMIN_SCAN_CAP),
+        ctx.db.query("databases").take(ADMIN_SCAN_CAP),
+        ctx.db.query("files").take(ADMIN_SCAN_CAP),
+        ctx.db.query("comments").take(ADMIN_SCAN_CAP),
+        ctx.db.query("notifications").take(ADMIN_SCAN_CAP),
       ]);
     const trashedPages = pages.filter((p) => p.trashed).length;
     const adminCount = profiles.filter((p) => p.role === "admin" || p.role === "superadmin").length;
@@ -113,7 +119,7 @@ export const getActivityTrend = query({
     const span = Math.max(1, Math.min(90, days ?? 14));
     const now = Date.now();
     const start = now - span * DAY_MS;
-    const pages = await ctx.db.query("pages").collect();
+    const pages = await ctx.db.query("pages").take(ADMIN_SCAN_CAP);
     type Bucket = { date: string; created: number; edited: number };
     const buckets: Bucket[] = [];
     for (let i = span - 1; i >= 0; i--) {
@@ -146,9 +152,9 @@ export const getTopUsersByContent = query({
     await requireAdminQuery(ctx);
     const cap = Math.max(1, Math.min(50, limit ?? 10));
     const [users, pages, databases] = await Promise.all([
-      ctx.db.query("users").collect(),
-      ctx.db.query("pages").collect(),
-      ctx.db.query("databases").collect(),
+      ctx.db.query("users").take(ADMIN_SCAN_CAP),
+      ctx.db.query("pages").take(ADMIN_SCAN_CAP),
+      ctx.db.query("databases").take(ADMIN_SCAN_CAP),
     ]);
     const pageCount = new Map<string, number>();
     const dbCount = new Map<string, number>();
@@ -178,8 +184,8 @@ export const getRoleDistribution = query({
   args: {},
   handler: async (ctx) => {
     await requireAdminQuery(ctx);
-    const profiles = await ctx.db.query("userProfiles").collect();
-    const total = (await ctx.db.query("users").collect()).length;
+    const profiles = await ctx.db.query("userProfiles").take(ADMIN_SCAN_CAP);
+    const total = (await ctx.db.query("users").take(ADMIN_SCAN_CAP)).length;
     const counts = { superadmin: 0, admin: 0, user: 0 };
     for (const p of profiles) counts[p.role as keyof typeof counts] += 1;
     const profiledTotal = counts.superadmin + counts.admin + counts.user;
@@ -195,7 +201,7 @@ export const getSignupTrend = query({
     const span = Math.max(1, Math.min(90, days ?? 14));
     const now = Date.now();
     const start = now - span * DAY_MS;
-    const users = await ctx.db.query("users").collect();
+    const users = await ctx.db.query("users").take(ADMIN_SCAN_CAP);
     const buckets: { date: string; count: number }[] = [];
     for (let i = span - 1; i >= 0; i--) {
       const d = new Date(now - i * DAY_MS);
@@ -220,11 +226,11 @@ export const listUsersWithProfiles = query({
     await requireAdminQuery(ctx);
     const cap = Math.max(1, Math.min(500, limit ?? 200));
     const users = await ctx.db.query("users").take(cap);
-    const profiles = await ctx.db.query("userProfiles").collect();
+    const profiles = await ctx.db.query("userProfiles").take(ADMIN_SCAN_CAP);
     const profileByUser = new Map(profiles.map((p) => [p.userId, p]));
     const [allPages, allDatabases] = await Promise.all([
-      ctx.db.query("pages").collect(),
-      ctx.db.query("databases").collect(),
+      ctx.db.query("pages").take(ADMIN_SCAN_CAP),
+      ctx.db.query("databases").take(ADMIN_SCAN_CAP),
     ]);
     const pageCountByUser = new Map<string, number>();
     const dbCountByUser = new Map<string, number>();
