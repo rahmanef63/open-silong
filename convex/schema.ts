@@ -130,6 +130,7 @@ export default defineSchema({
     templates: v.optional(v.array(v.any())),
     defaultTemplateId: v.optional(v.union(v.string(), v.null())),
     subItemsParentPropId: v.optional(v.union(v.string(), v.null())),
+    locked: v.optional(v.boolean()),
     trashed: v.optional(v.boolean()),
   })
     .index("by_user", ["userId"])

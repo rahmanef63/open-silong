@@ -11,6 +11,7 @@ import { AddColumnHeader, AddRowFooter } from "../row";
 import { useDragFill, type FillSource } from "@/slices/database-cell-selection";
 import { RowMarqueeOverlay } from "../row-selection";
 import { getVisibleProps } from "../lib/visibility";
+import { buildSubItemsTree } from "../lib/subItemsTree";
 import { HeaderCheckboxGutter } from "./table/Checkboxes";
 import { SortableHeader } from "./table/SortableHeader";
 import { SortableRow } from "./table/SortableRow";
@@ -26,6 +27,20 @@ export function TableView({ db, view, rows, onOpenRow }: ViewProps) {
     rowHeight === "short" ? "min-h-7" : rowHeight === "tall" ? "min-h-12" : "min-h-9";
   const [pendingFocusId, setPendingFocusId] = useState<string | null>(null);
   const [selectedCell, setSelectedCell] = useState<{ rowId: string; propId: string } | null>(null);
+  // Sub-items collapse/expand state — defaults to expanded so first paint
+  // shows the tree. Persistence per-view is a follow-up.
+  const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
+  const toggleExpand = (id: string) =>
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  const tree = buildSubItemsTree(db, rows, expanded.size === 0 && db.subItemsParentPropId
+    ? new Set(rows.map((r) => r.id))
+    : expanded);
+  const treeEnabled = !!db.subItemsParentPropId;
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
@@ -79,23 +94,31 @@ export function TableView({ db, view, rows, onOpenRow }: ViewProps) {
               <AddColumnHeader dbId={db.id} />
             </div>
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onRowEnd}>
-              <SortableContext items={rows.map((r) => r.id)} strategy={verticalListSortingStrategy}>
-                {rows.map((row, rowIndex) => (
+              <SortableContext items={tree.map((n) => n.row.id)} strategy={verticalListSortingStrategy}>
+                {tree.map((node, rowIndex) => (
                   <SortableRow
-                    key={row.id}
-                    row={row}
+                    key={node.row.id}
+                    row={node.row}
                     rowIndex={rowIndex}
                     db={db}
                     visibleProps={visibleProps}
-                    onOpen={() => onOpenRow(row.id)}
-                    onDelete={() => deleteRow(db.id, row.id)}
-                    autoEdit={pendingFocusId === row.id}
+                    onOpen={() => onOpenRow(node.row.id)}
+                    onDelete={() => deleteRow(db.id, node.row.id)}
+                    autoEdit={pendingFocusId === node.row.id}
                     onAutoEditConsumed={() => setPendingFocusId(null)}
                     selectedCell={selectedCell}
                     onSelectCell={setSelectedCell}
                     fill={fill}
                     wrap={wrap}
                     rowHeightClass={rowHeightClass}
+                    treeEnabled={treeEnabled}
+                    depth={node.depth}
+                    hasChildren={node.hasChildren}
+                    expanded={
+                      expanded.has(node.row.id) ||
+                      (expanded.size === 0 && treeEnabled)
+                    }
+                    onToggleExpand={() => toggleExpand(node.row.id)}
                   />
                 ))}
               </SortableContext>

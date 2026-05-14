@@ -184,6 +184,104 @@ export const addRow = mutation({
   },
 });
 
+/** Deep-copy rows from `srcDbId` into `targetDbId`. Walks source row
+ *  pages, clones each (with new id), and re-points `rowOfDatabaseId` at
+ *  the target. Sub-item parent references are id-remapped in a second
+ *  pass so children land beneath their cloned parent. Relation values
+ *  pointing OUTSIDE the source db are preserved as-is; intra-db
+ *  relations get remapped to the new row ids.
+ *
+ *  Bounded at 5000 rows per call — past that, suggest export/import. */
+export const duplicateWithRows = mutation({
+  args: { srcDbId: v.string(), targetDbId: v.string() },
+  handler: async (ctx, args) => {
+    const { userId, doc: src } = await requireWorkspaceAccess(ctx, "databases", args.srcDbId as Id<"databases">, { write: false });
+    const { doc: target } = await requireWorkspaceAccess(ctx, "databases", args.targetDbId as Id<"databases">, { write: true });
+    await rateLimit(ctx, userId, RATE_LIMITS.dbCreate);
+    const MAX = 5000;
+    const srcRowIds = (src.rowIds ?? []).slice(0, MAX) as string[];
+    if (srcRowIds.length === 0) return { copied: 0 };
+    const now = Date.now();
+
+    // Build prop-id remap from source.properties → target.properties by
+    // (name + type). When the duplicate-database action was used,
+    // properties match by (name + type) since names are preserved.
+    const propIdMap = new Map<string, string>();
+    for (const sp of (src.properties ?? []) as { id: string; name: string; type: string }[]) {
+      const tp = (target.properties ?? []).find(
+        (p: any) => p.name === sp.name && p.type === sp.type,
+      );
+      if (tp) propIdMap.set(sp.id, tp.id);
+    }
+
+    const rowIdMap = new Map<string, string>();
+    const insertedIds: string[] = [];
+
+    // Phase 1: insert clones with rowProps but parent-ref values cleared
+    // (we don't have new ids yet for intra-db relations).
+    for (const oldId of srcRowIds) {
+      const page = await ctx.db.get(oldId as Id<"pages">);
+      if (!page) continue;
+      const remappedRowProps: Record<string, unknown> = {};
+      for (const [oldPropId, val] of Object.entries(page.rowProps ?? {})) {
+        const newPropId = propIdMap.get(oldPropId);
+        if (!newPropId) continue;
+        remappedRowProps[newPropId] = val;
+      }
+      const newId = await ctx.db.insert("pages", {
+        userId,
+        workspaceId: target.workspaceId,
+        parentId: null,
+        title: page.title,
+        icon: page.icon,
+        cover: page.cover ?? null,
+        blocks: JSON.parse(JSON.stringify(page.blocks ?? [])),
+        favorite: false,
+        trashed: false,
+        rowOfDatabaseId: args.targetDbId,
+        rowProps: remappedRowProps,
+        createdAt: now,
+        updatedAt: now,
+      });
+      rowIdMap.set(String(oldId), String(newId));
+      insertedIds.push(String(newId));
+    }
+
+    // Phase 2: rewrite intra-db relation values now that we have the
+    // full id map. Affects relation props whose target is the source db
+    // (which is now this same target db post-clone).
+    const relationProps = (target.properties ?? []).filter(
+      (p: any) => p.type === "relation",
+    ) as { id: string; relationDatabaseId?: string | null }[];
+    for (const newId of insertedIds) {
+      const page = await ctx.db.get(newId as Id<"pages">);
+      if (!page) continue;
+      let touched = false;
+      const next: Record<string, unknown> = { ...(page.rowProps ?? {}) };
+      for (const rp of relationProps) {
+        const raw = next[rp.id];
+        if (!Array.isArray(raw)) continue;
+        const remapped = (raw as string[]).map((id) => rowIdMap.get(id) ?? id);
+        const changed = remapped.some((id, i) => id !== (raw as string[])[i]);
+        if (changed) {
+          next[rp.id] = remapped;
+          touched = true;
+        }
+      }
+      if (touched) {
+        await ctx.db.patch(newId as Id<"pages">, { rowProps: next });
+      }
+    }
+
+    // Append to target.rowIds in source order.
+    await ctx.db.patch(args.targetDbId as Id<"databases">, {
+      rowIds: [...(target.rowIds ?? []), ...insertedIds],
+      updatedAt: now,
+    });
+    return { copied: insertedIds.length };
+  },
+});
+
 /** Soft-delete a row page (sets `pages.trashed: true`) and remove its
  *  id from `database.rowIds`. Recoverable from trash for 30 days. */
 export const deleteRow = mutation({

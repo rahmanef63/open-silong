@@ -36,6 +36,7 @@ export function ColumnHeaderMenu({ db, view, prop, index, trigger }: Props) {
     reorderProperties, updateView,
   } = useStore();
 
+  const locked = !!db.locked;
   const isFrozen = view.frozenPropIds?.includes(prop.id) ?? false;
   const isHidden = view.hiddenPropIds?.includes(prop.id) ?? false;
   const isWrap = !!view.tableWrapCells;
@@ -162,29 +163,30 @@ export function ColumnHeaderMenu({ db, view, prop, index, trigger }: Props) {
 
         <DropdownMenuSeparator />
 
-        <DropdownMenuItem onClick={() => duplicateProperty(db.id, prop.id)}>
+        <DropdownMenuItem onClick={() => duplicateProperty(db.id, prop.id)} disabled={locked} className={cn(locked && "opacity-60")}>
           <Copy className="mr-2 h-3.5 w-3.5" /> Duplicate property
         </DropdownMenuItem>
 
         <DropdownMenuSeparator />
 
-        <DropdownMenuItem onClick={() => insertAt(-1)}>
+        <DropdownMenuItem onClick={() => insertAt(-1)} disabled={locked} className={cn(locked && "opacity-60")}>
           <ArrowLeftToLine className="mr-2 h-3.5 w-3.5" /> Insert left
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => insertAt(1)}>
+        <DropdownMenuItem onClick={() => insertAt(1)} disabled={locked} className={cn(locked && "opacity-60")}>
           <ArrowRightToLine className="mr-2 h-3.5 w-3.5" /> Insert right
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => moveBy(-1)} disabled={!canMoveLeft} className={cn(!canMoveLeft && "opacity-60")}>
+        <DropdownMenuItem onClick={() => moveBy(-1)} disabled={locked || !canMoveLeft} className={cn((locked || !canMoveLeft) && "opacity-60")}>
           <ArrowLeft className="mr-2 h-3.5 w-3.5" /> Move left
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => moveBy(1)} disabled={!canMoveRight} className={cn(!canMoveRight && "opacity-60")}>
+        <DropdownMenuItem onClick={() => moveBy(1)} disabled={locked || !canMoveRight} className={cn((locked || !canMoveRight) && "opacity-60")}>
           <ArrowRight className="mr-2 h-3.5 w-3.5" /> Move right
         </DropdownMenuItem>
 
         <DropdownMenuSeparator />
         <DropdownMenuItem
-          className="text-destructive focus:text-destructive"
+          className={cn("text-destructive focus:text-destructive", locked && "opacity-60")}
           onClick={() => deleteProperty(db.id, prop.id)}
+          disabled={locked}
         >
           <Trash2 className="mr-2 h-3.5 w-3.5" /> Delete property
         </DropdownMenuItem>
