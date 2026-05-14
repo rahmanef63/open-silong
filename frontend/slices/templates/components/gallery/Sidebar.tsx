@@ -18,7 +18,8 @@ export function CategorySidebar({
     <aside
       className={cn(
         "shrink-0 border-b md:border-b-0 md:border-r border-border bg-muted/20",
-        "md:w-56 md:flex-col md:flex md:overflow-y-auto md:scrollbar-thin",
+        // Desktop layout = 1/6 of dialog width (sidebar : list : preview = 1 : 1 : 4)
+        "md:w-1/6 md:min-w-[160px] md:max-w-[220px] md:flex-col md:flex md:overflow-y-auto md:scrollbar-thin",
         mobilePreviewOpen ? "hidden md:flex" : "flex flex-col",
       )}
     >

@@ -16,7 +16,9 @@ export function TemplateGrid({
   return (
     <section
       className={cn(
-        "flex-1 min-h-0 flex flex-col overflow-hidden",
+        // Desktop = 1/6 of dialog (matches sidebar). Mobile = full width.
+        "min-h-0 flex flex-col overflow-hidden flex-1 md:flex-none",
+        "md:w-1/6 md:min-w-[200px] md:max-w-[280px] md:border-r md:border-border md:shrink-0",
         mobilePreviewOpen ? "hidden md:flex" : "flex",
       )}
     >
@@ -40,7 +42,7 @@ export function TemplateGrid({
             {search ? "No templates match your search." : "No templates in this category."}
           </div>
         )}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+        <div className="grid grid-cols-1 gap-2.5">
           {filtered.map((tpl) => (
             <TemplateCard
               key={String(tpl._id)}
