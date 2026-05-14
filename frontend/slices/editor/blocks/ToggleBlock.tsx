@@ -5,12 +5,11 @@ import { ChevronRight, Plus } from "lucide-react";
 import type { Block, BlockType } from "@/shared/types/domain";
 import { useStore } from "@/shared/lib/store";
 import { cn } from "@/shared/lib/utils";
+import { uid } from "@/shared/lib/uid";
 import { BlockShell } from "./BlockShell";
 import { BlockControls } from "./BlockControls";
 import { requireNested } from "./nestedRegistry";
 import { bgColorClass, colorClass } from "../lib/colors";
-
-const uid = () => Math.random().toString(36).slice(2, 10);
 
 /** Body of a toggle block — chevron + heading + children list.
  * Pure callback API so it can be reused both at the top level (wrapped in BlockShell)

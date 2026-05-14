@@ -9,11 +9,11 @@ import { gunzipSync } from "zlib";
 import { markdownToBlocks, htmlToBlocks, parseCsv } from "./markdown";
 
 const MAX_ZIP_BYTES = 50 * 1024 * 1024;
+import { uid } from "../_shared/uid";
+
 const MAX_ENTRIES = 5_000;
 const MAX_TEXT_BYTES = 1 * 1024 * 1024;
 const MAX_BINARY_BYTES = 25 * 1024 * 1024;
-
-const uid = () => Math.random().toString(36).slice(2, 10);
 
 interface ImportSummary {
   pages: number;

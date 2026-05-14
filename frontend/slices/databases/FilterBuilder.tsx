@@ -1,5 +1,6 @@
 import { Database, DatabaseFilter, DatabaseViewConfig, Property } from "@/shared/types/domain";
 import { useStore } from "@/shared/lib/store";
+import { uid } from "@/shared/lib/uid";
 import { Plus, X } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
 import { Input } from "@/shared/ui/input";
@@ -12,8 +13,6 @@ const OPS: { value: DatabaseFilter["op"]; label: string; needsValue: boolean }[]
   { value: "checked", label: "is checked", needsValue: false },
   { value: "unchecked", label: "is unchecked", needsValue: false },
 ];
-
-const uid = () => Math.random().toString(36).slice(2, 10);
 
 export function FilterBuilder({ db, view }: { db: Database; view: DatabaseViewConfig }) {
   const { updateView } = useStore();

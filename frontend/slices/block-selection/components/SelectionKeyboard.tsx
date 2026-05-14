@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import type { Block } from "@/shared/types/domain";
 import { useStore } from "@/shared/lib/store";
+import { uid } from "@/shared/lib/uid";
 import { useBlockSelection } from "./BlockSelectionProvider";
 import { moveTopLevelGroup } from "../lib/multiMove";
 
@@ -9,7 +10,6 @@ interface Props {
 }
 
 const CLIPBOARD_MIME = "application/x-notion-clone-blocks";
-const uid = () => Math.random().toString(36).slice(2, 10);
 
 /** Recursively regenerate ids on a block subtree so a paste doesn't collide
  * with the source. */

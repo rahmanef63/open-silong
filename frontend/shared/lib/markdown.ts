@@ -1,6 +1,5 @@
 import { Block, Page } from "../types";
-
-const uid = () => Math.random().toString(36).slice(2, 10);
+import { uid } from "./uid";
 
 export function blockToMarkdown(b: Block, depth = 0): string {
   const indent = "  ".repeat(depth);

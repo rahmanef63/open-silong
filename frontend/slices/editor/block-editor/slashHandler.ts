@@ -1,6 +1,5 @@
 import type { Block, BlockType } from "@/shared/types/domain";
-
-const uid = () => Math.random().toString(36).slice(2, 10);
+import { uid } from "@/shared/lib/uid";
 
 interface Deps {
   pageId: string;

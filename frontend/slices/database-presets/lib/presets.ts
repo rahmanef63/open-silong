@@ -1,6 +1,5 @@
 import type { Database, DatabaseTemplate, DatabaseViewConfig, Property } from "@/shared/types/domain";
-
-const uid = () => Math.random().toString(36).slice(2, 10);
+import { uid } from "@/shared/lib/uid";
 
 export interface DatabasePreset {
   id: string;

@@ -46,4 +46,4 @@ export interface RemapTables {
   rows: Map<string, string>;
 }
 
-export const uid = () => Math.random().toString(36).slice(2, 10);
+export { uid } from "@/shared/lib/uid";

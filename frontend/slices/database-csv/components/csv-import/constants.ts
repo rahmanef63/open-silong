@@ -1,6 +1,6 @@
 import type { PropertyType } from "@/shared/types/domain";
 
-export const uid = () => Math.random().toString(36).slice(2, 10);
+export { uid } from "@/shared/lib/uid";
 export const OPTION_COLORS = ["default", "gray", "brown", "orange", "yellow", "green", "blue", "purple", "pink", "red"];
 
 export const SKIP = "__skip__";

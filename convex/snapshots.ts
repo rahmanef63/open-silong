@@ -2,9 +2,8 @@ import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { requireAuth, requireOwned } from "./_shared/auth";
+import { uid } from "./_shared/uid";
 import { Id } from "./_generated/dataModel";
-
-const uid = () => Math.random().toString(36).slice(2, 10);
 
 export const listForPage = query({
   args: { pageId: v.string() },

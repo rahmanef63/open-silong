@@ -6,6 +6,7 @@ import {
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { useStore } from "@/shared/lib/store";
+import { uid } from "@/shared/lib/uid";
 import type { Database, DatabaseTemplate } from "@/shared/types/domain";
 import { cn } from "@/shared/lib/utils";
 
@@ -14,8 +15,6 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
-
-const uid = () => Math.random().toString(36).slice(2, 10);
 
 export function TemplatesDialog({ db, open, onOpenChange }: Props) {
   const { updateDatabase } = useStore();
@@ -155,7 +154,7 @@ function TemplateEditor({
           onChange={(e) => {
             const lines = e.target.value.split("\n");
             const blocks = lines.map((line) => {
-              const id = Math.random().toString(36).slice(2, 10);
+              const id = uid();
               if (line.startsWith("## ")) return { id, type: "h2" as const, text: line.slice(3) };
               if (line.startsWith("### ")) return { id, type: "h3" as const, text: line.slice(4) };
               if (line.startsWith("- ")) return { id, type: "bullet" as const, text: line.slice(2) };
