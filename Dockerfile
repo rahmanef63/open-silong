@@ -1,9 +1,14 @@
 FROM node:20-alpine AS deps
+RUN apk add --no-cache libc6-compat
+# corepack reads `packageManager` from package.json to pin pnpm version.
+RUN corepack enable
 WORKDIR /app
-COPY package*.json ./
-RUN npm ci --legacy-peer-deps
+COPY package.json pnpm-lock.yaml ./
+RUN corepack prepare --activate && pnpm install --frozen-lockfile --prod=false
 
 FROM node:20-alpine AS builder
+RUN apk add --no-cache libc6-compat
+RUN corepack enable
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -23,7 +28,7 @@ ENV GITHUB_SHA=$GITHUB_SHA
 ENV NEXT_PUBLIC_BUILD_ID=$NEXT_PUBLIC_BUILD_ID
 ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN npm run build
+RUN pnpm exec next build
 
 FROM node:20-alpine AS runner
 WORKDIR /app

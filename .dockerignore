@@ -1,0 +1,17 @@
+node_modules
+.next
+.git
+.github
+.vscode
+.idea
+*.log
+.env*
+.DS_Store
+tests
+docs
+README.md
+Dockerfile
+.dockerignore
+docker-compose.yml
+coverage
+.turbo
