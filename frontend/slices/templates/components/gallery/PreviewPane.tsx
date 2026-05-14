@@ -19,7 +19,8 @@ export function PreviewPane({
   return (
     <aside
       className={cn(
-        "md:w-[420px] lg:w-[480px] shrink-0 border-t md:border-t-0 md:border-l border-border bg-card flex flex-col overflow-hidden",
+        // Desktop = 4/6 of dialog (sidebar 1/6 : list 1/6 : preview 4/6).
+        "md:flex-1 md:min-w-0 border-t md:border-t-0 border-border bg-card flex flex-col overflow-hidden",
         mobilePreviewOpen ? "flex flex-1 min-h-0" : "hidden md:flex",
       )}
     >
