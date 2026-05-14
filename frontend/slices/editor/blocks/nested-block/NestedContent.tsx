@@ -53,6 +53,8 @@ export function NestedContent({ block, baseProps, setRef, handleKeyDown, onUpdat
     return wrap(<h2 ref={setRef as React.Ref<HTMLHeadingElement>} {...baseProps} className={baseProps.className + " text-xl font-semibold tracking-tight font-serif py-0.5"} />);
   case "h3":
     return wrap(<h3 ref={setRef as React.Ref<HTMLHeadingElement>} {...baseProps} className={baseProps.className + " text-lg font-semibold tracking-tight py-0.5"} />);
+  case "h4":
+    return wrap(<h4 ref={setRef as React.Ref<HTMLHeadingElement>} {...baseProps} className={baseProps.className + " text-base font-semibold tracking-tight py-0.5"} />);
   case "todo":
     return (
       <div className="flex items-start gap-2 py-1">
@@ -116,6 +118,8 @@ export function NestedContent({ block, baseProps, setRef, handleKeyDown, onUpdat
     return wrap(<ToggleContent block={block} onUpdate={onUpdate} depth={depth + 1} pageId={pageId} />);
   case "columns2":
   case "columns3":
+  case "columns4":
+  case "columns5":
     if (depth > MAX_NEST) return wrap(<NestingCap type="Columns" />);
     return wrap(<ColumnBlockEditor block={block} onUpdate={onUpdate} depth={depth + 1} pageId={pageId} />);
   case "database":
