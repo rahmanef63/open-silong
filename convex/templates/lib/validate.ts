@@ -89,7 +89,7 @@ const TplBlock: z.ZodType<TplBlockI> = z.lazy(() =>
     databaseRef: z.string().optional(),
     pageRef: z.string().optional(),
     payload: z.record(z.unknown()).optional(),
-    columns: z.array(z.array(TplBlock).max(80)).max(3).optional(),
+    columns: z.array(z.array(TplBlock).max(80)).max(5).optional(),
     children: z.array(TplBlock).max(80).optional(),
   }),
 ) as z.ZodType<TplBlockI>;

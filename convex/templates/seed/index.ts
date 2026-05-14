@@ -7,18 +7,60 @@ import { personalCrm } from "./personalCrm";
 import { contentCalendar } from "./contentCalendar";
 import { okrTracker } from "./okrTracker";
 import { recipeVault } from "./recipeVault";
+import { dailyJournal } from "./dailyJournal";
+import { meetingNotes } from "./meetingNotes";
+import { sprintPlanner } from "./sprintPlanner";
+import { bugTracker } from "./bugTracker";
+import { roadmap } from "./roadmap";
+import { tripPlanner } from "./tripPlanner";
+import { budget } from "./budget";
+import { investmentPortfolio } from "./investmentPortfolio";
+import { courseTracker } from "./courseTracker";
+import { homeInventory } from "./homeInventory";
+import { workoutLog } from "./workoutLog";
+import { salesPipeline } from "./salesPipeline";
+import { subscriptionTracker } from "./subscriptionTracker";
+import { jobSearch } from "./jobSearch";
+import { weddingPlanner } from "./weddingPlanner";
+import { garageWorkshop } from "./garageWorkshop";
+import { podcastLibrary } from "./podcastLibrary";
 
-/** Default seed catalog. Order shapes the gallery sort.
- *  - First three: simple single-database starters (Personal/Finance).
- *  - Last five (cycle 7, 2026-05-09): column-heavy dashboards with
- *    cross-database relations + dashboard/chart/calendar views. */
+/** Default seed catalog. One file per template — order shapes the gallery
+ *  sort. Convex mutations evaluate this module synchronously, so imports
+ *  stay static (no `import()`). To add a template: drop a new file under
+ *  this folder, append the import + entry below, bump the count in
+ *  seedCatalog.test.ts. */
 export const SEED_TEMPLATES: TemplateJson[] = [
+  // Starter (single database)
   expenseTracker,
   readingList,
   habitTracker,
+  // Productivity dashboards (multi-db, columns + dashboard view)
   projectOs,
-  personalCrm,
-  contentCalendar,
+  sprintPlanner,
+  meetingNotes,
+  bugTracker,
+  roadmap,
   okrTracker,
+  // Personal / lifestyle
+  dailyJournal,
+  workoutLog,
+  podcastLibrary,
   recipeVault,
+  // Career / business
+  personalCrm,
+  salesPipeline,
+  jobSearch,
+  contentCalendar,
+  // Finance
+  budget,
+  investmentPortfolio,
+  subscriptionTracker,
+  // Home / hobby
+  homeInventory,
+  garageWorkshop,
+  // Education / events / travel
+  courseTracker,
+  tripPlanner,
+  weddingPlanner,
 ];
