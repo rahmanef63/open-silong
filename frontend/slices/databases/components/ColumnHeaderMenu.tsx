@@ -1,7 +1,8 @@
 import {
   Sliders, Sparkles, Filter as FilterIcon,
   Group as GroupIcon, Pin, EyeOff, Type as WrapIcon,
-  ArrowLeftToLine, ArrowRightToLine, Trash2, Check,
+  ArrowLeftToLine, ArrowRightToLine, ArrowLeft, ArrowRight,
+  Copy, Trash2, Check,
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -26,11 +27,13 @@ interface Props {
 }
 
 /** Notion-style column header menu.
- *  13 items: Edit · Change type · AI Autofill · Filter · Sort · Group ·
- *  Calculate · Freeze · Hide · Wrap · Insert L · Insert R · Delete. */
+ *  16 items: Edit · Change type · AI Autofill · Filter · Sort · Group ·
+ *  Calculate · Freeze · Hide · Wrap · Duplicate · Insert L · Insert R ·
+ *  Move L · Move R · Delete. */
 export function ColumnHeaderMenu({ db, view, prop, index, trigger }: Props) {
   const {
-    updateProperty, deleteProperty, addProperty, reorderProperties, updateView,
+    updateProperty, deleteProperty, duplicateProperty, addProperty,
+    reorderProperties, updateView,
   } = useStore();
 
   const isFrozen = view.frozenPropIds?.includes(prop.id) ?? false;
@@ -57,6 +60,18 @@ export function ColumnHeaderMenu({ db, view, prop, index, trigger }: Props) {
     const next = [...allWithout.slice(0, target), newProp.id, ...allWithout.slice(target)];
     reorderProperties(db.id, next);
   };
+
+  const moveBy = (offset: -1 | 1) => {
+    const ids = db.properties.map((p) => p.id);
+    const target = index + offset;
+    if (target < 0 || target >= ids.length) return;
+    const next = [...ids];
+    [next[index], next[target]] = [next[target], next[index]];
+    reorderProperties(db.id, next);
+  };
+
+  const canMoveLeft = index > 0;
+  const canMoveRight = index < db.properties.length - 1;
 
   const seedFilter = () => {
     const op = inferFilterOp(prop.type);
@@ -147,11 +162,23 @@ export function ColumnHeaderMenu({ db, view, prop, index, trigger }: Props) {
 
         <DropdownMenuSeparator />
 
+        <DropdownMenuItem onClick={() => duplicateProperty(db.id, prop.id)}>
+          <Copy className="mr-2 h-3.5 w-3.5" /> Duplicate property
+        </DropdownMenuItem>
+
+        <DropdownMenuSeparator />
+
         <DropdownMenuItem onClick={() => insertAt(-1)}>
           <ArrowLeftToLine className="mr-2 h-3.5 w-3.5" /> Insert left
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => insertAt(1)}>
           <ArrowRightToLine className="mr-2 h-3.5 w-3.5" /> Insert right
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => moveBy(-1)} disabled={!canMoveLeft} className={cn(!canMoveLeft && "opacity-60")}>
+          <ArrowLeft className="mr-2 h-3.5 w-3.5" /> Move left
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => moveBy(1)} disabled={!canMoveRight} className={cn(!canMoveRight && "opacity-60")}>
+          <ArrowRight className="mr-2 h-3.5 w-3.5" /> Move right
         </DropdownMenuItem>
 
         <DropdownMenuSeparator />

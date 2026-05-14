@@ -56,6 +56,7 @@ export interface StoreCtx {
   permanentlyDeleteDatabase: (id: string) => void;
   addDatabaseFromTable: (input: { headerRow: string[]; bodyRows: string[][] }) => Promise<string | null>;
   addProperty: (dbId: string, type: PropertyType, name?: string) => Property;
+  duplicateProperty: (dbId: string, propId: string) => Property | null;
   updateProperty: (dbId: string, propId: string, patch: Partial<Property>) => void;
   deleteProperty: (dbId: string, propId: string) => void;
   reorderProperties: (dbId: string, orderedIds: string[]) => void;
