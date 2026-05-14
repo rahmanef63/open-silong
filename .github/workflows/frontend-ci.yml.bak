@@ -1,7 +1,12 @@
 name: Frontend CI
 
 on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
   workflow_dispatch:
+
 concurrency:
   group: frontend-ci-${{ github.ref }}
   cancel-in-progress: true
