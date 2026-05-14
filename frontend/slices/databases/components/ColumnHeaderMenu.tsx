@@ -47,6 +47,7 @@ export function ColumnHeaderMenu({ db, view, prop, index, trigger, writeView }: 
   };
 
   const locked = !!db.locked;
+  const viewLocked = !!view.locked;
   const isFrozen = view.frozenPropIds?.includes(prop.id) ?? false;
   const isHidden = view.hiddenPropIds?.includes(prop.id) ?? false;
   const isWrap = !!view.tableWrapCells;
@@ -135,7 +136,7 @@ export function ColumnHeaderMenu({ db, view, prop, index, trigger, writeView }: 
 
         <DropdownMenuSeparator />
 
-        <DropdownMenuItem onClick={seedFilter}>
+        <DropdownMenuItem onClick={seedFilter} disabled={viewLocked} className={cn(viewLocked && "opacity-60")}>
           <FilterIcon className="mr-2 h-3.5 w-3.5" /> Filter
           {filtered && <span className="ml-auto text-[10px] text-brand">on</span>}
         </DropdownMenuItem>
@@ -144,31 +145,32 @@ export function ColumnHeaderMenu({ db, view, prop, index, trigger, writeView }: 
           propId={prop.id}
           sorts={view.sorts}
           onSet={(next) => writeViewLocal({ sorts: next })}
+          disabled={viewLocked}
         />
 
         <DropdownMenuItem
           onClick={groupBy}
-          disabled={prop.type !== "select" && prop.type !== "status"}
-          className={cn(prop.type !== "select" && prop.type !== "status" && "opacity-60")}
+          disabled={viewLocked || (prop.type !== "select" && prop.type !== "status")}
+          className={cn((viewLocked || (prop.type !== "select" && prop.type !== "status")) && "opacity-60")}
         >
           <GroupIcon className="mr-2 h-3.5 w-3.5" /> Group
           {grouped && <span className="ml-auto text-[10px] text-brand">on</span>}
         </DropdownMenuItem>
 
         {calcs.length > 0 && (
-          <CalcSubmenu currentCalc={currentCalc} calcs={calcs} onSet={setCalc} />
+          <CalcSubmenu currentCalc={currentCalc} calcs={calcs} onSet={setCalc} disabled={viewLocked} />
         )}
 
         <DropdownMenuSeparator />
 
-        <DropdownMenuItem onClick={() => togglePropIdInList("frozenPropIds")}>
+        <DropdownMenuItem onClick={() => togglePropIdInList("frozenPropIds")} disabled={viewLocked} className={cn(viewLocked && "opacity-60")}>
           <Pin className="mr-2 h-3.5 w-3.5" /> {isFrozen ? "Unfreeze" : "Freeze"}
           {isFrozen && <Check className="ml-auto h-3.5 w-3.5" />}
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => togglePropIdInList("hiddenPropIds")}>
+        <DropdownMenuItem onClick={() => togglePropIdInList("hiddenPropIds")} disabled={viewLocked} className={cn(viewLocked && "opacity-60")}>
           <EyeOff className="mr-2 h-3.5 w-3.5" /> {isHidden ? "Show" : "Hide"}
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => updateView(db.id, view.id, { tableWrapCells: !isWrap })}>
+        <DropdownMenuItem onClick={() => updateView(db.id, view.id, { tableWrapCells: !isWrap })} disabled={viewLocked} className={cn(viewLocked && "opacity-60")}>
           <WrapIcon className="mr-2 h-3.5 w-3.5" /> Wrap content
           {isWrap && <Check className="ml-auto h-3.5 w-3.5" />}
         </DropdownMenuItem>

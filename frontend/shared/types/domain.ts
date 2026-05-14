@@ -326,6 +326,10 @@ export interface DatabaseViewConfig {
   id: string;
   name: string;
   type: DbView;
+  /** UI-level per-view lock — when true, filter / sort / group / hidden /
+   *  frozen / calc / search edits are gated in the frontend. Independent
+   *  from `Database.locked` (which gates structural property edits). */
+  locked?: boolean;
   groupBy?: string;     // property id (for board)
   sorts: DatabaseSort[];
   filters: DatabaseFilter[];

@@ -163,14 +163,16 @@ function PropertiesMenu({
 }) {
   const { deleteProperty, addProperty } = useStore();
   const hidden = new Set(view.hiddenPropIds ?? []);
+  const viewLocked = !!view.locked;
   const toggle = (pid: string) => {
+    if (viewLocked) return;
     const next = new Set(hidden);
     if (next.has(pid)) next.delete(pid);
     else next.add(pid);
     writeView(view.id, { hiddenPropIds: [...next] });
   };
-  const showAll = () => writeView(view.id, { hiddenPropIds: [] });
-  const hideAll = () => writeView(view.id, { hiddenPropIds: db.properties.map((p) => p.id) });
+  const showAll = () => { if (!viewLocked) writeView(view.id, { hiddenPropIds: [] }); };
+  const hideAll = () => { if (!viewLocked) writeView(view.id, { hiddenPropIds: db.properties.map((p) => p.id) }); };
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>

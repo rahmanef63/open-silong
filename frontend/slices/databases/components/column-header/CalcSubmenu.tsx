@@ -6,15 +6,16 @@ import type { CalcKind } from "@/shared/types/domain";
 import { calcLabel } from "../../lib/calcAggregate";
 
 export function CalcSubmenu({
-  currentCalc, calcs, onSet,
+  currentCalc, calcs, onSet, disabled,
 }: {
   currentCalc: CalcKind;
   calcs: CalcKind[];
   onSet: (c: CalcKind) => void;
+  disabled?: boolean;
 }) {
   return (
     <DropdownMenuSub>
-      <DropdownMenuSubTrigger>
+      <DropdownMenuSubTrigger disabled={disabled} className={disabled ? "opacity-60" : undefined}>
         <Sigma className="mr-2 h-3.5 w-3.5" /> Calculate
         {currentCalc !== "none" && (
           <span className="ml-auto truncate text-[10px] text-brand">{calcLabel(currentCalc)}</span>

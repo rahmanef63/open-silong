@@ -2,12 +2,12 @@ import { useState } from "react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
-import { MoreHorizontal, Pencil, Copy, Trash2 } from "lucide-react";
+import { MoreHorizontal, Pencil, Copy, Trash2, Lock, Unlock } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import type { Database, DatabaseViewConfig } from "@/shared/types/domain";
 import { VIEW_META } from "./lazyViews";
 
-export function ViewTab({ db: _db, v, active, onActivate, onRename, onDuplicate, onDelete }: {
+export function ViewTab({ db: _db, v, active, onActivate, onRename, onDuplicate, onDelete, onToggleLock }: {
   db: Database;
   v: DatabaseViewConfig;
   active: boolean;
@@ -15,8 +15,10 @@ export function ViewTab({ db: _db, v, active, onActivate, onRename, onDuplicate,
   onRename: (name: string) => void;
   onDuplicate: () => void;
   onDelete: () => void;
+  onToggleLock?: () => void;
 }) {
   void _db;
+  const locked = !!v.locked;
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(v.name);
   const Meta = VIEW_META[v.type];
@@ -59,6 +61,7 @@ export function ViewTab({ db: _db, v, active, onActivate, onRename, onDuplicate,
       >
         <Meta.icon className="h-3.5 w-3.5" />
         <span className="hidden sm:inline">{v.name}</span>
+        {locked && <Lock className="h-3 w-3 text-amber-600 dark:text-amber-400" aria-label="View locked" />}
       </button>
       {active && (
         <DropdownMenu>
@@ -78,6 +81,12 @@ export function ViewTab({ db: _db, v, active, onActivate, onRename, onDuplicate,
             <DropdownMenuItem onClick={onDuplicate}>
               <Copy className="mr-2 h-3.5 w-3.5" /> Duplicate
             </DropdownMenuItem>
+            {onToggleLock && (
+              <DropdownMenuItem onClick={onToggleLock}>
+                {locked ? <Unlock className="mr-2 h-3.5 w-3.5" /> : <Lock className="mr-2 h-3.5 w-3.5" />}
+                {locked ? "Unlock view" : "Lock view"}
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem className="text-destructive" onClick={onDelete}>
               <Trash2 className="mr-2 h-3.5 w-3.5" /> Delete view
             </DropdownMenuItem>

@@ -21,6 +21,8 @@ interface ToolbarProps {
 export function DatabaseToolbar({ db, view, writeView }: ToolbarProps) {
   const activeFilters = (view.filters ?? []).length;
   const activeSorts = (view.sorts ?? []).length;
+  const locked = !!view.locked;
+  const lockTitle = "View is locked — unlock from the view tab menu";
   return (
     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-3 py-1.5 bg-muted/30">
       <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-1 min-w-[180px]">
@@ -28,17 +30,23 @@ export function DatabaseToolbar({ db, view, writeView }: ToolbarProps) {
         <Input
           value={view.search ?? ""}
           onChange={(e) => writeView(view.id, { search: e.target.value })}
-          placeholder="Search rows…"
-          className="h-7 text-xs border-0 bg-transparent shadow-none px-1 focus-visible:ring-0 max-w-48"
+          placeholder={locked ? "Search disabled — view locked" : "Search rows…"}
+          disabled={locked}
+          title={locked ? lockTitle : undefined}
+          className="h-7 text-xs border-0 bg-transparent shadow-none px-1 focus-visible:ring-0 max-w-48 disabled:opacity-50"
         />
       </div>
       <div className="flex flex-wrap items-center gap-1">
         <Popover>
           <PopoverTrigger asChild>
-            <button className={cn(
-              "flex items-center gap-1 rounded-md px-2 py-1 text-xs hover:bg-accent transition",
-              activeFilters > 0 ? "text-brand bg-brand/10" : "text-muted-foreground",
-            )}>
+            <button
+              disabled={locked}
+              title={locked ? lockTitle : undefined}
+              className={cn(
+                "flex items-center gap-1 rounded-md px-2 py-1 text-xs hover:bg-accent transition disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent",
+                activeFilters > 0 ? "text-brand bg-brand/10" : "text-muted-foreground",
+              )}
+            >
               <Filter className="h-3 w-3" />
               Filter
               {activeFilters > 0 && <span className="ml-0.5 rounded-full bg-brand text-white text-[10px] px-1">{activeFilters}</span>}
@@ -51,10 +59,14 @@ export function DatabaseToolbar({ db, view, writeView }: ToolbarProps) {
 
         <Popover>
           <PopoverTrigger asChild>
-            <button className={cn(
-              "flex items-center gap-1 rounded-md px-2 py-1 text-xs hover:bg-accent transition",
-              activeSorts > 0 ? "text-brand bg-brand/10" : "text-muted-foreground",
-            )}>
+            <button
+              disabled={locked}
+              title={locked ? lockTitle : undefined}
+              className={cn(
+                "flex items-center gap-1 rounded-md px-2 py-1 text-xs hover:bg-accent transition disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent",
+                activeSorts > 0 ? "text-brand bg-brand/10" : "text-muted-foreground",
+              )}
+            >
               <ArrowUpDown className="h-3 w-3" />
               Sort
               {activeSorts > 0 && <span className="ml-0.5 rounded-full bg-brand text-white text-[10px] px-1">{activeSorts}</span>}
@@ -76,11 +88,16 @@ export function DatabaseToolbar({ db, view, writeView }: ToolbarProps) {
 function GroupByButton({ db, view, writeView }: ToolbarProps) {
   const groupProps = db.properties.filter((p) => p.type === "select" || p.type === "status");
   const current = db.properties.find((p) => p.id === view.groupBy) ?? groupProps[0];
+  const locked = !!view.locked;
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="flex items-center gap-1 rounded-md px-2 py-1 text-xs hover:bg-accent text-muted-foreground">
+        <button
+          disabled={locked}
+          title={locked ? "View is locked — unlock from the view tab menu" : undefined}
+          className="flex items-center gap-1 rounded-md px-2 py-1 text-xs hover:bg-accent text-muted-foreground disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+        >
           <LayoutGrid className="h-3 w-3" />
           Group: {current?.name ?? "—"}
         </button>
