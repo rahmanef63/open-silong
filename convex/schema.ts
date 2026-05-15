@@ -301,4 +301,30 @@ export default defineSchema({
     .index("by_published", ["isPublished"])
     .index("by_category", ["category"])
     .index("by_seed_name", ["isSeed", "name"]),
+
+  /** Singleton row (max 1). Admin-managed system-wide AI config. When
+   *  set + enabled, the AI pipeline routes through `provider` + `apiKey`
+   *  instead of the env var. Lets admin rotate the OpenRouter key from
+   *  the UI without redeploying. Per-user model can be overridden via
+   *  `aiUserModelOverrides`; provider + key always come from here. */
+  globalAISettings: defineTable({
+    provider: v.string(),
+    model: v.string(),
+    apiKey: v.string(),
+    baseUrl: v.optional(v.string()),
+    enabled: v.boolean(),
+    updatedBy: v.id("users"),
+    updatedAt: v.number(),
+  }),
+
+  /** Admin-set per-user MODEL override. Inherits provider + apiKey from
+   *  `globalAISettings` — useful when admin wants a premium user on a
+   *  beefier model (e.g. claude-sonnet-4.5) and free-tier users on a
+   *  cheaper one (e.g. claude-haiku-4.5), all routed through one key. */
+  aiUserModelOverrides: defineTable({
+    userId: v.id("users"),
+    model: v.string(),
+    setBy: v.id("users"),
+    updatedAt: v.number(),
+  }).index("by_user", ["userId"]),
 });
