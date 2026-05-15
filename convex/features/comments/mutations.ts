@@ -16,11 +16,20 @@ export const create = mutation({
   },
   handler: async (ctx, args) => {
     if (args.text.length > CHAR_CAPS.commentText) throw new Error("Comment too long");
-    const { userId } = await requireOwned(ctx, "pages", args.pageId as Id<"pages">);
+    const { userId, doc: page } = await requireOwned(
+      ctx,
+      "pages",
+      args.pageId as Id<"pages">,
+    );
     await rateLimit(ctx, userId, RATE_LIMITS.commentsCreate);
     const now = Date.now();
     return await ctx.db.insert("comments", {
       userId,
+      // Inherit workspace scope from the parent page so per-workspace
+      // listings (and future workspace-scoped exports) bucket cleanly.
+      // Legacy pages without a workspaceId stamp leave this field unset
+      // and are visible only via the rowInActiveWorkspace legacy passthrough.
+      workspaceId: page.workspaceId,
       pageId: args.pageId,
       blockId: args.blockId,
       text: args.text,

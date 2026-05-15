@@ -206,6 +206,11 @@ export default defineSchema({
   // === comments ===
   comments: defineTable({
     userId: v.id("users"),                  // author
+    /** Workspace owning the parent page. Optional for legacy rows that
+     *  predate workspace scoping; new comments always stamp this from
+     *  the parent page's `workspaceId`. Defense-in-depth — the primary
+     *  authz path is still the parent-page ownership check. */
+    workspaceId: v.optional(v.id("workspaces")),
     pageId: v.string(),
     blockId: v.optional(v.string()),        // null = page-level comment
     text: v.string(),
@@ -217,7 +222,8 @@ export default defineSchema({
   })
     .index("by_user", ["userId"])
     .index("by_page", ["pageId"])
-    .index("by_block", ["blockId"]),
+    .index("by_block", ["blockId"])
+    .index("by_workspace", ["workspaceId"]),
 
   // === admin: per-user role + bootstrap ===
   userProfiles: defineTable({
