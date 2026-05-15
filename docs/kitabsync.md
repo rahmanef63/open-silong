@@ -1,8 +1,8 @@
 # KitabSync Report — notion-page-clone
 
-> Generated: 2026-05-15T08:15:00Z
-> Run: post-edit bump
-> Kitab snapshot ref: 659c7fb
+> Generated: 2026-05-15T12:15:00Z
+> Run: DOWN-sync apply (kitab `comments@0.2.0` adopted)
+> Kitab snapshot ref: comments@0.2.0
 
 ## Snapshot
 
@@ -17,8 +17,8 @@
 
 | Verdict | Count | Slices |
 |---|---|---|
-| in-sync | 0 | — |
-| up-needed | 2 | comments, command-menu |
+| in-sync | 1 | comments |
+| up-needed | 1 | command-menu |
 | down-needed | 0 | — |
 | diverged | 0 | — |
 | consumer-only | 33 | admin-panel, ai-agent, analytics, backlinks, block-selection, code-block, dashboard, database-cell-selection, database-csv, database-json, database-presets, database-templates, databases, editor, equation, feedback, files, inbox, library, mentions, mobile-nav, notifications, search, sharing, simple-table, snapshots, templates, theme-presets, trash, wiki, workspace-io, workspace-members, workspace-sidebar |
@@ -34,24 +34,27 @@
 
 ## Slices detail
 
-### `comments` — `up-needed` · `portable`
+### `comments` — `in-sync` · `portable`
 
-- kitabVersion: `0.1.0`
-- consumerVersion: `0.3.0`
+- kitabVersion: `0.2.0`
+- consumerVersion: `0.2.0`
 - syncDirection: `bidirectional`
-- lastPullAt: `null`
+- lastPullAt: `2026-05-15`
 - lastPushAt: `null`
 - Local path: `frontend/slices/comments/`
-- Blockers (UP-sync gate): _none_ — all 4 prior blockers resolved this run.
-- Generalization changes:
-  - `types/index.ts` — `Comment` now exposes `targetId` / `targetSubId` / `targetKind` (legacy `pageId` / `blockId` removed from the portable shape).
-  - `lib/CommentsContext.tsx` (NEW, replaces `lib/PageCommentsContext.tsx`) — renderless `CommentsProvider({ targetId, targetKind?, comments, create, update, resolve, remove })`. Buckets a flat list by `targetSubId`. No Convex imports.
-  - `useThreadComments(subId?)` replaces `useBlockComments(blockId)`. With no arg returns host-level (page-level) comments. `useComments()` is the new context-hook name (formerly `usePageComments`).
-  - `components/ThreadPopover.tsx` (NEW, replaces `components/BlockCommentsPopover.tsx`) — domain-neutral popover. Accepts `threadId` + `viewer` + `buildCreateArgs(text)` so the consumer owns backend args + auth shape. Labels prop bag with defaults.
-  - `adapters/nosion.tsx` (NEW, consumer-only) — `PageCommentsProvider` wires Convex `listForPage` fetcher + maps doc → portable Comment with `targetKind="page"`. `BlockCommentsPopover` wraps `ThreadPopover` with Nosion store viewer + `{pageId, blockId, ...}` create args. `useBlockComments` is a back-compat alias of `useThreadComments`. Excluded from kitab UP-sync.
-  - `hooks/useComments.ts` — Convex-backed `useStandaloneComments` (no Provider needed), kept consumer-only for analytics.
-  - `index.ts` — exports the renderless core (`CommentsProvider`, `useThreadComments`, `ThreadPopover`, `useCommentsContext`) plus back-compat aliases (`PageCommentsProvider`, `useBlockComments`, `BlockCommentsPopover`, `useComments`, `usePageComments`).
-- Suggested action: `/rr-prep comments --fix` (sanity check) → `/rr-send comments` (UP). When ingested, kitab should drop the `adapters/` directory + `hooks/useComments.ts`.
+- Blockers (UP-sync gate): _none_ — adopts kitab v0.2.0 polymorphic `TargetRef`.
+- Generalization changes (DOWN-sync to kitab v0.2.0):
+  - `types/index.ts` — `TargetRef = { kind, id, subId? }` polymorphic anchor; `Comment.target: TargetRef`. Replaces v0.1.0 flat `targetId` / `targetSubId` / `targetKind` field trio. No `pageId` / `blockId` / `targetType` literals in the portable shape.
+  - `hooks/useCommentsCore.ts` (NEW) — kitab v0.2.0 props-driven hook `useCommentsCore(bindings, opts)` matching the contract `requiredProps: [target, bindings, forbiddenWords, pathMap]`. Built-in `forbiddenWords` guard at create-time. Renamed locally from kitab `useComments` to avoid colliding with the back-compat consumer alias.
+  - `components/CommentsAnchor.tsx` (NEW) — kitab v0.2.0 renderless anchor with `pathMap?` deep-link prop. Render-prop signature `({ isLoading, openCount, totalCount, href }) => ReactNode`.
+  - `components/CommentsThread.tsx` (NEW) — kitab v0.2.0 renderless thread wrapper. Render-prop exposes `{ isLoading, items, openCount, create, update, resolve, remove }` to the consumer skin.
+  - `lib/CommentsContext.tsx` — context-provider variant retained for the editor mount. `target: TargetRef` instead of split `targetId` / `targetKind` props. Buckets comments by `target.subId`. No Convex imports.
+  - `components/ThreadPopover.tsx` — domain-neutral popover (no portable-surface forbidden-term references; doc comment scrubbed of `pageId` / `blockId` example).
+  - `adapters/nosion.tsx` — translates Convex `comments` rows into `Comment.target = { kind: "page", id: pageId, subId: blockId }`. Hosts `PageCommentsProvider` / `BlockCommentsPopover` / `useBlockComments`. CONSUMER-only, excluded from kitab UP-sync.
+  - `adapters/nosionStandalone.ts` (moved from `hooks/useComments.ts`) — Convex-backed `useStandaloneComments` for analytics. CONSUMER-only.
+  - `adapters/PageCommentsPanel.tsx` (moved from `components/`) — Nosion-store-bound page-level panel. CONSUMER-only.
+  - `index.ts` — exports kitab v0.2.0 portable surface (`useCommentsCore`, `CommentsAnchor`, `CommentsThread`, `CommentsBindings`, `TargetRef`, `Comment`) alongside the existing renderless core (`CommentsProvider`, `useThreadComments`, `ThreadPopover`) plus consumer adapter back-compat aliases (`PageCommentsProvider`, `useBlockComments`, `BlockCommentsPopover`, `PageCommentsPanel`, `useComments`, `usePageComments`, `useStandaloneComments`).
+- Suggested action: none — slice now matches kitab `comments@0.2.0`. Future local edits should bump `consumerVersion` and re-audit.
 
 ### `command-menu` — `up-needed` · `portable`
 
@@ -67,7 +70,7 @@
 
 ## Aggregate suggested actions (priority order)
 
-1. `comments` — up-needed + portable (P1, NEW): `/rr-send comments` is unblocked. Renderless core + isolated adapter ready for kitab ingestion as `comments@0.2.0`.
+1. `comments` — in-sync + portable (DONE): adopted kitab `comments@0.2.0` polymorphic `TargetRef` contract. No further action.
 2. `command-menu` — up-needed + portable (P1): `/rr-send command-palette` is unblocked.
 3. `convex-auth` — kitab-only (P3): repo already uses `@convex-dev/auth` directly in `convex/auth.ts`; promotion to kitab-aware slice unnecessary unless adapter divergence appears.
 4. `vector-search` — kitab-only (P3): local `search` slice is text-only via `pages`/`databases` filters; adopt only when semantic-search backend is wired (out of current scope).
@@ -81,4 +84,5 @@
 | 2026-05-15T05:00:00Z    | initial bootstrap     |              2 | 88a7e43 | claude-code  |
 | 2026-05-15T05:09:24Z    | audit refresh         |              2 | 839ede5 | claude-code  |
 | 2026-05-15T07:08:00Z    | command-menu refactor portable + bidirectional | 1 | 068709c | claude-code  |
-| 2026-05-15T08:15:00Z    | comments refactor portable + bidirectional | 1 | (this) | claude-code  |
+| 2026-05-15T08:15:00Z    | comments refactor portable + bidirectional | 1 | (prev) | claude-code  |
+| 2026-05-15T12:15:00Z    | DOWN-sync apply: adopt kitab comments@0.2.0 polymorphic TargetRef contract | 1 | (this) | claude-code  |

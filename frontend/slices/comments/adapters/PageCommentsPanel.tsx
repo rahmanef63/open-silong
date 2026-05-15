@@ -1,10 +1,14 @@
 "use client";
 
+/** Nosion-bound page-level comments panel. CONSUMER ONLY — wires the
+ *  Nosion store viewer + Convex create-args shape into the renderless
+ *  CommentItem + CommentComposer primitives. Excluded from kitab UP-sync. */
+
 import { MessageSquare } from "lucide-react";
 import { useStore } from "@/shared/lib/store";
 import { useComments } from "../lib/CommentsContext";
-import { CommentItem } from "./CommentItem";
-import { CommentComposer } from "./CommentComposer";
+import { CommentItem } from "../components/CommentItem";
+import { CommentComposer } from "../components/CommentComposer";
 
 interface Props {
   pageId: string;

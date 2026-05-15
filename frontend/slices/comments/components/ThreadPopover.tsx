@@ -32,7 +32,7 @@ interface Props {
    *  edit-affordance. Adapter passes from its own auth/store. */
   viewer: { id?: string; name: string; icon: string };
   /** Build the args object passed to `create()`. The adapter knows what
-   *  shape the backend expects (e.g. `{ pageId, blockId, ... }`). */
+   *  shape the backend expects. */
   buildCreateArgs: (text: string) => Record<string, unknown>;
   /** Override copy. */
   labels?: ThreadPopoverLabels;

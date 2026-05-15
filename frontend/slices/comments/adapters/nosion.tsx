@@ -8,8 +8,8 @@
  *  - Convex `features/comments/queries.listForPage` is wired as the fetcher.
  *  - Convex `features/comments/mutations.{create,update,resolve,remove}`
  *    are wired as the mutator surface.
- *  - Backend doc → portable `Comment` mapping stamps `targetKind="page"`,
- *    `targetId=pageId`, `targetSubId=blockId`.
+ *  - Backend doc -> portable `Comment` mapping stamps
+ *    `target = { kind: "page", id: <pageId>, subId: <blockId> }`.
  *  - Re-exports `PageCommentsProvider`, `useBlockComments`, and
  *    `BlockCommentsPopover` so the rest of the app keeps the historical
  *    naming. Excluded from kitab UP-sync surface.
@@ -30,9 +30,11 @@ import { ThreadPopover } from "../components/ThreadPopover";
 function toComment(doc: any): Comment {
   return {
     id: doc._id,
-    targetKind: "page",
-    targetId: doc.pageId,
-    targetSubId: doc.blockId,
+    target: {
+      kind: "page",
+      id: doc.pageId,
+      subId: doc.blockId ?? undefined,
+    },
     text: doc.text,
     authorName: doc.authorName,
     authorIcon: doc.authorIcon,
@@ -63,10 +65,14 @@ export function PageCommentsProvider({
     [raw],
   );
 
+  const target = useMemo(
+    () => ({ kind: "page", id: pageId }),
+    [pageId],
+  );
+
   return (
     <CommentsProvider
-      targetId={pageId}
-      targetKind="page"
+      target={target}
       comments={comments}
       create={create}
       update={update}
