@@ -1,12 +1,16 @@
 import type { ReactNode } from "react";
+import { useState } from "react";
 import type { Property, PropertyType, PropertyValue } from "@/shared/types/domain";
 import { Input } from "@/shared/ui/input";
 import { Checkbox } from "@/shared/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
 import { cn } from "@/shared/lib/utils";
 import { colorClass } from "@/shared/lib/format";
-import { X } from "lucide-react";
+import { X, Link2, AlertTriangle } from "lucide-react";
 import { DatePicker } from "../property-cell/date-cell/DatePicker";
+import { useStore } from "@/shared/lib/store";
+import { filterRelationCandidates } from "../lib/relationCandidates";
+import { DynamicIcon } from "@/shared/components/icon-picker";
 
 /** Property types that can't be edited from a form (computed / system fields). */
 export const READ_ONLY_PROPERTY_TYPES: PropertyType[] = [
@@ -14,7 +18,7 @@ export const READ_ONLY_PROPERTY_TYPES: PropertyType[] = [
   "last_edited_time", "last_edited_by", "unique_id",
 ];
 /** Property types that don't yet have a form-friendly editor. */
-export const UNSUPPORTED_FORM_TYPES: PropertyType[] = ["relation", "files", "verification"];
+export const UNSUPPORTED_FORM_TYPES: PropertyType[] = ["files", "verification"];
 
 export function isFormableProperty(p: Property): boolean {
   return !READ_ONLY_PROPERTY_TYPES.includes(p.type) && !UNSUPPORTED_FORM_TYPES.includes(p.type);
@@ -177,7 +181,98 @@ export function PropertyFormInput({
         />
       );
     }
+    case "relation":
+      return <FormRelationInput prop={prop} value={value} onChange={onChange} />;
     default:
       return <Input value={String(value ?? "")} onChange={e => onChange(e.target.value)} />;
   }
+}
+
+/** Form-friendly relation picker. Read-only candidates list — does NOT
+ *  expose row creation (form is for new-row submission, sub-creates would
+ *  be confusing). Renders a multi-select chip list with search. */
+function FormRelationInput({
+  prop, value, onChange,
+}: { prop: Property; value: PropertyValue; onChange: (v: PropertyValue) => void }) {
+  const { pages, databases } = useStore();
+  const [query, setQuery] = useState("");
+  const linkedIds = Array.isArray(value) ? (value as string[]) : [];
+
+  const targetDbConfigured = !!prop.relationDatabaseId;
+  const targetDb = prop.relationDatabaseId ? databases.find((d) => d.id === prop.relationDatabaseId) : null;
+  const targetDbMissing = targetDbConfigured && !targetDb;
+
+  const candidates = filterRelationCandidates({
+    pages,
+    selfRowId: undefined,
+    targetDbId: prop.relationDatabaseId,
+    targetDbMissing,
+    query,
+  });
+
+  const linkedPages = linkedIds
+    .map((id) => pages.find((p) => p.id === id && !p.trashed))
+    .filter((p): p is NonNullable<typeof p> => !!p);
+
+  const toggle = (id: string) => {
+    onChange(linkedIds.includes(id) ? linkedIds.filter((x) => x !== id) : [...linkedIds, id]);
+  };
+
+  if (!targetDbConfigured) {
+    return (
+      <div className="rounded-md border border-amber-500/40 bg-amber-500/5 px-3 py-2 text-xs text-amber-700 dark:text-amber-400 inline-flex items-center gap-1">
+        <AlertTriangle className="h-3 w-3" />
+        Relation property has no target database configured.
+      </div>
+    );
+  }
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button type="button" className="w-full min-h-[38px] rounded-md border border-border bg-background px-3 py-2 text-left text-sm hover:bg-accent/50 flex flex-wrap gap-1 items-center">
+          {linkedPages.length === 0 && (
+            <span className="text-muted-foreground inline-flex items-center gap-1">
+              <Link2 className="h-3 w-3" /> Link a row…
+            </span>
+          )}
+          {linkedPages.map((p) => (
+            <span key={p.id} className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-2 py-0.5 text-xs">
+              <DynamicIcon value={p.icon} className="text-xs" />
+              <span className="truncate max-w-[120px]">{p.title || "Untitled"}</span>
+            </span>
+          ))}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-72 p-1">
+        <Input
+          autoFocus
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search rows…"
+          className="h-7 text-xs mb-1"
+        />
+        <div className="max-h-60 overflow-y-auto space-y-0.5">
+          {candidates.length === 0 && (
+            <div className="px-2 py-2 text-xs text-muted-foreground">No matching rows.</div>
+          )}
+          {candidates.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => toggle(p.id)}
+              className={cn(
+                "flex w-full items-center gap-2 px-2 py-1 rounded hover:bg-accent text-xs",
+                linkedIds.includes(p.id) && "bg-accent",
+              )}
+            >
+              <DynamicIcon value={p.icon} className="text-xs" />
+              <span className="truncate flex-1 text-left">{p.title || "Untitled"}</span>
+              {linkedIds.includes(p.id) && <X className="h-3 w-3 text-muted-foreground" />}
+            </button>
+          ))}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
 }

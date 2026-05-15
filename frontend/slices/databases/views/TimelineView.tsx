@@ -1,6 +1,11 @@
 import { useMemo, useState } from "react";
 import { Database, DatabaseViewConfig, Page } from "@/shared/types/domain";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Settings2, Check } from "lucide-react";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
+  DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/shared/ui/dropdown-menu";
 import { cn } from "@/shared/lib/utils";
 import { focusSiblingBySelector } from "@/shared/lib/keyboard";
 import { QuickCreateDialog } from "../components/QuickCreateDialog";
@@ -11,9 +16,15 @@ import { TimelineBar } from "./timeline/TimelineBar";
 import { TimelineHeader } from "./timeline/HeaderRow";
 import { TimelineDependencies } from "./timeline/Dependencies";
 
-interface Props { db: Database; view: DatabaseViewConfig; rows: Page[]; onOpenRow: (id: string) => void }
+interface Props {
+  db: Database;
+  view: DatabaseViewConfig;
+  rows: Page[];
+  onOpenRow: (id: string) => void;
+  writeView?: (viewId: string, patch: Partial<DatabaseViewConfig>) => void;
+}
 
-export function TimelineView({ db, view, rows, onOpenRow }: Props) {
+export function TimelineView({ db, view, rows, onOpenRow, writeView }: Props) {
   const { setRowValue } = useStore();
   const [quickOpen, setQuickOpen] = useState(false);
   const dateProp =
@@ -102,12 +113,17 @@ export function TimelineView({ db, view, rows, onOpenRow }: Props) {
         {!dateProp && (
           <span className="text-xs text-muted-foreground ml-2">(add a Date property to see bars)</span>
         )}
-        <button
-          onClick={() => setQuickOpen(true)}
-          className="ml-auto flex items-center gap-1 rounded-md border border-border bg-card px-2 py-1 text-xs hover:bg-accent text-muted-foreground"
-        >
-          <Plus className="h-3 w-3" /> New row
-        </button>
+        <div className="ml-auto flex items-center gap-1">
+          {writeView && (
+            <TimelineSettingsMenu db={db} view={view} writeView={writeView} />
+          )}
+          <button
+            onClick={() => setQuickOpen(true)}
+            className="flex items-center gap-1 rounded-md border border-border bg-card px-2 py-1 text-xs hover:bg-accent text-muted-foreground"
+          >
+            <Plus className="h-3 w-3" /> New row
+          </button>
+        </div>
       </div>
 
       <div style={{ minWidth: LABEL_W + DAYS * CELL_W }}>
@@ -226,5 +242,108 @@ export function TimelineView({ db, view, rows, onOpenRow }: Props) {
         onCreated={onOpenRow}
       />
     </div>
+  );
+}
+
+function TimelineSettingsMenu({
+  db, view, writeView,
+}: {
+  db: Database;
+  view: DatabaseViewConfig;
+  writeView: (viewId: string, patch: Partial<DatabaseViewConfig>) => void;
+}) {
+  const dateProps = db.properties.filter((p) => p.type === "date");
+  const colorProps = db.properties.filter((p) => p.type === "select" || p.type === "status");
+  const relProps = db.properties.filter((p) => p.type === "relation" && p.relationDatabaseId === db.id);
+  const zoom = view.timelineZoom ?? "month";
+  const set = (patch: Partial<DatabaseViewConfig>) => writeView(view.id, patch);
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button className="flex items-center gap-1 rounded-md border border-border bg-card px-2 py-1 text-xs hover:bg-accent text-muted-foreground" title="Timeline settings">
+          <Settings2 className="h-3 w-3" /> Settings
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuLabel className="text-xs">Timeline</DropdownMenuLabel>
+        <DropdownMenuSub>
+          <DropdownMenuSubTrigger className="text-xs">Start date</DropdownMenuSubTrigger>
+          <DropdownMenuSubContent>
+            {dateProps.length === 0 && <DropdownMenuItem disabled>No date properties</DropdownMenuItem>}
+            {dateProps.map((p) => (
+              <DropdownMenuItem key={p.id} onClick={() => set({ timelineStartProp: p.id })}>
+                {view.timelineStartProp === p.id && <Check className="mr-2 h-3.5 w-3.5" />}
+                {view.timelineStartProp !== p.id && <span className="mr-2 inline-block w-3.5" />}
+                {p.name}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuSubContent>
+        </DropdownMenuSub>
+        <DropdownMenuSub>
+          <DropdownMenuSubTrigger className="text-xs">End date (optional)</DropdownMenuSubTrigger>
+          <DropdownMenuSubContent>
+            <DropdownMenuItem onClick={() => set({ timelineEndProp: undefined })}>
+              {!view.timelineEndProp && <Check className="mr-2 h-3.5 w-3.5" />}
+              {view.timelineEndProp && <span className="mr-2 inline-block w-3.5" />}
+              <span className="text-muted-foreground">None</span>
+            </DropdownMenuItem>
+            {dateProps.map((p) => (
+              <DropdownMenuItem key={p.id} onClick={() => set({ timelineEndProp: p.id })}>
+                {view.timelineEndProp === p.id && <Check className="mr-2 h-3.5 w-3.5" />}
+                {view.timelineEndProp !== p.id && <span className="mr-2 inline-block w-3.5" />}
+                {p.name}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuSubContent>
+        </DropdownMenuSub>
+        <DropdownMenuSub>
+          <DropdownMenuSubTrigger className="text-xs">Color by</DropdownMenuSubTrigger>
+          <DropdownMenuSubContent>
+            <DropdownMenuItem onClick={() => set({ timelineColorByProp: undefined })}>
+              {!view.timelineColorByProp && <Check className="mr-2 h-3.5 w-3.5" />}
+              {view.timelineColorByProp && <span className="mr-2 inline-block w-3.5" />}
+              <span className="text-muted-foreground">None</span>
+            </DropdownMenuItem>
+            {colorProps.map((p) => (
+              <DropdownMenuItem key={p.id} onClick={() => set({ timelineColorByProp: p.id })}>
+                {view.timelineColorByProp === p.id && <Check className="mr-2 h-3.5 w-3.5" />}
+                {view.timelineColorByProp !== p.id && <span className="mr-2 inline-block w-3.5" />}
+                {p.name}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuSubContent>
+        </DropdownMenuSub>
+        <DropdownMenuSub>
+          <DropdownMenuSubTrigger className="text-xs">Dependencies</DropdownMenuSubTrigger>
+          <DropdownMenuSubContent>
+            <DropdownMenuItem onClick={() => set({ timelineDependencyProp: undefined })}>
+              {!view.timelineDependencyProp && <Check className="mr-2 h-3.5 w-3.5" />}
+              {view.timelineDependencyProp && <span className="mr-2 inline-block w-3.5" />}
+              <span className="text-muted-foreground">Auto-detect</span>
+            </DropdownMenuItem>
+            {relProps.length === 0 && (
+              <DropdownMenuItem disabled className="text-[10px]">No self-relation property</DropdownMenuItem>
+            )}
+            {relProps.map((p) => (
+              <DropdownMenuItem key={p.id} onClick={() => set({ timelineDependencyProp: p.id })}>
+                {view.timelineDependencyProp === p.id && <Check className="mr-2 h-3.5 w-3.5" />}
+                {view.timelineDependencyProp !== p.id && <span className="mr-2 inline-block w-3.5" />}
+                {p.name}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuSubContent>
+        </DropdownMenuSub>
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel className="text-xs">Zoom</DropdownMenuLabel>
+        {(["day", "week", "month", "quarter"] as const).map((z) => (
+          <DropdownMenuItem key={z} onClick={() => set({ timelineZoom: z })}>
+            {zoom === z && <Check className="mr-2 h-3.5 w-3.5" />}
+            {zoom !== z && <span className="mr-2 inline-block w-3.5" />}
+            <span className="capitalize">{z}</span>
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

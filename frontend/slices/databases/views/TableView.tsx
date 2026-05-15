@@ -33,16 +33,19 @@ export function TableView({ db, view, rows, onOpenRow, writeView }: ViewProps) {
     rowHeight === "short" ? "min-h-7" : rowHeight === "tall" ? "min-h-12" : "min-h-9";
   const [pendingFocusId, setPendingFocusId] = useState<string | null>(null);
   const [selectedCell, setSelectedCell] = useState<{ rowId: string; propId: string } | null>(null);
-  // Sub-items collapse/expand state — defaults to expanded so first paint
-  // shows the tree. Persistence per-view is a follow-up.
-  const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
-  const toggleExpand = (id: string) =>
-    setExpanded((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+  // Sub-items expand state — persists per-view via writeView when
+  // available (linked DB blocks override per-block; canonical view
+  // writes to db). Empty/undefined `view.subItemsExpanded` means
+  // "all expanded by default".
+  const [localExpanded, setLocalExpanded] = useState<Set<string>>(() => new Set(view.subItemsExpanded ?? []));
+  const expanded = view.subItemsExpanded ? new Set(view.subItemsExpanded) : localExpanded;
+  const toggleExpand = (id: string) => {
+    const next = new Set(expanded);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    if (writeView) writeView(view.id, { subItemsExpanded: [...next] });
+    else setLocalExpanded(next);
+  };
   const tree = buildSubItemsTree(db, rows, expanded.size === 0 && db.subItemsParentPropId
     ? new Set(rows.map((r) => r.id))
     : expanded);

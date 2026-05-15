@@ -20,6 +20,7 @@ export function mergeViewOverrides(
     hiddenPropIds: o.hiddenPropIds ?? view.hiddenPropIds,
     frozenPropIds: o.frozenPropIds ?? view.frozenPropIds,
     tableCalcs: o.tableCalcs ?? view.tableCalcs,
+    subItemsExpanded: o.subItemsExpanded ?? view.subItemsExpanded,
   };
 }
 
@@ -28,6 +29,7 @@ export function mergeViewOverrides(
 const OVERRIDE_KEYS = new Set([
   "filters", "sorts", "groupBy", "search",
   "hiddenPropIds", "frozenPropIds", "tableCalcs",
+  "subItemsExpanded",
 ]);
 
 /** Split a view-patch into the (overridable, db-direct) buckets. */

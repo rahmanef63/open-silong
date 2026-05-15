@@ -52,6 +52,7 @@ export interface Block {
     hiddenPropIds: string[];
     frozenPropIds: string[];
     tableCalcs: Record<string, string>;
+    subItemsExpanded: string[];
   }>>;
   /** for columns2/columns3: array of column block arrays */
   columns?: Block[][];
@@ -365,6 +366,10 @@ export interface DatabaseViewConfig {
   /** Per-column calculate aggregate (Table view footer). Map propId →
    *  CalcKind. Empty / "none" hides the cell. */
   tableCalcs?: Record<string, string>;
+  /** Sub-items tree expansion state (row ids). When unset and the DB
+   *  has subItemsParentPropId, defaults to all-expanded. Persisted
+   *  per-view so collapse state survives navigation. */
+  subItemsExpanded?: string[];
   /** Feed view: secondary timestamp source */
   feedTimestamp?: "createdAt" | "updatedAt";
 
