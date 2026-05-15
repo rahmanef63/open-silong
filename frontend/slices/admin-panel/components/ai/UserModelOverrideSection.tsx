@@ -42,18 +42,21 @@ export function UserModelOverrideSection({ providerSpec, globalModel }: Props) {
 
   async function onAdd(e: React.FormEvent) {
     e.preventDefault();
-    if (!email.trim() || !model.trim()) {
-      toast.error("Email + model required");
+    const trimmedEmail = email.trim();
+    const trimmedModel = model.trim();
+    if (!trimmedEmail || !trimmedModel) {
+      toast.error("Email and model are both required");
       return;
     }
     setAdding(true);
+    const t = toast.loading(`Assigning ${trimmedModel} to ${trimmedEmail}…`);
     try {
-      await set({ email: email.trim(), model: model.trim() });
-      toast.success(`Override set: ${email.trim()} → ${model.trim()}`);
+      await set({ email: trimmedEmail, model: trimmedModel });
+      toast.success(`${trimmedEmail} → ${trimmedModel}`, { id: t });
       setEmail("");
       setModel("");
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Set failed");
+      toast.error(e instanceof Error ? e.message : "Assignment failed", { id: t });
     } finally {
       setAdding(false);
     }
@@ -61,11 +64,12 @@ export function UserModelOverrideSection({ providerSpec, globalModel }: Props) {
 
   async function onClear(userId: Id<"users">, email: string | null) {
     setPendingClear(String(userId));
+    const t = toast.loading(`Clearing override for ${email ?? "user"}…`);
     try {
       await clear({ userId });
-      toast.success(`Override cleared for ${email ?? "user"}`);
+      toast.success(`${email ?? "User"} now uses the global default`, { id: t });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Clear failed");
+      toast.error(e instanceof Error ? e.message : "Clear failed", { id: t });
     } finally {
       setPendingClear(null);
     }

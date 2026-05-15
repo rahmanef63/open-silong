@@ -22,7 +22,7 @@ interface ResolvedAI {
   baseUrl: string;
   apiKey: string;
   model: string;
-  source: "global" | "env";
+  source: "global" | "env" | "inline";
 }
 
 /** Resolution order:
@@ -38,6 +38,10 @@ async function resolveAI(
 ): Promise<ResolvedAI> {
   const userId = await getAuthUserId(ctx);
 
+  // _getGlobalAISettings already filters out !enabled / empty key — so a
+  // null result here means EITHER no row exists, OR the row exists but
+  // is disabled / has no key. We need to disambiguate for the error
+  // message so admin knows what to fix.
   const global = await ctx.runQuery(internal.ai.queries._getGlobalAISettings, {});
   if (global) {
     let model = global.model;
@@ -60,8 +64,16 @@ async function resolveAI(
 
   const envKey = process.env.OPENROUTER_API_KEY;
   if (!envKey) {
+    // Diagnose the global row state so the message is actionable.
+    const probe = await ctx.runQuery(internal.ai.queries._probeGlobalAISettings, {});
+    if (probe?.exists && !probe.enabled) {
+      throw new Error("AI is configured but disabled — toggle Enabled in /dashboard/admin → AI and Save.");
+    }
+    if (probe?.exists && !probe.hasKey) {
+      throw new Error("AI provider is set but the API key is missing — paste a key in /dashboard/admin → AI and Save.");
+    }
     throw new Error(
-      "AI not configured — admin must set the OpenRouter key in /dashboard/admin → AI, or set OPENROUTER_API_KEY in Convex env.",
+      "AI not configured — set the OpenRouter key in /dashboard/admin → AI (recommended) or set OPENROUTER_API_KEY in Convex env.",
     );
   }
   return {
@@ -146,16 +158,33 @@ export const complete = action({
 });
 
 /** Admin-only — quick connectivity test from the admin AI panel. Sends a
- *  one-token "ping" through the resolver chain so the admin can verify
- *  whether their just-saved global config actually works before users
- *  hit a broken key. */
+ *  one-token "ping". When inline {provider, model, apiKey, baseUrl} are
+ *  supplied (e.g. admin typed a fresh key but hasn't clicked Save yet),
+ *  the test uses them directly — letting the admin validate a key
+ *  BEFORE persisting it. With no inline args it falls back to the same
+ *  resolver chain `complete` uses (globalAISettings → env). */
 export const testConnection = action({
-  args: {},
-  handler: async (ctx) => {
-    // Goes through the same resolver as `complete`. Admin gating happens
-    // at the UI layer (button only rendered for admins) + the underlying
-    // settings the test reads are admin-only via `getGlobalAISettings`.
-    const cfg = await resolveAI(ctx);
+  args: {
+    provider: v.optional(v.string()),
+    model: v.optional(v.string()),
+    apiKey: v.optional(v.string()),
+    baseUrl: v.optional(v.string()),
+  },
+  handler: async (ctx, args): Promise<{ ok: true; source: string; model: string; reply: string }> => {
+    let cfg: ResolvedAI;
+    const inlineKey = args.apiKey?.trim();
+    if (inlineKey && args.provider && args.model) {
+      // Inline-test path — admin is validating before save. We don't
+      // require a saved row to exist.
+      cfg = {
+        baseUrl: resolveProviderBaseUrl(args.provider, args.baseUrl),
+        apiKey: inlineKey,
+        model: args.model.trim(),
+        source: "inline",
+      } as ResolvedAI;
+    } else {
+      cfg = await resolveAI(ctx);
+    }
     const res = await fetch(`${cfg.baseUrl}/chat/completions`, {
       method: "POST",
       headers: {
@@ -173,7 +202,10 @@ export const testConnection = action({
     });
     if (!res.ok) {
       const detail = await res.text().catch(() => "");
-      throw new Error(`Test failed ${res.status} (${cfg.source}): ${detail.slice(0, 200)}`);
+      // Surface the upstream body — most provider errors include a hint
+      // (invalid key, model not found, billing required) the admin can
+      // act on directly.
+      throw new Error(`Test failed (HTTP ${res.status}, source=${cfg.source}): ${detail.slice(0, 200) || res.statusText}`);
     }
     const data = await res.json() as { choices?: { message?: { content?: string } }[] };
     const reply = data.choices?.[0]?.message?.content ?? "";
