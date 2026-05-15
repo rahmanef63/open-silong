@@ -6,13 +6,17 @@ import { useSearch } from "@/slices/search";
 import { Search, FileText, Clock, Database as DatabaseIcon, Loader2 } from "lucide-react";
 import { DynamicIcon } from "@/shared/components/icon-picker";
 import { ROUTES } from "@/shared/lib/routes";
+import { DEFAULT_SEARCH_LABELS, type SearchModalLabels } from "../lib/types";
 
 interface Props {
   open: boolean;
   onOpenChange: (o: boolean) => void;
+  /** Override copy strings. Defaults preserve the legacy Nosion strings. */
+  labels?: SearchModalLabels;
 }
 
-export function SearchModal({ open, onOpenChange }: Props) {
+export function SearchModal({ open, onOpenChange, labels }: Props) {
+  const t = { ...DEFAULT_SEARCH_LABELS, ...labels };
   const { pages, recents } = useStore();
   const [q, setQ] = useState("");
   const navigate = useNavigate();
@@ -31,9 +35,9 @@ export function SearchModal({ open, onOpenChange }: Props) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="p-0 overflow-hidden max-w-xl gap-0 top-[20%] translate-y-0">
-        <DialogTitle className="sr-only">Search workspace</DialogTitle>
+        <DialogTitle className="sr-only">{t.searchTitle}</DialogTitle>
         <DialogDescription className="sr-only">
-          Search pages and databases by title.
+          {t.searchDescription}
         </DialogDescription>
         <div className="flex items-center gap-3 px-4 py-3 border-b border-border">
           <Search className="h-4 w-4 text-muted-foreground" />
@@ -41,19 +45,19 @@ export function SearchModal({ open, onOpenChange }: Props) {
             autoFocus
             value={q}
             onChange={e => setQ(e.target.value)}
-            placeholder="Search pages and databases…"
+            placeholder={t.searchPlaceholder}
             className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
           />
           {isLoading && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
-          <kbd className="text-[10px] text-muted-foreground border border-border rounded px-1.5 py-0.5">ESC</kbd>
+          <kbd className="text-[10px] text-muted-foreground border border-border rounded px-1.5 py-0.5">{t.escapeHint}</kbd>
         </div>
         <div className="max-h-[420px] overflow-y-auto p-2">
           {q && !isLoading && totalHits === 0 && (
-            <div className="px-3 py-8 text-center text-sm text-muted-foreground">No results for "{q}"</div>
+            <div className="px-3 py-8 text-center text-sm text-muted-foreground">{t.noResults(q)}</div>
           )}
           {!q && recent.length > 0 && (
             <>
-              <SectionHeader icon={<Clock className="h-3 w-3" />}>Recent</SectionHeader>
+              <SectionHeader icon={<Clock className="h-3 w-3" />}>{t.recentHeading}</SectionHeader>
               {recent.map(p => p && (
                 <Row key={p.id} icon={p.icon} title={p.title || "Untitled"} subtitle={preview(p.blocks[0]?.text)} onClick={() => goPage(p.id)} />
               ))}
@@ -61,7 +65,7 @@ export function SearchModal({ open, onOpenChange }: Props) {
           )}
           {result.pages.length > 0 && (
             <>
-              <SectionHeader icon={<FileText className="h-3 w-3" />}>Pages</SectionHeader>
+              <SectionHeader icon={<FileText className="h-3 w-3" />}>{t.pagesHeading}</SectionHeader>
               {result.pages.map(p => (
                 <Row key={p.id} icon={p.icon} title={p.title || "Untitled"} onClick={() => goPage(p.id)} />
               ))}
@@ -69,14 +73,14 @@ export function SearchModal({ open, onOpenChange }: Props) {
           )}
           {result.databases.length > 0 && (
             <>
-              <SectionHeader icon={<DatabaseIcon className="h-3 w-3" />}>Databases</SectionHeader>
+              <SectionHeader icon={<DatabaseIcon className="h-3 w-3" />}>{t.databasesHeading}</SectionHeader>
               {result.databases.map(d => (
                 <Row key={d.id} icon={d.icon} title={d.name || "Untitled"} onClick={() => goDb(d.id)} kind="db" />
               ))}
             </>
           )}
           {!q && recent.length === 0 && (
-            <div className="px-3 py-8 text-center text-sm text-muted-foreground">Start typing to search your workspace</div>
+            <div className="px-3 py-8 text-center text-sm text-muted-foreground">{t.emptyHint}</div>
           )}
         </div>
       </DialogContent>
