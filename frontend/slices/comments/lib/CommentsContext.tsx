@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useMemo, type ReactNode } from "react";
-import type { Comment } from "../types";
+import type { Comment, TargetRef } from "../types";
 
 /** Generic mutation surface. The provider doesn't know what backend the
  *  consumer uses — it just relays calls. Adapter is responsible for wiring
@@ -18,19 +18,17 @@ export interface CommentMutators {
 export interface CommentsContextValue extends CommentMutators {
   /** True while the underlying fetcher hasn't returned. */
   isLoading: boolean;
-  /** The host id the provider was instantiated with (e.g. pageId). */
-  targetId: string;
-  /** Optional discriminator the adapter passed in (e.g. "page"). */
-  targetKind?: string;
-  /** All comments for this target, sorted oldest → newest. */
+  /** The host target the provider was instantiated with. */
+  target: TargetRef;
+  /** All comments for this target, sorted oldest -> newest. */
   all: Comment[];
-  /** Comments with no `targetSubId` set (i.e. host-level / page-level). */
+  /** Comments with no `target.subId` set (i.e. host-level). */
   hostLevel: Comment[];
   /** Open-count among `hostLevel`. */
   hostOpenCount: number;
-  /** Comments grouped by `targetSubId` (e.g. by block id). */
+  /** Comments grouped by `target.subId`. */
   bySubId: Map<string, Comment[]>;
-  /** Open-count grouped by `targetSubId`. */
+  /** Open-count grouped by `target.subId`. */
   openCountBySubId: Map<string, number>;
 }
 
@@ -39,22 +37,19 @@ const Ctx = createContext<CommentsContextValue | null>(null);
 const EMPTY: Comment[] = [];
 
 interface ProviderProps extends CommentMutators {
-  /** Host id the provider scopes to. */
-  targetId: string;
-  /** Optional kind discriminator stamped on `value.targetKind`. */
-  targetKind?: string;
+  /** Host target the provider scopes to. */
+  target: TargetRef;
   /** Pre-fetched comments. The adapter is responsible for invoking its own
-   *  fetcher (Convex `useQuery`, REST hook, …) and passing the result here.
+   *  fetcher (Convex `useQuery`, REST hook, ...) and passing the result here.
    *  Pass `undefined` while loading. */
   comments: Comment[] | undefined;
   children: ReactNode;
 }
 
-/** Renderless comments provider. Buckets a flat list by `targetSubId` and
+/** Renderless comments provider. Buckets a flat list by `target.subId` and
  *  exposes mutator passthroughs. No backend assumptions, no Convex imports. */
 export function CommentsProvider({
-  targetId,
-  targetKind,
+  target,
   comments,
   create,
   update,
@@ -73,15 +68,13 @@ export function CommentsProvider({
     let hostOpenCount = 0;
 
     for (const c of all) {
-      if (c.targetSubId) {
-        const arr = bySubId.get(c.targetSubId) ?? [];
+      const sub = c.target?.subId;
+      if (sub) {
+        const arr = bySubId.get(sub) ?? [];
         arr.push(c);
-        bySubId.set(c.targetSubId, arr);
+        bySubId.set(sub, arr);
         if (!c.resolved) {
-          openCountBySubId.set(
-            c.targetSubId,
-            (openCountBySubId.get(c.targetSubId) ?? 0) + 1,
-          );
+          openCountBySubId.set(sub, (openCountBySubId.get(sub) ?? 0) + 1);
         }
       } else {
         hostLevel.push(c);
@@ -91,8 +84,7 @@ export function CommentsProvider({
 
     return {
       isLoading: comments === undefined,
-      targetId,
-      targetKind,
+      target,
       all,
       hostLevel,
       hostOpenCount,
@@ -103,7 +95,7 @@ export function CommentsProvider({
       resolve,
       remove,
     };
-  }, [comments, targetId, targetKind, create, update, resolve, remove]);
+  }, [comments, target, create, update, resolve, remove]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
@@ -114,8 +106,8 @@ export function useComments(): CommentsContextValue {
   return v;
 }
 
-/** Read comments scoped to a sub-target (e.g. a single block within a page).
- *  When `subId` is omitted/null, returns host-level comments + counts. */
+/** Read comments scoped to a sub-target. When `subId` is omitted/null,
+ *  returns host-level comments + counts. */
 export function useThreadComments(subId?: string | null) {
   const v = useComments();
   if (!subId) {

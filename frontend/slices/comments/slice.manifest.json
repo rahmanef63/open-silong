@@ -1,6 +1,6 @@
 {
   "name": "comments",
-  "description": "",
+  "description": "Threaded comments anchored to a polymorphic TargetRef. Kitab v0.2.0 portable surface (renderless core + props-driven hook); Convex-backed Nosion wiring isolated under adapters/.",
   "deps": {
     "shared": [
       "lib/format",
@@ -13,5 +13,5 @@
       "_generated"
     ]
   },
-  "notes": ""
+  "notes": "Portable surface: types/, lib/CommentsContext.tsx, hooks/useCommentsCore.ts, components/{CommentsAnchor,CommentsThread,ThreadPopover,CommentItem,CommentComposer}.tsx. Consumer-only: adapters/{nosion,nosionStandalone,PageCommentsPanel}. The shared lib/store + Convex _generated deps are consumed only by adapter files and never by the portable surface."
 }

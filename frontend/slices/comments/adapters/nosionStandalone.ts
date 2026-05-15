@@ -1,7 +1,7 @@
 /** Nosion-bound standalone hook (no Provider needed). Used by analytics +
  *  any caller that needs a flat comment list outside the dashboard editor.
- *  CONSUMER ONLY — kitab UP-sync surface uses `useThreadComments` from the
- *  renderless context instead. */
+ *  CONSUMER ONLY — kitab UP-sync surface uses `useCommentsCore` from
+ *  `hooks/useCommentsCore.ts` instead. */
 
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
@@ -10,9 +10,11 @@ import type { Comment } from "../types";
 function toComment(doc: any): Comment {
   return {
     id: doc._id,
-    targetKind: "page",
-    targetId: doc.pageId,
-    targetSubId: doc.blockId,
+    target: {
+      kind: "page",
+      id: doc.pageId,
+      subId: doc.blockId ?? undefined,
+    },
     text: doc.text,
     authorName: doc.authorName,
     authorIcon: doc.authorIcon,
