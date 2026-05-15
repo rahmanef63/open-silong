@@ -52,6 +52,11 @@ export async function runSlashSelect(type: BlockType, deps: Deps) {
     updateBlock(pageId, block.id, { text: "", children: [], collapsed: false });
     return;
   }
+  if (type === "synced") {
+    setBlockType(pageId, block.id, "synced");
+    updateBlock(pageId, block.id, { text: "", children: [], syncId: uid() });
+    return;
+  }
   if (type === "database") {
     const db = await createDatabase();
     setBlockType(pageId, block.id, "database");

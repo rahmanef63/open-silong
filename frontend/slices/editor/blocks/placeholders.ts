@@ -14,7 +14,7 @@ export const TOP_LEVEL_PLACEHOLDERS: Record<BlockType, string> = {
   divider: "", page: "", database: "",
   columns2: "", columns3: "", columns4: "", columns5: "",
   toggle: "", image: "", equation: "", table: "",
-  embed: "", button: "",
+  embed: "", button: "", synced: "",
 };
 
 /** Nested context — terser placeholders fit narrower columns / toggles. */

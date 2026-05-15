@@ -10,6 +10,7 @@ import type { Block } from "@/shared/types/domain";
 import { getBlockRenderer } from "../registry";
 import { ColumnBlockEditor } from "../../ColumnBlockEditor";
 import { ToggleContent } from "../ToggleBlock";
+import { SyncedBlockContent } from "../SyncedBlock";
 import { DatabaseBlock } from "@/slices/databases/DatabaseBlock";
 import { MAX_NEST, NestingCap } from "./NestingCap";
 
@@ -116,6 +117,9 @@ export function NestedContent({ block, baseProps, setRef, handleKeyDown, onUpdat
   case "toggle":
     if (depth > MAX_NEST) return wrap(<NestingCap type="Toggle" />);
     return wrap(<ToggleContent block={block} onUpdate={onUpdate} depth={depth + 1} pageId={pageId} />);
+  case "synced":
+    if (depth > MAX_NEST) return wrap(<NestingCap type="Synced" />);
+    return wrap(<SyncedBlockContent block={block} onUpdate={onUpdate} pageId={pageId} />);
   case "columns2":
   case "columns3":
   case "columns4":

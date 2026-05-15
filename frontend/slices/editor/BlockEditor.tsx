@@ -12,6 +12,7 @@ import { BlockControls } from "./blocks/BlockControls";
 import { BlockBody } from "./blocks/BlockBody";
 import { DatabasePicker } from "./blocks/DatabasePicker";
 import { ToggleBlock } from "./blocks/ToggleBlock";
+import { SyncedBlockContent } from "./blocks/SyncedBlock";
 import { getBlockRenderer } from "./blocks/registry";
 // Side-effect import: NestedBlock self-registers into nestedRegistry on
 // module load. Without this, columns / toggle blocks render with
@@ -118,6 +119,18 @@ function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerR
         setNodeRef={setNodeRef} style={style} isDragging={isDragging} isOver={isOver}
         attributes={attributes} listeners={listeners} convertTo={convertTo}
       />
+    );
+  }
+
+  if (block.type === "synced") {
+    return (
+      <BlockShell {...shellProps} controls={controls}>
+        <SyncedBlockContent
+          block={block}
+          pageId={pageId}
+          onUpdate={(patch) => updateBlock(pageId, block.id, patch)}
+        />
+      </BlockShell>
     );
   }
 

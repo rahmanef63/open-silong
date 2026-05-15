@@ -22,7 +22,8 @@ export type BlockType =
   | "equation"   // LaTeX block equation
   | "table"      // simple table (rows × cols of strings)
   | "embed"      // iframe embed (YouTube / Vimeo / Loom / Figma / generic)
-  | "button";    // CTA button → URL or page
+  | "button"     // CTA button → URL or page
+  | "synced";    // synced block — source (owns children) or ref (mirrors source)
 
 export interface Block {
   id: string;
@@ -76,6 +77,12 @@ export interface Block {
   color?: string;
   /** Notion-style background color palette key */
   bgColor?: string;
+  /** Synced block grouping. Source and all refs share the same syncId.
+   *  Source = block.type === "synced" without `syncRef`; owns `children`.
+   *  Ref    = block.type === "synced" with `syncRef: true`; mirrors the
+   *  source's children read-only via runtime page lookup. */
+  syncId?: string;
+  syncRef?: boolean;
 }
 
 export type PageFont = "default" | "serif" | "mono";
