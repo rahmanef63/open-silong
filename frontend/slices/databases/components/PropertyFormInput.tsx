@@ -16,9 +16,13 @@ import { DynamicIcon } from "@/shared/components/icon-picker";
 export const READ_ONLY_PROPERTY_TYPES: PropertyType[] = [
   "rollup", "formula", "created_time", "created_by",
   "last_edited_time", "last_edited_by", "unique_id",
+  "ai_summary", "ai_translation", "ai_keywords", "ai_custom",
 ];
 /** Property types that don't yet have a form-friendly editor. */
-export const UNSUPPORTED_FORM_TYPES: PropertyType[] = ["files", "verification"];
+export const UNSUPPORTED_FORM_TYPES: PropertyType[] = [
+  "files", "verification",
+  "ai_summary", "ai_translation", "ai_keywords", "ai_custom",
+];
 
 export function isFormableProperty(p: Property): boolean {
   return !READ_ONLY_PROPERTY_TYPES.includes(p.type) && !UNSUPPORTED_FORM_TYPES.includes(p.type);

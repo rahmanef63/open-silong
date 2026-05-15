@@ -193,7 +193,11 @@ export type PropertyType =
   | "unique_id"
   | "button"
   | "place"
-  | "verification";
+  | "verification"
+  | "ai_summary"      // AI-generated row summary
+  | "ai_translation"  // AI-translated text
+  | "ai_keywords"     // AI-extracted keywords
+  | "ai_custom";      // user-prompted AI autofill
 
 /** Calculate aggregate for the table footer. Mirrors Notion's
  *  per-type set; UI gates which aggregates are valid for which

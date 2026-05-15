@@ -123,5 +123,25 @@ export function PropertyCell({ db, prop, row, compact = false }: Props) {
       );
     case "verification":
       return <VerificationCell value={value} onSet={set} cellClass={cellClass} />;
+    case "ai_summary":
+    case "ai_translation":
+    case "ai_keywords":
+    case "ai_custom":
+      return <AIStubCell type={prop.type} cellClass={cellClass} />;
   }
+}
+
+function AIStubCell({ type, cellClass }: { type: "ai_summary" | "ai_translation" | "ai_keywords" | "ai_custom"; cellClass: string }) {
+  const labels = {
+    ai_summary: "AI summary",
+    ai_translation: "AI translation",
+    ai_keywords: "AI keywords",
+    ai_custom: "AI autofill",
+  } as const;
+  return (
+    <span className={cn(cellClass, "inline-flex items-center gap-1.5 px-2 py-1 text-xs text-muted-foreground")} title={`${labels[type]} — backend wiring coming soon`}>
+      <span className="rounded bg-brand/10 px-1 text-[9px] uppercase tracking-wider text-brand">Soon</span>
+      <span className="opacity-70">{labels[type]}</span>
+    </span>
+  );
 }
