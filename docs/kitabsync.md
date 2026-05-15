@@ -58,15 +58,15 @@
 
 ### `command-menu` — `up-needed` · `portable`
 
-- kitabVersion: `0.1.0`
+- kitabVersion: `0.2.0`
 - consumerVersion: `0.3.0`
 - syncDirection: `bidirectional`
 - lastPullAt: `null`
-- lastPushAt: `null`
+- lastPushAt: `2026-05-15T13:30:00Z`
 - Local path: `frontend/slices/command-palette/`
 - Blockers: — (all 5 resolved in Wave N+3.3, commit 068709c)
-- Notes: Renderless `CommandPalette` consumes generic `CommandGroup[]` + label bag. Nosion-specific wiring isolated under `adapters/nosion.tsx` + `adapters/NosionCommandPalette.tsx` (excluded from kitab UP-sync surface). `SearchModal` accepts `labels?: SearchModalLabels` with defaults. Slice index re-exports the Nosion adapter as `CommandPalette` for back-compat with the dashboard mount.
-- Suggested action: `/rr-prep command-palette --fix` (sanity check) → `/rr-send command-palette` (UP). Kitab maintainer accepts as `command-menu@0.2.0`.
+- Notes: Wave N+3.7 — kitab maintainer pulled UP the renderless surface as `command-menu@0.2.0` (kitab `frontend/slices/command-menu/`). This consumer remains one minor ahead because it ships the `adapters/nosion.tsx` + `adapters/NosionCommandPalette.tsx` + Nosion-keyed `lib/cmdkHistory.ts` layer that is intentionally excluded from the kitab portable surface. Verdict will read `up-needed · portable` again until either (a) we drop the adapters layer consumer-side, or (b) we promote it to its own `nosion-command-palette` consumer-locked slice. Kitab DNA file lineage entry stamped `2026-05-15T13:30:00Z` records the merge.
+- Suggested action: keep `bidirectional` and bump `consumerVersion` on the next local edit. No further UP-sync until adapter scope decision.
 
 ## Aggregate suggested actions (priority order)
 
@@ -85,4 +85,5 @@
 | 2026-05-15T05:09:24Z    | audit refresh         |              2 | 839ede5 | claude-code  |
 | 2026-05-15T07:08:00Z    | command-menu refactor portable + bidirectional | 1 | 068709c | claude-code  |
 | 2026-05-15T08:15:00Z    | comments refactor portable + bidirectional | 1 | (prev) | claude-code  |
-| 2026-05-15T12:15:00Z    | DOWN-sync apply: adopt kitab comments@0.2.0 polymorphic TargetRef contract | 1 | (this) | claude-code  |
+| 2026-05-15T12:15:00Z    | DOWN-sync apply: adopt kitab comments@0.2.0 polymorphic TargetRef contract | 1 | (prev) | claude-code  |
+| 2026-05-15T13:30:00Z    | UP-sync notion command-palette@0.3.0 → kitab command-menu@0.2.0 (renderless surface adopted, Nosion adapters left consumer-side). Bumped `kitabVersion` 0.1.0→0.2.0 + stamped `lastPushAt`. | 1 | (this) | claude-code  |
