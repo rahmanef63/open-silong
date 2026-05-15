@@ -7,11 +7,13 @@ import { UsersPanel } from "./UsersPanel";
 import { TemplatesPanel } from "./TemplatesPanel";
 import { AuditLogPanel } from "./AuditLogPanel";
 import { FeedbackPanel } from "./FeedbackPanel";
+import { AIConfigPanel } from "./ai/AIConfigPanel";
 
 const TABS = [
   { id: "overview", label: "Overview" },
   { id: "users", label: "Users" },
   { id: "templates", label: "Templates" },
+  { id: "ai", label: "AI" },
   { id: "audit", label: "Audit log" },
   { id: "feedback", label: "Feedback" },
 ] as const;
@@ -38,6 +40,7 @@ export function AdminPanel() {
           <TabsContent value="overview" className="mt-6"><OverviewPanel /></TabsContent>
           <TabsContent value="users" className="mt-6"><UsersPanel /></TabsContent>
           <TabsContent value="templates" className="mt-6"><TemplatesPanel /></TabsContent>
+          <TabsContent value="ai" className="mt-6"><AIConfigPanel /></TabsContent>
           <TabsContent value="audit" className="mt-6"><AuditLogPanel /></TabsContent>
           <TabsContent value="feedback" className="mt-6"><FeedbackPanel /></TabsContent>
         </Tabs>

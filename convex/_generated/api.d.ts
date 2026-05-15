@@ -21,6 +21,8 @@ import type * as admin_mutations from "../admin/mutations.js";
 import type * as admin_queries from "../admin/queries.js";
 import type * as ai_chat from "../ai/chat.js";
 import type * as ai_internal from "../ai/internal.js";
+import type * as ai_mutations from "../ai/mutations.js";
+import type * as ai_queries from "../ai/queries.js";
 import type * as auth from "../auth.js";
 import type * as crons from "../crons.js";
 import type * as databases from "../databases.js";
@@ -88,6 +90,8 @@ declare const fullApi: ApiFromModules<{
   "admin/queries": typeof admin_queries;
   "ai/chat": typeof ai_chat;
   "ai/internal": typeof ai_internal;
+  "ai/mutations": typeof ai_mutations;
+  "ai/queries": typeof ai_queries;
   auth: typeof auth;
   crons: typeof crons;
   databases: typeof databases;
