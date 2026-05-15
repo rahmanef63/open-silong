@@ -66,6 +66,7 @@ export function AIConfigPanel() {
 
   async function onSave() {
     setSaving(true);
+    const t = toast.loading("Saving AI config…");
     try {
       await save({
         provider,
@@ -74,10 +75,10 @@ export function AIConfigPanel() {
         baseUrl: baseUrl || undefined,
         enabled,
       });
-      toast.success("AI config saved");
+      toast.success(`Saved — ${provider}/${model}${enabled ? " (enabled)" : " (disabled)"}`, { id: t });
       setApiKey("");
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Save failed");
+      toast.error(e instanceof Error ? e.message : "Save failed", { id: t });
     } finally {
       setSaving(false);
     }
@@ -88,12 +89,13 @@ export function AIConfigPanel() {
       return;
     }
     setClearing(true);
+    const t = toast.loading("Clearing AI config…");
     try {
       await clear({});
-      toast.success("AI config cleared — env fallback active");
+      toast.success("Cleared — env fallback active", { id: t });
       setApiKey("");
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Clear failed");
+      toast.error(e instanceof Error ? e.message : "Clear failed", { id: t });
     } finally {
       setClearing(false);
     }
@@ -101,11 +103,34 @@ export function AIConfigPanel() {
 
   async function onTest() {
     setTesting(true);
+    // Prefer in-form values when present so admin can validate a freshly
+    // typed key BEFORE saving. When the key field is blank we fall back
+    // to whatever's persisted server-side via the resolver chain.
+    const inline = apiKey.trim().length > 0;
+    const args = inline
+      ? {
+          provider,
+          model,
+          apiKey: apiKey.trim(),
+          baseUrl: baseUrl || undefined,
+        }
+      : {};
+    const t = toast.loading(
+      inline
+        ? `Testing ${provider}/${model} with the key in the form…`
+        : "Testing saved config…",
+    );
     try {
-      const r = await test({});
-      toast.success(`Test OK — ${r.source} · ${r.model} replied "${r.reply}"`);
+      const r = await test(args);
+      toast.success(
+        `Test OK — ${r.source}/${r.model} replied "${r.reply.slice(0, 40)}"`,
+        { id: t, duration: 6000 },
+      );
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Test failed");
+      toast.error(e instanceof Error ? e.message : "Test failed", {
+        id: t,
+        duration: 8000,
+      });
     } finally {
       setTesting(false);
     }
@@ -117,6 +142,10 @@ export function AIConfigPanel() {
     model !== current?.model ||
     baseUrl !== (current?.baseUrl ?? "") ||
     enabled !== (current?.enabled ?? false);
+  // Test is only meaningful when there's SOMETHING to test —
+  // either a saved enabled config OR a freshly typed key.
+  const canTest =
+    apiKey.trim().length > 0 || (!!current?.hasKey && !!current?.enabled);
 
   return (
     <div className="space-y-8">
@@ -219,7 +248,18 @@ export function AIConfigPanel() {
             {saving && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />}
             Save
           </Button>
-          <Button variant="outline" onClick={onTest} disabled={testing}>
+          <Button
+            variant="outline"
+            onClick={onTest}
+            disabled={testing || !canTest}
+            title={
+              canTest
+                ? apiKey.trim().length > 0
+                  ? "Send a 'ping' using the key in the form (no save needed)"
+                  : "Send a 'ping' using the saved config"
+                : "Paste an API key or save + enable a config first"
+            }
+          >
             {testing ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : <Plug className="h-3.5 w-3.5 mr-1.5" />}
             Test connection
           </Button>

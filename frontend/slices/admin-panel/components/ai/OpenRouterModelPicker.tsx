@@ -32,11 +32,13 @@ export function OpenRouterModelPicker({ onPick, currentModel }: Props) {
 
   async function load() {
     setLoading(true);
+    const t = toast.loading("Fetching OpenRouter catalog…");
     try {
       const list = await fetchModels({});
       setModels(list);
+      toast.success(`Loaded ${list.length} models`, { id: t });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to load models");
+      toast.error(e instanceof Error ? e.message : "Failed to load models", { id: t });
     } finally {
       setLoading(false);
     }

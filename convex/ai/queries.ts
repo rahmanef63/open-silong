@@ -52,6 +52,22 @@ export const _getGlobalAISettings = internalQuery({
   },
 });
 
+/** Internal — diagnostic. Tells the resolver whether the row exists and
+ *  why `_getGlobalAISettings` returned null, so error messages can point
+ *  at the exact missing piece (no row vs disabled vs no key). */
+export const _probeGlobalAISettings = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    const row = await ctx.db.query("globalAISettings").first();
+    if (!row) return { exists: false, enabled: false, hasKey: false };
+    return {
+      exists: true,
+      enabled: !!row.enabled,
+      hasKey: row.apiKey.length > 0,
+    };
+  },
+});
+
 /** Internal — model override for a single user (returns just the model
  *  string or null). */
 export const _getUserModelOverride = internalQuery({
