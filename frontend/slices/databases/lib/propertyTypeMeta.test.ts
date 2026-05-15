@@ -11,6 +11,7 @@ const ALL_TYPES: PropertyType[] = [
   "files", "relation", "rollup", "formula",
   "created_time", "created_by", "last_edited_time", "last_edited_by",
   "unique_id", "button", "place", "verification",
+  "ai_summary", "ai_translation", "ai_keywords", "ai_custom",
 ];
 
 describe("propertyTypeMeta — coverage", () => {
@@ -34,7 +35,11 @@ describe("propertyTypeMeta — coverage", () => {
 
 describe("propertyTypeMeta — semantic invariants", () => {
   it("computed types are read-only", () => {
-    for (const t of ["rollup", "formula", "created_time", "created_by", "last_edited_time", "last_edited_by", "unique_id"] as PropertyType[]) {
+    for (const t of [
+      "rollup", "formula", "created_time", "created_by",
+      "last_edited_time", "last_edited_by", "unique_id",
+      "ai_summary", "ai_translation", "ai_keywords", "ai_custom",
+    ] as PropertyType[]) {
       expect(PROPERTY_TYPE_META[t].readOnlyValue).toBe(true);
     }
   });

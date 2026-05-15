@@ -13,6 +13,7 @@ import {
   Type, Hash, ChevronDown, Tags, Circle, Calendar, User, CheckSquare,
   Link2, Mail, Phone, Paperclip, ArrowUpRight, Sigma, Calculator, Clock,
   UserCheck, Fingerprint, MousePointer, MapPin, ShieldCheck,
+  Sparkles, Languages, Lightbulb, Wand2,
   type LucideIcon,
 } from "lucide-react";
 import type { PropertyType } from "@/shared/types/domain";
@@ -20,7 +21,7 @@ import type { PropertyType } from "@/shared/types/domain";
 export type PropertyTypeCategory =
   | "text" | "numeric" | "option" | "date" | "people"
   | "boolean" | "contact" | "media" | "relational" | "computed"
-  | "system" | "automation" | "location" | "wiki";
+  | "system" | "automation" | "location" | "wiki" | "ai";
 
 export interface PropertyTypeMeta {
   /** UI label shown in menus + headers. */
@@ -63,6 +64,10 @@ export const PROPERTY_TYPE_META: Record<PropertyType, PropertyTypeMeta> = {
   button:           { label: "Button",           icon: MousePointer, defaultName: "Action",       category: "automation",  apiName: "button" },
   place:            { label: "Place",            icon: MapPin,       defaultName: "Place",        category: "location",    apiName: "place" },
   verification:     { label: "Verification",     icon: ShieldCheck,  defaultName: "Verified",     category: "wiki",        apiName: "verification" },
+  ai_summary:       { label: "AI summary",       icon: Sparkles,     defaultName: "AI summary",   category: "ai",          apiName: "ai_summary",      readOnlyValue: true },
+  ai_translation:   { label: "AI translation",   icon: Languages,    defaultName: "Translation",  category: "ai",          apiName: "ai_translation",  readOnlyValue: true },
+  ai_keywords:      { label: "AI keywords",      icon: Lightbulb,    defaultName: "Keywords",     category: "ai",          apiName: "ai_keywords",     readOnlyValue: true },
+  ai_custom:        { label: "AI custom",        icon: Wand2,        defaultName: "AI autofill",  category: "ai",          apiName: "ai_custom",       readOnlyValue: true },
 };
 
 /** Convenience derived maps (computed once at module-load). */

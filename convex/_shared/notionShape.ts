@@ -444,6 +444,10 @@ const NOSION_TO_NOTION_PROP_TYPE: Record<string, string> = {
   button: "button",
   place: "place",
   verification: "verification",
+  ai_summary: "ai_summary",
+  ai_translation: "ai_translation",
+  ai_keywords: "ai_keywords",
+  ai_custom: "ai_custom",
 };
 
 const NOTION_TO_NOSION_PROP_TYPE: Record<string, string> = Object.fromEntries(
