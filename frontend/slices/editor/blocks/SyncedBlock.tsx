@@ -147,7 +147,10 @@ function SyncedSourceView({
   );
 }
 
-/** Ref mode — read-only mirror of source block's children. */
+/** Ref mode — editable mirror of source block's children. Edits route
+ *  to the source block (any-page) via updateBlock so every other ref
+ *  re-renders with the new content automatically (zustand source-of-
+ *  truth). */
 function SyncedRefView({
   block, sourcePage, sourceBlock,
 }: {
@@ -155,7 +158,9 @@ function SyncedRefView({
   sourcePage: { id: string; title: string } | null;
   sourceBlock: Block | null;
 }) {
-  if (!sourceBlock) {
+  const { updateBlock } = useStore();
+
+  if (!sourceBlock || !sourcePage) {
     return (
       <div className="rounded-md border border-amber-500/40 bg-amber-500/5 p-3 text-xs text-amber-700 dark:text-amber-400 flex items-center gap-2">
         <AlertTriangle className="h-4 w-4 shrink-0" />
@@ -170,26 +175,25 @@ function SyncedRefView({
   }
 
   const children: Block[] = sourceBlock.children ?? [];
+  const setChildren = (next: Block[]) => {
+    updateBlock(sourcePage.id, sourceBlock.id, { children: next });
+  };
 
   return (
     <div className={cn("rounded-md border border-brand/30 bg-brand/5 p-2", bgColorClass(block.bgColor))}>
       <div className="flex items-center gap-2 px-1 pb-1.5 mb-1.5 border-b border-brand/20 text-[10px] font-medium text-brand/80 uppercase tracking-wider">
         <RefreshCw className="h-3 w-3" />
         <span>Synced from</span>
-        {sourcePage && (
-          <a
-            href={`/dashboard/p/${sourcePage.id}`}
-            className="inline-flex items-center gap-1 normal-case font-normal text-brand hover:underline"
-          >
-            <Link2 className="h-3 w-3" />
-            {sourcePage.title || "Untitled"}
-          </a>
-        )}
-        <span className="ml-auto text-[9px] opacity-70 normal-case">read-only here · edit at source</span>
+        <a
+          href={`/dashboard/p/${sourcePage.id}`}
+          className="inline-flex items-center gap-1 normal-case font-normal text-brand hover:underline"
+        >
+          <Link2 className="h-3 w-3" />
+          {sourcePage.title || "Untitled"}
+        </a>
+        <span className="ml-auto text-[9px] opacity-70 normal-case">edits propagate to all refs</span>
       </div>
-      <div className="opacity-90 pointer-events-none select-text" aria-readonly>
-        <SyncedChildrenList children={children} setChildren={() => {}} pageId={undefined} editable={false} />
-      </div>
+      <SyncedChildrenList children={children} setChildren={setChildren} pageId={sourcePage.id} editable />
     </div>
   );
 }

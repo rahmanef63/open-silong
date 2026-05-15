@@ -4,6 +4,7 @@ import { requireAuth } from "../../_shared/auth";
 import { rateLimit } from "../../_shared/rateLimit";
 import { CHAR_CAPS, RATE_LIMITS } from "../../_shared/limits";
 import { Id } from "../../_generated/dataModel";
+import { getActiveWorkspaceMutation } from "../../_shared/workspace";
 
 export const create = mutation({
   args: {
@@ -26,8 +27,13 @@ export const create = mutation({
     if (args.body && args.body.length > CHAR_CAPS.inboxBody) throw new Error("Body too long");
     const userId = await requireAuth(ctx);
     await rateLimit(ctx, userId, RATE_LIMITS.inboxCreate);
+    // Stamp the active workspace so listings filter cleanly per
+    // workspace; legacy rows without workspaceId stay visible only
+    // in the personal workspace via rowInActiveWorkspace.
+    const active = await getActiveWorkspaceMutation(ctx, userId);
     return await ctx.db.insert("notifications", {
       userId,
+      workspaceId: active._id,
       kind: args.kind,
       title: args.title,
       body: args.body,
