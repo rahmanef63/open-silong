@@ -22,6 +22,14 @@ export function MarqueeOverlay({ containerRef }: Props) {
       // Bailing on pointerdown inside their root prevents accidental
       // block-marquee while reordering kanban cards.
       skipSelector="[data-database-block-root]"
+      // Drag inside a column / toggle / synced container: pick the
+      // inner blocks, not the parent. The parent shell still gets
+      // intersected, but its descendants are also hit so we drop it.
+      excludeAncestorsWhenDescendantHit
+      // AutoCAD-style: drag rightwards = strict window enclosure;
+      // drag leftwards = crossing intersection. Visual: solid blue
+      // ring vs dashed green ring.
+      autocad
     />
   );
 }
