@@ -39,6 +39,7 @@ export function runNestedSlashSelect(
 ) {
   const patch: Partial<Block> = { type, text: "" };
   if (type === "toggle") { patch.children = []; patch.collapsed = false; }
+  if (type === "synced") { patch.children = []; patch.syncId = uid(); }
   if (type === "columns2") {
     patch.columns = [
       [{ id: uid(), type: "paragraph", text: "" }],
