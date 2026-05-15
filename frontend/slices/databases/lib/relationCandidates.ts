@@ -9,7 +9,7 @@ import type { Page } from "@/shared/types/domain";
 interface FilterArgs {
   pages: Page[];
   /** The page hosting the cell — excluded so a row never relates to itself. */
-  selfRowId: string;
+  selfRowId?: string;
   /** Target database id. `null | undefined` means "all database rows". */
   targetDbId: string | null | undefined;
   /** True when `targetDbId` is set but the DB is missing from the
