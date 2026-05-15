@@ -2,17 +2,13 @@
   "$schema": "https://resource.rahmanef.com/schemas/kitab-consumer.json",
   "kitabSlug": "comments",
   "kitabVersion": "0.1.0",
-  "consumerVersion": "0.2.0",
-  "syncDirection": "down-only",
+  "consumerVersion": "0.3.0",
+  "syncDirection": "bidirectional",
   "generalization": {
-    "status": "needs-adapter",
+    "status": "portable",
     "auditedAt": "2026-05-15",
-    "blockers": [
-      "frontend/slices/comments/types/index.ts:3-4 — Comment shape hardcodes `pageId: string` + `blockId?: string`; kitab generic should expose `targetId` + optional `targetSubId` keyed by `targetKind`.",
-      "frontend/slices/comments/lib/PageCommentsContext.tsx:46 — Convex API path `api[\"features/comments/queries\"].listForPage` baked in; kitab should accept a fetcher fn or path prop.",
-      "frontend/slices/comments/lib/PageCommentsContext.tsx:45 — `PageCommentsProvider` name + `useBlockComments(blockId)` hook tie domain language to page/block; rename to `CommentsProvider` + `useThreadComments(threadId)` for portability.",
-      "frontend/slices/comments/components/BlockCommentsPopover.tsx — file + component naming presumes block UI; kitab should provide a domain-neutral `ThreadPopover` with the consumer naming the host."
-    ]
+    "blockers": [],
+    "notes": "Renderless `CommentsProvider` accepts pre-fetched `comments: Comment[]` + mutator passthroughs — no Convex imports in the kitab surface. Generic `Comment` shape exposes `targetId` / `targetSubId` / `targetKind` (legacy `pageId` / `blockId` removed). `useThreadComments(subId)` replaces the page-/block-coupled hook names. Renderless `ThreadPopover` accepts `threadId` + viewer + `buildCreateArgs`. Nosion-specific wiring (`PageCommentsProvider`, `useBlockComments`, `BlockCommentsPopover`, Convex-backed `useStandaloneComments`) lives under `adapters/nosion.tsx` + `hooks/useComments.ts` and is excluded from kitab UP-sync. Slice index re-exports the adapter under historical names for back-compat."
   },
   "lastPullAt": null,
   "lastPushAt": null

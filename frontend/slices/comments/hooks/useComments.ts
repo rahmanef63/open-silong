@@ -1,3 +1,8 @@
+/** Nosion-bound standalone hook (no Provider needed). Used by analytics +
+ *  any caller that needs a flat comment list outside the dashboard editor.
+ *  CONSUMER ONLY — kitab UP-sync surface uses `useThreadComments` from the
+ *  renderless context instead. */
+
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import type { Comment } from "../types";
@@ -5,8 +10,9 @@ import type { Comment } from "../types";
 function toComment(doc: any): Comment {
   return {
     id: doc._id,
-    pageId: doc.pageId,
-    blockId: doc.blockId,
+    targetKind: "page",
+    targetId: doc.pageId,
+    targetSubId: doc.blockId,
     text: doc.text,
     authorName: doc.authorName,
     authorIcon: doc.authorIcon,
@@ -17,7 +23,7 @@ function toComment(doc: any): Comment {
   };
 }
 
-export function useComments(opts: { pageId?: string; blockId?: string }) {
+export function useStandaloneComments(opts: { pageId?: string; blockId?: string }) {
   const byPage = useQuery(
     api["features/comments/queries"].listForPage,
     opts.pageId ? { pageId: opts.pageId } : "skip",
@@ -47,3 +53,6 @@ export function useComments(opts: { pageId?: string; blockId?: string }) {
     remove,
   };
 }
+
+/** Back-compat alias. */
+export { useStandaloneComments as useComments };

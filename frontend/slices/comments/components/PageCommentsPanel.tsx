@@ -1,6 +1,8 @@
+"use client";
+
 import { MessageSquare } from "lucide-react";
 import { useStore } from "@/shared/lib/store";
-import { usePageComments } from "../lib/PageCommentsContext";
+import { useComments } from "../lib/CommentsContext";
 import { CommentItem } from "./CommentItem";
 import { CommentComposer } from "./CommentComposer";
 
@@ -10,7 +12,14 @@ interface Props {
 
 export function PageCommentsPanel({ pageId }: Props) {
   const { user } = useStore();
-  const { pageLevel, pageOpenCount: openCount, create, update, resolve, remove } = usePageComments();
+  const {
+    hostLevel,
+    hostOpenCount: openCount,
+    create,
+    update,
+    resolve,
+    remove,
+  } = useComments();
 
   const onCreate = (text: string) => {
     create({
@@ -30,7 +39,7 @@ export function PageCommentsPanel({ pageId }: Props) {
         </h3>
       </div>
       <div className="space-y-2">
-        {pageLevel.map((c) => {
+        {hostLevel.map((c) => {
           const isAuthor = !!c.authorId && c.authorId === user.id;
           // Within the dashboard, the viewer is always the page owner —
           // the page-by-id query rejects access otherwise. Hence delete +
