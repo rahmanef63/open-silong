@@ -1,0 +1,20 @@
+{
+  "$schema": "https://resource.rahmanef.com/schemas/kitab-consumer.json",
+  "kitabSlug": "command-menu",
+  "kitabVersion": "0.1.0",
+  "consumerVersion": "0.2.0",
+  "syncDirection": "down-only",
+  "generalization": {
+    "status": "needs-adapter",
+    "auditedAt": "2026-05-15",
+    "blockers": [
+      "frontend/slices/command-palette/components/CommandPalette.tsx:23 — palette consumes `pages, recents, databases, createPage, createDatabase` directly from the Nosion store; kitab should accept a generic `groups: CommandGroup[]` plus action handlers as props.",
+      "frontend/slices/command-palette/components/CommandPalette.tsx:60 — placeholder copy `\"Search pages, databases, or run a command…\"` is consumer-domain text; kitab should accept a `placeholder` prop or i18n keys.",
+      "frontend/slices/command-palette/components/palette/PagesGroups.tsx:60 — navigation hardcodes `ROUTES.database(d.id)` (consumer route helper); kitab should accept an `onNavigate(item)` callback so consumer owns route shape.",
+      "frontend/slices/command-palette/components/palette/PresetGroup.tsx:13-14 — couples to `addBlock(pageId, after, type)` / `updateBlock(pageId, blockId, patch)` editor APIs; kitab should expose only renderless `CommandGroup` and `CommandItem` slots and let consumer wire effects.",
+      "frontend/slices/command-palette/components/SearchModal.tsx:34 — DialogTitle literal `\"Search workspace\"` and surrounding placeholder `\"Search pages and databases…\"` are domain text; needs labels prop bag."
+    ]
+  },
+  "lastPullAt": null,
+  "lastPushAt": null
+}
