@@ -83,6 +83,8 @@ export function NestedBlock({
       ref={setNodeRef as unknown as React.Ref<HTMLDivElement>}
       style={sortableStyle}
       {...attributes}
+      data-block-shell-id={block.id}
+      data-block-nested
       className={cn(
         "group/nested relative flex items-start gap-1 min-w-0",
         isDragging && "opacity-40",

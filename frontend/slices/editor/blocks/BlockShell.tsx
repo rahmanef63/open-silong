@@ -44,6 +44,40 @@ export function BlockShell({
       >
         {controls}
       </div>
+      {/* Edge-grab strips — let users tap the top/bottom border of a
+          block (especially containers like columns / toggle / synced
+          where the body steals all clicks for inner CRUD) to select
+          THIS block as a whole. Tiny so they don't hijack normal text
+          selection in the body. Modifier-aware: shift = range,
+          meta/ctrl = toggle. */}
+      {blockId && sel && (
+        <>
+          <div
+            aria-hidden
+            data-block-edge="top"
+            onPointerDown={(e) => {
+              if (e.button !== 0) return;
+              e.stopPropagation();
+              if (e.shiftKey) sel.range(blockId);
+              else if (e.metaKey || e.ctrlKey) sel.toggle(blockId);
+              else sel.selectOne(blockId);
+            }}
+            className="absolute inset-x-0 top-0 h-1.5 cursor-pointer hover:bg-brand/20"
+          />
+          <div
+            aria-hidden
+            data-block-edge="bottom"
+            onPointerDown={(e) => {
+              if (e.button !== 0) return;
+              e.stopPropagation();
+              if (e.shiftKey) sel.range(blockId);
+              else if (e.metaKey || e.ctrlKey) sel.toggle(blockId);
+              else sel.selectOne(blockId);
+            }}
+            className="absolute inset-x-0 bottom-0 h-1.5 cursor-pointer hover:bg-brand/20"
+          />
+        </>
+      )}
       <div className="min-w-0">{children}</div>
     </div>
   );
