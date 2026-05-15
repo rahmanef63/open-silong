@@ -3,6 +3,7 @@ import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { RefreshCw, Plus, Link2, AlertTriangle, Copy, Check } from "lucide-react";
 import type { Block, BlockType } from "@/shared/types/domain";
 import { useStore } from "@/shared/lib/store";
+import { useWorkspaces } from "@/shared/lib/store/hooks";
 import { cn } from "@/shared/lib/utils";
 import { uid } from "@/shared/lib/uid";
 import { findSyncedSource } from "../lib/syncedBlocks";
@@ -31,17 +32,31 @@ export function SyncedBlockContent({
   onUpdate: (patch: Partial<Block>) => void;
 }) {
   const { pages } = useStore();
+  const { workspace } = useWorkspaces();
+  const viewerWorkspaceId = workspace?.id;
   const isRef = !!block.syncRef;
   const sourceLookup = useMemo(
-    () => (isRef && block.syncId ? findSyncedSource(block.syncId, pages, block.id) : null),
-    [isRef, block.syncId, block.id, pages],
+    () =>
+      isRef && block.syncId
+        ? findSyncedSource(block.syncId, pages, {
+            excludeBlockId: block.id,
+            viewerWorkspaceId,
+          })
+        : null,
+    [isRef, block.syncId, block.id, pages, viewerWorkspaceId],
   );
   const sourcePage = sourceLookup?.page ?? null;
   const sourceBlock = sourceLookup?.block ?? null;
+  const cycle = !!sourceLookup?.cycle;
 
   if (isRef) {
     return (
-      <SyncedRefView block={block} sourcePage={sourcePage} sourceBlock={sourceBlock} />
+      <SyncedRefView
+        block={block}
+        sourcePage={sourcePage}
+        sourceBlock={sourceBlock}
+        cycle={cycle}
+      />
     );
   }
 
@@ -152,11 +167,12 @@ function SyncedSourceView({
  *  re-renders with the new content automatically (zustand source-of-
  *  truth). */
 function SyncedRefView({
-  block, sourcePage, sourceBlock,
+  block, sourcePage, sourceBlock, cycle,
 }: {
   block: Block;
   sourcePage: { id: string; title: string } | null;
   sourceBlock: Block | null;
+  cycle?: boolean;
 }) {
   const { updateBlock } = useStore();
 
@@ -168,6 +184,20 @@ function SyncedRefView({
           <div className="font-medium">Synced source not found.</div>
           <div className="text-[10px] mt-0.5 opacity-80">
             sync id <code className="font-mono">{block.syncId?.slice(0, 8) ?? "—"}</code> — the original may have been deleted or moved to a workspace you can&rsquo;t see.
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (cycle) {
+    return (
+      <div className="rounded-md border border-rose-500/40 bg-rose-500/5 p-3 text-xs text-rose-700 dark:text-rose-400 flex items-center gap-2">
+        <AlertTriangle className="h-4 w-4 shrink-0" />
+        <div>
+          <div className="font-medium">Synced cycle detected.</div>
+          <div className="text-[10px] mt-0.5 opacity-80">
+            sync id <code className="font-mono">{block.syncId?.slice(0, 8)}</code> — the source on <span className="font-medium">{sourcePage.title || "Untitled"}</span> contains a reference back to this group. Remove the nested ref to render this block.
           </div>
         </div>
       </div>

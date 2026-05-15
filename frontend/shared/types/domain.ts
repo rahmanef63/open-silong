@@ -98,6 +98,12 @@ export interface Page {
   trashed: boolean;
   createdAt: number;
   updatedAt: number;
+  /** Workspace owning this page. Convex queries already pre-filter pages to
+   *  the active workspace, so most consumers can ignore this field. Surfaced
+   *  for defense-in-depth gates (e.g. cross-workspace synced-block lookup)
+   *  + future per-page presence + ownership reasoning. Optional because
+   *  legacy rows may lack the stamp. */
+  workspaceId?: string;
   /** Sharing */
   isPublic?: boolean;
   /** Snapshots are kept separately on the workspace; pages just live. */

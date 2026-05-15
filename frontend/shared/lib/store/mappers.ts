@@ -4,6 +4,7 @@ export function toPage(doc: any): Page {
   return {
     id: doc._id, parentId: doc.parentId, title: doc.title, icon: doc.icon, cover: doc.cover,
     blocks: doc.blocks ?? [], favorite: doc.favorite, trashed: doc.trashed, isPublic: doc.isPublic,
+    workspaceId: doc.workspaceId,
     shareSlug: doc.shareSlug,
     shareIndexable: doc.shareIndexable,
     rowOfDatabaseId: doc.rowOfDatabaseId, rowProps: doc.rowProps,
