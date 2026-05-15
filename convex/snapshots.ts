@@ -1,20 +1,23 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { requireAuth, requireOwned } from "./_shared/auth";
-import { uid } from "./_shared/uid";
+import { requireOwned } from "./_shared/auth";
 import { Id } from "./_generated/dataModel";
+import { readActiveWorkspace, rowInActiveWorkspace } from "./_shared/workspace";
 
 export const listForPage = query({
   args: { pageId: v.string() },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) return [];
-    return await ctx.db
+    const active = await readActiveWorkspace(ctx, userId);
+    if (!active) return [];
+    const rows = await ctx.db
       .query("snapshots")
       .withIndex("by_user_page", (q) => q.eq("userId", userId).eq("pageId", args.pageId))
       .order("desc")
       .take(50);
+    return rows.filter((r) => rowInActiveWorkspace(r, active, userId));
   },
 });
 
@@ -23,7 +26,14 @@ export const listAll = query({
   handler: async (ctx) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) return [];
-    return await ctx.db.query("snapshots").withIndex("by_user", (q) => q.eq("userId", userId)).order("desc").take(500);
+    const active = await readActiveWorkspace(ctx, userId);
+    if (!active) return [];
+    const rows = await ctx.db
+      .query("snapshots")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .order("desc")
+      .take(500);
+    return rows.filter((r) => rowInActiveWorkspace(r, active, userId));
   },
 });
 
@@ -39,9 +49,13 @@ export const create = mutation({
     rowProps: v.optional(v.any()),
   },
   handler: async (ctx, args) => {
-    const { userId } = await requireOwned(ctx, "pages", args.pageId as Id<"pages">);
+    const { userId, doc: page } = await requireOwned(ctx, "pages", args.pageId as Id<"pages">);
     return await ctx.db.insert("snapshots", {
       userId,
+      // Inherit the parent page's workspaceId so the snapshot scopes
+      // alongside its source — listAll already filters via
+      // rowInActiveWorkspace for legacy rows without workspaceId.
+      workspaceId: page.workspaceId,
       pageId: args.pageId,
       authorId: userId,
       authorName: args.authorName,
