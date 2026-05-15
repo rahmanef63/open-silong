@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as _shared_aiProviders from "../_shared/aiProviders.js";
 import type * as _shared_auth from "../_shared/auth.js";
 import type * as _shared_blocks from "../_shared/blocks.js";
 import type * as _shared_hash from "../_shared/hash.js";
@@ -16,6 +17,7 @@ import type * as _shared_limits from "../_shared/limits.js";
 import type * as _shared_notionShape from "../_shared/notionShape.js";
 import type * as _shared_pageTree from "../_shared/pageTree.js";
 import type * as _shared_rateLimit from "../_shared/rateLimit.js";
+import type * as _shared_uid from "../_shared/uid.js";
 import type * as _shared_workspace from "../_shared/workspace.js";
 import type * as admin_mutations from "../admin/mutations.js";
 import type * as admin_queries from "../admin/queries.js";
@@ -58,15 +60,32 @@ import type * as templates_lib_instantiate from "../templates/lib/instantiate.js
 import type * as templates_lib_validate from "../templates/lib/validate.js";
 import type * as templates_mutations from "../templates/mutations.js";
 import type * as templates_queries from "../templates/queries.js";
+import type * as templates_seed_budget from "../templates/seed/budget.js";
+import type * as templates_seed_bugTracker from "../templates/seed/bugTracker.js";
 import type * as templates_seed_contentCalendar from "../templates/seed/contentCalendar.js";
+import type * as templates_seed_courseTracker from "../templates/seed/courseTracker.js";
+import type * as templates_seed_dailyJournal from "../templates/seed/dailyJournal.js";
 import type * as templates_seed_expenseTracker from "../templates/seed/expenseTracker.js";
+import type * as templates_seed_garageWorkshop from "../templates/seed/garageWorkshop.js";
 import type * as templates_seed_habitTracker from "../templates/seed/habitTracker.js";
+import type * as templates_seed_homeInventory from "../templates/seed/homeInventory.js";
 import type * as templates_seed_index from "../templates/seed/index.js";
+import type * as templates_seed_investmentPortfolio from "../templates/seed/investmentPortfolio.js";
+import type * as templates_seed_jobSearch from "../templates/seed/jobSearch.js";
+import type * as templates_seed_meetingNotes from "../templates/seed/meetingNotes.js";
 import type * as templates_seed_okrTracker from "../templates/seed/okrTracker.js";
 import type * as templates_seed_personalCrm from "../templates/seed/personalCrm.js";
+import type * as templates_seed_podcastLibrary from "../templates/seed/podcastLibrary.js";
 import type * as templates_seed_projectOs from "../templates/seed/projectOs.js";
 import type * as templates_seed_readingList from "../templates/seed/readingList.js";
 import type * as templates_seed_recipeVault from "../templates/seed/recipeVault.js";
+import type * as templates_seed_roadmap from "../templates/seed/roadmap.js";
+import type * as templates_seed_salesPipeline from "../templates/seed/salesPipeline.js";
+import type * as templates_seed_sprintPlanner from "../templates/seed/sprintPlanner.js";
+import type * as templates_seed_subscriptionTracker from "../templates/seed/subscriptionTracker.js";
+import type * as templates_seed_tripPlanner from "../templates/seed/tripPlanner.js";
+import type * as templates_seed_weddingPlanner from "../templates/seed/weddingPlanner.js";
+import type * as templates_seed_workoutLog from "../templates/seed/workoutLog.js";
 import type * as users from "../users.js";
 import type * as workspaces from "../workspaces.js";
 
@@ -77,6 +96,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  "_shared/aiProviders": typeof _shared_aiProviders;
   "_shared/auth": typeof _shared_auth;
   "_shared/blocks": typeof _shared_blocks;
   "_shared/hash": typeof _shared_hash;
@@ -85,6 +105,7 @@ declare const fullApi: ApiFromModules<{
   "_shared/notionShape": typeof _shared_notionShape;
   "_shared/pageTree": typeof _shared_pageTree;
   "_shared/rateLimit": typeof _shared_rateLimit;
+  "_shared/uid": typeof _shared_uid;
   "_shared/workspace": typeof _shared_workspace;
   "admin/mutations": typeof admin_mutations;
   "admin/queries": typeof admin_queries;
@@ -127,15 +148,32 @@ declare const fullApi: ApiFromModules<{
   "templates/lib/validate": typeof templates_lib_validate;
   "templates/mutations": typeof templates_mutations;
   "templates/queries": typeof templates_queries;
+  "templates/seed/budget": typeof templates_seed_budget;
+  "templates/seed/bugTracker": typeof templates_seed_bugTracker;
   "templates/seed/contentCalendar": typeof templates_seed_contentCalendar;
+  "templates/seed/courseTracker": typeof templates_seed_courseTracker;
+  "templates/seed/dailyJournal": typeof templates_seed_dailyJournal;
   "templates/seed/expenseTracker": typeof templates_seed_expenseTracker;
+  "templates/seed/garageWorkshop": typeof templates_seed_garageWorkshop;
   "templates/seed/habitTracker": typeof templates_seed_habitTracker;
+  "templates/seed/homeInventory": typeof templates_seed_homeInventory;
   "templates/seed/index": typeof templates_seed_index;
+  "templates/seed/investmentPortfolio": typeof templates_seed_investmentPortfolio;
+  "templates/seed/jobSearch": typeof templates_seed_jobSearch;
+  "templates/seed/meetingNotes": typeof templates_seed_meetingNotes;
   "templates/seed/okrTracker": typeof templates_seed_okrTracker;
   "templates/seed/personalCrm": typeof templates_seed_personalCrm;
+  "templates/seed/podcastLibrary": typeof templates_seed_podcastLibrary;
   "templates/seed/projectOs": typeof templates_seed_projectOs;
   "templates/seed/readingList": typeof templates_seed_readingList;
   "templates/seed/recipeVault": typeof templates_seed_recipeVault;
+  "templates/seed/roadmap": typeof templates_seed_roadmap;
+  "templates/seed/salesPipeline": typeof templates_seed_salesPipeline;
+  "templates/seed/sprintPlanner": typeof templates_seed_sprintPlanner;
+  "templates/seed/subscriptionTracker": typeof templates_seed_subscriptionTracker;
+  "templates/seed/tripPlanner": typeof templates_seed_tripPlanner;
+  "templates/seed/weddingPlanner": typeof templates_seed_weddingPlanner;
+  "templates/seed/workoutLog": typeof templates_seed_workoutLog;
   users: typeof users;
   workspaces: typeof workspaces;
 }>;
