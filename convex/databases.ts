@@ -31,7 +31,7 @@ export const list = query({
  *  reachable by direct id (e.g. backlinks). Use `permanentlyDelete`
  *  to cascade. */
 export const trash = mutation({
-  args: { dbId: v.string() },
+  args: { dbId: v.id("databases") },
   handler: async (ctx, args) => {
     await requireWorkspaceAccess(ctx, "databases", args.dbId as Id<"databases">, { write: true });
     await ctx.db.patch(args.dbId as Id<"databases">, { trashed: true, updatedAt: Date.now() });
@@ -41,7 +41,7 @@ export const trash = mutation({
 /** Inverse of `trash`. Un-flips `trashed`. Row pages were not
  *  touched by `trash`, so no cascade needed here either. */
 export const restore = mutation({
-  args: { dbId: v.string() },
+  args: { dbId: v.id("databases") },
   handler: async (ctx, args) => {
     await requireWorkspaceAccess(ctx, "databases", args.dbId as Id<"databases">, { write: true });
     await ctx.db.patch(args.dbId as Id<"databases">, { trashed: false, updatedAt: Date.now() });
@@ -54,7 +54,7 @@ export const restore = mutation({
  *  `snapshots.by_user_page`. Today's row pages don't typically have
  *  snapshots so leak risk is low. */
 export const permanentlyDelete = mutation({
-  args: { dbId: v.string() },
+  args: { dbId: v.id("databases") },
   handler: async (ctx, args) => {
     const { doc: db } = await requireWorkspaceAccess(ctx, "databases", args.dbId as Id<"databases">, { write: true });
     const rows = await Promise.all(
@@ -115,7 +115,7 @@ export const create = mutation({
  *  `frontend/shared/lib/store/mutationGuard.ts`. See
  *  `docs/api/databases.md` for the patch shape table. */
 export const update = mutation({
-  args: { dbId: v.string(), patch: v.any() },
+  args: { dbId: v.id("databases"), patch: v.any() },
   handler: async (ctx, args) => {
     await requireWorkspaceAccess(ctx, "databases", args.dbId as Id<"databases">, { write: true });
     await ctx.db.patch(args.dbId as Id<"databases">, { ...args.patch, updatedAt: Date.now() });
@@ -128,7 +128,7 @@ export const update = mutation({
  *  (prefix-aware). Appends to `database.rowIds`. Returns row's
  *  `Id<"pages">`. */
 export const addRow = mutation({
-  args: { dbId: v.string(), init: v.optional(v.any()), templateId: v.optional(v.string()) },
+  args: { dbId: v.id("databases"), init: v.optional(v.any()), templateId: v.optional(v.string()) },
   handler: async (ctx, args) => {
     const { userId, doc: db } = await requireWorkspaceAccess(ctx, "databases", args.dbId as Id<"databases">, { write: true });
     await rateLimit(ctx, userId, RATE_LIMITS.dbAddRow);
@@ -285,7 +285,7 @@ export const duplicateWithRows = mutation({
 /** Soft-delete a row page (sets `pages.trashed: true`) and remove its
  *  id from `database.rowIds`. Recoverable from trash for 30 days. */
 export const deleteRow = mutation({
-  args: { dbId: v.string(), rowPageId: v.string() },
+  args: { dbId: v.id("databases"), rowPageId: v.id("pages") },
   handler: async (ctx, args) => {
     const { doc: db } = await requireWorkspaceAccess(ctx, "databases", args.dbId as Id<"databases">, { write: true });
     await requireWorkspaceAccess(ctx, "pages", args.rowPageId as Id<"pages">, { write: true });
@@ -303,7 +303,7 @@ export const deleteRow = mutation({
  *  updates (relation propagation). Pass the parent dbId so callers
  *  don't have to change when that lands. */
 export const setRowValue = mutation({
-  args: { dbId: v.string(), rowPageId: v.string(), propId: v.string(), value: v.any() },
+  args: { dbId: v.id("databases"), rowPageId: v.id("pages"), propId: v.string(), value: v.any() },
   handler: async (ctx, args) => {
     const { doc: page } = await requireWorkspaceAccess(ctx, "pages", args.rowPageId as Id<"pages">, { write: true });
     const rowProps = { ...(page.rowProps ?? {}), [args.propId]: args.value };

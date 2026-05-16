@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from "react";
 import { useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
+import type { Id } from "@convex/_generated/dataModel";
 import type { Page } from "@/shared/types/domain";
 import { guardMutVoid } from "../mutationGuard";
 
@@ -10,7 +11,7 @@ export function useSearchAndTrash(pages: Page[]) {
 
   const pushRecent = useCallback(
     (id: string) => {
-      guardMutVoid("pushRecent", mutPushRecent({ pageId: id }));
+      guardMutVoid("pushRecent", mutPushRecent({ pageId: id as Id<"pages"> }));
       guardMutVoid("upsertPrefs", mutUpsertPrefs({ patch: { lastOpenedPageId: id } }));
     },
     [mutPushRecent, mutUpsertPrefs],

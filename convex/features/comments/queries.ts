@@ -48,7 +48,7 @@ async function loadPageScope(ctx: QueryCtx, pageId: string) {
  *  active workspace — OR the page is public. Public viewers receive a
  *  sanitized DTO (no userId). */
 export const listForPage = query({
-  args: { pageId: v.string() },
+  args: { pageId: v.id("pages") },
   handler: async (ctx, args) => {
     const scope = await loadPageScope(ctx, args.pageId);
     if (!scope) return [];
@@ -63,7 +63,7 @@ export const listForPage = query({
 /** Block-level comments require the parent page check; resolve via a foreign
  *  key on `comments.pageId` rather than trusting the blockId in isolation. */
 export const listForBlock = query({
-  args: { blockId: v.string(), pageId: v.string() },
+  args: { blockId: v.string(), pageId: v.id("pages") },
   handler: async (ctx, args) => {
     const scope = await loadPageScope(ctx, args.pageId);
     if (!scope) return [];

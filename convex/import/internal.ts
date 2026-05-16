@@ -98,7 +98,7 @@ export const createPage = internalMutation({
 export const appendBlocks = internalMutation({
   args: {
     userId: v.id("users"),
-    pageId: v.string(),
+    pageId: v.id("pages"),
     blocks: v.array(v.any()),
   },
   handler: async (ctx, { userId, pageId, blocks }) => {

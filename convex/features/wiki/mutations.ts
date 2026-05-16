@@ -5,7 +5,7 @@ import { Id } from "../../_generated/dataModel";
 
 export const enable = mutation({
   args: {
-    pageId: v.string(),
+    pageId: v.id("pages"),
     ownerName: v.string(),
     ownerIcon: v.string(),
   },
@@ -25,7 +25,7 @@ export const enable = mutation({
 });
 
 export const disable = mutation({
-  args: { pageId: v.string() },
+  args: { pageId: v.id("pages") },
   handler: async (ctx, args) => {
     await requireOwned(ctx, "pages", args.pageId as Id<"pages">);
     await ctx.db.patch(args.pageId as Id<"pages">, {
@@ -36,7 +36,7 @@ export const disable = mutation({
 });
 
 export const verify = mutation({
-  args: { pageId: v.string(), verified: v.boolean() },
+  args: { pageId: v.id("pages"), verified: v.boolean() },
   handler: async (ctx, args) => {
     const { doc: page } = await requireOwned(ctx, "pages", args.pageId as Id<"pages">);
     if (!page.wiki) throw new Error("Wiki not enabled");

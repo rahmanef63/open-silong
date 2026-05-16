@@ -1,11 +1,16 @@
 import { useCallback } from "react";
 import { useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
+import type { Id } from "@convex/_generated/dataModel";
 import type {
   Database, DatabaseViewConfig, Property, PropertyType, PropertyValue,
 } from "@/shared/types/domain";
 import { DEFAULT_DATABASE_ICON } from "@/shared/components/icon-picker";
 import { uid } from "./constants";
+
+/** Boundary cast — frontend `Database.id` is `string`; Convex requires
+ *  the branded `Id<"databases">`. */
+const asDbId = (s: string): Id<"databases"> => s as Id<"databases">;
 
 interface Args {
   databaseMap: Map<string, Database>;
@@ -32,7 +37,7 @@ export function useDbCrud({ databaseMap }: Args) {
   );
 
   const updateDatabase = useCallback(
-    (id: string, patch: Partial<Database>) => { mutUpdateDatabase({ dbId: id, patch }); },
+    (id: string, patch: Partial<Database>) => { mutUpdateDatabase({ dbId: asDbId(id), patch }); },
     [mutUpdateDatabase],
   );
 
@@ -126,10 +131,10 @@ export function useDbCrud({ databaseMap }: Args) {
     [databaseMap, mutCreateDatabase, mutUpdateDatabase, mutDuplicateWithRows],
   );
 
-  const trashDatabase = useCallback((id: string) => { mutTrashDatabase({ dbId: id }); }, [mutTrashDatabase]);
-  const restoreDatabase = useCallback((id: string) => { mutRestoreDatabase({ dbId: id }); }, [mutRestoreDatabase]);
+  const trashDatabase = useCallback((id: string) => { mutTrashDatabase({ dbId: asDbId(id) }); }, [mutTrashDatabase]);
+  const restoreDatabase = useCallback((id: string) => { mutRestoreDatabase({ dbId: asDbId(id) }); }, [mutRestoreDatabase]);
   const permanentlyDeleteDatabase = useCallback(
-    (id: string) => { mutPermanentlyDeleteDatabase({ dbId: id }); },
+    (id: string) => { mutPermanentlyDeleteDatabase({ dbId: asDbId(id) }); },
     [mutPermanentlyDeleteDatabase],
   );
 

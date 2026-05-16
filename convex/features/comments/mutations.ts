@@ -8,7 +8,7 @@ import { Id } from "../../_generated/dataModel";
 
 export const create = mutation({
   args: {
-    pageId: v.string(),
+    pageId: v.id("pages"),
     blockId: v.optional(v.string()),
     text: v.string(),
     authorName: v.string(),
