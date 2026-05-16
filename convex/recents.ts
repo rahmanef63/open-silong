@@ -24,7 +24,7 @@ export const get = query({
 });
 
 export const push = mutation({
-  args: { pageId: v.string() },
+  args: { pageId: v.id("pages") },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");

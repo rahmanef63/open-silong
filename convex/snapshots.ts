@@ -6,7 +6,7 @@ import { Id } from "./_generated/dataModel";
 import { readActiveWorkspace, rowInActiveWorkspace } from "./_shared/workspace";
 
 export const listForPage = query({
-  args: { pageId: v.string() },
+  args: { pageId: v.id("pages") },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) return [];
@@ -39,7 +39,7 @@ export const listAll = query({
 
 export const create = mutation({
   args: {
-    pageId: v.string(),
+    pageId: v.id("pages"),
     authorName: v.string(),
     takenAt: v.number(),
     title: v.string(),
@@ -70,7 +70,7 @@ export const create = mutation({
 });
 
 export const restore = mutation({
-  args: { snapshotId: v.string() },
+  args: { snapshotId: v.id("snapshots") },
   handler: async (ctx, args) => {
     const { doc: snap } = await requireOwned(ctx, "snapshots", args.snapshotId as Id<"snapshots">);
     const { doc: page } = await requireOwned(ctx, "pages", snap.pageId as Id<"pages">);

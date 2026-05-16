@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
+import type { Id } from "@convex/_generated/dataModel";
 import { useStore } from "@/shared/lib/store";
 import type { WikiMeta } from "../types";
 
@@ -37,18 +38,18 @@ export function useWiki(pageId: string | undefined): {
     enable: async () => {
       if (!pageId) return;
       await enableMut({
-        pageId,
+        pageId: pageId as Id<"pages">,
         ownerName: user?.name ?? "Anonymous",
         ownerIcon: user?.icon ?? "📄",
       });
     },
     disable: async () => {
       if (!pageId) return;
-      await disableMut({ pageId });
+      await disableMut({ pageId: pageId as Id<"pages"> });
     },
     verify: async (next = true) => {
       if (!pageId) return;
-      await verifyMut({ pageId, verified: next });
+      await verifyMut({ pageId: pageId as Id<"pages">, verified: next });
     },
   };
 }

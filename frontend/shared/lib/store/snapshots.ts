@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useRef } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
+import type { Id } from "@convex/_generated/dataModel";
 import type { Page, PageSnapshot } from "@/shared/types/domain";
 
 export function useSnapshots(authorName: string) {
@@ -50,7 +51,7 @@ export function useSnapshots(authorName: string) {
       if (now - last < 90_000) return;
       lastSnapshotRef.current[pageId] = now;
       mutCreateSnapshot({
-        pageId,
+        pageId: pageId as Id<"pages">,
         authorName,
         takenAt: now,
         title: page.title,
@@ -65,7 +66,7 @@ export function useSnapshots(authorName: string) {
 
   const restoreSnapshot = useCallback(
     (snapshotId: string) => {
-      mutRestoreSnapshot({ snapshotId });
+      mutRestoreSnapshot({ snapshotId: snapshotId as Id<"snapshots"> });
     },
     [mutRestoreSnapshot],
   );

@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
+import type { Id } from "@convex/_generated/dataModel";
 import type {
   Database, Page, Property, PropertyValue,
 } from "@/shared/types/domain";
@@ -8,10 +9,15 @@ import { applyMirrorToInverse, planRelationMirror } from "@/shared/lib/databases
 import { DEFAULT_ROW_ICON } from "@/shared/components/icon-picker";
 import { type StructuralAction } from "./constants";
 
+/** Boundary casts — frontend ids are `string`; Convex requires branded
+ *  table-prefixed `Id<TABLE>`. */
+const asDbId = (s: string): Id<"databases"> => s as Id<"databases">;
+const asPageId = (s: string): Id<"pages"> => s as Id<"pages">;
+
 interface Args {
   databaseMap: Map<string, Database>;
   pageMap: Map<string, Page>;
-  mutUpdateDatabase: (args: { dbId: string; patch: Partial<Database> }) => void;
+  mutUpdateDatabase: (args: { dbId: Id<"databases">; patch: Partial<Database> }) => void;
   pushStructuralAction: (a: StructuralAction) => void;
 }
 
@@ -22,7 +28,7 @@ export function useRowActions({ databaseMap, pageMap, mutUpdateDatabase, pushStr
 
   const addRow = useCallback(
     async (dbId: string, init: Partial<Page> = {}, templateId?: string): Promise<Page> => {
-      const rowId = await mutAddRow({ dbId, init, templateId });
+      const rowId = await mutAddRow({ dbId: asDbId(dbId), init, templateId });
       const now = Date.now();
       return { id: rowId, parentId: null, title: "", icon: DEFAULT_ROW_ICON, cover: null, blocks: [], favorite: false, trashed: false, rowOfDatabaseId: dbId, rowProps: {}, createdAt: now, updatedAt: now };
     },
@@ -30,7 +36,7 @@ export function useRowActions({ databaseMap, pageMap, mutUpdateDatabase, pushStr
   );
 
   const deleteRow = useCallback(
-    (dbId: string, rowPageId: string) => { mutDeleteRow({ dbId, rowPageId }); },
+    (dbId: string, rowPageId: string) => { mutDeleteRow({ dbId: asDbId(dbId), rowPageId: asPageId(rowPageId) }); },
     [mutDeleteRow],
   );
 
@@ -43,10 +49,10 @@ export function useRowActions({ databaseMap, pageMap, mutUpdateDatabase, pushStr
       if (same) return;
       pushStructuralAction({
         label: "Reorder rows",
-        undo: () => mutUpdateDatabase({ dbId, patch: { rowIds: before } }),
-        redo: () => mutUpdateDatabase({ dbId, patch: { rowIds: orderedIds } }),
+        undo: () => mutUpdateDatabase({ dbId: asDbId(dbId), patch: { rowIds: before } }),
+        redo: () => mutUpdateDatabase({ dbId: asDbId(dbId), patch: { rowIds: orderedIds } }),
       });
-      mutUpdateDatabase({ dbId, patch: { rowIds: orderedIds } });
+      mutUpdateDatabase({ dbId: asDbId(dbId), patch: { rowIds: orderedIds } });
     },
     [databaseMap, mutUpdateDatabase, pushStructuralAction],
   );
@@ -76,7 +82,7 @@ export function useRowActions({ databaseMap, pageMap, mutUpdateDatabase, pushStr
       const target = pageMap.get(targetRowId);
       if (!target) continue;
       mutSetRowValue({
-        dbId: targetDb.id, rowPageId: targetRowId, propId: inverseProp.id,
+        dbId: asDbId(targetDb.id), rowPageId: asPageId(targetRowId), propId: inverseProp.id,
         value: applyMirrorToInverse(target.rowProps?.[inverseProp.id], srcRowId, "add"),
       });
     }
@@ -84,7 +90,7 @@ export function useRowActions({ databaseMap, pageMap, mutUpdateDatabase, pushStr
       const target = pageMap.get(targetRowId);
       if (!target) continue;
       mutSetRowValue({
-        dbId: targetDb.id, rowPageId: targetRowId, propId: inverseProp.id,
+        dbId: asDbId(targetDb.id), rowPageId: asPageId(targetRowId), propId: inverseProp.id,
         value: applyMirrorToInverse(target.rowProps?.[inverseProp.id], srcRowId, "remove"),
       });
     }
@@ -92,7 +98,7 @@ export function useRowActions({ databaseMap, pageMap, mutUpdateDatabase, pushStr
 
   const setRowValue = useCallback(
     (dbId: string, rowPageId: string, propId: string, value: PropertyValue) => {
-      mutSetRowValue({ dbId, rowPageId, propId, value });
+      mutSetRowValue({ dbId: asDbId(dbId), rowPageId: asPageId(rowPageId), propId, value });
       const db = databaseMap.get(dbId);
       const prop = db?.properties.find((p) => p.id === propId);
       if (db && prop) mirrorTwoWay(db, prop, rowPageId, value);
