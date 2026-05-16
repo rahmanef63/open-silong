@@ -1,7 +1,13 @@
 import type { PropertyType } from "@/shared/types/domain";
+import { OPTION_COLORS } from "@/shared/lib/format";
 
 export { uid } from "@/shared/lib/uid";
-export const OPTION_COLORS = ["default", "gray", "brown", "orange", "yellow", "green", "blue", "purple", "pink", "red"];
+
+/** CSV-mapping colors include a `default` sentinel meaning "don't write
+ *  a color on the option" — distinct from the runtime `OPTION_COLORS`
+ *  list which is the actual color choices. Order matters: caller cycles
+ *  via `[idx % CSV_MAPPING_COLORS.length]`. */
+export const CSV_MAPPING_COLORS = ["default", ...OPTION_COLORS] as const;
 
 export const SKIP = "__skip__";
 export const TITLE = "__title__";

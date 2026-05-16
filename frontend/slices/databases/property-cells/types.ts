@@ -9,6 +9,5 @@ export interface CellProps {
   cellClass: string;
 }
 
-export const OPTION_COLORS = [
-  "gray", "brown", "orange", "yellow", "green", "blue", "purple", "pink", "red",
-] as const;
+// Re-export so existing call-sites keep working; SSOT lives in shared.
+export { OPTION_COLORS } from "@/shared/lib/format";

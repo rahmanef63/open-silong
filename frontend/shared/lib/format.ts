@@ -11,7 +11,10 @@ export const OPTION_COLOR_CLASS: Record<string, string> = {
   red: "bg-[hsl(0_75%_94%)] text-[hsl(0_60%_40%)] border-[hsl(0_70%_85%)] dark:bg-[hsl(0_40%_22%)] dark:text-[hsl(0_75%_80%)] dark:border-[hsl(0_40%_32%)]",
 };
 
-export const OPTION_COLORS = Object.keys(OPTION_COLOR_CLASS);
+/** Canonical Notion-style option color palette. SSOT — peer slices
+ *  import from here. Derived from `OPTION_COLOR_CLASS` so adding a new
+ *  color updates both the keys + the class map in one place. */
+export const OPTION_COLORS = Object.keys(OPTION_COLOR_CLASS) as readonly string[];
 
 export function colorClass(color?: string) {
   return OPTION_COLOR_CLASS[color ?? "gray"] ?? OPTION_COLOR_CLASS.gray;

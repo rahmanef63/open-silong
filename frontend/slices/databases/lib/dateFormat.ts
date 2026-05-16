@@ -28,7 +28,7 @@ export function parseYmdToLocal(ymd: string, hm?: string): Date | null {
 
 function pad2(n: number) { return n < 10 ? `0${n}` : `${n}`; }
 
-export function formatDate(ymd: string, fmt: DateFormatKind = "full"): string {
+export function formatYmd(ymd: string, fmt: DateFormatKind = "full"): string {
   const dt = parseYmdToLocal(ymd);
   if (!dt) return ymd;
   const y = dt.getFullYear(), mo = dt.getMonth() + 1, d = dt.getDate();
@@ -56,11 +56,11 @@ export function formatDateValue(v: DateValue, prop?: Pick<Property, "dateFormat"
   const tfmt = prop?.timeFormat ?? "12h";
   const showTime = !!prop?.dateIncludeTime;
   if (!v.date) return "";
-  const parts: string[] = [formatDate(v.date, fmt)];
+  const parts: string[] = [formatYmd(v.date, fmt)];
   if (showTime && v.time) parts.push(formatTime(v.time, tfmt));
   let out = parts.join(" ");
   if (v.end) {
-    const endParts: string[] = [formatDate(v.end, fmt)];
+    const endParts: string[] = [formatYmd(v.end, fmt)];
     if (showTime && v.endTime) endParts.push(formatTime(v.endTime, tfmt));
     out += " → " + endParts.join(" ");
   } else if (showTime && v.endTime) {
