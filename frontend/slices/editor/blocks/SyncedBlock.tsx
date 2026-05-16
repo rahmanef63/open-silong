@@ -9,6 +9,7 @@ import { uid } from "@/shared/lib/uid";
 import { Link } from "@/shared/lib/router";
 import { ROUTES } from "@/shared/lib/routes";
 import { findSyncedSource } from "../lib/syncedBlocks";
+import { focusBlockSoon, findBlockNode } from "../lib/focusBlock";
 import { requireNested } from "./nestedRegistry";
 import { bgColorClass } from "../lib/colors";
 
@@ -96,7 +97,7 @@ function SyncedSourceView({
   const addChild = () => {
     const nb: Block = { id: uid(), type: "paragraph", text: "" };
     setChildren([...children, nb]);
-    setTimeout(() => document.querySelector<HTMLElement>(`[data-block-id="${nb.id}"]`)?.focus(), 30);
+    focusBlockSoon(nb.id);
   };
 
   const copyLink = async () => {
@@ -264,15 +265,15 @@ function SyncedChildrenList({
               const nc = [...children];
               nc.splice(ci + 1, 0, nb);
               setChildren(nc);
-              setTimeout(() => document.querySelector<HTMLElement>(`[data-block-id="${nb.id}"]`)?.focus(), 30);
+              focusBlockSoon(nb.id);
             }}
             onFocusNext={() => {
               const next = children[ci + 1];
-              if (next) document.querySelector<HTMLElement>(`[data-block-id="${next.id}"]`)?.focus();
+              if (next) findBlockNode(next.id)?.focus();
             }}
             onFocusPrev={() => {
               const prev = children[ci - 1];
-              if (prev) document.querySelector<HTMLElement>(`[data-block-id="${prev.id}"]`)?.focus();
+              if (prev) findBlockNode(prev.id)?.focus();
             }}
           />
         ))}

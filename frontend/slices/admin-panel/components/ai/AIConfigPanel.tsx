@@ -18,6 +18,8 @@ import {
 import { Loader2, RotateCw, Trash2, Plug } from "lucide-react";
 import { OpenRouterModelPicker } from "./OpenRouterModelPicker";
 import { UserModelOverrideSection } from "./UserModelOverrideSection";
+import { ModelSelect } from "./ModelSelect";
+import { useConfirm } from "@/shared/components/ConfirmProvider";
 
 /** Admin AI panel — singleton global config + per-user model overrides.
  *
@@ -31,6 +33,7 @@ export function AIConfigPanel() {
   const save = useMutation(api.ai.mutations.setGlobalAISettings);
   const clear = useMutation(api.ai.mutations.clearGlobalAISettings);
   const test = useAction(api.ai.chat.testConnection);
+  const confirm = useConfirm();
 
   const [provider, setProvider] = useState("openrouter");
   const [model, setModel] = useState("");
@@ -85,9 +88,13 @@ export function AIConfigPanel() {
   }
 
   async function onClear() {
-    if (!confirm("Clear admin-managed AI config? The pipeline will fall back to OPENROUTER_API_KEY env var.")) {
-      return;
-    }
+    const ok = await confirm({
+      title: "Clear admin-managed AI config?",
+      description: "The pipeline will fall back to the OPENROUTER_API_KEY env var until you save a new config.",
+      variant: "destructive",
+      confirmLabel: "Clear config",
+    });
+    if (!ok) return;
     setClearing(true);
     const t = toast.loading("Clearing AI config…");
     try {
@@ -182,26 +189,13 @@ export function AIConfigPanel() {
 
           <div className="space-y-1.5">
             <Label htmlFor="ai-model">Default model</Label>
-            <Input
+            <ModelSelect
               id="ai-model"
+              models={providerSpec?.models ?? []}
               value={model}
-              onChange={(e) => setModel(e.target.value)}
+              onChange={setModel}
               placeholder={providerSpec?.defaultModel ?? "model-id"}
             />
-            {providerSpec && providerSpec.models.length > 0 && (
-              <div className="flex flex-wrap gap-1 mt-1">
-                {providerSpec.models.slice(0, 6).map((m) => (
-                  <button
-                    key={m}
-                    type="button"
-                    onClick={() => setModel(m)}
-                    className="text-[10px] rounded border border-border px-1.5 py-0.5 hover:bg-accent text-muted-foreground"
-                  >
-                    {m}
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
 
           <div className="space-y-1.5 md:col-span-2">

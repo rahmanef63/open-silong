@@ -6,8 +6,7 @@ import { Loader2, Upload, FileArchive, CheckCircle2, AlertTriangle } from "lucid
 import { api } from "@convex/_generated/api";
 import { Button } from "@/shared/ui/button";
 import { useAsyncError } from "@/shared/hooks/useAsyncError";
-import { useFileUpload } from "@/slices/files/hooks/useFileUpload";
-import { parseFileRef } from "@/slices/files/lib/parse";
+import { useFileUpload, parseFileRef } from "@/slices/files";
 import { cn } from "@/shared/lib/utils";
 import type { ZipSummary } from "../lib/types";
 

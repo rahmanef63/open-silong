@@ -4,6 +4,7 @@ import { Star, Trash2, Download, X, Globe2 } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { useStore } from "@/shared/lib/store";
 import { useWorkspaceIO } from "@/shared/providers";
+import { useConfirm } from "@/shared/components/ConfirmProvider";
 import { toast } from "sonner";
 import { reportError } from "@/shared/lib/error";
 
@@ -15,6 +16,7 @@ interface Props {
 export function BulkActionBar({ selectedIds, onClear }: Props) {
   const { pages, toggleFavorite, togglePublic, deletePage } = useStore();
   const workspaceIO = useWorkspaceIO();
+  const confirm = useConfirm();
 
   if (selectedIds.length === 0) return null;
   const selectedPages = pages.filter((p) => selectedIds.includes(p.id));
@@ -47,8 +49,14 @@ export function BulkActionBar({ selectedIds, onClear }: Props) {
     }
   };
 
-  const handleTrash = () => {
-    if (!confirm(`Move ${selectedIds.length} page${selectedIds.length === 1 ? "" : "s"} to trash?`)) return;
+  const handleTrash = async () => {
+    const ok = await confirm({
+      title: `Move ${selectedIds.length} page${selectedIds.length === 1 ? "" : "s"} to trash?`,
+      description: "You can restore them from the Trash within 30 days.",
+      variant: "destructive",
+      confirmLabel: "Move to trash",
+    });
+    if (!ok) return;
     try {
       for (const id of selectedIds) deletePage(id);
       toast.success("Moved to trash");

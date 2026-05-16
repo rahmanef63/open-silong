@@ -332,6 +332,11 @@ export default defineSchema({
     model: v.string(),
     setBy: v.id("users"),
     updatedAt: v.number(),
+    /** Denormalized for the admin list UI so we don't N+1 db.get
+     *  every row. Stamped at write; legacy rows without these fields
+     *  fall back to a live user lookup. */
+    emailAtAssign: v.optional(v.string()),
+    nameAtAssign: v.optional(v.string()),
   })
     .index("by_user", ["userId"])
     .index("by_updated", ["updatedAt"]),

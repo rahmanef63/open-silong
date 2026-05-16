@@ -7,6 +7,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
 import { DynamicIcon } from "@/shared/components/icon-picker";
+import { useConfirm } from "@/shared/components/ConfirmProvider";
 import type { Page, Property } from "@/shared/types/domain";
 
 export function DayCell({
@@ -94,6 +95,7 @@ function DraggableEvent({
   onDeleteRow: (id: string) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: row.id });
+  const confirm = useConfirm();
   return (
     <div
       ref={setNodeRef}
@@ -110,9 +112,14 @@ function DraggableEvent({
             focusSiblingBySelector(e.currentTarget, "[data-db-nav-item]", delta as 1 | -1);
           }
         }}
-        onContextMenu={(e) => {
+        onContextMenu={async (e) => {
           e.preventDefault();
-          if (window.confirm(`Delete "${row.title || "Untitled"}"?`)) onDeleteRow(row.id);
+          const ok = await confirm({
+            title: `Delete "${row.title || "Untitled"}"?`,
+            description: "This row will be moved to the Trash.",
+            variant: "destructive",
+          });
+          if (ok) onDeleteRow(row.id);
         }}
         data-db-nav-item
         title={colorOptName ?? "Click to open · Drag to change date · Right-click to delete"}

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Trash2 } from "lucide-react";
 import { useStore } from "@/shared/lib/store";
 import type { Property } from "@/shared/types/domain";
-import { PROPERTY_TYPE_ICONS } from "@/slices/databases/lib/propertyTypeMeta";
+import { PROPERTY_TYPE_ICONS } from "@/slices/databases";
 
 export function PropertyNameCell({ dbId, prop }: { dbId: string; prop: Property }) {
   const { updateProperty, deleteProperty } = useStore();

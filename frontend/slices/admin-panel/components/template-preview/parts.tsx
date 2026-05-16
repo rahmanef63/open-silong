@@ -1,4 +1,4 @@
-import type { TemplateTreeNode } from "@/slices/templates/lib/previewTemplate";
+import type { TemplateTreeNode } from "@/slices/templates";
 
 export function SectionLabel({ children }: { children: React.ReactNode }) {
   return (

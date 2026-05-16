@@ -9,6 +9,7 @@ import { Input } from "@/shared/ui/input";
 import { Button } from "@/shared/ui/button";
 import { Label } from "@/shared/ui/label";
 import { Loader2, UserPlus, X } from "lucide-react";
+import { ModelSelect } from "./ModelSelect";
 
 interface ProviderSpec {
   id: string;
@@ -100,27 +101,13 @@ export function UserModelOverrideSection({ providerSpec, globalModel }: Props) {
         </div>
         <div className="space-y-1">
           <Label htmlFor="ovr-model" className="text-xs">Model</Label>
-          <Input
+          <ModelSelect
             id="ovr-model"
+            models={providerSpec?.models ?? []}
             value={model}
-            onChange={(e) => setModel(e.target.value)}
+            onChange={setModel}
             placeholder={providerSpec?.defaultModel ?? "model-id"}
-            className="h-9"
           />
-          {providerSpec && providerSpec.models.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-1">
-              {providerSpec.models.slice(0, 5).map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  onClick={() => setModel(m)}
-                  className="text-[10px] rounded border border-border px-1.5 py-0.5 hover:bg-accent text-muted-foreground"
-                >
-                  {m}
-                </button>
-              ))}
-            </div>
-          )}
         </div>
         <Button type="submit" disabled={adding} className="h-9">
           {adding ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : <UserPlus className="h-3.5 w-3.5 mr-1.5" />}

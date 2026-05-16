@@ -4,6 +4,7 @@ import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
 import { useConvexAuth } from "convex/react";
 import { Search } from "lucide-react";
 import { ErrorBoundary } from "@/shared/components/ErrorBoundary";
+import { ConfirmProvider } from "@/shared/components/ConfirmProvider";
 import { RouteSkeleton, PageBodySkeleton } from "@/shared/components/RouteSkeleton";
 import { TooltipProvider } from "@/shared/ui/tooltip";
 import { Toaster } from "@/shared/ui/toaster";
@@ -100,6 +101,7 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
           <RouterProvider basename="/dashboard">
           <StoreProvider>
             <WorkspaceIOProvider>
+            <ConfirmProvider>
             <Suspense fallback={null}>
               <CommandPalette />
             </Suspense>
@@ -160,6 +162,7 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
                 is fixed-positioned. */}
             <SearchModal open={searchOpen} onOpenChange={setSearchOpen} />
             <MobileBottomNav onOpenSearch={() => setSearchOpen(true)} />
+            </ConfirmProvider>
             </WorkspaceIOProvider>
           </StoreProvider>
           </RouterProvider>
