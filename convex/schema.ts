@@ -110,6 +110,9 @@ export default defineSchema({
     .index("by_workspace", ["workspaceId"])
     .index("by_workspace_parent", ["workspaceId", "parentId"])
     .index("by_share_slug", ["shareSlug"])
+    // Powers the daily trash purge cron without a full table scan.
+    // Read: q.eq("trashed", true).lt("updatedAt", cutoff).
+    .index("by_trashed_updated", ["trashed", "updatedAt"])
     .searchIndex("search_content", {
       searchField: "searchText",
       filterFields: ["userId", "workspaceId", "trashed"],
@@ -135,6 +138,10 @@ export default defineSchema({
   })
     .index("by_user", ["userId"])
     .index("by_workspace", ["workspaceId"])
+    // Powers the daily trash purge cron. databases.trashed is optional —
+    // the (undefined → false) coalescing happens in the cron handler
+    // since indexes can't filter on undefined directly.
+    .index("by_trashed_updated", ["trashed", "updatedAt"])
     .searchIndex("search_name", {
       searchField: "name",
       filterFields: ["userId", "workspaceId"],
@@ -287,7 +294,10 @@ export default defineSchema({
     scope: v.string(),       // e.g. "comments.create", "ai.complete"
     windowStart: v.number(), // epoch ms truncated to bucket boundary
     count: v.number(),
-  }).index("by_user_scope", ["userId", "scope"]),
+  })
+    .index("by_user_scope", ["userId", "scope"])
+    // Powers `maintenance.pruneRateLimits` — daily prune of expired buckets.
+    .index("by_window", ["windowStart"]),
 
   // === page templates (admin-managed JSON blueprints) ===
   pageTemplates: defineTable({

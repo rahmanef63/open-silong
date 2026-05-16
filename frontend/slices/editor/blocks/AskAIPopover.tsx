@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { useStore } from "@/shared/lib/store";
 import type { Block } from "@/shared/types/domain";
 import { useAsyncError } from "@/shared/hooks/useAsyncError";
+import { Button } from "@/shared/ui/button";
 
 interface Props {
   pageId: string;
@@ -144,15 +145,17 @@ export function AskAIPanel({ pageId, block, index, onClose }: Props) {
           Quick actions
         </div>
         {PRESETS.map((p) => (
-          <button
+          <Button
             key={p.key}
             type="button"
+            variant="ghost"
+            size="sm"
             disabled={ask.pending}
             onClick={() => void run(p)}
-            className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm hover:bg-accent disabled:opacity-50"
+            className="h-auto w-full justify-start gap-2 px-2 py-1.5 text-left text-sm font-normal"
           >
             <p.icon className="h-3.5 w-3.5 text-muted-foreground" /> {p.label}
-          </button>
+          </Button>
         ))}
       </div>
       {ask.error && (

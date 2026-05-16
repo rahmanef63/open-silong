@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { api } from "@convex/_generated/api";
 import { cn } from "@/shared/lib/utils";
 import { Separator } from "@/shared/ui/separator";
+import { Button } from "@/shared/ui/button";
 import { reportError } from "@/shared/lib/error";
 import { stripMd } from "@/shared/lib/inlineMd";
 import { AI_PROMPTS, WRAP, type AIPreset, type Mark } from "./selection-toolbar/types";

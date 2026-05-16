@@ -82,6 +82,9 @@ export const seedDefaults = mutation({
   args: {},
   handler: async (ctx) => {
     const actorId = await requireAdmin(ctx);
+    // Full-table scan acceptable — admin-only seed mutation, called from
+    // the admin templates panel after fresh deploys. `pageTemplates`
+    // stays small (template count ≈ 20–50 across a deployment).
     const existing = await ctx.db.query("pageTemplates").collect();
     const seedByName = new Map(
       existing.filter((d) => d.isSeed).map((d) => [d.name, d]),

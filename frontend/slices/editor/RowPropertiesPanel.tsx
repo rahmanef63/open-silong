@@ -6,6 +6,7 @@ import { Page } from "@/shared/types/domain";
 import { DynamicIcon } from "@/shared/components/icon-picker";
 import { ChevronRight, ChevronDown, ChevronUp } from "lucide-react";
 import { Skeleton } from "@/shared/ui/skeleton";
+import { Button } from "@/shared/ui/button";
 import { PropertyRow } from "./row-properties/PropertyRow";
 import { AddPropertyMenu } from "./row-properties/AddPropertyMenu";
 
@@ -44,13 +45,15 @@ export function RowPropertiesPanel({ page }: { page: Page }) {
   return (
     <div className="mb-6">
       <div className="flex items-center gap-1 text-xs text-muted-foreground mb-3">
-        <button
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={() => navigate(ROUTES.database(db.id))}
-          className="flex items-center gap-1 hover:text-foreground transition-colors"
+          className="h-auto gap-1 px-0 py-0 hover:bg-transparent hover:text-foreground"
         >
           <DynamicIcon value={db.icon} className="text-sm" />
           <span>{db.name || "Untitled database"}</span>
-        </button>
+        </Button>
         <ChevronRight className="h-3 w-3 shrink-0" />
         <span className="text-foreground">{page.title || "Untitled"}</span>
       </div>
@@ -71,17 +74,19 @@ export function RowPropertiesPanel({ page }: { page: Page }) {
         ))}
 
         {hasRest && (
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="sm"
             onClick={() => setExpanded((v) => !v)}
             aria-expanded={expanded}
-            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground px-3 py-2 w-full transition-colors border-t border-border/40"
+            className="h-auto justify-start gap-1.5 rounded-none border-t border-border/40 px-3 py-2 text-xs font-normal text-muted-foreground hover:bg-transparent hover:text-foreground"
           >
             {expanded
               ? <ChevronUp className="h-3.5 w-3.5" />
               : <ChevronDown className="h-3.5 w-3.5" />}
             {expanded ? "Hide" : `Show ${restProps.length} more`} {restProps.length === 1 ? "property" : "properties"}
-          </button>
+          </Button>
         )}
 
         <AddPropertyMenu onAdd={(type) => addProperty(db.id, type)} />

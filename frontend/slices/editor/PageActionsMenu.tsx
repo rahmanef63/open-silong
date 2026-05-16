@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Page } from "@/shared/types/domain";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
+import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
 import { AnalyticsPopover } from "@/slices/analytics";
 import { NotifyMePopover } from "@/slices/notifications";
@@ -39,12 +40,14 @@ export function PageActionsMenu({ page, onShowHistory }: Props) {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button
-          className="flex h-8 w-8 items-center justify-center rounded hover:bg-accent text-muted-foreground"
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 text-muted-foreground"
           aria-label="Page actions"
         >
           <MoreHorizontal className="h-4 w-4" />
-        </button>
+        </Button>
       </PopoverTrigger>
       <PopoverContent
         align="end"
