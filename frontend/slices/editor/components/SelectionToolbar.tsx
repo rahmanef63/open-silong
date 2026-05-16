@@ -6,6 +6,7 @@ import { useAction } from "convex/react";
 import { toast } from "sonner";
 import { api } from "@convex/_generated/api";
 import { cn } from "@/shared/lib/utils";
+import { Separator } from "@/shared/ui/separator";
 import { reportError } from "@/shared/lib/error";
 import { stripMd } from "@/shared/lib/inlineMd";
 import { AI_PROMPTS, WRAP, type AIPreset, type Mark } from "./selection-toolbar/types";
@@ -159,7 +160,7 @@ export function SelectionToolbar() {
       <Btn label="Inline code (Cmd/Ctrl+E)" onClick={() => apply("code")}><Code className="h-3.5 w-3.5" /></Btn>
       <Btn label="Link (Cmd/Ctrl+Shift+K)" onClick={() => apply("link")}><Link2 className="h-3.5 w-3.5" /></Btn>
       <Btn label="Clear formatting" onClick={clearFormatting}><Eraser className="h-3.5 w-3.5" /></Btn>
-      <span className="mx-0.5 h-4 w-px bg-border" aria-hidden />
+      <Separator orientation="vertical" className="mx-0.5 h-4" />
       <div className="relative">
         <Btn
           label={aiPending ? "AI working…" : "AI actions"}

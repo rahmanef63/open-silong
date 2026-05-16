@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { useStore } from "@/shared/lib/store";
 import { useRowSelection } from "./RowSelectionProvider";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
+import { Separator } from "@/shared/ui/separator";
 import {
   PropertyFormInput,
   FormField,
@@ -68,7 +69,7 @@ export function RowSelectionToolbar({ databaseId }: Props) {
           <Lock className="h-3 w-3" /> {lockedCount} locked
         </span>
       )}
-      <div className="h-5 w-px bg-border" />
+      <Separator orientation="vertical" className="h-5" />
       <Popover open={editOpen} onOpenChange={(o) => { setEditOpen(o); if (!o) { setEditProp(null); setEditValue(null); } }}>
         <PopoverTrigger asChild>
           <button

@@ -1,4 +1,6 @@
 import type { Database, Property } from "@/shared/types/domain";
+import { Input } from "@/shared/ui/input";
+import { Textarea } from "@/shared/ui/textarea";
 import { Label } from "./atoms";
 
 export function FormulaConfig({ db, prop, updateProperty }: {
@@ -9,12 +11,12 @@ export function FormulaConfig({ db, prop, updateProperty }: {
   return (
     <div>
       <Label>Expression</Label>
-      <textarea
+      <Textarea
         value={prop.formulaExpression ?? ""}
         onChange={(e) => updateProperty(db.id, prop.id, { formulaExpression: e.target.value })}
         placeholder='{{title}} or =round({{Price}} * 1.1, 2)'
         rows={3}
-        className="mt-1 w-full rounded-md border border-border bg-background px-2 py-1 font-mono text-xs outline-none focus:ring-2 focus:ring-ring"
+        className="mt-1 min-h-0 px-2 py-1 font-mono text-xs"
       />
       <p className="mt-1 text-[11px] text-muted-foreground">
         18 fns available: if/and/or/not/empty/concat/contains/replace/lower/upper/length/round/floor/ceil/abs/min/max/now/today.
@@ -31,11 +33,11 @@ export function UniqueIdConfig({ db, prop, updateProperty }: {
   return (
     <div>
       <Label>Prefix (optional)</Label>
-      <input
+      <Input
         value={prop.uniqueIdPrefix ?? ""}
         onChange={(e) => updateProperty(db.id, prop.id, { uniqueIdPrefix: e.target.value || undefined })}
         placeholder="TASK"
-        className="mt-1 h-8 w-full rounded-md border border-border bg-background px-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+        className="mt-1 h-8 text-sm"
       />
       <p className="mt-1 text-[11px] text-muted-foreground">
         Existing rows keep their old IDs. New rows: {prop.uniqueIdPrefix ? `${prop.uniqueIdPrefix}-N` : "N"}.

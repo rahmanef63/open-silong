@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
+import { Skeleton } from "@/shared/ui/skeleton";
 import { useStore } from "@/shared/lib/store";
 import { ROUTES_ABS } from "@/shared/lib/routes";
 import { groupPagesForLibrary } from "../lib/groupPages";
@@ -64,10 +65,10 @@ export function LibraryView() {
   if (isInitialLoading) {
     return (
       <div className="mx-auto max-w-6xl px-4 md:px-8 py-8 space-y-4">
-        <div className="h-10 w-72 rounded bg-muted/40 animate-pulse" />
-        <div className="h-9 w-full rounded bg-muted/30 animate-pulse" />
+        <Skeleton className="h-10 w-72 rounded bg-muted/40" />
+        <Skeleton className="h-9 w-full rounded bg-muted/30" />
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-32 rounded-lg border border-border bg-card animate-pulse" />
+          <Skeleton key={i} className="h-32 rounded-lg border border-border bg-card" />
         ))}
       </div>
     );

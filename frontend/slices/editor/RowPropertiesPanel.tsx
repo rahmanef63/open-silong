@@ -5,6 +5,7 @@ import { useStore } from "@/shared/lib/store";
 import { Page } from "@/shared/types/domain";
 import { DynamicIcon } from "@/shared/components/icon-picker";
 import { ChevronRight, ChevronDown, ChevronUp } from "lucide-react";
+import { Skeleton } from "@/shared/ui/skeleton";
 import { PropertyRow } from "./row-properties/PropertyRow";
 import { AddPropertyMenu } from "./row-properties/AddPropertyMenu";
 
@@ -25,9 +26,9 @@ export function RowPropertiesPanel({ page }: { page: Page }) {
     // (blocks) still renders below.
     return (
       <div className="mb-6 rounded-lg border border-border bg-card overflow-hidden">
-        <div className="h-8 border-b border-border/40 bg-muted/30 animate-pulse" />
-        <div className="h-8 border-b border-border/40 bg-muted/20 animate-pulse" />
-        <div className="h-8 border-b border-border/40 bg-muted/10 animate-pulse" />
+        <Skeleton className="h-8 rounded-none border-b border-border/40 bg-muted/30" />
+        <Skeleton className="h-8 rounded-none border-b border-border/40 bg-muted/20" />
+        <Skeleton className="h-8 rounded-none border-b border-border/40 bg-muted/10" />
         <div className="px-3 py-2 text-xs text-muted-foreground/70 italic">
           Loading database properties…
         </div>

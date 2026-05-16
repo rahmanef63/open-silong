@@ -2,6 +2,7 @@
 
 import { Star, Trash2, Download, X, Globe2 } from "lucide-react";
 import { Button } from "@/shared/ui/button";
+import { Separator } from "@/shared/ui/separator";
 import { useStore } from "@/shared/lib/store";
 import { useWorkspaceIO } from "@/slices/workspace-io";
 import { useConfirm } from "@/shared/components/ConfirmProvider";
@@ -81,7 +82,7 @@ export function BulkActionBar({ selectedIds, onClear }: Props) {
       <span className="text-xs text-muted-foreground px-2 tabular-nums">
         {selectedIds.length} selected
       </span>
-      <span className="h-5 w-px bg-border" />
+      <Separator orientation="vertical" className="h-5" />
       <Button size="sm" variant="ghost" onClick={handleFav} title={allFavorite ? "Remove favorite" : "Add to favorites"}>
         <Star className={`h-4 w-4 ${allFavorite ? "fill-amber-400 text-amber-400" : ""}`} />
       </Button>
@@ -94,7 +95,7 @@ export function BulkActionBar({ selectedIds, onClear }: Props) {
       <Button size="sm" variant="ghost" onClick={handleTrash} title="Move to trash" className="text-destructive hover:text-destructive">
         <Trash2 className="h-4 w-4" />
       </Button>
-      <span className="h-5 w-px bg-border" />
+      <Separator orientation="vertical" className="h-5" />
       <Button size="sm" variant="ghost" onClick={onClear} title="Clear selection">
         <X className="h-4 w-4" />
       </Button>

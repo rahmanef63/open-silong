@@ -1,4 +1,5 @@
 import { useNavigate } from "@/shared/lib/router";
+import { Button } from "@/shared/ui/button";
 
 export function PageNotFound() {
   const navigate = useNavigate();
@@ -8,7 +9,7 @@ export function PageNotFound() {
         <div className="text-5xl mb-4">🕊️</div>
         <h2 className="text-xl font-semibold mb-2">Page not found</h2>
         <p className="text-muted-foreground text-sm mb-6">This page may have been moved or deleted.</p>
-        <button onClick={() => navigate("/")} className="rounded-md bg-foreground text-background px-4 py-2 text-sm hover:opacity-90">Back home</button>
+        <Button onClick={() => navigate("/")}>Back home</Button>
       </div>
     </div>
   );

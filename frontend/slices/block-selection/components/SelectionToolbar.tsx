@@ -5,6 +5,7 @@ import {
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
 import { cn } from "@/shared/lib/utils";
+import { Separator } from "@/shared/ui/separator";
 import type { BlockType } from "@/shared/types/domain";
 import { BLOCK_SPECS, BLOCK_COLORS, BLOCK_COLOR_KEYS, type BlockColorKey } from "@/slices/editor";
 import { useBlockSelection } from "./BlockSelectionProvider";
@@ -54,7 +55,7 @@ export function SelectionToolbar({ pageId }: Props) {
       <span className="px-2 text-xs text-muted-foreground tabular-nums">
         {count} selected
       </span>
-      <div className="h-5 w-px bg-border" />
+      <Separator orientation="vertical" className="h-5" />
 
       <ToolButton onClick={onDuplicate} title="Duplicate">
         <Copy className="h-3.5 w-3.5" /> Duplicate
@@ -101,7 +102,7 @@ export function SelectionToolbar({ pageId }: Props) {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <div className="h-5 w-px bg-border" />
+      <Separator orientation="vertical" className="h-5" />
 
       <ToolButton onClick={onDelete} variant="destructive" title="Delete (Del/Backspace)">
         <Trash2 className="h-3.5 w-3.5" /> Delete

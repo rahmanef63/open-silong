@@ -2,6 +2,7 @@ import type { KeyboardEvent } from "react";
 import dynamic from "next/dynamic";
 import type { Block } from "@/shared/types/domain";
 import { Checkbox } from "@/shared/ui/checkbox";
+import { Skeleton } from "@/shared/ui/skeleton";
 import { cn } from "@/shared/lib/utils";
 import { bgColorClass, colorClass } from "../lib/colors";
 import { TOP_LEVEL_PLACEHOLDERS as PLACEHOLDERS } from "./placeholders";
@@ -9,7 +10,7 @@ import { TOP_LEVEL_PLACEHOLDERS as PLACEHOLDERS } from "./placeholders";
 // hljs (~90KB) only loaded when a code block actually renders.
 const CodeBlock = dynamic(
   () => import("@/slices/code-block").then((m) => ({ default: m.CodeBlock })),
-  { ssr: false, loading: () => <div className="h-12 rounded bg-muted animate-pulse" /> },
+  { ssr: false, loading: () => <Skeleton className="h-12 rounded" /> },
 );
 
 interface Props {
