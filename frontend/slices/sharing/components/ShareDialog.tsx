@@ -4,6 +4,7 @@ import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/shared/ui/dialog";
 import { Switch } from "@/shared/ui/switch";
+import { Input } from "@/shared/ui/input";
 import { Page } from "@/shared/types/domain";
 import { useStore } from "@/shared/lib/store";
 import { DynamicIcon } from "@/shared/components/icon-picker";
@@ -72,7 +73,7 @@ export function ShareDialog({ open, onOpenChange, page }: { open: boolean; onOpe
           <div>
             <label className="text-xs uppercase tracking-wider font-semibold text-muted-foreground">Share link (read-only)</label>
             <div className="mt-1 flex items-center gap-2 rounded-md border border-border bg-muted/30 p-1">
-              <input value={url} readOnly className="flex-1 bg-transparent px-2 py-1 text-sm outline-none" onFocus={e => e.currentTarget.select()} />
+              <Input value={url} readOnly className="h-8 flex-1 border-0 bg-transparent text-sm" onFocus={e => e.currentTarget.select()} />
               <Button size="sm" variant={page.isPublic ? "default" : "secondary"} onClick={() => copy(url)} disabled={!page.isPublic}>
                 <Copy className="h-3.5 w-3.5 mr-1" /> {copied ? "Copied" : "Copy"}
               </Button>
@@ -86,7 +87,7 @@ export function ShareDialog({ open, onOpenChange, page }: { open: boolean; onOpe
             <label className="text-xs uppercase tracking-wider font-semibold text-muted-foreground">Custom URL slug</label>
             <div className="mt-1 flex items-center gap-2">
               <span className="rounded-l-md border border-r-0 border-border bg-muted/30 px-2 py-1.5 text-xs text-muted-foreground">/share/</span>
-              <input
+              <Input
                 value={slugDraft}
                 onChange={(e) => setSlugDraft(e.target.value)}
                 onBlur={saveSlug}
@@ -99,7 +100,7 @@ export function ShareDialog({ open, onOpenChange, page }: { open: boolean; onOpe
                 }}
                 placeholder="my-page-slug"
                 pattern="[a-z0-9-]{3,60}"
-                className="flex-1 rounded-r-md border border-border bg-card px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-ring"
+                className="h-8 flex-1 rounded-l-none bg-card text-sm"
               />
               {slugSave.pending && <Check className="h-4 w-4 animate-pulse text-muted-foreground" />}
             </div>

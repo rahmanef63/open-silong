@@ -7,6 +7,7 @@ import {
 } from "@/shared/ui/accordion";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
+import { Alert, AlertDescription } from "@/shared/ui/alert";
 import type { Database, DatabaseViewConfig, Property, PropertyValue } from "@/shared/types/domain";
 import { useStore } from "@/shared/lib/store";
 import {
@@ -163,9 +164,9 @@ export function QuickCreateDialog({
           )}
 
           {error && (
-            <div className="rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-xs text-destructive">
-              {error}
-            </div>
+            <Alert variant="destructive" className="px-3 py-2">
+              <AlertDescription className="text-xs">{error}</AlertDescription>
+            </Alert>
           )}
 
           <DialogFooter className="gap-2">

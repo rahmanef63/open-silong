@@ -3,6 +3,7 @@ import { Database, DatabaseViewConfig, PropertyValue } from "@/shared/types/doma
 import { useStore } from "@/shared/lib/store";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
+import { Alert, AlertDescription } from "@/shared/ui/alert";
 import { Settings, CheckCircle2, Pencil } from "lucide-react";
 import {
   PropertyFormInput, FormField, isFormableProperty as isFormable, emptyDraft, isEmptyValue,
@@ -130,9 +131,9 @@ export function FormView({ db, view }: Props) {
         )}
 
         {error && (
-          <div className="rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-xs text-destructive">
-            {error}
-          </div>
+          <Alert variant="destructive" className="px-3 py-2">
+            <AlertDescription className="text-xs">{error}</AlertDescription>
+          </Alert>
         )}
 
         <div className="flex items-center justify-between pt-2 border-t border-border">

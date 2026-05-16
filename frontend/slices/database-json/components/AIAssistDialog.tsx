@@ -5,6 +5,9 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/shared/ui/dialog";
 import { Button } from "@/shared/ui/button";
+import { Input } from "@/shared/ui/input";
+import { Textarea } from "@/shared/ui/textarea";
+import { Alert, AlertDescription } from "@/shared/ui/alert";
 import { useStore } from "@/shared/lib/store";
 import type { Database } from "@/shared/types/domain";
 import {
@@ -121,23 +124,23 @@ export function AIAssistDialog({ db, open, onOpenChange, onImported }: Props) {
 
         {!done && (
           <div className="space-y-2">
-            <textarea
+            <Textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               placeholder={placeholder}
               rows={3}
-              className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-ring"
+              className="min-h-0 px-2 py-1.5 text-sm"
             />
             {mode === "rows" && (
               <div className="flex items-center gap-2 text-xs">
                 <label className="text-muted-foreground">Rows:</label>
-                <input
+                <Input
                   type="number"
                   min={1}
                   max={50}
                   value={count}
                   onChange={(e) => setCount(Math.max(1, Math.min(50, Number(e.target.value) || 5)))}
-                  className="h-7 w-16 rounded border border-border bg-background px-1.5"
+                  className="h-7 w-16 px-1.5 text-xs"
                 />
               </div>
             )}
@@ -166,10 +169,10 @@ export function AIAssistDialog({ db, open, onOpenChange, onImported }: Props) {
         )}
 
         {error && (
-          <div className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
-            <AlertCircle className="h-4 w-4 mt-0.5" />
-            <span>{error}</span>
-          </div>
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
         )}
 
         <DialogFooter>
