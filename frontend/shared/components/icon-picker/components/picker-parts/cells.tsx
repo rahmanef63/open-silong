@@ -1,42 +1,119 @@
+import * as React from "react";
 import { cn } from "@/shared/lib/utils";
 import { lucideValue } from "../../lib/parse";
-import { DynamicIcon } from "../DynamicIcon";
+import { RawIcon } from "../DynamicIcon";
+import type { Style } from "../../lib/style-pref";
 
+/** 8-col grid with `content-visibility:auto` so the browser can skip
+ *  rendering offscreen rows entirely. `contain-intrinsic-size` keeps
+ *  the scroll height stable while content is skipped. Combined with
+ *  one section per category, this approximates virtualization without
+ *  any JS-side measurement. */
 export function Grid({ children }: { children: React.ReactNode }) {
-  return <div className="grid grid-cols-8 gap-1">{children}</div>;
+  return (
+    <div
+      className="grid grid-cols-8 gap-1"
+      style={{ contentVisibility: "auto", containIntrinsicSize: "0 320px" } as React.CSSProperties}
+    >
+      {children}
+    </div>
+  );
 }
 
-export function EmojiCell({ emoji, active, onClick }: { emoji: string; active: boolean; onClick: () => void }) {
+interface CellProps {
+  active: boolean;
+  onClick: () => void;
+  onMouseEnter?: () => void;
+  tabIndex?: number;
+  /** Set by the picker once it knows the cell's index, so keyboard nav
+   *  can walk siblings via the data attribute. */
+  index?: number;
+}
+
+interface EmojiCellProps extends CellProps {
+  emoji: string;
+  style: Style;
+}
+
+function EmojiCellImpl({ emoji, active, onClick, onMouseEnter, tabIndex, index, style }: EmojiCellProps) {
   return (
     <button
       type="button"
       onClick={onClick}
+      onMouseEnter={onMouseEnter}
+      tabIndex={tabIndex}
+      data-icon-cell-index={index}
       className={cn(
         "flex h-8 w-8 items-center justify-center rounded text-lg leading-none transition",
         active ? "bg-brand/15 ring-1 ring-brand" : "hover:bg-accent",
       )}
       title={emoji}
+      aria-label={`Pick ${emoji}`}
     >
-      <DynamicIcon value={emoji} className="text-lg" />
+      <RawIcon value={emoji} style={style} className="text-lg" />
     </button>
   );
 }
 
-export function LucideCell({ name, color, active, onClick }: { name: string; color: string | undefined; active: boolean; onClick: () => void }) {
+export const EmojiCell = React.memo(EmojiCellImpl);
+
+interface LucideCellProps extends CellProps {
+  name: string;
+  color: string | undefined;
+  style: Style;
+}
+
+function LucideCellImpl({ name, color, active, onClick, onMouseEnter, tabIndex, index, style }: LucideCellProps) {
+  const value = React.useMemo(() => lucideValue(name, color), [name, color]);
   return (
     <button
       type="button"
       onClick={onClick}
+      onMouseEnter={onMouseEnter}
+      tabIndex={tabIndex}
+      data-icon-cell-index={index}
       className={cn(
         "flex h-8 w-8 items-center justify-center rounded transition",
         active ? "bg-brand/15 ring-1 ring-brand" : "hover:bg-accent",
       )}
       title={name}
+      aria-label={`Pick ${name}`}
     >
-      <DynamicIcon value={lucideValue(name, color)} className="text-base" />
+      <RawIcon value={value} style={style} className="text-base" />
     </button>
   );
 }
+
+export const LucideCell = React.memo(LucideCellImpl);
+
+/** Renders a recent entry — value may be either emoji or `lucide:Name`,
+ *  with optional color suffix. */
+interface RecentCellProps extends CellProps {
+  value: string;
+  style: Style;
+}
+
+function RecentCellImpl({ value, active, onClick, onMouseEnter, tabIndex, index, style }: RecentCellProps) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      onMouseEnter={onMouseEnter}
+      tabIndex={tabIndex}
+      data-icon-cell-index={index}
+      className={cn(
+        "flex h-8 w-8 items-center justify-center rounded transition",
+        active ? "bg-brand/15 ring-1 ring-brand" : "hover:bg-accent",
+      )}
+      title={value}
+      aria-label={`Pick recent ${value}`}
+    >
+      <RawIcon value={value} style={style} className="text-base" />
+    </button>
+  );
+}
+
+export const RecentCell = React.memo(RecentCellImpl);
 
 export function Empty() {
   return (

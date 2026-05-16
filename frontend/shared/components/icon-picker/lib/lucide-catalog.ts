@@ -96,7 +96,7 @@ export const LUCIDE_GROUPS: LucideGroup[] = [
     id: "tools",
     label: "Tools",
     items: [
-      "Wrench","Hammer","Settings","Settings2","Cog","Sliders","Filter","Funnel",
+      "Wrench","Hammer","Settings","Settings2","Cog","Sliders","Filter",
       "Search","ScanSearch","Microscope","Telescope","Ruler","Scissors","Paintbrush",
       "Palette","Pipette","Crop","Wand","Wand2","Magnet",
     ],

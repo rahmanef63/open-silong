@@ -1,81 +1,61 @@
 "use client";
 
 import * as React from "react";
-import * as LucideIcons from "lucide-react";
-import { FileText } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
-import { parseIconValue } from "../lib/parse";
+import { parseIconValue, type IconValue } from "../lib/parse";
 import { twemojiUrl } from "../lib/twemoji";
-import { useIconStyle } from "../lib/style-pref";
+import { useIconStyle, type Style } from "../lib/style-pref";
+import { LUCIDE_ICONS, FallbackLucideIcon } from "../lib/lucide-icons";
 
-type IconMap = Record<string, React.ComponentType<{ className?: string; style?: React.CSSProperties }>>;
-
-interface Props {
+interface CommonProps {
   value: string | null | undefined;
   /** Tailwind classes applied to the wrapping span. Sizing should be set
    *  here (`text-base`, `h-4 w-4`, etc) — both emoji and SVG inherit. */
   className?: string;
-  /** Fallback emoji shown when value is empty. Default: 📄 */
+  /** Fallback emoji or `lucide:Name` shown when value is empty. */
   fallback?: string;
   /** Title for tooltip (a11y). */
   title?: string;
-  /** Force native emoji rendering even when twemoji preference is on.
-   *  Used in pickers so the user sees the OS rendering of what they pick. */
-  forceNative?: boolean;
 }
 
-/** Renders icon for a stored value. Three modes:
- *   - lucide:Name      → SVG component, color from `?c=hex`
- *   - emoji (twemoji)  → <img> from jsDelivr CDN, fallback to native
- *   - emoji (native)   → OS font glyph in a span
- *  Backwards-compat with all existing emoji-only icon strings.
- *  Fallback accepts either an emoji glyph or a lucide:Name string — it's
- *  parsed the same way as `value` so consumers can pass either format.
- *  Memoized: re-renders only when `value` or styling-affecting props change. */
-function DynamicIconImpl({ value, className, fallback = "📄", title, forceNative }: Props) {
-  // When the stored value is empty, fall through to parsing the fallback so
-  // a `lucide:FileText` fallback renders as the lucide SVG (not the literal
-  // string). parseIconValue treats empty/null as kind="emoji" with empty
-  // glyph, so we explicitly check that case here.
-  const effective = React.useMemo(() => {
-    const primary = parseIconValue(value);
-    if (primary.kind === "emoji" && !primary.emoji) {
-      return parseIconValue(fallback);
-    }
-    return primary;
-  }, [value, fallback]);
-  const parsed = effective;
-  const [style] = useIconStyle();
-  const useTwemoji = style === "twemoji" && !forceNative;
+/** Resolve a stored value (or fallback) to a parsed IconValue. */
+function resolveValue(value: string | null | undefined, fallback: string): IconValue {
+  const primary = parseIconValue(value);
+  if (primary.kind === "emoji" && !primary.emoji) return parseIconValue(fallback);
+  return primary;
+}
 
-  // Hooks MUST run in the same order every render. Compute these unconditionally
-  // even when the lucide branch will be taken — toggling between lucide and
-  // emoji icons must not change hook count (was React error #300).
-  const glyph = parsed.kind === "emoji" ? parsed.emoji : "";
-  const url = React.useMemo(
-    () => (useTwemoji && parsed.kind === "emoji" && glyph ? twemojiUrl(glyph) : null),
-    [useTwemoji, glyph, parsed.kind],
-  );
+interface RawIconProps extends CommonProps {
+  /** Explicit render style. When provided, RawIcon does NOT subscribe to
+   *  the global style store — caller is responsible for the value. Used
+   *  by `IconPickerInline` to read once and broadcast to every grid cell. */
+  style: Style;
+}
+
+function RawIconImpl({ value, style, className, fallback = "📄", title }: RawIconProps) {
+  const parsed = React.useMemo(() => resolveValue(value, fallback), [value, fallback]);
 
   if (parsed.kind === "lucide") {
-    const Cmp = (LucideIcons as unknown as IconMap)[parsed.name];
-    if (!Cmp && process.env.NODE_ENV !== "production") {
+    const Cmp = LUCIDE_ICONS[parsed.name] ?? FallbackLucideIcon;
+    if (Cmp === FallbackLucideIcon && process.env.NODE_ENV !== "production") {
       console.warn(`[DynamicIcon] Unknown lucide icon: "${parsed.name}". Falling back to FileText.`);
     }
-    const Resolved = Cmp ?? FileText;
     return (
       <span
         className={cn("inline-flex items-center justify-center leading-none", className)}
         title={title}
         style={parsed.color ? { color: parsed.color } : undefined}
       >
-        <Resolved className="h-[1em] w-[1em]" />
+        <Cmp className="h-[1em] w-[1em]" />
       </span>
     );
   }
 
-  if (url) return <TwemojiImg url={url} glyph={glyph} className={className} title={title} />;
-
+  const glyph = parsed.kind === "emoji" ? parsed.emoji : "";
+  if (style === "twemoji" && glyph) {
+    const url = twemojiUrl(glyph);
+    if (url) return <TwemojiImg url={url} glyph={glyph} className={className} title={title} />;
+  }
   return (
     <span className={cn("inline-flex items-center justify-center leading-none", className)} title={title}>
       {glyph}
@@ -83,9 +63,32 @@ function DynamicIconImpl({ value, className, fallback = "📄", title, forceNati
   );
 }
 
+/** Stateless icon renderer. Memoized on all props — re-renders only when
+ *  value/style/className change. Use this inside grids / lists where the
+ *  parent already knows the style; it skips the global store
+ *  subscription entirely. */
+export const RawIcon = React.memo(RawIconImpl);
+
+interface DynamicIconProps extends CommonProps {
+  /** Force native emoji rendering even when twemoji preference is on.
+   *  Used in pickers where we want to preview the OS glyph. */
+  forceNative?: boolean;
+}
+
+function DynamicIconImpl({ value, className, fallback, title, forceNative }: DynamicIconProps) {
+  const [style] = useIconStyle();
+  const effective: Style = forceNative ? "native" : style;
+  return <RawIcon value={value} style={effective} className={className} fallback={fallback} title={title} />;
+}
+
+/** Icon renderer that subscribes to the global style preference. Suitable
+ *  for one-off renders (page title, sidebar, table cell). Inside large
+ *  grids prefer `RawIcon` + parent-level style read. */
 export const DynamicIcon = React.memo(DynamicIconImpl);
 
-function TwemojiImg({ url, glyph, className, title }: { url: string; glyph: string; className?: string; title?: string }) {
+function TwemojiImgImpl({
+  url, glyph, className, title,
+}: { url: string; glyph: string; className?: string; title?: string }) {
   const [failed, setFailed] = React.useState(false);
   if (failed) {
     return (
@@ -96,6 +99,7 @@ function TwemojiImg({ url, glyph, className, title }: { url: string; glyph: stri
   }
   return (
     <span className={cn("inline-flex items-center justify-center leading-none", className)}>
+      {/* eslint-disable-next-line @next/next/no-img-element -- external SVG CDN; next/image can't optimize without custom loader */}
       <img
         src={url}
         alt={glyph}
@@ -109,3 +113,5 @@ function TwemojiImg({ url, glyph, className, title }: { url: string; glyph: stri
     </span>
   );
 }
+
+const TwemojiImg = React.memo(TwemojiImgImpl);
