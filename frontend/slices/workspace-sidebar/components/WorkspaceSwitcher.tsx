@@ -9,6 +9,7 @@ import {
   DropdownMenu, DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
 import { DynamicIcon } from "@/shared/components/icon-picker";
+import { useConfirm } from "@/shared/components/ConfirmProvider";
 import { MembersDialog } from "@/slices/workspace-members";
 import { WorkspaceList } from "./workspace-switcher/WorkspaceList";
 import { EditWorkspaceDialog } from "./workspace-switcher/EditDialog";
@@ -31,6 +32,7 @@ export function WorkspaceSwitcher() {
   const createOp = useAsyncError("workspaceSwitcher.create");
   const deleteOp = useAsyncError("workspaceSwitcher.delete");
   const leaveOp = useAsyncError("workspaceSwitcher.leave");
+  const confirm = useConfirm();
 
   const isOwner = workspace.role === "owner";
   const canDelete = isOwner && !workspace.isPersonal;
@@ -61,12 +63,23 @@ export function WorkspaceSwitcher() {
   }
   async function onDelete() {
     if (!canDelete) return;
-    if (!window.confirm(`Delete "${workspace.name}"? Pages and databases inside become unreachable.`)) return;
+    const ok = await confirm({
+      title: `Delete "${workspace.name}"?`,
+      description: "Pages and databases inside become unreachable. This cannot be undone.",
+      variant: "destructive",
+      confirmLabel: "Delete workspace",
+    });
+    if (!ok) return;
     await deleteOp.execute(async () => { await deleteWorkspace(workspace.id); });
   }
   async function onLeave() {
     if (!canLeave) return;
-    if (!window.confirm(`Leave "${workspace.name}"?`)) return;
+    const ok = await confirm({
+      title: `Leave "${workspace.name}"?`,
+      description: "You'll lose access to all pages and databases in this workspace.",
+      confirmLabel: "Leave workspace",
+    });
+    if (!ok) return;
     await leaveOp.execute(async () => { await leaveWorkspace(workspace.id); });
   }
 

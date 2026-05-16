@@ -6,8 +6,7 @@ import {
 } from "@/shared/ui/dropdown-menu";
 import { cn } from "@/shared/lib/utils";
 import type { BlockType } from "@/shared/types/domain";
-import { BLOCK_SPECS } from "@/slices/editor/blockSpecs";
-import { BLOCK_COLORS, BLOCK_COLOR_KEYS, type BlockColorKey } from "@/slices/editor/lib/colors";
+import { BLOCK_SPECS, BLOCK_COLORS, BLOCK_COLOR_KEYS, type BlockColorKey } from "@/slices/editor";
 import { useBlockSelection } from "./BlockSelectionProvider";
 
 interface Props {

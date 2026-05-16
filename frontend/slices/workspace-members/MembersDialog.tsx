@@ -5,6 +5,7 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 import { useAsyncError } from "@/shared/hooks/useAsyncError";
+import { useConfirm } from "@/shared/components/ConfirmProvider";
 import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
 } from "@/shared/ui/dialog";
@@ -28,6 +29,7 @@ export function MembersDialog({ open, onOpenChange, workspace }: Props) {
   const revokeInvite = useMutation(api.invites.revoke);
   const createOp = useAsyncError("members.createInvite");
   const revokeOp = useAsyncError("members.revokeInvite");
+  const confirm = useConfirm();
   const [draftRole, setDraftRole] = useState<"editor" | "viewer">("editor");
   const [lastCode, setLastCode] = useState<string | null>(null);
 
@@ -52,7 +54,13 @@ export function MembersDialog({ open, onOpenChange, workspace }: Props) {
   }
 
   async function onRevoke(id: Id<"workspaceInvites">) {
-    if (!window.confirm("Revoke this invite link? Anyone holding it will no longer be able to join.")) return;
+    const confirmed = await confirm({
+      title: "Revoke invite link?",
+      description: "Anyone holding it will no longer be able to join.",
+      variant: "destructive",
+      confirmLabel: "Revoke",
+    });
+    if (!confirmed) return;
     const ok = await revokeOp.execute(async () => { await revokeInvite({ inviteId: id }); });
     if (ok !== undefined) toast.success("Invite revoked");
   }

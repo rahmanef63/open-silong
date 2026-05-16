@@ -1,6 +1,17 @@
 export { DatabaseBlock, PROPERTY_TYPE_LABELS } from "./DatabaseBlock";
 export { DatabasePage } from "./DatabasePage";
 
+// Lib surface — re-exported so peer slices (editor/row-properties/*,
+// database-csv) don't deep-import into `databases/lib/*`.
+export {
+  PROPERTY_TYPE_META,
+  PROPERTY_TYPE_ICONS,
+  PROPERTY_TYPES,
+  defaultPropName,
+  type PropertyTypeCategory,
+  type PropertyTypeMeta,
+} from "./lib/propertyTypeMeta";
+
 // Row sub-namespace (formerly @/slices/database-row)
 export {
   RowDetailSheet,

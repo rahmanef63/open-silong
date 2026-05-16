@@ -10,8 +10,7 @@ import { ScrollArea } from "@/shared/ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/shared/ui/tabs";
 import { DynamicIcon } from "@/shared/components/icon-picker";
 import { Pencil } from "lucide-react";
-import { walkTemplateTree, templateStats } from "@/slices/templates/lib/previewTemplate";
-import { TemplatePagePreview } from "@/slices/templates/components/TemplatePagePreview";
+import { walkTemplateTree, templateStats, TemplatePagePreview } from "@/slices/templates";
 import { TreeNode } from "./template-preview/parts";
 import { InfoTab } from "./template-preview/InfoTab";
 

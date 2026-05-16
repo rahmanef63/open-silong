@@ -1,5 +1,5 @@
 import { Plus } from "lucide-react";
-import { PROPERTY_TYPE_LABELS } from "@/slices/databases/DatabaseBlock";
+import { PROPERTY_TYPE_LABELS } from "@/slices/databases";
 import type { Database } from "@/shared/types/domain";
 import type { ParsedCsv } from "../../lib/csv";
 import { COMPUTED_TYPES, NEW_PREFIX, NEW_TYPES, SKIP, TITLE } from "./constants";

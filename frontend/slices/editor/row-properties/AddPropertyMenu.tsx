@@ -4,7 +4,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
 import type { PropertyType } from "@/shared/types/domain";
-import { PROPERTY_TYPE_ICONS, PROPERTY_TYPE_LABELS } from "@/slices/databases/lib/propertyTypeMeta";
+import { PROPERTY_TYPE_ICONS, PROPERTY_TYPE_LABELS } from "@/slices/databases";
 
 export function AddPropertyMenu({ onAdd }: { onAdd: (type: PropertyType) => void }) {
   const [open, setOpen] = useState(false);

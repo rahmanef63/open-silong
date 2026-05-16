@@ -101,6 +101,8 @@ export const setUserAIModelOverride = mutation({
       model,
       setBy: adminId,
       updatedAt: Date.now(),
+      emailAtAssign: (user.email as string | undefined) ?? email,
+      nameAtAssign: (user.name as string | undefined) ?? undefined,
     };
 
     if (existing) {

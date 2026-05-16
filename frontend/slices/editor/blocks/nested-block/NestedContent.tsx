@@ -11,7 +11,7 @@ import { getBlockRenderer } from "../registry";
 import { ColumnBlockEditor } from "../../ColumnBlockEditor";
 import { ToggleContent } from "../ToggleBlock";
 import { SyncedBlockContent } from "../SyncedBlock";
-import { DatabaseBlock } from "@/slices/databases/DatabaseBlock";
+import { DatabaseBlock } from "@/slices/databases";
 import { MAX_NEST, NestingCap } from "./NestingCap";
 
 const CodeBlock = dynamic(

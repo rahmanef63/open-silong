@@ -67,6 +67,32 @@ export const _getGlobalAISettings = internalQuery({
   },
 });
 
+/** Internal — combined resolver for the chat action: global config +
+ *  per-user model override in ONE round-trip from action context. */
+export const _getAIResolution = internalQuery({
+  args: { userId: v.optional(v.id("users")) },
+  handler: async (ctx, { userId }) => {
+    const row = await ctx.db.query("globalAISettings").first();
+    const global = row && row.enabled && row.apiKey
+      ? {
+          provider: row.provider,
+          model: row.model,
+          apiKey: await decryptApiKey(row.apiKey),
+          baseUrl: row.baseUrl ?? null,
+        }
+      : null;
+    let override: string | null = null;
+    if (userId) {
+      const ov = await ctx.db
+        .query("aiUserModelOverrides")
+        .withIndex("by_user", (q) => q.eq("userId", userId))
+        .first();
+      override = ov?.model ?? null;
+    }
+    return { global, override };
+  },
+});
+
 /** Internal — diagnostic. Tells the resolver whether the row exists and
  *  why `_getGlobalAISettings` returned null, so error messages can point
  *  at the exact missing piece (no row vs disabled vs no key). */
@@ -110,7 +136,11 @@ export const _requireAdminFromAction = internalQuery({
 /** Admin — all model overrides with user email + name for the table UI.
  *  Walks `by_updated` in descending order so the most-recent assignments
  *  surface first without an in-memory sort. Capped at
- *  `COUNT_CAPS.aiOverridesScan`; beyond that, switch to pagination. */
+ *  `COUNT_CAPS.aiOverridesScan`; beyond that, switch to pagination.
+ *
+ *  Reads denormalized `emailAtAssign` / `nameAtAssign` to avoid N+1
+ *  `db.get(userId)` round-trips. Rows that pre-date denormalization
+ *  fall back to a live user lookup. */
 export const listAIOverrides = query({
   args: {},
   handler: async (ctx) => {
@@ -122,11 +152,17 @@ export const listAIOverrides = query({
       .take(COUNT_CAPS.aiOverridesScan);
     return Promise.all(
       rows.map(async (r) => {
-        const user = await ctx.db.get(r.userId);
+        let email = r.emailAtAssign ?? null;
+        let name = r.nameAtAssign ?? null;
+        if (email === null && name === null) {
+          const user = await ctx.db.get(r.userId);
+          email = (user?.email as string | undefined) ?? null;
+          name = (user?.name as string | undefined) ?? null;
+        }
         return {
           userId: r.userId,
-          email: user?.email ?? null,
-          name: user?.name ?? null,
+          email,
+          name,
           model: r.model,
           updatedAt: r.updatedAt,
         };

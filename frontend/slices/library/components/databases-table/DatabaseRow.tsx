@@ -13,6 +13,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
 import { DynamicIcon, IconPickerPopover } from "@/shared/components/icon-picker";
+import { useConfirm } from "@/shared/components/ConfirmProvider";
 import { formatRelTime } from "@/shared/lib/format";
 import { cn } from "@/shared/lib/utils";
 import type { Database, Page } from "@/shared/types/domain";
@@ -35,6 +36,7 @@ export function DatabaseRow({
   const [draft, setDraft] = useState(db.name);
   const renameOp = useAsyncError(`library.dbRename.${db.id}`);
   const deleteOp = useAsyncError(`library.dbDelete.${db.id}`);
+  const confirm = useConfirm();
 
   function commitRename() {
     const next = draft.trim();
@@ -48,8 +50,14 @@ export function DatabaseRow({
     void renameOp.execute(async () => { updateDatabase(db.id, { icon }); });
   }
 
-  function onDelete() {
-    if (!window.confirm(`Move "${db.name || "Untitled database"}" to trash?`)) return;
+  async function onDelete() {
+    const ok = await confirm({
+      title: `Move "${db.name || "Untitled database"}" to trash?`,
+      description: "Rows are kept. You can restore from the Trash within 30 days.",
+      variant: "destructive",
+      confirmLabel: "Move to trash",
+    });
+    if (!ok) return;
     void deleteOp.execute(async () => { trashDatabase(db.id); });
   }
 

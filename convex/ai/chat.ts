@@ -45,19 +45,17 @@ async function resolveAI(
 ): Promise<ResolvedAI> {
   const userId = await getAuthUserId(ctx);
 
-  // _getGlobalAISettings already filters out !enabled / empty key — so a
-  // null result here means EITHER no row exists, OR the row exists but
-  // is disabled / has no key. We need to disambiguate for the error
-  // message so admin knows what to fix.
-  const global = await ctx.runQuery(internal.ai.queries._getGlobalAISettings, {});
+  // Single combined query — global config + per-user override in one
+  // round-trip. Null `global` means EITHER no row exists, OR the row
+  // is disabled / missing key; the probe below disambiguates for the
+  // error message.
+  const { global, override } = await ctx.runQuery(
+    internal.ai.queries._getAIResolution,
+    userId ? { userId } : {},
+  );
   if (global) {
     let model = global.model;
-    if (userId) {
-      const override = await ctx.runQuery(internal.ai.queries._getUserModelOverride, {
-        userId,
-      });
-      if (override) model = override;
-    }
+    if (override) model = override;
     // Caller-supplied model wins over both — used by features that need
     // a specific model (e.g. summaries) regardless of the per-user pick.
     if (callerOverrideModel) model = callerOverrideModel;

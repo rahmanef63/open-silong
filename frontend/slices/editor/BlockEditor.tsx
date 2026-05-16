@@ -5,7 +5,7 @@ import { SlashMenu } from "./SlashMenu";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useBlockHistory } from "@/shared/hooks/useBlockHistory";
-import { DatabaseBlock } from "@/slices/databases/DatabaseBlock";
+import { DatabaseBlock } from "@/slices/databases";
 import { ColumnBlockEditor } from "./ColumnBlockEditor";
 import { BlockShell } from "./blocks/BlockShell";
 import { BlockControls } from "./blocks/BlockControls";

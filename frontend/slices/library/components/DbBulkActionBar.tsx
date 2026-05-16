@@ -4,6 +4,7 @@ import { Trash2, X } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { useStore } from "@/shared/lib/store";
 import { useAsyncError } from "@/shared/hooks/useAsyncError";
+import { useConfirm } from "@/shared/components/ConfirmProvider";
 import { toast } from "sonner";
 
 interface Props {
@@ -14,10 +15,17 @@ interface Props {
 export function DbBulkActionBar({ selectedIds, onClear }: Props) {
   const { trashDatabase } = useStore();
   const trashOp = useAsyncError("library.dbBulkTrash");
+  const confirm = useConfirm();
   if (selectedIds.length === 0) return null;
 
   const handleTrash = async () => {
-    if (!window.confirm(`Move ${selectedIds.length} database${selectedIds.length === 1 ? "" : "s"} to trash?`)) return;
+    const ok2 = await confirm({
+      title: `Move ${selectedIds.length} database${selectedIds.length === 1 ? "" : "s"} to trash?`,
+      description: "Rows are kept. You can restore from the Trash within 30 days.",
+      variant: "destructive",
+      confirmLabel: "Move to trash",
+    });
+    if (!ok2) return;
     const ok = await trashOp.execute(async () => {
       for (const id of selectedIds) trashDatabase(id);
     });

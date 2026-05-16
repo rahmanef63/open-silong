@@ -3,6 +3,7 @@
 import { useStore } from "@/shared/lib/store";
 import { Trash2, RotateCcw, X, Table2, FileText } from "lucide-react";
 import { DynamicIcon, DEFAULT_DATABASE_ICON } from "@/shared/components/icon-picker";
+import { useConfirm } from "@/shared/components/ConfirmProvider";
 import { formatDateTime } from "@/shared/lib/format";
 
 export function TrashView() {
@@ -10,6 +11,7 @@ export function TrashView() {
     trash, restorePage, permanentlyDelete,
     trashedDatabases, restoreDatabase, permanentlyDeleteDatabase,
   } = useStore();
+  const confirm = useConfirm();
 
   const isEmpty = trash.length === 0 && trashedDatabases.length === 0;
 
@@ -28,9 +30,15 @@ export function TrashView() {
           </div>
           {!isEmpty && (
             <button
-              onClick={() => {
+              onClick={async () => {
                 const total = trash.length + trashedDatabases.length;
-                if (!confirm(`Permanently delete all ${total} item${total === 1 ? "" : "s"}? This cannot be undone.`)) return;
+                const ok = await confirm({
+                  title: "Empty trash?",
+                  description: `Permanently delete all ${total} item${total === 1 ? "" : "s"}. This cannot be undone.`,
+                  variant: "destructive",
+                  confirmLabel: "Delete all",
+                });
+                if (!ok) return;
                 trash.forEach((p) => permanentlyDelete(p.id));
                 trashedDatabases.forEach((db) => permanentlyDeleteDatabase(db.id));
               }}
@@ -69,7 +77,14 @@ export function TrashView() {
                         <RotateCcw className="h-3.5 w-3.5" /> Restore
                       </button>
                       <button
-                        onClick={() => { if (confirm("Permanently delete? This cannot be undone.")) permanentlyDelete(p.id); }}
+                        onClick={async () => {
+                          const ok = await confirm({
+                            title: "Permanently delete page?",
+                            description: "This cannot be undone.",
+                            variant: "destructive",
+                          });
+                          if (ok) permanentlyDelete(p.id);
+                        }}
                         className="flex items-center gap-1 rounded-md px-2.5 py-1 text-xs text-destructive hover:bg-destructive/10"
                       >
                         <X className="h-3.5 w-3.5" /> Delete
@@ -102,9 +117,13 @@ export function TrashView() {
                         <RotateCcw className="h-3.5 w-3.5" /> Restore
                       </button>
                       <button
-                        onClick={() => {
-                          if (confirm(`Permanently delete "${db.name}" and all ${db.rowIds.length} rows? This cannot be undone.`))
-                            permanentlyDeleteDatabase(db.id);
+                        onClick={async () => {
+                          const ok = await confirm({
+                            title: `Delete "${db.name || "Untitled database"}"?`,
+                            description: `${db.rowIds.length} row${db.rowIds.length === 1 ? "" : "s"} will be permanently deleted. This cannot be undone.`,
+                            variant: "destructive",
+                          });
+                          if (ok) permanentlyDeleteDatabase(db.id);
                         }}
                         className="flex items-center gap-1 rounded-md px-2.5 py-1 text-xs text-destructive hover:bg-destructive/10"
                       >

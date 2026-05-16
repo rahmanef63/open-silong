@@ -7,12 +7,14 @@ import { toast } from "sonner";
 import { api } from "@convex/_generated/api";
 import { pickFile } from "@/shared/lib/markdown";
 import { useAsyncError } from "@/shared/hooks/useAsyncError";
+import { useConfirm } from "@/shared/components/ConfirmProvider";
 import { cn } from "@/shared/lib/utils";
 
 export function ImportJsonTab({ onClose }: { onClose: () => void }) {
   const importJson = useMutation(api["import/workspace"].importFromJson);
   const jsonImport = useAsyncError("workspaceImport");
   const [dragOver, setDragOver] = useState(false);
+  const confirm = useConfirm();
 
   async function runImport(file: File) {
     if (jsonImport.pending) return;
@@ -24,7 +26,12 @@ export function ImportJsonTab({ onClose }: { onClose: () => void }) {
       toast.error("File too large (max 8 MB)");
       return;
     }
-    if (!confirm(`Import "${file.name}"? Existing pages and databases stay; the import is additive.`)) return;
+    const ok2 = await confirm({
+      title: `Import "${file.name}"?`,
+      description: "Existing pages and databases stay; the import is additive.",
+      confirmLabel: "Import",
+    });
+    if (!ok2) return;
     const ok = await jsonImport.execute(async () => {
       const text = await file.text();
       const res = await importJson({ json: text });

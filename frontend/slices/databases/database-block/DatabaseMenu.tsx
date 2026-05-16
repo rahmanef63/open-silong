@@ -7,6 +7,7 @@ import {
 import { MoreHorizontal, Pencil, Trash2, Eye, EyeOff, Settings2, Plus, Copy, Lock, Unlock, Network } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { DynamicIcon, IconPickerPopover, DEFAULT_DATABASE_ICON } from "@/shared/components/icon-picker";
+import { useConfirm } from "@/shared/components/ConfirmProvider";
 import { ViewOptions } from "../ViewOptions";
 import { DataMenu } from "@/slices/database-json";
 import { PROPERTY_TYPE_LABELS, PROPERTY_TYPES } from "../lib/propertyTypeMeta";
@@ -21,6 +22,7 @@ export function DatabaseMenu({
   writeView: (viewId: string, patch: Partial<DatabaseViewConfig>) => void;
 }) {
   const { updateDatabase, trashDatabase, duplicateDatabase } = useStore();
+  const confirm = useConfirm();
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -80,10 +82,14 @@ export function DatabaseMenu({
         </button>
         <SubItemsPicker db={db} />
         <button
-          onClick={() => {
-            if (window.confirm(`Move "${db.name}" to Trash? Rows are kept and can be restored.`)) {
-              trashDatabase(db.id);
-            }
+          onClick={async () => {
+            const ok = await confirm({
+              title: `Move "${db.name || "Untitled"}" to Trash?`,
+              description: "Rows are kept and can be restored from the Trash.",
+              variant: "destructive",
+              confirmLabel: "Move to trash",
+            });
+            if (ok) trashDatabase(db.id);
           }}
           className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs hover:bg-destructive/10 text-destructive"
         >

@@ -11,6 +11,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
 import { DynamicIcon, IconPickerPopover } from "@/shared/components/icon-picker";
+import { useConfirm } from "@/shared/components/ConfirmProvider";
 import { cn } from "@/shared/lib/utils";
 import { formatRelTime } from "@/shared/lib/format";
 import type { Page } from "@/shared/types/domain";
@@ -41,6 +42,7 @@ export function PageRow({
   const [draft, setDraft] = useState(page.title);
   const renameOp = useAsyncError(`library.pageRename.${page.id}`);
   const trashOp = useAsyncError(`library.pageTrash.${page.id}`);
+  const confirm = useConfirm();
 
   function commitRename() {
     const next = draft.trim();
@@ -54,8 +56,14 @@ export function PageRow({
     void renameOp.execute(async () => { updatePage(page.id, { icon }); });
   }
 
-  function onTrash() {
-    if (!window.confirm(`Move "${page.title || "Untitled"}" to trash?`)) return;
+  async function onTrash() {
+    const ok = await confirm({
+      title: `Move "${page.title || "Untitled"}" to trash?`,
+      description: "You can restore it from the Trash within 30 days.",
+      variant: "destructive",
+      confirmLabel: "Move to trash",
+    });
+    if (!ok) return;
     void trashOp.execute(async () => { deletePage(page.id); });
   }
 
