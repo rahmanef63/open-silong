@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { useMutation } from "convex/react";
-import { api } from "../../../../convex/_generated/api";
+import { api } from "@convex/_generated/api";
 import type { Workspace } from "@/shared/types/domain";
 
 export function useWorkspaceMuts(workspace: Workspace) {

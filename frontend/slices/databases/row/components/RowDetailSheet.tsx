@@ -2,7 +2,7 @@
 
 import { type ReactNode } from "react";
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/shared/ui/sheet";
-import { useFullPage } from "@/slices/editor/hooks/useFullPage";
+import { useFullPage } from "@/slices/editor";
 import { RowDetailBody } from "./RowDetailBody";
 
 interface Props {

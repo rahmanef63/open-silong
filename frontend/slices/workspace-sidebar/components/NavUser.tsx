@@ -27,15 +27,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
-
-const BASE = "/dashboard";
+import { ROUTE_BASE } from "@/shared/lib/routes";
 
 export function NavUser() {
   const { user } = useStore();
   const { isMobile } = useSidebar();
   const { signOut } = useAuthActions();
   const router = useRouter();
-  const go = (p: string) => router.push(`${BASE}${p}`);
+  const go = (p: string) => router.push(`${ROUTE_BASE}${p}`);
   const [signingOut, setSigningOut] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
 

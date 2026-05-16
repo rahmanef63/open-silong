@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
 import { DynamicIcon } from "@/shared/components/icon-picker";
-import { templateStats } from "@/slices/templates/lib/previewTemplate";
+import { templateStats } from "@/slices/templates";
 import { Eye, Pencil, MoreHorizontal, Copy, Trash2, FileText, Database, Boxes } from "lucide-react";
 import { PublishToggle } from "./parts";
 import type { Handlers, Template } from "./types";

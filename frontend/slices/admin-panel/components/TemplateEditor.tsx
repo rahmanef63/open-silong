@@ -10,7 +10,7 @@ import { Switch } from "@/shared/ui/switch";
 import { Label } from "@/shared/ui/label";
 import { Textarea } from "@/shared/ui/textarea";
 import type { Id } from "@convex/_generated/dataModel";
-import { summarizeTemplate } from "@/slices/templates/lib/previewTemplate";
+import { summarizeTemplate } from "@/slices/templates";
 import { AIGenerateDialog } from "./AIGenerateDialog";
 
 const BLANK_JSON = {

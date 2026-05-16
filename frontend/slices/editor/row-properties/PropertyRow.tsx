@@ -1,5 +1,5 @@
 import type { Database, Page, Property } from "@/shared/types/domain";
-import { PropertyCell } from "@/slices/databases/PropertyCell";
+import { PropertyCell } from "@/slices/databases";
 import { PropertyNameCell } from "./PropertyNameCell";
 
 export function PropertyRow({

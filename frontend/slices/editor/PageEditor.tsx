@@ -11,8 +11,8 @@ import {
   type CollisionDetection,
 } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
-import { ShareDialog } from "@/slices/sharing/components/ShareDialog";
-import { VersionHistory } from "@/slices/snapshots/components/VersionHistory";
+import { ShareDialog } from "@/slices/sharing";
+import { VersionHistory } from "@/slices/snapshots";
 import { prioritizeCollisions } from "./lib/collisionPriority";
 import { BlockSelectionProvider, SelectionToolbar, SelectionKeyboard, MarqueeOverlay } from "@/slices/block-selection";
 import { PageHeaderSlot } from "@/shared/components/PageHeaderSlot";

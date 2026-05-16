@@ -3,8 +3,7 @@
 import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useStore } from "@/shared/lib/store";
-
-const BASE = "/dashboard";
+import { ROUTE_BASE, ROUTES_ABS } from "@/shared/lib/routes";
 
 /**
  * Page CRUD orchestrator — adapted from SuperSpace's useWorkspaceCRUD.
@@ -34,7 +33,7 @@ export function usePageCRUD() {
         title: data.title || undefined,
         icon: data.icon,
       });
-      router.push(`${BASE}/p/${page.id}`);
+      router.push(ROUTES_ABS.page(page.id));
     },
     [createPage, router],
   );
@@ -48,8 +47,8 @@ export function usePageCRUD() {
     async (pageId: string) => {
       await deletePage(pageId);
       // If user was viewing the trashed page, fall back to dashboard root.
-      if (typeof window !== "undefined" && window.location.pathname.startsWith(`${BASE}/p/${pageId}`)) {
-        router.push(BASE);
+      if (typeof window !== "undefined" && window.location.pathname.startsWith(ROUTES_ABS.page(pageId))) {
+        router.push(ROUTE_BASE);
       }
     },
     [deletePage, router],

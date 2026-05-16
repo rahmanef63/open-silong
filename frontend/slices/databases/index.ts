@@ -1,5 +1,6 @@
 export { DatabaseBlock, PROPERTY_TYPE_LABELS } from "./DatabaseBlock";
 export { DatabasePage } from "./DatabasePage";
+export { PropertyCell } from "./PropertyCell";
 
 // Lib surface — re-exported so peer slices (editor/row-properties/*,
 // database-csv) don't deep-import into `databases/lib/*`.

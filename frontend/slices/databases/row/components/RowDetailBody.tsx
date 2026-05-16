@@ -10,11 +10,9 @@ import {
 } from "@dnd-kit/sortable";
 import { Plus, X } from "lucide-react";
 import { useStore } from "@/shared/lib/store";
-import { BlockEditor } from "@/slices/editor/BlockEditor";
-import { RowPropertiesPanel } from "@/slices/editor/RowPropertiesPanel";
+import { BlockEditor, RowPropertiesPanel, useFullPage } from "@/slices/editor";
 import { PageCommentsProvider } from "@/slices/comments";
 import { DynamicIcon, IconPickerPopover, DEFAULT_ROW_ICON } from "@/shared/components/icon-picker";
-import { useFullPage } from "@/slices/editor/hooks/useFullPage";
 import type { Block } from "@/shared/types/domain";
 
 interface Props {

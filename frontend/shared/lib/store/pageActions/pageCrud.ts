@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { useMutation } from "convex/react";
-import { api } from "../../../../../convex/_generated/api";
+import { api } from "@convex/_generated/api";
 import type { Page } from "@/shared/types/domain";
 import { guardMut, guardMutVoid } from "../mutationGuard";
 import { DEFAULT_PAGE_ICON } from "@/shared/components/icon-picker";

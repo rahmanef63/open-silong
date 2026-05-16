@@ -4,7 +4,7 @@ import { type ReactNode } from "react";
 import {
   Dialog, DialogContent, DialogTitle, DialogDescription,
 } from "@/shared/ui/dialog";
-import { useFullPage } from "@/slices/editor/hooks/useFullPage";
+import { useFullPage } from "@/slices/editor";
 import { RowDetailBody } from "./RowDetailBody";
 
 interface Props {

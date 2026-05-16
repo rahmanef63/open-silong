@@ -6,8 +6,7 @@ import {
 } from "@/shared/ui/dropdown-menu";
 import { useStore } from "@/shared/lib/store";
 import type { Database, Page } from "@/shared/types/domain";
-import { CsvImportDialog } from "@/slices/database-csv/components/CsvImportDialog";
-import { downloadCsv, exportDatabaseToCsv } from "@/slices/database-csv/lib/csv";
+import { CsvImportDialog, downloadCsv, exportDatabaseToCsv } from "@/slices/database-csv";
 import { JsonImportDialog } from "./JsonImportDialog";
 import { AIAssistDialog } from "./AIAssistDialog";
 import { downloadJson, exportDatabase } from "../lib/serialize";

@@ -11,7 +11,7 @@ import {
   TableRow,
 } from "@/shared/ui/table";
 import { DynamicIcon } from "@/shared/components/icon-picker";
-import { templateStats } from "@/slices/templates/lib/previewTemplate";
+import { templateStats } from "@/slices/templates";
 import { groupByDateBucket } from "../../lib/groupByDate";
 import { formatRelTime } from "@/shared/lib/format";
 import { FileText, Database, Boxes } from "lucide-react";
