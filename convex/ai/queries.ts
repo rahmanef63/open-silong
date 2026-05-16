@@ -2,6 +2,8 @@ import { query, internalQuery } from "../_generated/server";
 import { v } from "convex/values";
 import { requireAdminQuery } from "../_shared/auth";
 import { listProvidersPublic } from "../_shared/aiProviders";
+import { decryptApiKey, isEncryptedApiKey } from "../_shared/aiCrypto";
+import { COUNT_CAPS } from "../_shared/limits";
 
 function maskKey(key: string): string {
   if (!key) return "";
@@ -17,36 +19,49 @@ export const listAIProviders = query({
 });
 
 /** Admin — current global AI config (provider/model/baseUrl/enabled +
- *  masked key preview). Returns null when not yet set. */
+ *  masked key preview). Returns null when not yet set. Mask is computed
+ *  from the DECRYPTED key so the preview is meaningful regardless of
+ *  whether the stored value is enveloped or legacy plaintext. */
 export const getGlobalAISettings = query({
   args: {},
   handler: async (ctx) => {
     await requireAdminQuery(ctx);
     const row = await ctx.db.query("globalAISettings").first();
     if (!row) return null;
+    let plain = "";
+    try {
+      plain = await decryptApiKey(row.apiKey);
+    } catch {
+      // Encrypted but secret missing/wrong — admin still gets to see the
+      // config but the preview is replaced with a diagnostic placeholder.
+      plain = "";
+    }
     return {
       provider: row.provider,
       model: row.model,
       baseUrl: row.baseUrl ?? null,
       enabled: row.enabled,
       hasKey: row.apiKey.length > 0,
-      keyPreview: maskKey(row.apiKey),
+      keyPreview: plain ? maskKey(plain) : (row.apiKey.length > 0 ? "🔒 encrypted (no secret loaded)" : ""),
+      encrypted: isEncryptedApiKey(row.apiKey),
       updatedAt: row.updatedAt,
     };
   },
 });
 
-/** Internal — used by the chat resolver. Returns the live config (with
- *  the unmasked apiKey) only when enabled + key present. */
+/** Internal — used by the chat resolver. Returns the live config with the
+ *  DECRYPTED apiKey only when enabled + key present. Decryption errors
+ *  surface to the action so it can produce an actionable message. */
 export const _getGlobalAISettings = internalQuery({
   args: {},
   handler: async (ctx) => {
     const row = await ctx.db.query("globalAISettings").first();
     if (!row || !row.enabled || !row.apiKey) return null;
+    const apiKey = await decryptApiKey(row.apiKey);
     return {
       provider: row.provider,
       model: row.model,
-      apiKey: row.apiKey,
+      apiKey,
       baseUrl: row.baseUrl ?? null,
     };
   },
@@ -81,12 +96,27 @@ export const _getUserModelOverride = internalQuery({
   },
 });
 
-/** Admin — all model overrides with user email + name for the table UI. */
+/** Internal — used by AI actions to assert the caller is an admin. Throws
+ *  on failure with the same error string as `requireAdminQuery`. Actions
+ *  cannot touch ctx.db directly, so this query is the gate. */
+export const _requireAdminFromAction = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    await requireAdminQuery(ctx);
+    return true;
+  },
+});
+
+/** Admin — all model overrides with user email + name for the table UI.
+ *  Capped via `COUNT_CAPS.aiOverridesScan`; if you hit the cap, switch
+ *  to pagination. */
 export const listAIOverrides = query({
   args: {},
   handler: async (ctx) => {
     await requireAdminQuery(ctx);
-    const rows = await ctx.db.query("aiUserModelOverrides").collect();
+    const rows = await ctx.db
+      .query("aiUserModelOverrides")
+      .take(COUNT_CAPS.aiOverridesScan);
     const enriched = await Promise.all(
       rows.map(async (r) => {
         const user = await ctx.db.get(r.userId);

@@ -6,6 +6,8 @@ import { useStore } from "@/shared/lib/store";
 import { useWorkspaces } from "@/shared/lib/store/hooks";
 import { cn } from "@/shared/lib/utils";
 import { uid } from "@/shared/lib/uid";
+import { Link } from "@/shared/lib/router";
+import { ROUTES } from "@/shared/lib/routes";
 import { findSyncedSource } from "../lib/syncedBlocks";
 import { requireNested } from "./nestedRegistry";
 import { bgColorClass } from "../lib/colors";
@@ -214,13 +216,13 @@ function SyncedRefView({
       <div className="flex items-center gap-2 px-1 pb-1.5 mb-1.5 border-b border-brand/20 text-[10px] font-medium text-brand/80 uppercase tracking-wider">
         <RefreshCw className="h-3 w-3" />
         <span>Synced from</span>
-        <a
-          href={`/dashboard/p/${sourcePage.id}`}
+        <Link
+          to={ROUTES.page(sourcePage.id)}
           className="inline-flex items-center gap-1 normal-case font-normal text-brand hover:underline"
         >
           <Link2 className="h-3 w-3" />
           {sourcePage.title || "Untitled"}
-        </a>
+        </Link>
         <span className="ml-auto text-[9px] opacity-70 normal-case">edits propagate to all refs</span>
       </div>
       <SyncedChildrenList children={children} setChildren={setChildren} pageId={sourcePage.id} editable />
