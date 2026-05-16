@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { useParams, useNavigate } from "@/shared/lib/router";
 import { ROUTES } from "@/shared/lib/routes";
 import { useStore } from "@/shared/lib/store";
@@ -25,16 +25,13 @@ import type { Block } from "@/shared/types/domain";
  */
 export function DatabasePage() {
   const { id } = useParams<{ id: string }>();
-  const { getDatabase, pushRecent } = useStore();
+  const { getDatabase } = useStore();
   const navigate = useNavigate();
   const db = id ? getDatabase(id) : undefined;
-
-  // Echo opens into the recents stack so the dashboard / search reflect
-  // recent activity for full-page DB visits, mirroring how PageEditor
-  // does it for /p/<id>.
-  useEffect(() => {
-    if (id) pushRecent(id);
-  }, [id, pushRecent]);
+  // `recents.pageIds[]` is `Id<"pages">[]` — pushing a database id
+  // would fail the Convex validator. Database recents need their
+  // own table; until then, DB visits don't surface in the Recents
+  // dashboard.
 
   // Synthetic block — DatabaseBlock's prop shape is page-block-oriented,
   // but here we have a dbId directly. The block is never written to

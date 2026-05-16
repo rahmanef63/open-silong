@@ -8,13 +8,18 @@ import { guardMutVoid } from "../mutationGuard";
 export function useSearchAndTrash(pages: Page[]) {
   const mutPushRecent = useMutation(api.recents.push);
   const mutUpsertPrefs = useMutation(api.preferences.upsert);
+  const pageIdSet = useMemo(() => new Set(pages.map((p) => p.id)), [pages]);
 
   const pushRecent = useCallback(
     (id: string) => {
+      // Guard: recents.pageIds is `Id<"pages">[]` — silently drop ids
+      // that aren't in the user's page set (e.g. database ids from
+      // /dashboard/db/:id) so the Convex validator never rejects.
+      if (!pageIdSet.has(id)) return;
       guardMutVoid("pushRecent", mutPushRecent({ pageId: id as Id<"pages"> }));
       guardMutVoid("upsertPrefs", mutUpsertPrefs({ patch: { lastOpenedPageId: id } }));
     },
-    [mutPushRecent, mutUpsertPrefs],
+    [pageIdSet, mutPushRecent, mutUpsertPrefs],
   );
 
   const trash = useMemo(() => pages.filter((p) => p.trashed), [pages]);
