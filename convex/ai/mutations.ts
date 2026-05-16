@@ -2,6 +2,7 @@ import { mutation } from "../_generated/server";
 import { v } from "convex/values";
 import { requireAdmin } from "../_shared/auth";
 import { AI_PROVIDERS } from "../_shared/aiProviders";
+import { encryptApiKey } from "../_shared/aiCrypto";
 
 /** Admin — upsert the singleton global AI config row. When `apiKey` is
  *  empty the existing key is preserved (so admin can update model/provider
@@ -31,7 +32,12 @@ export const setGlobalAISettings = mutation({
     }
 
     const existing = await ctx.db.query("globalAISettings").first();
-    const apiKey = rawKey || existing?.apiKey || "";
+    // New key supplied → encrypt before write. Blank input preserves the
+    // existing stored value (encrypted or legacy plaintext — either is
+    // fine, decryptApiKey passes plaintext through).
+    const apiKey = rawKey
+      ? await encryptApiKey(rawKey)
+      : (existing?.apiKey || "");
     if (args.enabled && !apiKey) {
       throw new Error("API key is required when enabling global AI");
     }

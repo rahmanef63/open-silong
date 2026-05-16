@@ -5,13 +5,18 @@ import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { internal } from "../_generated/api";
 
-import { CHAR_CAPS } from "../_shared/limits";
-import { resolveProviderBaseUrl } from "../_shared/aiProviders";
+import { CHAR_CAPS, RATE_LIMITS } from "../_shared/limits";
+import { AI_PROVIDERS, resolveProviderBaseUrl } from "../_shared/aiProviders";
 
-const ENV_DEFAULT_MODEL = "anthropic/claude-haiku-4.5";
-const ENV_BASE_URL = "https://openrouter.ai/api/v1";
 const MAX_INPUT_CHARS = CHAR_CAPS.aiInput;
 const MAX_TOKENS_HARD_CAP = 4096;
+/** Inline-test only allows known catalog providers. The "custom" provider
+ *  has a fully attacker-controlled baseUrl when treated naively — gating
+ *  it here prevents the action from being used as an outbound HTTP relay
+ *  (SSRF) or as a stolen-key validation oracle for arbitrary upstreams. */
+const INLINE_TEST_ALLOWED = new Set(
+  Object.keys(AI_PROVIDERS).filter((id) => id !== "custom"),
+);
 
 const MessageSchema = v.object({
   role: v.union(v.literal("user"), v.literal("assistant"), v.literal("system")),
@@ -31,6 +36,8 @@ interface ResolvedAI {
  *     keeping the same provider + key.
  *  2. env var `OPENROUTER_API_KEY` — original behaviour, preserved as
  *     the fallback so a fresh deploy without admin config still works.
+ *     Default model + base URL pulled from `AI_PROVIDERS.openrouter`
+ *     so the SSOT catalog is the only place these strings live.
  */
 async function resolveAI(
   ctx: ActionCtx,
@@ -76,10 +83,11 @@ async function resolveAI(
       "AI not configured — set the OpenRouter key in /dashboard/admin → AI (recommended) or set OPENROUTER_API_KEY in Convex env.",
     );
   }
+  const openrouter = AI_PROVIDERS.openrouter;
   return {
-    baseUrl: ENV_BASE_URL,
+    baseUrl: openrouter.baseUrl,
     apiKey: envKey,
-    model: callerOverrideModel ?? ENV_DEFAULT_MODEL,
+    model: callerOverrideModel ?? openrouter.defaultModel,
     source: "env",
   };
 }
@@ -158,11 +166,16 @@ export const complete = action({
 });
 
 /** Admin-only — quick connectivity test from the admin AI panel. Sends a
- *  one-token "ping". When inline {provider, model, apiKey, baseUrl} are
- *  supplied (e.g. admin typed a fresh key but hasn't clicked Save yet),
- *  the test uses them directly — letting the admin validate a key
- *  BEFORE persisting it. With no inline args it falls back to the same
- *  resolver chain `complete` uses (globalAISettings → env). */
+ *  one-token "ping".
+ *
+ *  Security:
+ *    - admin role gated via `_requireAdminFromAction` (internal query).
+ *    - rate-limited per admin (`ai.admin.test`) so a compromised admin
+ *      session can't be used as a credential-stuffing oracle.
+ *    - inline-test (admin types a key but hasn't saved) is restricted to
+ *      KNOWN catalog providers. The "custom" provider — with its
+ *      admin-supplied baseUrl — must be SAVED first (which also encrypts
+ *      the key at rest). This closes the SSRF / arbitrary-fetch path. */
 export const testConnection = action({
   args: {
     provider: v.optional(v.string()),
@@ -171,13 +184,26 @@ export const testConnection = action({
     baseUrl: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<{ ok: true; source: string; model: string; reply: string }> => {
+    await ctx.runQuery(internal.ai.queries._requireAdminFromAction, {});
+    await ctx.runMutation(internal.ai.internal.checkAdminRateLimit, {
+      scope: RATE_LIMITS.aiAdminTest.scope,
+      max: RATE_LIMITS.aiAdminTest.max,
+      windowMs: RATE_LIMITS.aiAdminTest.windowMs,
+    });
+
     let cfg: ResolvedAI;
     const inlineKey = args.apiKey?.trim();
     if (inlineKey && args.provider && args.model) {
-      // Inline-test path — admin is validating before save. We don't
-      // require a saved row to exist.
+      if (!INLINE_TEST_ALLOWED.has(args.provider)) {
+        throw new Error(
+          `Inline test not allowed for provider "${args.provider}" — save the config first, then re-test.`,
+        );
+      }
+      // Inline-test path — admin is validating before save. baseUrl arg
+      // is IGNORED here; resolveProviderBaseUrl falls back to the
+      // catalog's known good base URL for the chosen provider.
       cfg = {
-        baseUrl: resolveProviderBaseUrl(args.provider, args.baseUrl),
+        baseUrl: resolveProviderBaseUrl(args.provider),
         apiKey: inlineKey,
         model: args.model.trim(),
         source: "inline",
@@ -213,12 +239,19 @@ export const testConnection = action({
   },
 });
 
-/** Admin-only — live OpenRouter model catalog with pricing. Public OR
- *  endpoint, no auth required by OpenRouter itself, but admin-gated on
- *  our side because the model picker is admin UX. */
+/** Admin-only — live OpenRouter model catalog with pricing. Gated +
+ *  rate-limited so the public Convex endpoint can't be turned into an
+ *  unauthenticated bandwidth-burn / amplification vector against
+ *  openrouter.ai. */
 export const listOpenRouterModels = action({
   args: {},
-  handler: async (): Promise<Array<{ id: string; name: string; promptUsd: number; completionUsd: number; context: number }>> => {
+  handler: async (ctx): Promise<Array<{ id: string; name: string; promptUsd: number; completionUsd: number; context: number }>> => {
+    await ctx.runQuery(internal.ai.queries._requireAdminFromAction, {});
+    await ctx.runMutation(internal.ai.internal.checkAdminRateLimit, {
+      scope: RATE_LIMITS.aiAdminCatalog.scope,
+      max: RATE_LIMITS.aiAdminCatalog.max,
+      windowMs: RATE_LIMITS.aiAdminCatalog.windowMs,
+    });
     const r = await fetch("https://openrouter.ai/api/v1/models");
     if (!r.ok) throw new Error(`OpenRouter responded ${r.status}`);
     const j = (await r.json()) as {

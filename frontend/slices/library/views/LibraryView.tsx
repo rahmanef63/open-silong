@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 import { useStore } from "@/shared/lib/store";
+import { ROUTES_ABS } from "@/shared/lib/routes";
 import { groupPagesForLibrary } from "../lib/groupPages";
 import { PagesTable } from "../components/PagesTable";
 import { DatabasesTable } from "../components/DatabasesTable";
@@ -51,10 +52,10 @@ export function LibraryView() {
 
   async function newPage() {
     const p = await createPage(null);
-    router.push(`/dashboard/p/${p.id}`);
+    router.push(ROUTES_ABS.page(p.id));
   }
-  const openPage = (id: string) => router.push(`/dashboard/p/${id}`);
-  const openDatabase = (id: string) => router.push(`/dashboard/db/${id}`);
+  const openPage = (id: string) => router.push(ROUTES_ABS.page(id));
+  const openDatabase = (id: string) => router.push(ROUTES_ABS.database(id));
   const openSource = (kind: "page" | "database", id: string) => {
     if (kind === "page") openPage(id);
     else openDatabase(id);

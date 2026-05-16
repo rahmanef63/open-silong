@@ -32,6 +32,11 @@ export const RATE_LIMITS = {
   // AI (per-hour)
   aiComplete:        { scope: "ai.complete",        max: 20,  windowMs: 60 * 60_000 },
 
+  // Admin-only AI surface — generous but capped to prevent runaway
+  // catalog fetches / connection tests in tight loops.
+  aiAdminTest:       { scope: "ai.admin.test",      max: 60,  windowMs: 60_000 },
+  aiAdminCatalog:    { scope: "ai.admin.catalog",   max: 20,  windowMs: 60_000 },
+
   // Public form submissions — generous but capped per-form-owner. The
   // anonymous submitter is bucketed against the form OWNER's userId
   // (we don't have anonymous IPs in Convex), so 60/min keeps a single
@@ -70,6 +75,9 @@ export const COUNT_CAPS = {
   sitemapScanRows:      2_000,
   /** Search result cap. */
   searchResultMax:      20,
+  /** Admin scan cap for `aiUserModelOverrides`. Swap to pagination if you
+   *  ever expect more than this many per-user model assignments. */
+  aiOverridesScan:      500,
 } as const;
 
 // ─── Time windows ─────────────────────────────────────────────────
