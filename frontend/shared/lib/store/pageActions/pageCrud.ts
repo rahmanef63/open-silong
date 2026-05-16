@@ -10,6 +10,8 @@ import { uid, type StructuralAction } from "./constants";
 /** Boundary cast — frontend Page.id is `string` for convenience;
  *  Convex mutations require the branded `Id<"pages">`. */
 const asPageId = (s: string): Id<"pages"> => s as Id<"pages">;
+const asDbId = (s: string): Id<"databases"> => s as Id<"databases">;
+const asParentId = (s: string | null): Id<"pages"> | null => (s ? asPageId(s) : null);
 
 interface Args {
   pages: Page[];
@@ -32,10 +34,10 @@ export function usePageCrud({ pages, pageMap, snapshotIfNeeded, pushStructuralAc
   const createPage = useCallback(
     async (parentId: string | null = null, opts: Partial<Page> = {}): Promise<Page> => {
       const id = await guardMut("createPage", mutCreatePage({
-        parentId,
+        parentId: asParentId(parentId),
         title: opts.title,
         icon: opts.icon,
-        rowOfDatabaseId: opts.rowOfDatabaseId,
+        rowOfDatabaseId: opts.rowOfDatabaseId ? asDbId(opts.rowOfDatabaseId) : undefined,
       }));
       const now = Date.now();
       return {
@@ -56,7 +58,7 @@ export function usePageCrud({ pages, pageMap, snapshotIfNeeded, pushStructuralAc
     (id: string, patch: Partial<Page>) => {
       const page = pageMap.get(id);
       if (page) snapshotIfNeeded(id, page);
-      guardMutVoid("updatePage", mutUpdatePage({ pageId: asPageId(id), patch }));
+      guardMutVoid("updatePage", mutUpdatePage({ pageId: asPageId(id), patch: patch as never }));
     },
     [pageMap, mutUpdatePage, snapshotIfNeeded],
   );
@@ -65,8 +67,8 @@ export function usePageCrud({ pages, pageMap, snapshotIfNeeded, pushStructuralAc
     (id: string, newParentId: string | null) => {
       const page = pageMap.get(id);
       if (!page || page.parentId === newParentId) return;
-      const before = { parentId: page.parentId, createdAt: page.createdAt };
-      const after = { parentId: newParentId, createdAt: Date.now() };
+      const before = { parentId: asParentId(page.parentId), createdAt: page.createdAt };
+      const after = { parentId: asParentId(newParentId), createdAt: Date.now() };
       pushStructuralAction({
         label: "Move page",
         undo: () => mutUpdatePage({ pageId: asPageId(id), patch: before }),
@@ -93,7 +95,7 @@ export function usePageCrud({ pages, pageMap, snapshotIfNeeded, pushStructuralAc
       const same = currentOrder.length === orderedIds.length && currentOrder.every((cid, i) => cid === orderedIds[i]);
       if (same) return;
       const apply = (states: Array<{ id: string; parentId: string | null; createdAt: number }>) => {
-        states.forEach((state) => mutUpdatePage({ pageId: asPageId(state.id), patch: { parentId: state.parentId, createdAt: state.createdAt } }));
+        states.forEach((state) => mutUpdatePage({ pageId: asPageId(state.id), patch: { parentId: asParentId(state.parentId), createdAt: state.createdAt } }));
       };
       pushStructuralAction({ label: "Reorder pages", undo: () => apply(before), redo: () => apply(after) });
       apply(after);

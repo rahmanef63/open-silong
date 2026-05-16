@@ -64,7 +64,7 @@ export default defineSchema({
      *  legacy rows resolve to the owner's personal workspace via the
      *  fallback rule in `requireWorkspaceMember`. */
     workspaceId: v.optional(v.id("workspaces")),
-    parentId: v.union(v.string(), v.null()),
+    parentId: v.union(v.id("pages"), v.null()),
     title: v.string(),
     icon: v.string(),
     cover: v.union(v.string(), v.null()),
@@ -72,14 +72,14 @@ export default defineSchema({
     favorite: v.boolean(),
     trashed: v.boolean(),
     isPublic: v.optional(v.boolean()),
-    rowOfDatabaseId: v.optional(v.string()),
+    rowOfDatabaseId: v.optional(v.id("databases")),
     rowProps: v.optional(v.any()),
     /** Set on host pages whose primary content is a single database
      *  block. Holds the ids of databases this page hosts (today: 1 id;
      *  array shape keeps room for future split-screen multi-db hosts).
      *  Stamped by `databases` "Open as page" and by template-instantiated
      *  database-pages. Lets full-page-DB detection skip walking blocks. */
-    databaseHostFor: v.optional(v.array(v.string())),
+    databaseHostFor: v.optional(v.array(v.id("databases"))),
     font: v.optional(v.string()),
     smallText: v.optional(v.boolean()),
     fullWidth: v.optional(v.boolean()),
@@ -121,7 +121,7 @@ export default defineSchema({
     name: v.string(),
     icon: v.string(),
     properties: v.array(v.any()),
-    rowIds: v.array(v.string()),
+    rowIds: v.array(v.id("pages")),
     views: v.array(v.any()),
     activeViewId: v.string(),
     createdAt: v.number(),
@@ -153,7 +153,7 @@ export default defineSchema({
   snapshots: defineTable({
     userId: v.id("users"),
     workspaceId: v.optional(v.id("workspaces")),
-    pageId: v.string(),
+    pageId: v.id("pages"),
     authorId: v.string(),
     authorName: v.string(),
     takenAt: v.number(),
@@ -170,7 +170,7 @@ export default defineSchema({
   recents: defineTable({
     userId: v.id("users"),
     workspaceId: v.optional(v.id("workspaces")),
-    pageIds: v.array(v.string()),
+    pageIds: v.array(v.id("pages")),
   })
     .index("by_user", ["userId"])
     .index("by_user_workspace", ["userId", "workspaceId"]),
@@ -182,7 +182,7 @@ export default defineSchema({
     kind: v.string(),                       // "mention" | "comment" | "share" | "system" | "update"
     title: v.string(),
     body: v.optional(v.string()),
-    pageId: v.optional(v.string()),
+    pageId: v.optional(v.id("pages")),
     blockId: v.optional(v.string()),
     actorName: v.optional(v.string()),
     actorIcon: v.optional(v.string()),
@@ -211,7 +211,7 @@ export default defineSchema({
      *  the parent page's `workspaceId`. Defense-in-depth — the primary
      *  authz path is still the parent-page ownership check. */
     workspaceId: v.optional(v.id("workspaces")),
-    pageId: v.string(),
+    pageId: v.id("pages"),
     blockId: v.optional(v.string()),        // null = page-level comment
     text: v.string(),
     authorName: v.string(),

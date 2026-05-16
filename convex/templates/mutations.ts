@@ -60,7 +60,7 @@ export const deleteTemplate = mutation({
 export const instantiate = mutation({
   args: {
     templateId: v.id("pageTemplates"),
-    parentPageId: v.optional(v.union(v.string(), v.null())),
+    parentPageId: v.optional(v.union(v.id("pages"), v.null())),
   },
   handler: async (ctx, { templateId, parentPageId }) => {
     const userId = await requireAuth(ctx);

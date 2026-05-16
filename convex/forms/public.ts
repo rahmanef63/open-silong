@@ -92,7 +92,7 @@ export const submitForm = mutation({
       _id: Id<"databases">;
       userId: Id<"users">;
       properties?: { id: string; type: string; uniqueIdPrefix?: string }[];
-      rowIds: string[];
+      rowIds: Id<"pages">[];
       uniqueIdCounter?: number;
     };
     const view = found.view;

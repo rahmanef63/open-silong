@@ -193,7 +193,7 @@ export const addRow = mutation({
  *
  *  Bounded at 5000 rows per call — past that, suggest export/import. */
 export const duplicateWithRows = mutation({
-  args: { srcDbId: v.string(), targetDbId: v.string() },
+  args: { srcDbId: v.id("databases"), targetDbId: v.id("databases") },
   handler: async (ctx, args) => {
     const { userId, doc: src } = await requireWorkspaceAccess(ctx, "databases", args.srcDbId as Id<"databases">, { write: false });
     const { doc: target } = await requireWorkspaceAccess(ctx, "databases", args.targetDbId as Id<"databases">, { write: true });
@@ -215,7 +215,7 @@ export const duplicateWithRows = mutation({
     }
 
     const rowIdMap = new Map<string, string>();
-    const insertedIds: string[] = [];
+    const insertedIds: Id<"pages">[] = [];
 
     // Phase 1: insert clones with rowProps but parent-ref values cleared
     // (we don't have new ids yet for intra-db relations).
@@ -244,7 +244,7 @@ export const duplicateWithRows = mutation({
         updatedAt: now,
       });
       rowIdMap.set(String(oldId), String(newId));
-      insertedIds.push(String(newId));
+      insertedIds.push(newId);
     }
 
     // Phase 2: rewrite intra-db relation values now that we have the

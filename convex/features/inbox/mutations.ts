@@ -17,7 +17,7 @@ export const create = mutation({
     ),
     title: v.string(),
     body: v.optional(v.string()),
-    pageId: v.optional(v.string()),
+    pageId: v.optional(v.id("pages")),
     blockId: v.optional(v.string()),
     actorName: v.optional(v.string()),
     actorIcon: v.optional(v.string()),

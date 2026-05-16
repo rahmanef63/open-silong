@@ -223,8 +223,8 @@ export const importFromJson = mutation({
       }
 
       await ctx.db.patch(newId as Id<"pages">, {
-        parentId: newParent,
-        rowOfDatabaseId: newRowOfDb,
+        parentId: newParent as Id<"pages"> | null,
+        rowOfDatabaseId: newRowOfDb as Id<"databases"> | undefined,
         rowProps: nextRowProps,
         blocks: remappedBlocks,
       });
@@ -237,7 +237,7 @@ export const importFromJson = mutation({
       if (!newId) continue;
       const newRowIds = (d.rowIds ?? [])
         .map((rid) => pageMap.get(rid))
-        .filter((x): x is string => !!x);
+        .filter((x): x is string => !!x) as Id<"pages">[];
       const remappedProps = remapPropertyXRefs(d.properties ?? [], maps);
       const remappedTemplates = remapTemplates(d.templates, maps);
       await ctx.db.patch(newId as Id<"databases">, {
@@ -256,7 +256,7 @@ export const importFromJson = mutation({
       const blocks = importBlockTree((s.blocks ?? []) as BlockLike[], maps);
       await ctx.db.insert("snapshots", {
         userId,
-        pageId: newPageId,
+        pageId: newPageId as Id<"pages">,
         authorId: userId, // cross-workspace authorId meaningless
         authorName: s.authorName ?? "",
         takenAt: s.takenAt,
