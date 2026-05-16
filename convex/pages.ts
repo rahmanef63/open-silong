@@ -241,10 +241,10 @@ export const getById = query({
  *  Returns the bare `Id<"pages">` (NOT wrapped). */
 export const create = mutation({
   args: {
-    parentId: v.union(v.string(), v.null()),
+    parentId: v.union(v.id("pages"), v.null()),
     title: v.optional(v.string()),
     icon: v.optional(v.string()),
-    rowOfDatabaseId: v.optional(v.string()),
+    rowOfDatabaseId: v.optional(v.id("databases")),
   },
   handler: async (ctx, args) => {
     const userId = await requireAuth(ctx);
@@ -255,7 +255,7 @@ export const create = mutation({
     return await ctx.db.insert("pages", {
       userId,
       workspaceId: active._id,
-      parentId: args.parentId,
+      parentId: args.parentId as Id<"pages"> | null,
       title: args.title ?? "",
       icon: args.icon ?? "lucide:FileText",
       cover: null,
@@ -263,7 +263,7 @@ export const create = mutation({
       favorite: false,
       trashed: false,
       isPublic: false,
-      rowOfDatabaseId: args.rowOfDatabaseId,
+      rowOfDatabaseId: args.rowOfDatabaseId as Id<"databases"> | undefined,
       rowProps: args.rowOfDatabaseId ? {} : undefined,
       searchText: buildSearchText(args.title, blocks),
       createdAt: now,
@@ -286,13 +286,13 @@ export const update = mutation({
       cover: v.optional(v.union(v.string(), v.null())),
       blocks: v.optional(v.array(v.any())),
       favorite: v.optional(v.boolean()),
-      parentId: v.optional(v.union(v.string(), v.null())),
+      parentId: v.optional(v.union(v.id("pages"), v.null())),
       font: v.optional(v.string()),
       smallText: v.optional(v.boolean()),
       fullWidth: v.optional(v.boolean()),
       locked: v.optional(v.boolean()),
       rowProps: v.optional(v.any()),
-      databaseHostFor: v.optional(v.array(v.string())),
+      databaseHostFor: v.optional(v.array(v.id("databases"))),
       // Manual sort uses createdAt as the order key; reorder undo restores it.
       createdAt: v.optional(v.number()),
     }),
@@ -375,7 +375,7 @@ export const permanentlyDelete = mutation({
       // deleted (snapshots are author-owned, no by_workspace index yet).
       // Other members' snapshots become orphaned; session-2 snapshot scoping
       // will fix the leak.
-      const snaps = await ctx.db.query("snapshots").withIndex("by_user_page", (q) => q.eq("userId", userId).eq("pageId", id)).collect();
+      const snaps = await ctx.db.query("snapshots").withIndex("by_user_page", (q) => q.eq("userId", userId).eq("pageId", id as Id<"pages">)).collect();
       for (const s of snaps) await ctx.db.delete(s._id);
       await ctx.db.delete(id as Id<"pages">);
     }

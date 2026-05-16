@@ -6,10 +6,16 @@ import type { Block, BlockType, Page } from "@/shared/types/domain";
 import { guardMut, guardMutVoid } from "../mutationGuard";
 import { uid, type StructuralAction } from "./constants";
 
+// Loosely typed mutUpdatePage — Convex ReactMutation has a precisely-branded
+// patch shape (Id<"pages"> for parentId etc.) but this hook only passes
+// `{ blocks }`. Typed as `any` to bypass invariance at the prop boundary.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type UpdatePageFn = (args: { pageId: Id<"pages">; patch: any }) => unknown;
+
 interface Args {
   pageMap: Map<string, Page>;
   pushStructuralAction: (a: StructuralAction) => void;
-  mutUpdatePage: (args: { pageId: Id<"pages">; patch: Partial<Page> }) => void;
+  mutUpdatePage: UpdatePageFn;
 }
 
 /** Local cast helper — frontend `Page.id` is `string` for convenience;

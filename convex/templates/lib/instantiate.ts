@@ -134,7 +134,7 @@ export async function instantiateTemplate(
   ctx: MutationCtx,
   template: TemplateJson,
   userId: Id<"users">,
-  rootParentId: string | null,
+  rootParentId: Id<"pages"> | null,
 ): Promise<InstantiateResult> {
   const dbMap = new Map<string, Id<"databases">>();
   const pageMap = new Map<string, Id<"pages">>();
@@ -173,7 +173,7 @@ export async function instantiateTemplate(
 
   // 2. pre-order walk: insert pages with first-pass blocks (pageRef may not resolve yet)
   let pagesInserted = 0;
-  async function walk(p: TplPageT, parentId: string | null): Promise<Id<"pages">> {
+  async function walk(p: TplPageT, parentId: Id<"pages"> | null): Promise<Id<"pages">> {
     const now = Date.now();
     const blocks = buildBlocks(p.blocks, dbMap, pageMap);
     const pageId = await ctx.db.insert("pages", {
@@ -195,7 +195,7 @@ export async function instantiateTemplate(
     pagesInserted += 1;
     if (p.ref) pageMap.set(p.ref, pageId);
     for (const child of p.children ?? []) {
-      await walk(child, String(pageId));
+      await walk(child, pageId);
     }
     return pageId;
   }
@@ -227,7 +227,7 @@ export async function instantiateTemplate(
   for (const db of allDbs) {
     if (!db.seedRows?.length) continue;
     const dbId = dbMap.get(db.ref)!;
-    const rowPageIds: string[] = [];
+    const rowPageIds: Id<"pages">[] = [];
     for (const row of db.seedRows) {
       const titleProp = db.properties.find((p) => p.type === "text") ?? db.properties[0];
       const titleVal = titleProp ? row.props[titleProp.id] : "";
@@ -241,12 +241,12 @@ export async function instantiateTemplate(
         favorite: false,
         trashed: false,
         isPublic: false,
-        rowOfDatabaseId: String(dbId),
+        rowOfDatabaseId: dbId,
         rowProps: row.props,
         createdAt: Date.now(),
         updatedAt: Date.now(),
       });
-      rowPageIds.push(String(rowPageId));
+      rowPageIds.push(rowPageId);
       rowsInserted += 1;
     }
     await ctx.db.patch(dbId, { rowIds: rowPageIds, updatedAt: Date.now() });

@@ -21,6 +21,7 @@ import type * as _shared_rateLimit from "../_shared/rateLimit.js";
 import type * as _shared_uid from "../_shared/uid.js";
 import type * as _shared_workspace from "../_shared/workspace.js";
 import type * as admin_fkAudit from "../admin/fkAudit.js";
+import type * as admin_fkGc from "../admin/fkGc.js";
 import type * as admin_mutations from "../admin/mutations.js";
 import type * as admin_queries from "../admin/queries.js";
 import type * as ai_chat from "../ai/chat.js";
@@ -111,6 +112,7 @@ declare const fullApi: ApiFromModules<{
   "_shared/uid": typeof _shared_uid;
   "_shared/workspace": typeof _shared_workspace;
   "admin/fkAudit": typeof admin_fkAudit;
+  "admin/fkGc": typeof admin_fkGc;
   "admin/mutations": typeof admin_mutations;
   "admin/queries": typeof admin_queries;
   "ai/chat": typeof ai_chat;

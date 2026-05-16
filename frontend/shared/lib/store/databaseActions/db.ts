@@ -124,7 +124,7 @@ export function useDbCrud({ databaseMap }: Args) {
       const activeViewId = srcActiveIdx >= 0 ? views[srcActiveIdx].id : views[0]?.id ?? "";
       await mutUpdateDatabase({ dbId, patch: { properties, views, activeViewId } });
       if (opts.includeRows && src.rowIds.length > 0) {
-        await mutDuplicateWithRows({ srcDbId: id, targetDbId: dbId });
+        await mutDuplicateWithRows({ srcDbId: asDbId(id), targetDbId: dbId });
       }
       return dbId;
     },

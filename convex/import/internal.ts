@@ -37,7 +37,7 @@ async function insertDb(
     updatedAt: now,
   });
 
-  const rowIds: string[] = [];
+  const rowIds: Id<"pages">[] = [];
   for (const cells of rows) {
     const rowProps: Record<string, string> = {};
     props.forEach((p, i) => { rowProps[p.id] = cells[i] ?? ""; });
@@ -52,13 +52,13 @@ async function insertDb(
       favorite: false,
       trashed: false,
       isPublic: false,
-      rowOfDatabaseId: String(dbId),
+      rowOfDatabaseId: dbId,
       rowProps,
       searchText: buildSearchText(title, []),
       createdAt: now,
       updatedAt: now,
     });
-    rowIds.push(String(rowPageId));
+    rowIds.push(rowPageId);
   }
   await ctx.db.patch(dbId, { rowIds });
   return dbId;
@@ -78,7 +78,7 @@ export const createPage = internalMutation({
     const now = Date.now();
     return await ctx.db.insert("pages", {
       userId,
-      parentId,
+      parentId: parentId as Id<"pages"> | null,
       title,
       icon: icon ?? "📄",
       cover: null,
@@ -132,7 +132,7 @@ export const createDatabaseFromCsvWithHost = internalMutation({
     ];
     const pageId = await ctx.db.insert("pages", {
       userId,
-      parentId,
+      parentId: parentId as Id<"pages"> | null,
       title: name,
       icon: "🗂️",
       cover: null,

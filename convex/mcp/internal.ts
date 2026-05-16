@@ -131,7 +131,7 @@ export const createPage = internalMutation({
       : [{ id: uid(), type: "paragraph", text: "" }];
     return await ctx.db.insert("pages", {
       userId: args.userId,
-      parentId: args.parentId,
+      parentId: args.parentId as Id<"pages"> | null,
       title: args.title ?? "",
       icon: args.icon ?? "📄",
       cover: null,
@@ -139,7 +139,7 @@ export const createPage = internalMutation({
       favorite: false,
       trashed: false,
       isPublic: false,
-      rowOfDatabaseId: args.rowOfDatabaseId,
+      rowOfDatabaseId: args.rowOfDatabaseId as Id<"databases"> | undefined,
       rowProps: args.rowOfDatabaseId ? (args.rowProps ?? {}) : undefined,
       searchText: buildSearchText(args.title, seedBlocks),
       createdAt: now,
@@ -185,7 +185,7 @@ export const movePage = internalMutation({
   handler: async (ctx, args) => {
     const doc = await ctx.db.get(args.pageId as Id<"pages">);
     if (!doc || doc.userId !== args.userId) throw new Error("Tidak ditemukan");
-    await ctx.db.patch(args.pageId as Id<"pages">, { parentId: args.parentId, updatedAt: Date.now() });
+    await ctx.db.patch(args.pageId as Id<"pages">, { parentId: args.parentId as Id<"pages"> | null, updatedAt: Date.now() });
     return { ok: true };
   },
 });
@@ -284,7 +284,7 @@ export const createRow = internalMutation({
       blocks,
       favorite: false,
       trashed: false,
-      rowOfDatabaseId: args.dbId,
+      rowOfDatabaseId: args.dbId as Id<"databases">,
       rowProps: args.rowProps ?? {},
       searchText: buildSearchText(args.title, blocks),
       createdAt: now,
