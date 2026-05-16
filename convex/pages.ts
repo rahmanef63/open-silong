@@ -81,7 +81,7 @@ export const getPublicShare = query({
 
 /** Toggle whether the public share allows search-engine indexing. */
 export const setShareIndexable = mutation({
-  args: { pageId: v.string(), indexable: v.boolean() },
+  args: { pageId: v.id("pages"), indexable: v.boolean() },
   handler: async (ctx, { pageId, indexable }) => {
     await requireWorkspaceAccess(ctx, "pages", pageId as Id<"pages">, { write: true });
     await ctx.db.patch(pageId as Id<"pages">, { shareIndexable: indexable, updatedAt: Date.now() });
@@ -93,7 +93,7 @@ export const setShareIndexable = mutation({
  *  chars, lowercase + digits + hyphens, not starting/ending with hyphen.
  *  Empty string clears the slug. Throws on collision with another page. */
 export const setShareSlug = mutation({
-  args: { pageId: v.string(), slug: v.string() },
+  args: { pageId: v.id("pages"), slug: v.string() },
   handler: async (ctx, args) => {
     await requireWorkspaceAccess(ctx, "pages", args.pageId as Id<"pages">, { write: true });
     const slug = args.slug.trim().toLowerCase();
@@ -279,7 +279,7 @@ export const create = mutation({
  */
 export const update = mutation({
   args: {
-    pageId: v.string(),
+    pageId: v.id("pages"),
     patch: v.object({
       title: v.optional(v.string()),
       icon: v.optional(v.string()),
@@ -321,7 +321,7 @@ export const update = mutation({
  *  (`pagesSetPublic`) — toggling 100×/min would hammer downstream
  *  share-page CDNs / OG-image edge regenerations. */
 export const setPublic = mutation({
-  args: { pageId: v.string(), isPublic: v.boolean() },
+  args: { pageId: v.id("pages"), isPublic: v.boolean() },
   handler: async (ctx, { pageId, isPublic }) => {
     const { userId } = await requireWorkspaceAccess(ctx, "pages", pageId as Id<"pages">, { write: true });
     await rateLimit(ctx, userId, RATE_LIMITS.pagesSetPublic);
@@ -334,7 +334,7 @@ export const setPublic = mutation({
  *  `maintenance.purgeStaleTrash` permanently deletes after 30 days.
  *  Touches `updatedAt`. */
 export const trash = mutation({
-  args: { pageId: v.string() },
+  args: { pageId: v.id("pages") },
   handler: async (ctx, args) => {
     const { userId, doc: page } = await requireWorkspaceAccess(ctx, "pages", args.pageId as Id<"pages">, { write: true });
     const allPages = await collectScopedPages(ctx, userId, page.workspaceId);
@@ -351,7 +351,7 @@ export const trash = mutation({
  *  top of recents. Does NOT re-parent orphans (parent might still be
  *  trashed) — caller responsibility. */
 export const restore = mutation({
-  args: { pageId: v.string() },
+  args: { pageId: v.id("pages") },
   handler: async (ctx, args) => {
     const { userId, doc: page } = await requireWorkspaceAccess(ctx, "pages", args.pageId as Id<"pages">, { write: true });
     const allPages = await collectScopedPages(ctx, userId, page.workspaceId);
@@ -365,7 +365,7 @@ export const restore = mutation({
 /** Recursively delete `pageId` + descendants AND every snapshot
  *  referencing those pages (`snapshots.by_user_page` index). One-way. */
 export const permanentlyDelete = mutation({
-  args: { pageId: v.string() },
+  args: { pageId: v.id("pages") },
   handler: async (ctx, args) => {
     const { userId, doc: page } = await requireWorkspaceAccess(ctx, "pages", args.pageId as Id<"pages">, { write: true });
     const allPages = await collectScopedPages(ctx, userId, page.workspaceId);
@@ -388,7 +388,7 @@ export const permanentlyDelete = mutation({
  *  from source. Rate-limited (`pagesDuplicate`). Returns the new
  *  `Id<"pages">`. */
 export const duplicate = mutation({
-  args: { pageId: v.string() },
+  args: { pageId: v.id("pages") },
   handler: async (ctx, args) => {
     const { userId, doc: src } = await requireWorkspaceAccess(ctx, "pages", args.pageId as Id<"pages">, { write: true });
     await rateLimit(ctx, userId, RATE_LIMITS.pagesDuplicate);
@@ -423,7 +423,7 @@ export const duplicate = mutation({
  *  Rebuilds `searchText`. Returns the new block id. */
 export const addBlock = mutation({
   args: {
-    pageId: v.string(),
+    pageId: v.id("pages"),
     afterIndex: v.number(),
     type: v.optional(v.string()),
     init: v.optional(v.any()),
@@ -453,7 +453,7 @@ export const addBlock = mutation({
  *  `caption` — style-only patches (color/bgColor/width/align/collapsed)
  *  skip the O(blocks) string build (color picker fires per drag). */
 export const updateBlock = mutation({
-  args: { pageId: v.string(), blockId: v.string(), patch: v.any() },
+  args: { pageId: v.id("pages"), blockId: v.string(), patch: v.any() },
   handler: async (ctx, args) => {
     const { userId, doc: page } = await requireWorkspaceAccess(ctx, "pages", args.pageId as Id<"pages">, { write: true });
     const blocks = page.blocks.map((b: any) =>
@@ -475,7 +475,7 @@ export const updateBlock = mutation({
  *  paragraph so cursor always has somewhere to land. Rebuilds
  *  `searchText`. */
 export const deleteBlock = mutation({
-  args: { pageId: v.string(), blockId: v.string() },
+  args: { pageId: v.id("pages"), blockId: v.string() },
   handler: async (ctx, args) => {
     const { userId, doc: page } = await requireWorkspaceAccess(ctx, "pages", args.pageId as Id<"pages">, { write: true });
     let blocks = page.blocks.filter((b: any) => b.id !== args.blockId);
@@ -492,7 +492,7 @@ export const deleteBlock = mutation({
  *  are dropped silently. Used by dnd-kit drop handler. Does NOT
  *  rebuild `searchText` — reorder preserves the word set. */
 export const reorderBlocks = mutation({
-  args: { pageId: v.string(), orderedIds: v.array(v.string()) },
+  args: { pageId: v.id("pages"), orderedIds: v.array(v.string()) },
   handler: async (ctx, args) => {
     const { userId, doc: page } = await requireWorkspaceAccess(ctx, "pages", args.pageId as Id<"pages">, { write: true });
     const map = new Map(page.blocks.map((b: any) => [b.id, b]));

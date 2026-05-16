@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
+import type { Id } from "@convex/_generated/dataModel";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/shared/ui/dialog";
 import { Switch } from "@/shared/ui/switch";
 import { Page } from "@/shared/types/domain";
@@ -38,7 +39,7 @@ export function ShareDialog({ open, onOpenChange, page }: { open: boolean; onOpe
     const next = slugDraft.trim().toLowerCase();
     if (next === (page.shareSlug ?? "")) return;
     const ok = await slugSave.execute(async () => {
-      await setShareSlug({ pageId: page.id, slug: next });
+      await setShareSlug({ pageId: page.id as Id<"pages">, slug: next });
       toast.success(next ? "Slug updated" : "Slug cleared");
     });
     if (ok === undefined) setSlugDraft(page.shareSlug ?? "");
@@ -121,7 +122,7 @@ export function ShareDialog({ open, onOpenChange, page }: { open: boolean; onOpe
                 disabled={indexableSave.pending}
                 onCheckedChange={(v) => {
                   void indexableSave.execute(async () => {
-                    await setShareIndexable({ pageId: page.id, indexable: v });
+                    await setShareIndexable({ pageId: page.id as Id<"pages">, indexable: v });
                   });
                 }}
               />
