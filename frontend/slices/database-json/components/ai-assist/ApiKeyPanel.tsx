@@ -1,4 +1,5 @@
 import { Key } from "lucide-react";
+import { Input } from "@/shared/ui/input";
 
 export function ApiKeyPanel({
   apiKey, onApiKeyChange, model, onModelChange, showKey, onToggleShow,
@@ -22,19 +23,19 @@ export function ApiKeyPanel({
       </button>
       {showKey && (
         <div className="mt-2 space-y-1.5">
-          <input
+          <Input
             type="password"
             placeholder="sk-ant-..."
             value={apiKey}
             onChange={(e) => onApiKeyChange(e.target.value)}
-            className="h-8 w-full rounded border border-border bg-background px-2 font-mono text-xs"
+            className="h-8 font-mono text-xs"
           />
-          <input
+          <Input
             type="text"
             placeholder="claude-sonnet-4-6"
             value={model}
             onChange={(e) => onModelChange(e.target.value)}
-            className="h-8 w-full rounded border border-border bg-background px-2 font-mono text-[11px]"
+            className="h-8 font-mono text-[11px]"
           />
           <div className="text-[10px] text-muted-foreground">
             Stored only in this browser (localStorage). Calls go directly to Anthropic.

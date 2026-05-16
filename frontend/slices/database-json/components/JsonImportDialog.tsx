@@ -5,6 +5,7 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/shared/ui/dialog";
 import { Button } from "@/shared/ui/button";
+import { Alert, AlertDescription } from "@/shared/ui/alert";
 import { useStore } from "@/shared/lib/store";
 import { useAsyncError } from "@/shared/hooks/useAsyncError";
 import { applyImport, parseExport, type DatabaseExportV1 } from "../lib/serialize";
@@ -114,10 +115,10 @@ export function JsonImportDialog({ open, onOpenChange, onImported }: Props) {
         )}
 
         {error && (
-          <div className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
-            <AlertCircle className="h-4 w-4 mt-0.5" />
-            <span>{error}</span>
-          </div>
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
         )}
 
         <DialogFooter>

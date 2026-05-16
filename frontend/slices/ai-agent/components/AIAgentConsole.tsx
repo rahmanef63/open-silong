@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/shared/ui/sheet";
 import { Button } from "@/shared/ui/button";
 import { Textarea } from "@/shared/ui/textarea";
+import { Alert, AlertDescription } from "@/shared/ui/alert";
 import { Sparkles, Trash2, ArrowUp } from "lucide-react";
 import { useAIChat } from "../hooks/useAIChat";
 import { SLASH_COMMANDS } from "../lib/slashCommands";
@@ -90,9 +91,9 @@ export function AIAgentConsole({ open, onOpenChange, context }: Props) {
             </div>
           )}
           {error && (
-            <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
-              {error}
-            </div>
+            <Alert variant="destructive" className="px-3 py-2">
+              <AlertDescription className="text-xs">{error}</AlertDescription>
+            </Alert>
           )}
         </div>
 

@@ -5,6 +5,7 @@ import { useAction } from "convex/react";
 import { Loader2, Upload, FileArchive, CheckCircle2, AlertTriangle } from "lucide-react";
 import { api } from "@convex/_generated/api";
 import { Button } from "@/shared/ui/button";
+import { Alert, AlertDescription } from "@/shared/ui/alert";
 import { useAsyncError } from "@/shared/hooks/useAsyncError";
 import { useFileUpload, parseFileRef } from "@/slices/files";
 import { cn } from "@/shared/lib/utils";
@@ -105,9 +106,10 @@ export const ImportZipTab = forwardRef<ImportZipTabHandle, Props>(function Impor
           </div>
 
           {zipImport.error?.message && (
-            <div className="rounded border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive flex items-start gap-2">
-              <AlertTriangle className="h-3.5 w-3.5 mt-0.5" /> {zipImport.error?.message}
-            </div>
+            <Alert variant="destructive" className="px-3 py-2">
+              <AlertTriangle className="h-3.5 w-3.5" />
+              <AlertDescription className="text-xs">{zipImport.error?.message}</AlertDescription>
+            </Alert>
           )}
 
           <div className="flex justify-end">
