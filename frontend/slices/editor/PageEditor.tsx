@@ -23,6 +23,7 @@ import { useLegacyHostRedirect, legacyHostDbIdOf } from "./hooks/useLegacyHostRe
 import { handlePageDragEnd } from "./lib/pageDragEnd";
 import { PageEditorSkeleton } from "./page-editor/PageEditorSkeleton";
 import { PageNotFound } from "./page-editor/PageNotFound";
+import { Button } from "@/shared/ui/button";
 import { HeaderBreadcrumbs } from "./page-editor/HeaderBreadcrumbs";
 import { HeaderActions } from "./page-editor/HeaderActions";
 import { Subpages } from "./page-editor/Subpages";
@@ -137,15 +138,17 @@ export function PageEditor() {
 
               {!fullPageDb && (
                 <>
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={async () => {
                       const newId = await addBlock(page.id, page.blocks.length - 1);
                       setTimeout(() => document.querySelector<HTMLElement>(`[data-block-id="${newId}"]`)?.focus(), 0);
                     }}
-                    className="mt-2 text-sm text-muted-foreground hover:text-foreground transition"
+                    className="mt-2 h-auto px-0 py-0 text-muted-foreground hover:bg-transparent hover:text-foreground"
                   >
                     + Add block
-                  </button>
+                  </Button>
 
                   <Subpages page={page} subpages={subpages} />
                   <BacklinksPanel pageId={page.id} />

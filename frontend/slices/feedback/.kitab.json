@@ -1,0 +1,16 @@
+{
+  "$schema": "https://resource.rahmanef.com/schemas/kitab-consumer.json",
+  "kitabSlug": "feedback",
+  "kitabVersion": "0.0.0",
+  "consumerVersion": "0.1.0",
+  "syncDirection": "down-only",
+  "generalization": {
+    "status": "needs-adapter",
+    "auditedAt": "2026-05-16",
+    "blockers": [
+      "unaudited - mass backfill, run /rr-prep before push UP"
+    ]
+  },
+  "lastPullAt": null,
+  "lastPushAt": null
+}

@@ -10,6 +10,7 @@ import { BlockShell } from "./BlockShell";
 import { BlockControls } from "./BlockControls";
 import { requireNested } from "./nestedRegistry";
 import { bgColorClass, colorClass } from "../lib/colors";
+import { Button } from "@/shared/ui/button";
 
 /** Body of a toggle block — chevron + heading + children list.
  * Pure callback API so it can be reused both at the top level (wrapped in BlockShell)

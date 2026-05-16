@@ -13,6 +13,7 @@ import { AskAIPanel } from "./AskAIPopover";
 import { buildActionRows, filterActionRows } from "./block-controls/searchRows";
 import { MenuHierarchy } from "./block-controls/MenuHierarchy";
 import { QuickButtons, GripButton } from "./block-controls/QuickButtons";
+import { Button } from "@/shared/ui/button";
 
 interface Props {
   pageId: string;
@@ -57,13 +58,15 @@ export function BlockControls({ pageId, block, index, listeners, convertTo, askO
           />
           <DropdownMenu open={open} onOpenChange={(o) => { setOpen(o); if (!o) setQ(""); }}>
             <DropdownMenuTrigger asChild>
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
                 title="Block menu"
                 aria-label="Block menu"
-                className="flex h-6 w-5 items-center justify-center rounded text-muted-foreground hover:bg-accent"
+                className="h-6 w-5 text-muted-foreground"
               >
                 <MoreHorizontal className="h-3.5 w-3.5" />
-              </button>
+              </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" side="right" className="w-64 p-0">
               <div className="p-2 border-b border-border">
