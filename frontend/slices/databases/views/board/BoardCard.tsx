@@ -45,7 +45,8 @@ export function BoardCard({ row, db, onOpen, cardPadding, colorByProp, cardPropI
       data-db-nav-item
       className={cn(
         "rounded-md bg-card border border-border shadow-soft cursor-grab active:cursor-grabbing hover:border-border-strong transition",
-        cardPadding, accentBar, isDragging && "opacity-50",
+        cardPadding, accentBar,
+        isDragging && "opacity-40 ring-2 ring-brand/60 shadow-lg",
       )}
     >
       <div className="flex items-center gap-1.5 text-sm font-medium mb-1">
