@@ -1,8 +1,9 @@
 import { Database, DatabaseViewConfig, Page, Property, SelectOption } from "@/shared/types/domain";
 import { useStore } from "@/shared/lib/store";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   DndContext, PointerSensor, useSensor, useSensors, DragEndEvent, KeyboardSensor,
+  pointerWithin, rectIntersection, type CollisionDetection,
 } from "@dnd-kit/core";
 import {
   SortableContext, horizontalListSortingStrategy, sortableKeyboardCoordinates,
@@ -13,6 +14,28 @@ import type { PropertyValue } from "@/shared/types/domain";
 import { BoardColumn } from "./board/BoardColumn";
 
 interface Props { db: Database; view: DatabaseViewConfig; rows: Page[]; onOpenRow: (id: string) => void }
+
+const COL_PREFIX = "col_";
+const COLSORT_PREFIX = "colsort_";
+
+/** Resolve any over-id (col_*, colsort_*, or a row id) to a column id
+ *  (or null for the "no group" column, or undefined when not found). */
+function resolveOverColId(
+  overId: string,
+  columns: { id: string | null; rows: Page[] }[],
+): string | null | undefined {
+  if (overId.startsWith(COL_PREFIX)) {
+    const raw = overId.slice(COL_PREFIX.length);
+    return raw === "null" ? null : raw;
+  }
+  if (overId.startsWith(COLSORT_PREFIX)) {
+    const raw = overId.slice(COLSORT_PREFIX.length);
+    return raw === "null" ? null : raw;
+  }
+  // Row id → owning column
+  const owner = columns.find((c) => c.rows.some((r) => r.id === overId));
+  return owner?.id;
+}
 
 export function BoardView({ db, view, rows, onOpenRow }: Props) {
   const { setRowValue, updateView } = useStore();
@@ -27,6 +50,30 @@ export function BoardView({ db, view, rows, onOpenRow }: Props) {
     return db.properties.find((p) => p.id === view.groupBy)
       ?? db.properties.find((p) => p.type === "status" || p.type === "select");
   }, [db.properties, view.groupBy]);
+
+  /** Disambiguates the two droppables registered on the same column ref
+   *  (`col_*` from useDroppable AND `colsort_*` from useSortable).
+   *  Without this, the default detector returns either at random — card
+   *  drops sometimes hit `colsort_*` which the cross-column branch
+   *  ignored, silently breaking the move. Strategy:
+   *    - Column-reorder drags (active = colsort_*): only colsort_*
+   *      targets count.
+   *    - Card drags (active = anything else): prefer `col_*`; fall
+   *      back to colsort_* only when nothing else under cursor.
+   *      `resolveOverColId` handles either prefix.
+   *  Declared BEFORE the early return so the hook ordering is stable. */
+  const collisionDetection: CollisionDetection = useCallback((args) => {
+    const activeId = String(args.active.id);
+    const pointer = pointerWithin(args);
+    const rect = rectIntersection(args);
+    const collisions = pointer.length > 0 ? pointer : rect;
+    if (activeId.startsWith(COLSORT_PREFIX)) {
+      return collisions.filter((c) => String(c.id).startsWith(COLSORT_PREFIX));
+    }
+    const colDirect = collisions.filter((c) => String(c.id).startsWith(COL_PREFIX));
+    if (colDirect.length > 0) return colDirect;
+    return collisions;
+  }, []);
 
   if (!groupProp || !groupProp.options) {
     return (
@@ -77,42 +124,32 @@ export function BoardView({ db, view, rows, onOpenRow }: Props) {
     const activeId = String(active.id);
     const overId = String(over.id);
 
-    if (activeId.startsWith("colsort_") && overId.startsWith("colsort_")) {
-      if (activeId === overId) return;
-      const fromKey = activeId.slice("colsort_".length);
-      const toKey = overId.slice("colsort_".length);
+    // Column reorder
+    if (activeId.startsWith(COLSORT_PREFIX)) {
+      if (!overId.startsWith(COLSORT_PREFIX) || activeId === overId) return;
+      const fromKey = activeId.slice(COLSORT_PREFIX.length);
+      const toKey = overId.slice(COLSORT_PREFIX.length);
+      if (fromKey === "null" || toKey === "null") return;
       const fromIdx = sortableIds.indexOf(activeId);
       const toIdx = sortableIds.indexOf(overId);
       if (fromIdx === -1 || toIdx === -1) return;
-      if (fromKey === "null" || toKey === "null") return;
       const next = sortedOptions.map((o) => o.id);
       next.splice(toIdx, 0, next.splice(fromIdx, 1)[0]);
       updateView(db.id, view.id, { boardColumnOrder: next });
       return;
     }
 
-    // Dropping a card onto a column → cross-column move (common case).
-    // Dropping a card onto another CARD → look up which column owns the
-    // target card and treat as a drop into that column. Without this
-    // fallback, the user can drag halfway across the board and have
-    // nothing happen because the cursor landed on a sibling card —
-    // silent UX failure flagged in the 2026-05-16 DnD audit.
-    let colId: string | null;
-    if (overId.startsWith("col_")) {
-      const raw = overId.slice(4);
-      colId = raw === "null" ? null : raw;
-    } else {
-      const targetCol = columns.find((c) => c.rows.some((r) => r.id === overId));
-      if (!targetCol) return;
-      colId = targetCol.id;
-    }
+    // Card move — resolve any over-id (col_*, colsort_*, or a row id)
+    // to a column id, then update the grouping property.
+    const colId = resolveOverColId(overId, columns);
+    if (colId === undefined) return;
     const currentColId = (rows.find((r) => r.id === activeId)?.rowProps?.[groupProp.id] as string | null | undefined) ?? null;
-    if (currentColId === colId) return; // already in target column — no-op
+    if (currentColId === colId) return;
     setRowValue(db.id, activeId, groupProp.id, colId);
   };
 
   return (
-    <DndContext sensors={sensors} onDragEnd={onDragEnd}>
+    <DndContext sensors={sensors} onDragEnd={onDragEnd} collisionDetection={collisionDetection}>
       <SortableContext items={sortableIds} strategy={horizontalListSortingStrategy}>
         <div className="flex gap-3 overflow-x-auto p-3 min-h-[280px]">
           <QuickCreateDialog
