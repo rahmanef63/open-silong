@@ -5,20 +5,19 @@
  * `/dashboard/...` literals. Downstream projects that re-host these slices
  * can override the constants without touching every call site.
  *
- * `BASE` is the dashboard segment prefix used by every authed route
- * (matches `frontend/shared/lib/router-compat.tsx:BASENAME`). If a
+ * `BASE` is the dashboard segment prefix used by every authed route. If a
  * consumer mounts the slice tree at a different prefix, change BASE here
  * and the rest follows.
  *
- * NOTE: callers using `@/shared/lib/router-compat`'s `Link`/`useNavigate`
- * pass routes WITHOUT the dashboard prefix (the shim adds BASENAME).
- * Callers using `next/navigation` should use the `*Abs` variants below,
- * which include the prefix.
+ * NOTE: callers using `@/shared/lib/router`'s `Link`/`useNavigate` pass
+ * routes WITHOUT the dashboard prefix (the RouterProvider basename adds
+ * it). Callers using `next/navigation` should use the `*Abs` variants
+ * below, which include the prefix.
  */
 
 const BASE = "/dashboard";
 
-/** Routes WITHOUT the dashboard prefix — for use with router-compat. */
+/** Routes WITHOUT the dashboard prefix — for use with `@/shared/lib/router`. */
 export const ROUTES = {
   home: "/",
   auth: "/auth",

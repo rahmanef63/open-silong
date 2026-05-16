@@ -1,12 +1,24 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { ShieldAlert, Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/shared/ui/button";
-import { AdminPanel, useAdminRole } from "@/slices/admin-panel";
+import { useAdminRole } from "@/slices/admin-panel";
 import { reportError } from "@/shared/lib/error";
+
+// Admin-only bundle — non-admins never download it. The auth gate
+// below redirects before we ever render AdminPanel, so dynamic() is
+// a pure size win.
+const AdminPanel = dynamic(
+  () => import("@/slices/admin-panel").then((m) => ({ default: m.AdminPanel })),
+  {
+    ssr: false,
+    loading: () => <div className="p-6 text-sm text-muted-foreground">Loading admin…</div>,
+  },
+);
 
 export default function ClientAdmin() {
   const router = useRouter();

@@ -11,7 +11,7 @@ import { Toaster } from "@/shared/ui/toaster";
 import { Toaster as Sonner } from "@/shared/ui/sonner";
 import { StoreProvider } from "@/shared/lib/store";
 import { RouterProvider } from "@/shared/lib/router";
-import { WorkspaceIOProvider } from "@/shared/providers";
+import { WorkspaceIOProvider } from "@/slices/workspace-io";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/shared/ui/sidebar";
 import { Separator } from "@/shared/ui/separator";
 import {
