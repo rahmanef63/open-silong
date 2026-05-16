@@ -102,6 +102,52 @@ new commits, never amend.
 - 165 `@/shared/lib/utils` import sites continue working — only resolution chain changed
 - Bump via `pnpm update rahman-shared`. Skill `/use-adopt-rahman-shared` codifies pattern
 
+## Boundary-cast pattern for Convex FKs (2026-05-16)
+
+Convex mutation/query args take branded ids: `pageId: v.id("pages")`,
+`dbId: v.id("databases")`, `snapshotId: v.id("snapshots")`. Frontend
+domain types (`Page.id`, `Database.id`) stay `string` for ergonomics —
+the boundary cast lives in the data-access layer.
+
+**Pattern** (top of any `shared/lib/store/*` or slice hook that calls
+Convex mutations):
+
+```ts
+import type { Id } from "@convex/_generated/dataModel";
+
+const asPageId = (s: string): Id<"pages"> => s as Id<"pages">;
+const asDbId = (s: string): Id<"databases"> => s as Id<"databases">;
+
+// call sites
+mutUpdatePage({ pageId: asPageId(page.id), patch });
+mutDeleteRow({ dbId: asDbId(dbId), rowPageId: asPageId(rowId) });
+```
+
+Helpers are intentionally per-file (not shared) so the cast surface is
+visible and grep-able. Adding a new convex mutation call? Cast at the
+call site, don't widen handler args back to `v.string()`.
+
+**Audit before tightening a schema FIELD** (vs an arg). Run
+`pnpm exec convex run admin/fkAudit:run` — confirms every stored
+string parses as a valid `Id<TABLE>`. Zero `invalidFormat` ⇒ the
+schema flip is safe. Orphans (`missingTarget > 0`) are fine, they
+don't block the validator. See `convex/admin/fkAudit.ts`.
+
+**Skip the cast** in `convex/mcp/internal.ts` — external HTTP input
+where the defensive `v.string()` is intentional.
+
+## Route SSOT — no `"/dashboard"` literals in slice code (2026-05-16)
+
+- `frontend/shared/lib/routes.ts` exports `ROUTE_BASE = "/dashboard"`
+  + `ROUTES` (relative, for `@/shared/lib/router`)
+  + `ROUTES_ABS` (absolute, for `next/navigation`).
+- Slices NEVER `const BASE = "/dashboard"`. Always import `ROUTE_BASE`
+  or use a named route (`ROUTES.page(id)` / `ROUTES_ABS.page(id)`).
+- Adding a new dashboard route? Edit `routes.ts` first, consume the
+  named export everywhere.
+- Migrating slices to a different host basename? Change `BASE` in
+  `routes.ts` only.
+
 ## Feature flags / discipline
 
 - Server Actions: every `"use server"` performs authn + authz; never return
