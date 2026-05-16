@@ -108,16 +108,19 @@ export const _requireAdminFromAction = internalQuery({
 });
 
 /** Admin — all model overrides with user email + name for the table UI.
- *  Capped via `COUNT_CAPS.aiOverridesScan`; if you hit the cap, switch
- *  to pagination. */
+ *  Walks `by_updated` in descending order so the most-recent assignments
+ *  surface first without an in-memory sort. Capped at
+ *  `COUNT_CAPS.aiOverridesScan`; beyond that, switch to pagination. */
 export const listAIOverrides = query({
   args: {},
   handler: async (ctx) => {
     await requireAdminQuery(ctx);
     const rows = await ctx.db
       .query("aiUserModelOverrides")
+      .withIndex("by_updated")
+      .order("desc")
       .take(COUNT_CAPS.aiOverridesScan);
-    const enriched = await Promise.all(
+    return Promise.all(
       rows.map(async (r) => {
         const user = await ctx.db.get(r.userId);
         return {
@@ -129,6 +132,5 @@ export const listAIOverrides = query({
         };
       }),
     );
-    return enriched.sort((a, b) => b.updatedAt - a.updatedAt);
   },
 });
