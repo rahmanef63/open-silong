@@ -3,6 +3,74 @@
 Block-based notes app. Next 16 (App Router) + React 19 + Convex 1.36 self-hosted.
 Live: https://nosion.rahmanef.com · Convex: https://api-notion-page-clone.rahmanef.com
 
+## Stack baseline (rr conventions — adapted)
+
+Nosion follows Rahman Resources (rr) conventions with 3 documented divergences
+(slice-metadata, CLI, MCP). Drift on the pins below breaks kitab compatibility.
+
+### Hard pins
+- **Next ^16 + React ^19, Tailwind v4** — `proxy.ts` only, no `middleware.ts`.
+  `experimental.cacheComponents` opt-in per page.
+- **Convex self-hosted ^1.36** — Docker Compose on Dokploy node. Deploy via
+  `node si-coder/deploy.js` (raw `npx convex deploy` → `BadAdminKey`).
+- **Auth = `@convex-dev/auth`** — NO Clerk. Custom auth slices only when
+  documented insufficient.
+
+### Vertical slices
+- Layout: `frontend/slices/<slug>/` (UI + types) + optional
+  `convex/features/<slug>/` (schema + queries + mutations).
+- **Barrel-only cross-slice imports.** `@/features/<slug>` ✅ —
+  `@/features/foo/lib/internal-thing` ❌. Barrels = contract.
+- **Props-driven portability.** No hardcoded URLs / env names / role enums
+  inside slice code — pass via props or env-configured allowlist.
+
+### Convex non-negotiables
+- Every client-reachable `mutation()` / `query()` declares
+  `args: { v.* }` validators. Missing = P0.
+- **No bare `.collect()`** — use `.withIndex(...).take(N)` or paginate.
+- Server-side authz **inside the handler** — `requireOwned` /
+  `requireWorkspaceMember` from `convex/_shared/`. Route gates don't
+  protect HTTP queries.
+- Indexes mandatory for every `.filter` / `.order` path. Add via
+  `defineTable(...).index(...)`.
+
+### UI non-negotiables
+- shadcn primitives only. Never raw `<button>` / `<dialog>` /
+  `<input type=date|file>`. Wrap via `ResponsiveDialog` / `DateField` /
+  `FileUpload` from `frontend/shared/`.
+- Theme tokens only (`bg-background` / `text-foreground` / `border-border`).
+  No hex.
+- Mobile-first responsive — `md:` / `lg:` layered up from single-column.
+- `next/link` for internal routes, `next/image` for hosted assets. No raw
+  `<a href="/internal">` / `<img>`.
+- `NEXT_PUBLIC_*` = exposed in client bundle. Never secrets / admin emails /
+  API keys.
+
+### Delivery
+- Solo dev → push direct to `main`, NO PRs. Conventional commits +
+  `Co-Authored-By: Claude …` footer. Dokploy webhook auto-builds.
+- Local CI: `/sc-git ci --repo notion-page-clone` or pre-push hook —
+  no GitHub Actions cloud minutes.
+
+### Divergences from canonical rr
+
+1. **Slice metadata** — Nosion ships `.kitab.json` (BSDL consumer manifest)
+   + `slice.manifest.json`. NO `slice.json` / `slice.contract.ts`
+   (rr-canonical, not adopted). See BSDL section below.
+2. **CLI** — `npx rahman-resources@latest add <slug>` to adopt,
+   `/rr-send <slug>` to lift UP. NOT `npx rr add`.
+3. **MCP** — `convex/mcp/` is a Notion-canonical JSON HTTP surface
+   (not OAuth/PKCE client). EXEMPT from "use create-your-mcp slice" rule.
+
+### Before writing code
+1. Check if the change crosses a rule above — apply even if user didn't
+   mention it. Call out which rule when proposing.
+2. New feature → check if it should be a new slice under
+   `frontend/slices/<slug>/` + `convex/features/<slug>/`.
+3. After editing: `pnpm typecheck` + relevant `pnpm test` before commit.
+4. Found rule-violating existing code? Flag it, but only fix if user asks
+   (avoid scope creep).
+
 ## Layout
 
 - `app/` — App Router routes. Dashboard segments live under `/dashboard/*`.
