@@ -25,7 +25,7 @@ import { useAdminRole } from "@/slices/admin-panel";
 import { TemplateGalleryDialog } from "@/slices/templates";
 import { AIAgentConsole } from "@/slices/ai-agent";
 import { InboxBadge } from "@/slices/inbox";
-import { useWorkspaceIO } from "@/shared/providers";
+import { useWorkspaceIO } from "@/slices/workspace-io";
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
 import { NavUser } from "./NavUser";
 import { PagesPanel } from "./PagesPanel";

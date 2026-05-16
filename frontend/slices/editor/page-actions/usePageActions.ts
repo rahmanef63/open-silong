@@ -7,7 +7,7 @@ import {
   pageToMarkdown, pageToPlainText, markdownToBlocks,
   downloadFile, pickFile,
 } from "@/shared/lib/markdown";
-import { useWorkspaceIO } from "@/shared/providers";
+import { useWorkspaceIO } from "@/slices/workspace-io";
 
 export function usePageActions(page: Page, close: () => void) {
   const { updatePage, duplicatePage, deletePage, addBlock } = useStore();

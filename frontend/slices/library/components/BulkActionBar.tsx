@@ -3,7 +3,7 @@
 import { Star, Trash2, Download, X, Globe2 } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { useStore } from "@/shared/lib/store";
-import { useWorkspaceIO } from "@/shared/providers";
+import { useWorkspaceIO } from "@/slices/workspace-io";
 import { useConfirm } from "@/shared/components/ConfirmProvider";
 import { toast } from "sonner";
 import { reportError } from "@/shared/lib/error";
