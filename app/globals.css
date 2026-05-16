@@ -167,6 +167,12 @@
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
+    /* Apply Inter on body so the preloaded woff2 is used on first
+     * paint. Without this, Chrome's "preloaded but not used within a
+     * few seconds" warning fires because the font is loaded eagerly
+     * but no element claims it until React mounts a `.font-sans`
+     * Tailwind class. */
+    font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     font-feature-settings: "cv11", "ss01", "ss03";
     transition: background-color 220ms ease, color 220ms ease;
