@@ -298,6 +298,11 @@ export interface Property {
   /** ─── Unique ID (type === "unique_id") ────────────────────── */
   uniqueIdPrefix?: string;
 
+  /** ─── URL (type === "url") ────────────────────────────────── */
+  /** When false (default), URL cells render the trimmed host/path
+   *  with link styling. When true, the entire href shows verbatim. */
+  urlShowFull?: boolean;
+
   /** ─── Button (type === "button") ──────────────────────────── */
   buttonLabel?: string;
   buttonActions?: ButtonAction[];
