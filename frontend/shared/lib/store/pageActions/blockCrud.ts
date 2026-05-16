@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import { useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
+import type { Id } from "@convex/_generated/dataModel";
 import type { Block, BlockType, Page } from "@/shared/types/domain";
 import { guardMut, guardMutVoid } from "../mutationGuard";
 import { uid, type StructuralAction } from "./constants";
@@ -8,8 +9,12 @@ import { uid, type StructuralAction } from "./constants";
 interface Args {
   pageMap: Map<string, Page>;
   pushStructuralAction: (a: StructuralAction) => void;
-  mutUpdatePage: (args: { pageId: string; patch: Partial<Page> }) => void;
+  mutUpdatePage: (args: { pageId: Id<"pages">; patch: Partial<Page> }) => void;
 }
+
+/** Local cast helper — frontend `Page.id` is `string` for convenience;
+ *  Convex requires the branded `Id<"pages">`. Boundary cast lives here. */
+const asPageId = (s: string): Id<"pages"> => s as Id<"pages">;
 
 const TEXT_ONLY_KEYS = new Set(["text", "caption"]);
 const isTextOnlyPatch = (patch: Partial<Block>) =>
@@ -23,7 +28,7 @@ export function useBlockCrud({ pageMap, pushStructuralAction, mutUpdatePage }: A
 
   const addBlock = useCallback(
     async (pageId: string, afterIndex: number, type: BlockType = "paragraph", init: Partial<Block> = {}): Promise<string> => {
-      return await guardMut("addBlock", mutAddBlock({ pageId, afterIndex, type, init }));
+      return await guardMut("addBlock", mutAddBlock({ pageId: asPageId(pageId), afterIndex, type, init }));
     },
     [mutAddBlock],
   );
@@ -39,7 +44,7 @@ export function useBlockCrud({ pageMap, pushStructuralAction, mutUpdatePage }: A
     if (!entry) return;
     window.clearTimeout(entry.timer);
     pendingBlockWrites.current.delete(key);
-    guardMutVoid("updateBlock", mutUpdateBlock({ pageId: entry.pageId, blockId: entry.blockId, patch: entry.patch }));
+    guardMutVoid("updateBlock", mutUpdateBlock({ pageId: asPageId(entry.pageId), blockId: entry.blockId, patch: entry.patch }));
   }, [mutUpdateBlock]);
 
   const flushAllPendingBlocks = useCallback(() => {
@@ -63,7 +68,7 @@ export function useBlockCrud({ pageMap, pushStructuralAction, mutUpdatePage }: A
       const key = `${pageId}:${blockId}`;
       if (!isTextOnlyPatch(patch)) {
         flushBlockKey(key);
-        guardMutVoid("updateBlock", mutUpdateBlock({ pageId, blockId, patch }));
+        guardMutVoid("updateBlock", mutUpdateBlock({ pageId: asPageId(pageId), blockId, patch }));
         return;
       }
       const existing = pendingBlockWrites.current.get(key);
@@ -76,7 +81,7 @@ export function useBlockCrud({ pageMap, pushStructuralAction, mutUpdatePage }: A
   );
 
   const deleteBlock = useCallback(
-    (pageId: string, blockId: string) => { guardMutVoid("deleteBlock", mutDeleteBlock({ pageId, blockId })); },
+    (pageId: string, blockId: string) => { guardMutVoid("deleteBlock", mutDeleteBlock({ pageId: asPageId(pageId), blockId })); },
     [mutDeleteBlock],
   );
 
@@ -89,7 +94,7 @@ export function useBlockCrud({ pageMap, pushStructuralAction, mutUpdatePage }: A
       const dup = { ...page.blocks[idx], id: uid() };
       const blocks = [...page.blocks];
       blocks.splice(idx + 1, 0, dup);
-      mutUpdatePage({ pageId, patch: { blocks } });
+      mutUpdatePage({ pageId: asPageId(pageId), patch: { blocks } });
       return dup.id;
     },
     [pageMap, mutUpdatePage],
@@ -106,10 +111,10 @@ export function useBlockCrud({ pageMap, pushStructuralAction, mutUpdatePage }: A
       const after = [...blocks];
       pushStructuralAction({
         label: "Move block",
-        undo: () => mutUpdatePage({ pageId, patch: { blocks: before } }),
-        redo: () => mutUpdatePage({ pageId, patch: { blocks: after } }),
+        undo: () => mutUpdatePage({ pageId: asPageId(pageId), patch: { blocks: before } }),
+        redo: () => mutUpdatePage({ pageId: asPageId(pageId), patch: { blocks: after } }),
       });
-      mutUpdatePage({ pageId, patch: { blocks } });
+      mutUpdatePage({ pageId: asPageId(pageId), patch: { blocks } });
     },
     [pageMap, mutUpdatePage, pushStructuralAction],
   );
@@ -123,17 +128,17 @@ export function useBlockCrud({ pageMap, pushStructuralAction, mutUpdatePage }: A
       if (same) return;
       pushStructuralAction({
         label: "Reorder blocks",
-        undo: () => mutReorderBlocks({ pageId, orderedIds: oldIds }),
-        redo: () => mutReorderBlocks({ pageId, orderedIds }),
+        undo: () => mutReorderBlocks({ pageId: asPageId(pageId), orderedIds: oldIds }),
+        redo: () => mutReorderBlocks({ pageId: asPageId(pageId), orderedIds }),
       });
-      mutReorderBlocks({ pageId, orderedIds });
+      mutReorderBlocks({ pageId: asPageId(pageId), orderedIds });
     },
     [pageMap, mutReorderBlocks, pushStructuralAction],
   );
 
   const setBlockType = useCallback(
     (pageId: string, blockId: string, type: BlockType) => {
-      mutUpdateBlock({ pageId, blockId, patch: { type, checked: type === "todo" ? false : undefined } });
+      mutUpdateBlock({ pageId: asPageId(pageId), blockId, patch: { type, checked: type === "todo" ? false : undefined } });
     },
     [mutUpdateBlock],
   );
@@ -143,7 +148,7 @@ export function useBlockCrud({ pageMap, pushStructuralAction, mutUpdatePage }: A
       const page = pageMap.get(pageId);
       if (!page) return;
       const blocks = page.blocks.map((b) => (b.id === blockId ? { ...next, id: blockId } : b));
-      mutUpdatePage({ pageId, patch: { blocks } });
+      mutUpdatePage({ pageId: asPageId(pageId), patch: { blocks } });
     },
     [pageMap, mutUpdatePage],
   );

@@ -1,10 +1,15 @@
 import { useCallback } from "react";
 import { useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
+import type { Id } from "@convex/_generated/dataModel";
 import type { Page } from "@/shared/types/domain";
 import { guardMut, guardMutVoid } from "../mutationGuard";
 import { DEFAULT_PAGE_ICON } from "@/shared/components/icon-picker";
 import { uid, type StructuralAction } from "./constants";
+
+/** Boundary cast — frontend Page.id is `string` for convenience;
+ *  Convex mutations require the branded `Id<"pages">`. */
+const asPageId = (s: string): Id<"pages"> => s as Id<"pages">;
 
 interface Args {
   pages: Page[];
@@ -51,7 +56,7 @@ export function usePageCrud({ pages, pageMap, snapshotIfNeeded, pushStructuralAc
     (id: string, patch: Partial<Page>) => {
       const page = pageMap.get(id);
       if (page) snapshotIfNeeded(id, page);
-      guardMutVoid("updatePage", mutUpdatePage({ pageId: id, patch }));
+      guardMutVoid("updatePage", mutUpdatePage({ pageId: asPageId(id), patch }));
     },
     [pageMap, mutUpdatePage, snapshotIfNeeded],
   );
@@ -64,10 +69,10 @@ export function usePageCrud({ pages, pageMap, snapshotIfNeeded, pushStructuralAc
       const after = { parentId: newParentId, createdAt: Date.now() };
       pushStructuralAction({
         label: "Move page",
-        undo: () => mutUpdatePage({ pageId: id, patch: before }),
-        redo: () => mutUpdatePage({ pageId: id, patch: after }),
+        undo: () => mutUpdatePage({ pageId: asPageId(id), patch: before }),
+        redo: () => mutUpdatePage({ pageId: asPageId(id), patch: after }),
       });
-      mutUpdatePage({ pageId: id, patch: after });
+      mutUpdatePage({ pageId: asPageId(id), patch: after });
     },
     [pageMap, mutUpdatePage, pushStructuralAction],
   );
@@ -88,7 +93,7 @@ export function usePageCrud({ pages, pageMap, snapshotIfNeeded, pushStructuralAc
       const same = currentOrder.length === orderedIds.length && currentOrder.every((cid, i) => cid === orderedIds[i]);
       if (same) return;
       const apply = (states: Array<{ id: string; parentId: string | null; createdAt: number }>) => {
-        states.forEach((state) => mutUpdatePage({ pageId: state.id, patch: { parentId: state.parentId, createdAt: state.createdAt } }));
+        states.forEach((state) => mutUpdatePage({ pageId: asPageId(state.id), patch: { parentId: state.parentId, createdAt: state.createdAt } }));
       };
       pushStructuralAction({ label: "Reorder pages", undo: () => apply(before), redo: () => apply(after) });
       apply(after);
@@ -101,13 +106,13 @@ export function usePageCrud({ pages, pageMap, snapshotIfNeeded, pushStructuralAc
     [reorderPages],
   );
 
-  const deletePage = useCallback((id: string) => { guardMutVoid("trashPage", mutTrashPage({ pageId: id })); }, [mutTrashPage]);
-  const restorePage = useCallback((id: string) => { guardMutVoid("restorePage", mutRestorePage({ pageId: id })); }, [mutRestorePage]);
-  const permanentlyDelete = useCallback((id: string) => { guardMutVoid("permanentlyDelete", mutPermanentlyDelete({ pageId: id })); }, [mutPermanentlyDelete]);
+  const deletePage = useCallback((id: string) => { guardMutVoid("trashPage", mutTrashPage({ pageId: asPageId(id) })); }, [mutTrashPage]);
+  const restorePage = useCallback((id: string) => { guardMutVoid("restorePage", mutRestorePage({ pageId: asPageId(id) })); }, [mutRestorePage]);
+  const permanentlyDelete = useCallback((id: string) => { guardMutVoid("permanentlyDelete", mutPermanentlyDelete({ pageId: asPageId(id) })); }, [mutPermanentlyDelete]);
 
   const duplicatePage = useCallback(
     async (id: string): Promise<Page | undefined> => {
-      const newId = await guardMut("duplicatePage", mutDuplicatePage({ pageId: id }));
+      const newId = await guardMut("duplicatePage", mutDuplicatePage({ pageId: asPageId(id) }));
       if (!newId) return undefined;
       const now = Date.now();
       return { id: newId, parentId: null, title: "", icon: DEFAULT_PAGE_ICON, cover: null, blocks: [], favorite: false, trashed: false, createdAt: now, updatedAt: now };
@@ -118,7 +123,7 @@ export function usePageCrud({ pages, pageMap, snapshotIfNeeded, pushStructuralAc
   const toggleFavorite = useCallback(
     (id: string) => {
       const page = pageMap.get(id);
-      if (page) mutUpdatePage({ pageId: id, patch: { favorite: !page.favorite } });
+      if (page) mutUpdatePage({ pageId: asPageId(id), patch: { favorite: !page.favorite } });
     },
     [pageMap, mutUpdatePage],
   );
@@ -126,7 +131,7 @@ export function usePageCrud({ pages, pageMap, snapshotIfNeeded, pushStructuralAc
   const togglePublic = useCallback(
     (id: string) => {
       const page = pageMap.get(id);
-      if (page) mutSetPublic({ pageId: id, isPublic: !page.isPublic });
+      if (page) mutSetPublic({ pageId: asPageId(id), isPublic: !page.isPublic });
     },
     [pageMap, mutSetPublic],
   );

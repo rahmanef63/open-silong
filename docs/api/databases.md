@@ -214,24 +214,26 @@ All views share: `filters[]`, `sorts[]`, `search`, `hiddenPropIds[]`,
 
 ## Column header menu (Table view)
 
-Click any column header to open the Notion-style 13-item menu:
+Click any column header to open the Notion-style 16-item menu. Items are gated by view-lock + db-lock; some hide when not applicable (e.g. Group only for `select`/`status`).
 
-| Item | Wires to |
-|---|---|
-| Edit property | Opens `PropertyConfigPanel` (Dialog) |
-| Change type | Submenu — sets `Property.type` |
-| AI Autofill | Reserved (deferred) |
-| Filter | Seeds `view.filters` with this prop + inferred operator |
-| Sort | Submenu — adds asc/desc to `view.sorts`, or clear |
-| Group | Switches view to `board` with `groupBy = prop.id` (select/status only) |
-| Calculate | Submenu — sets `view.tableCalcs[propId]` to a `CalcKind` |
-| Freeze | Toggles prop in `view.frozenPropIds` (sticky-left) |
-| Hide | Toggles prop in `view.hiddenPropIds` |
-| Wrap content | Toggles `view.tableWrapCells` |
-| Insert left/right | `addProperty` then `reorderProperties` to land at offset |
-| Delete property | Cascades referenced ids out of all views (see Cascade) |
+| Item | Wires to | Gated by |
+|---|---|---|
+| Edit property | Opens `PropertyConfigPanel` (Dialog) | — |
+| Change type | Submenu — sets `Property.type` | — |
+| AI Autofill | Stub ("Soon") | — |
+| Filter | Seeds `view.filters` with this prop + inferred operator | viewLocked |
+| Sort | Submenu — adds asc/desc to `view.sorts`, or clear | viewLocked |
+| Group | Switches view to `board` with `groupBy = prop.id` | viewLocked + type ∈ {select, status} |
+| Calculate | Submenu — sets `view.tableCalcs[propId]` to a `CalcKind` | viewLocked + `validCalcs(prop)` non-empty |
+| Freeze | Toggles prop in `view.frozenPropIds` (sticky-left) | viewLocked |
+| Hide | Toggles prop in `view.hiddenPropIds` | viewLocked |
+| Wrap content | Toggles `view.tableWrapCells` (table-wide) | viewLocked |
+| Duplicate property | `duplicateProperty(db.id, prop.id)` | db.locked |
+| Insert left / right | `addProperty` then `reorderProperties` to land at offset | db.locked |
+| Move left / right | `moveBy(±1)` over `properties[]` | db.locked + bounds |
+| Delete property | Cascades referenced ids out of all views (see Cascade) | db.locked |
 
-Implementation: `frontend/slices/databases/components/ColumnHeaderMenu.tsx`.
+Implementation: `frontend/slices/databases/components/ColumnHeaderMenu.tsx:113-206`.
 
 Calculate aggregates are computed in
 `frontend/slices/databases/lib/calcAggregate.ts:computeCalc(rows, prop, calc)`.
@@ -240,21 +242,61 @@ the AddRowFooter as a frozen-aware row.
 
 ## Property schema (`Property` type)
 
-21 property types. Required type-specific fields:
+**27 property types** registered in `frontend/shared/lib/databases/propertyTypeMeta.ts:PROPERTY_TYPE_META`. The map is the SSOT — adding a row there auto-updates label, icon, default name, slash-menu category, and the `apiName` used by export/import.
+
+### Required type-specific fields
 
 | type | extra fields |
 |---|---|
-| `text` / `url` / `email` / `phone` / `checkbox` / `created_time` / `last_edited_time` | — |
+| `text` / `url` / `email` / `phone` / `checkbox` | — |
 | `number` | `numberFormat`, `numberDecimals`, `numberCurrencyCode` |
 | `select` / `multi_select` / `status` | `options: SelectOption[]` |
-| `date` / `person` / `files` | — (value shape varies) |
+| `date` | optional `dateFormat`, `timeFormat`, `dateIncludeTime`, `dateNotification` (value: `DateValue`) |
+| `person` / `files` | — (value shape varies) |
 | `relation` | `relationDatabaseId`, `relationTwoWay`, `relationInversePropertyId` |
 | `rollup` | `rollupRelationPropertyId`, `rollupTargetPropertyId`, `rollupAggregate` |
 | `formula` | `formulaExpression` (string) |
-| `created_by` / `last_edited_by` | — (resolved from page metadata) |
+| `created_time` / `created_by` / `last_edited_time` / `last_edited_by` | — (resolved from page metadata, read-only) |
 | `unique_id` | `uniqueIdPrefix?: string` |
 | `button` | `buttonLabel`, `buttonActions[]` (open_url / open_page / show_confirmation / edit_property) |
-| `place` | free-form location string (map view integration planned) |
+| `place` | free-form location string (map view binding via `mapPropId`) |
+| `verification` | — (boolean + audit metadata) |
+| `ai_summary` / `ai_translation` / `ai_keywords` / `ai_custom` | **stub** — read-only cell, no backend wiring yet (tracked in audit) |
+
+### Surface matrix — what each type ships
+
+`✓` = implemented · `✗` = missing · `—` = N/A (read-only / computed)
+
+| Type | Cell | Config panel | Filter ops | Sort | View binding | Calc aggregates |
+|---|---|---|---|---|---|---|
+| text | input | — | generic | ✓ | — | common |
+| number | NumberCell | NumberConfig | generic | ✓ | Chart Y | sum/avg/median/min/max/range |
+| select | SelectCell | SelectConfig | generic | ✓ | Board group | common |
+| multi_select | MultiSelectCell | SelectConfig | generic | ✓ | — | common |
+| status | SelectCell | SelectConfig | generic | ✓ | Board group | common |
+| **date** | DateCell + picker | **DateConfig** | generic | ✓ | **Calendar + Timeline** | **earliest/latest/date_range** |
+| person | button | ✗ | generic | ✓ | — | common |
+| checkbox | Checkbox | — | checked/unchecked | ✓ | — | checked/unchecked/percent |
+| url / email / phone | styled input | — | generic | ✓ | — | common |
+| files | FilesCell | ✗ | generic | ✓ | Gallery cover | count/empty/percent |
+| relation | RelationCell | RelationConfig | generic | ✓ | — | common |
+| rollup | RollupCell | RollupConfig | — | — | — | common |
+| formula | FormulaCell | FormulaConfig | — | — | — | common |
+| created_time / last_edited_time | text | — | — | ✓ | — | earliest/latest/date_range |
+| created_by / last_edited_by | user badge | — | — | — | — | common |
+| unique_id | mono text | UniqueIdConfig | — | — | — | common |
+| button | ButtonCell | ButtonConfig | — | — | — | — |
+| place | input | PlaceConfig | generic | ✓ | Map (lat/lng) | common |
+| verification | VerificationCell | ✗ | checked/unchecked | — | — | checked/unchecked/percent |
+| ai_* (4) | stub | ✗ | — | — | — | common |
+
+Generic filter ops: `contains` / `equals` / `is_empty` / `is_not_empty`. Per-type ops not yet split into a registry — defined inline in `ColumnHeaderMenu.tsx:seedFilter` and the filter UI.
+
+The only property with a dedicated VIEW binding is `date` (Calendar + Timeline). `select` / `status` get Board grouping, `number` gets Chart Y-axis, `files` is the Gallery cover candidate, `place` drives Map.
+
+Known gaps tracked separately (no implementation in this cycle):
+- `person`, `files`, `verification` lack dedicated config panels.
+- `ai_*` types are UI stubs — backend `convex/ai/chat.complete` exists but the autofill pipeline isn't wired into the cell.
 
 ### Number formatting
 
