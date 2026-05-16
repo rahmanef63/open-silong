@@ -15,6 +15,7 @@ import { DAY_MS, makeBarStyle, msToYMD, toMs } from "./timeline/utils";
 import { TimelineBar } from "./timeline/TimelineBar";
 import { TimelineHeader } from "./timeline/HeaderRow";
 import { TimelineDependencies } from "./timeline/Dependencies";
+import { Button } from "@/shared/ui/button";
 
 interface Props {
   db: Database;
@@ -96,16 +97,16 @@ export function TimelineView({ db, view, rows, onOpenRow, writeView }: Props) {
   return (
     <div className="p-3 overflow-x-auto">
       <div className="flex items-center gap-2 mb-3">
-        <button onClick={() => setStartOffset((o) => o - 4)} className="rounded p-1 hover:bg-accent text-muted-foreground">
+        <Button variant="ghost" size="icon" onClick={() => setStartOffset((o) => o - 4)} className="h-auto w-auto p-1 text-muted-foreground">
           <ChevronLeft className="h-4 w-4" />
-        </button>
-        <button onClick={() => setStartOffset((o) => o + 4)} className="rounded p-1 hover:bg-accent text-muted-foreground">
+        </Button>
+        <Button variant="ghost" size="icon" onClick={() => setStartOffset((o) => o + 4)} className="h-auto w-auto p-1 text-muted-foreground">
           <ChevronRight className="h-4 w-4" />
-        </button>
+        </Button>
         {startOffset !== 0 && (
-          <button onClick={() => setStartOffset(0)} className="rounded px-2 py-1 text-xs border border-border hover:bg-accent text-muted-foreground">
+          <Button variant="outline" size="sm" onClick={() => setStartOffset(0)} className="h-auto px-2 py-1 text-xs font-normal text-muted-foreground">
             Today
-          </button>
+          </Button>
         )}
         <span className="text-xs text-muted-foreground">
           {days[0].toLocaleDateString("default", { month: "short", day: "numeric" })} – {days[DAYS - 1].toLocaleDateString("default", { month: "short", day: "numeric", year: "numeric" })}
@@ -117,12 +118,14 @@ export function TimelineView({ db, view, rows, onOpenRow, writeView }: Props) {
           {writeView && (
             <TimelineSettingsMenu db={db} view={view} writeView={writeView} />
           )}
-          <button
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => setQuickOpen(true)}
-            className="flex items-center gap-1 rounded-md border border-border bg-card px-2 py-1 text-xs hover:bg-accent text-muted-foreground"
+            className="h-auto gap-1 bg-card px-2 py-1 text-xs font-normal text-muted-foreground"
           >
             <Plus className="h-3 w-3" /> New row
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -155,7 +158,9 @@ export function TimelineView({ db, view, rows, onOpenRow, writeView }: Props) {
           const inView = item && (item.endMs >= rangeStart && item.startMs < rangeEnd);
           return (
             <div key={row.id} className="flex border-b border-border/50 hover:bg-muted/20 group" style={{ minHeight: 32 }}>
-              <button
+              <Button
+                variant="ghost"
+                size="sm"
                 style={{ width: LABEL_W }}
                 onClick={() => onOpenRow(row.id)}
                 onKeyDown={(e) => {
@@ -165,11 +170,11 @@ export function TimelineView({ db, view, rows, onOpenRow, writeView }: Props) {
                   }
                 }}
                 data-db-nav-item
-                className="shrink-0 flex items-center gap-1 text-xs px-2 border-r border-border text-left truncate hover:underline underline-offset-2"
+                className="h-auto shrink-0 justify-start gap-1 truncate rounded-none border-r border-border px-2 py-0 text-xs font-normal hover:bg-transparent hover:underline hover:underline-offset-2"
               >
                 <DynamicIcon value={row.icon} className="text-sm" />
                 <span className="truncate">{row.title || "Untitled"}</span>
-              </button>
+              </Button>
               <div className="relative flex-1" style={{ width: DAYS * CELL_W }}>
                 {days.map((d, i) => (
                   <div
@@ -261,9 +266,9 @@ function TimelineSettingsMenu({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="flex items-center gap-1 rounded-md border border-border bg-card px-2 py-1 text-xs hover:bg-accent text-muted-foreground" title="Timeline settings">
+        <Button variant="outline" size="sm" className="h-auto gap-1 bg-card px-2 py-1 text-xs font-normal text-muted-foreground" title="Timeline settings">
           <Settings2 className="h-3 w-3" /> Settings
-        </button>
+        </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel className="text-xs">Timeline</DropdownMenuLabel>

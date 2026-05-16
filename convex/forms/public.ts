@@ -40,21 +40,18 @@ interface FormPropertyLite {
   [k: string]: unknown;
 }
 
-/** Bound the scan to avoid unbounded reads on a public unauthenticated
- *  endpoint. `formIsPublic` lives inside the per-view JSON blob, which
- *  can't be indexed directly — adding a denormalized `hasPublicForm`
- *  flag on `databases` (+ index) would let this skip the scan entirely,
- *  but requires syncing on every `updateView` mutation. Deferred until
- *  the table grows past ~PUBLIC_SCAN_CAP. */
-const PUBLIC_SCAN_CAP = 500;
-
+/** Resolves a public-form slug to its owning database + view.
+ *  Uses the `by_has_public_form` index — only databases with at least
+ *  one publicly-flipped form view are scanned. `databases.update`
+ *  keeps `hasPublicForm` in sync whenever `views[]` is patched. */
 async function findBySlug(
-  ctx: { db: { query: (t: "databases") => { take: (n: number) => Promise<unknown[]> } } },
+  ctx: { db: { query: (t: "databases") => any } },
   slug: string,
 ): Promise<{ db: Record<string, unknown>; view: FormViewLite } | null> {
-  const dbs = (await ctx.db.query("databases").take(PUBLIC_SCAN_CAP)) as Array<
-    Record<string, unknown> & { views?: FormViewLite[]; trashed?: boolean }
-  >;
+  const dbs = (await ctx.db
+    .query("databases")
+    .withIndex("by_has_public_form", (q: any) => q.eq("hasPublicForm", true))
+    .collect()) as Array<Record<string, unknown> & { views?: FormViewLite[]; trashed?: boolean }>;
   for (const db of dbs) {
     if (db.trashed) continue;
     const view = (db.views ?? []).find((v) => v.formIsPublic && (v.formSlug || v.id) === slug);
