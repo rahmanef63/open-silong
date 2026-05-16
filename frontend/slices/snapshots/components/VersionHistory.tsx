@@ -8,6 +8,7 @@ import {
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/shared/ui/alert-dialog";
 import { Block, PageSnapshot } from "@/shared/types/domain";
+import { Button } from "@/shared/ui/button";
 import { DynamicIcon } from "@/shared/components/icon-picker";
 
 export function VersionHistory({ pageId, onClose }: { pageId: string; onClose: () => void }) {
@@ -80,9 +81,9 @@ function PreviewPanel({ snapshot, onClose, onRestore }: { snapshot: PageSnapshot
       </div>
       <AlertDialog>
         <AlertDialogTrigger asChild>
-          <button className="mt-3 w-full flex items-center justify-center gap-1 rounded-md bg-foreground text-background px-3 py-1.5 text-xs hover:opacity-90">
+          <Button size="sm" className="mt-3 w-full">
             <RotateCcw className="h-3 w-3" /> Restore this version
-          </button>
+          </Button>
         </AlertDialogTrigger>
         <AlertDialogContent>
           <AlertDialogHeader>

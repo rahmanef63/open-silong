@@ -1,6 +1,7 @@
 import { AlignLeft, AlignCenter, AlignRight } from "lucide-react";
 import type { Block } from "@/shared/types/domain";
 import { cn } from "@/shared/lib/utils";
+import { Separator } from "@/shared/ui/separator";
 
 const ALIGN_OPTIONS: { value: NonNullable<Block["align"]>; Icon: typeof AlignLeft }[] = [
   { value: "left", Icon: AlignLeft },
@@ -31,7 +32,7 @@ export function ImageToolbar({
           <Icon className="h-3 w-3" />
         </button>
       ))}
-      <span className="mx-0.5 h-3 w-px bg-border" />
+      <Separator orientation="vertical" className="mx-0.5 h-3" />
       <button
         type="button"
         onClick={onChange}

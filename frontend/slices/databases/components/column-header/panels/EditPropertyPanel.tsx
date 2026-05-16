@@ -17,6 +17,8 @@ import { useState } from "react";
 import { Trash2 } from "lucide-react";
 import { useStore } from "@/shared/lib/store";
 import type { Database, Property } from "@/shared/types/domain";
+import { Input } from "@/shared/ui/input";
+import { Button } from "@/shared/ui/button";
 import { Label } from "../../property-config/atoms";
 import { PROPERTY_TYPE_PANEL } from "./registry";
 
@@ -45,7 +47,7 @@ export function EditPropertyPanel({ db, prop, onClose, immutableType }: Props) {
     <div className="space-y-3 p-3 w-72">
       <div>
         <Label>Name</Label>
-        <input
+        <Input
           value={draftName}
           onChange={(e) => setDraftName(e.target.value)}
           onBlur={commitName}
@@ -53,7 +55,7 @@ export function EditPropertyPanel({ db, prop, onClose, immutableType }: Props) {
             if (e.key === "Enter") (e.currentTarget as HTMLInputElement).blur();
             if (e.key === "Escape") setDraftName(prop.name);
           }}
-          className="mt-1 h-8 w-full rounded-md border border-border bg-background px-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+          className="mt-1 h-8 text-sm"
         />
       </div>
 
@@ -61,21 +63,23 @@ export function EditPropertyPanel({ db, prop, onClose, immutableType }: Props) {
 
       <div>
         <Label>Description (optional)</Label>
-        <input
+        <Input
           value={prop.description ?? ""}
           onChange={(e) => updateProperty(db.id, prop.id, { description: e.target.value })}
           placeholder="Shown in property panel + form view"
-          className="mt-1 h-8 w-full rounded-md border border-border bg-background px-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+          className="mt-1 h-8 text-sm"
         />
       </div>
 
       {!immutableType && (
-        <button
+        <Button
+          variant="outline"
+          size="sm"
           onClick={() => { deleteProperty(db.id, prop.id); onClose?.(); }}
-          className="flex w-full items-center justify-center gap-2 rounded-md border border-destructive/40 px-2 py-1.5 text-xs text-destructive hover:bg-destructive/10"
+          className="w-full border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
         >
           <Trash2 className="h-3 w-3" /> Delete property
-        </button>
+        </Button>
       )}
     </div>
   );

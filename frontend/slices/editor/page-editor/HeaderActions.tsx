@@ -1,6 +1,7 @@
 import { Share2, History, Star } from "lucide-react";
 import { useStore } from "@/shared/lib/store";
 import { cn } from "@/shared/lib/utils";
+import { Button } from "@/shared/ui/button";
 import type { Page } from "@/shared/types/domain";
 import { PageActionsMenu } from "../PageActionsMenu";
 
@@ -18,23 +19,27 @@ export function HeaderActions({ page, onShare, onHistory, historyOpen }: Props) 
       <span className={cn("text-xs text-muted-foreground mr-1 hidden sm:inline", saving && "animate-pulse-soft")}>
         {saving ? "Saving…" : "Saved"}
       </span>
-      <button onClick={onShare} className="flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1 text-xs hover:bg-accent">
+      <Button variant="outline" size="sm" onClick={onShare}>
         <Share2 className="h-3.5 w-3.5" /> Share
-      </button>
-      <button
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon"
         onClick={onHistory}
-        className={cn("flex h-8 w-8 items-center justify-center rounded hover:bg-accent text-muted-foreground", historyOpen && "bg-accent text-foreground")}
+        className={cn("h-8 w-8 text-muted-foreground", historyOpen && "bg-accent text-foreground")}
         aria-label="Version history"
       >
         <History className="h-4 w-4" />
-      </button>
-      <button
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon"
         onClick={() => toggleFavorite(page.id)}
-        className="flex h-8 w-8 items-center justify-center rounded hover:bg-accent text-muted-foreground"
+        className="h-8 w-8 text-muted-foreground"
         aria-label="Favorite"
       >
         <Star className={cn("h-4 w-4", page.favorite && "fill-brand text-brand")} />
-      </button>
+      </Button>
       <PageActionsMenu page={page} onShowHistory={onHistory} />
     </div>
   );

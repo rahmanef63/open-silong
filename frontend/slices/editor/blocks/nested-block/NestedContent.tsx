@@ -3,6 +3,7 @@ import dynamic from "next/dynamic";
 import { FileText } from "lucide-react";
 import { useNavigate } from "@/shared/lib/router";
 import { Checkbox } from "@/shared/ui/checkbox";
+import { Skeleton } from "@/shared/ui/skeleton";
 import { useStore } from "@/shared/lib/store";
 import { cn } from "@/shared/lib/utils";
 import { DynamicIcon } from "@/shared/components/icon-picker";
@@ -16,7 +17,7 @@ import { MAX_NEST, NestingCap } from "./NestingCap";
 
 const CodeBlock = dynamic(
   () => import("@/slices/code-block").then((m) => ({ default: m.CodeBlock })),
-  { ssr: false, loading: () => <div className="h-12 rounded bg-muted animate-pulse" /> },
+  { ssr: false, loading: () => <Skeleton className="h-12 rounded" /> },
 );
 
 interface Props {

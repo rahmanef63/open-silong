@@ -1,4 +1,7 @@
 import type { Database, Property } from "@/shared/types/domain";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/shared/ui/select";
 import { Label } from "./atoms";
 
 const AGGREGATES: NonNullable<Property["rollupAggregate"]>[] = [
@@ -22,19 +25,22 @@ export function RollupConfig({ db, prop, databases, updateProperty }: {
     <>
       <div>
         <Label>Relation property (this db)</Label>
-        <select
-          value={prop.rollupRelationPropertyId ?? ""}
-          onChange={(e) => updateProperty(db.id, prop.id, {
-            rollupRelationPropertyId: e.target.value || null,
+        <Select
+          value={prop.rollupRelationPropertyId ?? undefined}
+          onValueChange={(v) => updateProperty(db.id, prop.id, {
+            rollupRelationPropertyId: v || null,
             rollupTargetPropertyId: null,
           })}
-          className="mt-1 h-8 w-full rounded-md border border-border bg-background px-2 text-sm outline-none"
         >
-          <option value="">Pick a relation…</option>
-          {relationProps.map((p) => (
-            <option key={p.id} value={p.id}>{p.name}</option>
-          ))}
-        </select>
+          <SelectTrigger className="mt-1 h-8 text-sm">
+            <SelectValue placeholder="Pick a relation…" />
+          </SelectTrigger>
+          <SelectContent>
+            {relationProps.map((p) => (
+              <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         {relationProps.length === 0 && (
           <p className="mt-1 text-[11px] text-muted-foreground">
             Add a relation property to this database first.
@@ -44,29 +50,34 @@ export function RollupConfig({ db, prop, databases, updateProperty }: {
       {targetDb && (
         <div>
           <Label>Target property ({targetDb.name})</Label>
-          <select
-            value={prop.rollupTargetPropertyId ?? ""}
-            onChange={(e) => updateProperty(db.id, prop.id, { rollupTargetPropertyId: e.target.value || null })}
-            className="mt-1 h-8 w-full rounded-md border border-border bg-background px-2 text-sm outline-none"
+          <Select
+            value={prop.rollupTargetPropertyId ?? undefined}
+            onValueChange={(v) => updateProperty(db.id, prop.id, { rollupTargetPropertyId: v || null })}
           >
-            <option value="">Pick a property…</option>
-            {targetProps.map((p) => (
-              <option key={p.id} value={p.id}>{p.name} <span className="text-muted-foreground">({p.type})</span></option>
-            ))}
-          </select>
+            <SelectTrigger className="mt-1 h-8 text-sm">
+              <SelectValue placeholder="Pick a property…" />
+            </SelectTrigger>
+            <SelectContent>
+              {targetProps.map((p) => (
+                <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       )}
       <div>
         <Label>Aggregate</Label>
-        <select
+        <Select
           value={prop.rollupAggregate ?? "count"}
-          onChange={(e) => updateProperty(db.id, prop.id, {
-            rollupAggregate: e.target.value as NonNullable<Property["rollupAggregate"]>,
+          onValueChange={(v) => updateProperty(db.id, prop.id, {
+            rollupAggregate: v as NonNullable<Property["rollupAggregate"]>,
           })}
-          className="mt-1 h-8 w-full rounded-md border border-border bg-background px-2 text-sm outline-none"
         >
-          {AGGREGATES.map((a) => <option key={a} value={a}>{a.replace("_", " ")}</option>)}
-        </select>
+          <SelectTrigger className="mt-1 h-8 text-sm"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            {AGGREGATES.map((a) => <SelectItem key={a} value={a}>{a.replace("_", " ")}</SelectItem>)}
+          </SelectContent>
+        </Select>
       </div>
     </>
   );

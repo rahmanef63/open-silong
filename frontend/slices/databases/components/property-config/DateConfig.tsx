@@ -1,5 +1,8 @@
 import type { Database, Property } from "@/shared/types/domain";
 import { Switch } from "@/shared/ui/switch";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/shared/ui/select";
 import { Label } from "./atoms";
 import {
   DATE_FORMAT_LABELS, TIME_FORMAT_LABELS, NOTIFICATION_LABELS,
@@ -23,15 +26,14 @@ export function DateConfig({ db, prop, updateProperty }: Props) {
     <div className="space-y-3">
       <div>
         <Label>Date format</Label>
-        <select
-          value={fmt}
-          onChange={(e) => patch({ dateFormat: e.target.value as DateFormatKind })}
-          className="mt-1 h-8 w-full rounded-md border border-border bg-background px-2 text-sm outline-none"
-        >
-          {(Object.keys(DATE_FORMAT_LABELS) as DateFormatKind[]).map((k) => (
-            <option key={k} value={k}>{DATE_FORMAT_LABELS[k]}</option>
-          ))}
-        </select>
+        <Select value={fmt} onValueChange={(v) => patch({ dateFormat: v as DateFormatKind })}>
+          <SelectTrigger className="mt-1 h-8 text-sm"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            {(Object.keys(DATE_FORMAT_LABELS) as DateFormatKind[]).map((k) => (
+              <SelectItem key={k} value={k}>{DATE_FORMAT_LABELS[k]}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="flex items-center justify-between">
@@ -42,29 +44,30 @@ export function DateConfig({ db, prop, updateProperty }: Props) {
       {includeTime && (
         <div>
           <Label>Time format</Label>
-          <select
-            value={tfmt}
-            onChange={(e) => patch({ timeFormat: e.target.value as TimeFormatKind })}
-            className="mt-1 h-8 w-full rounded-md border border-border bg-background px-2 text-sm outline-none"
-          >
-            {(Object.keys(TIME_FORMAT_LABELS) as TimeFormatKind[]).map((k) => (
-              <option key={k} value={k}>{TIME_FORMAT_LABELS[k]}</option>
-            ))}
-          </select>
+          <Select value={tfmt} onValueChange={(v) => patch({ timeFormat: v as TimeFormatKind })}>
+            <SelectTrigger className="mt-1 h-8 text-sm"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {(Object.keys(TIME_FORMAT_LABELS) as TimeFormatKind[]).map((k) => (
+                <SelectItem key={k} value={k}>{TIME_FORMAT_LABELS[k]}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       )}
 
       <div>
         <Label>Notifications</Label>
-        <select
+        <Select
           value={notif}
-          onChange={(e) => patch({ dateNotification: (e.target.value === "none" ? undefined : e.target.value) as Property["dateNotification"] })}
-          className="mt-1 h-8 w-full rounded-md border border-border bg-background px-2 text-sm outline-none"
+          onValueChange={(v) => patch({ dateNotification: (v === "none" ? undefined : v) as Property["dateNotification"] })}
         >
-          {(Object.keys(NOTIFICATION_LABELS) as Array<keyof typeof NOTIFICATION_LABELS>).map((k) => (
-            <option key={k} value={k}>{NOTIFICATION_LABELS[k]}</option>
-          ))}
-        </select>
+          <SelectTrigger className="mt-1 h-8 text-sm"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            {(Object.keys(NOTIFICATION_LABELS) as Array<keyof typeof NOTIFICATION_LABELS>).map((k) => (
+              <SelectItem key={k} value={k}>{NOTIFICATION_LABELS[k]}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
     </div>
   );

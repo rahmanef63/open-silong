@@ -2,6 +2,7 @@
 
 import { Trash2, X } from "lucide-react";
 import { Button } from "@/shared/ui/button";
+import { Separator } from "@/shared/ui/separator";
 import { useStore } from "@/shared/lib/store";
 import { useAsyncError } from "@/shared/hooks/useAsyncError";
 import { useConfirm } from "@/shared/components/ConfirmProvider";
@@ -45,7 +46,7 @@ export function DbBulkActionBar({ selectedIds, onClear }: Props) {
       <span className="text-xs text-muted-foreground px-2 tabular-nums">
         {selectedIds.length} database{selectedIds.length === 1 ? "" : "s"} selected
       </span>
-      <span className="h-5 w-px bg-border" />
+      <Separator orientation="vertical" className="h-5" />
       <Button
         size="sm"
         variant="ghost"
@@ -56,7 +57,7 @@ export function DbBulkActionBar({ selectedIds, onClear }: Props) {
       >
         <Trash2 className="h-4 w-4" />
       </Button>
-      <span className="h-5 w-px bg-border" />
+      <Separator orientation="vertical" className="h-5" />
       <Button size="sm" variant="ghost" onClick={onClear} title="Clear selection">
         <X className="h-4 w-4" />
       </Button>

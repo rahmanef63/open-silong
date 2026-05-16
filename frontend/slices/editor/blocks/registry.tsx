@@ -2,6 +2,7 @@ import type { ComponentType } from "react";
 import dynamic from "next/dynamic";
 import type { BlockType } from "@/shared/types/domain";
 import type { BlockRendererProps } from "@/shared/types";
+import { Skeleton } from "@/shared/ui/skeleton";
 import { ImageBlock } from "./ImageBlock";
 import { EmbedBlock } from "./EmbedBlock";
 import { ButtonBlock } from "./ButtonBlock";
@@ -17,7 +18,7 @@ const EquationBlockLazy = dynamic(
 );
 const SimpleTableBlockLazy = dynamic(
   () => import("@/slices/simple-table").then((m) => ({ default: m.SimpleTableBlock })),
-  { ssr: false, loading: () => <div className="h-24 rounded border border-border bg-muted/40 animate-pulse" /> },
+  { ssr: false, loading: () => <Skeleton className="h-24 rounded border border-border bg-muted/40" /> },
 );
 
 function EquationAdapter({ block, onUpdate, registerRef }: BlockRendererProps) {

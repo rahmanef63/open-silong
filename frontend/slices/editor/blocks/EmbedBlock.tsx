@@ -1,5 +1,7 @@
 import { useState } from "react";
 import type { Block } from "@/shared/types/domain";
+import { Input } from "@/shared/ui/input";
+import { Button } from "@/shared/ui/button";
 
 interface Props {
   block: Block;
@@ -64,13 +66,13 @@ export function EmbedBlock({ block, onUpdate }: Props) {
           onSubmit={(e) => { e.preventDefault(); if (draft.trim()) onUpdate({ url: draft.trim() }); }}
           className="flex gap-2 max-w-md mx-auto"
         >
-          <input
+          <Input
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             placeholder="YouTube · Vimeo · Loom · Figma · CodePen · Spotify · …"
-            className="flex-1 rounded-md border border-border bg-transparent px-3 py-1.5 text-sm outline-none focus:ring-2 ring-brand/30"
+            className="h-9 flex-1 text-sm"
           />
-          <button type="submit" className="rounded-md bg-foreground text-background px-3 py-1.5 text-sm">Embed</button>
+          <Button type="submit" size="sm">Embed</Button>
         </form>
       </div>
     );
