@@ -78,6 +78,11 @@ export const COUNT_CAPS = {
   /** Admin scan cap for `aiUserModelOverrides`. Swap to pagination if you
    *  ever expect more than this many per-user model assignments. */
   aiOverridesScan:      500,
+  /** Inbox feed scan cap. We sort by createdAt desc + cap before
+   *  applying the workspace filter; a single user is unlikely to have
+   *  >300 recent notifications worth showing. Beyond that, pagination
+   *  would be the next step. */
+  notificationScan:     300,
 } as const;
 
 // ─── Time windows ─────────────────────────────────────────────────

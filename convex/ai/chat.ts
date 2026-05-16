@@ -101,15 +101,15 @@ export const complete = action({
   },
   handler: async (ctx, { messages, system, model, maxTokens }) => {
     const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Belum login");
+    if (!userId) throw new Error("Not signed in");
     await ctx.runMutation(internal.ai.internal.checkRateLimit, {});
 
-    if (messages.length === 0) throw new Error("Pesan kosong");
+    if (messages.length === 0) throw new Error("Empty conversation");
 
     const totalChars = messages.reduce((n, m) => n + m.content.length, 0)
       + (system?.length ?? 0);
     if (totalChars > MAX_INPUT_CHARS) {
-      throw new Error(`Input terlalu besar (${totalChars} > ${MAX_INPUT_CHARS} chars)`);
+      throw new Error(`Input too large (${totalChars} > ${MAX_INPUT_CHARS} chars)`);
     }
 
     const cfg = await resolveAI(ctx, model);
