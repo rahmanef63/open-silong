@@ -3,8 +3,7 @@
 import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useStore } from "@/shared/lib/store";
-
-const BASE = "/dashboard";
+import { ROUTES_ABS } from "@/shared/lib/routes";
 
 /**
  * Database CRUD orchestrator — adapted from SuperSpace's useWorkspaceCRUD.
@@ -27,7 +26,7 @@ export function useDatabaseCRUD() {
       ]);
       const blockId = await addBlock(hostPage.id, 0, "database");
       updateBlock(hostPage.id, blockId, { databaseId: db.id });
-      router.push(`${BASE}/p/${hostPage.id}`);
+      router.push(ROUTES_ABS.page(hostPage.id));
     },
     [createPage, createDatabase, addBlock, updateBlock, router],
   );

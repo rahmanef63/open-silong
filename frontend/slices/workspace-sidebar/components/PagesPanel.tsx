@@ -23,8 +23,9 @@ interface Props {
   onClose?: () => void;
 }
 
-const BASE = "/dashboard";
-const path = (p: string) => (p === "/" ? BASE : `${BASE}${p}`);
+import { ROUTE_BASE } from "@/shared/lib/routes";
+
+const path = (p: string) => (p === "/" ? ROUTE_BASE : `${ROUTE_BASE}${p}`);
 
 /**
  * Pages tree (Favorites, Recent, Workspace, Databases) as flat sections.
@@ -35,7 +36,7 @@ export function PagesPanel({ onClose }: Props) {
     pages, recents, childrenOf, preferences, databases, isInitialLoading,
   } = useStore();
   const router = useRouter();
-  const pathname = usePathname() ?? BASE;
+  const pathname = usePathname() ?? ROUTE_BASE;
   const pageCRUD = usePageCRUD();
   const dbCRUD = useDatabaseCRUD();
   const density = DENSITY[preferences.sidebarDensity];

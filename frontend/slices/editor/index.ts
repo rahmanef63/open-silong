@@ -1,6 +1,10 @@
 export { PageEditor } from "./PageEditor";
 export { BlockEditor } from "./BlockEditor";
 export { PageActionsMenu } from "./PageActionsMenu";
+export { RowPropertiesPanel } from "./RowPropertiesPanel";
+
+// Hooks consumed by peer slices (databases row sheet/dialog/body).
+export { useFullPage } from "./hooks/useFullPage";
 
 // Public lib surface — re-exported so peer slices don't reach into
 // `editor/lib/*` directly (which breaks the slice-isolation contract).

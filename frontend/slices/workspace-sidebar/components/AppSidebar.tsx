@@ -34,8 +34,9 @@ interface Props {
   onOpenSearch: () => void;
 }
 
-const BASE = "/dashboard";
-const path = (p: string) => (p === "/" ? BASE : `${BASE}${p}`);
+import { ROUTE_BASE } from "@/shared/lib/routes";
+
+const path = (p: string) => (p === "/" ? ROUTE_BASE : `${ROUTE_BASE}${p}`);
 
 export function AppSidebar({ onOpenSearch }: Props) {
   const router = useRouter();
@@ -70,7 +71,7 @@ export function AppSidebar({ onOpenSearch }: Props) {
 
   const navItems: NavItem[] = [
     { icon: Search, label: "Search", onClick: onOpenSearch, active: false, shortcut: "⌘K" },
-    { icon: Sparkles, label: "Dashboard", onClick: () => go("/"), active: pathname === BASE },
+    { icon: Sparkles, label: "Dashboard", onClick: () => go("/"), active: pathname === ROUTE_BASE },
     { icon: Library, label: "Library", onClick: () => go("/library"), active: pathname === path("/library") },
     { icon: Bot, label: "AI", onClick: () => setAiOpen(true), active: false },
     {

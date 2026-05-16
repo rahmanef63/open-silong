@@ -1,7 +1,7 @@
 import type { DragEndEvent } from "@dnd-kit/core";
 import type { Block, Page } from "@/shared/types/domain";
 import { findLocation, moveBlock, type Location } from "./blockTree";
-import { placeTopLevelGroupAtBlock, appendTopLevelGroupToContainer, topLevelIdsInOrder } from "@/slices/block-selection/lib/multiMove";
+import { placeTopLevelGroupAtBlock, appendTopLevelGroupToContainer, topLevelIdsInOrder } from "@/slices/block-selection";
 
 interface Deps {
   page: Page;
