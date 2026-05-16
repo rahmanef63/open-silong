@@ -118,7 +118,16 @@ export const update = mutation({
   args: { dbId: v.id("databases"), patch: v.any() },
   handler: async (ctx, args) => {
     await requireWorkspaceAccess(ctx, "databases", args.dbId as Id<"databases">, { write: true });
-    await ctx.db.patch(args.dbId as Id<"databases">, { ...args.patch, updatedAt: Date.now() });
+    const patch: Record<string, unknown> = { ...args.patch, updatedAt: Date.now() };
+    // Recompute hasPublicForm whenever views[] changes so the by_has_public_form
+    // index stays in sync — public form lookup (`convex/forms/public.ts`)
+    // depends on this flag to skip a full-table scan.
+    if (Array.isArray(args.patch?.views)) {
+      patch.hasPublicForm = (args.patch.views as Array<{ formIsPublic?: boolean }>).some(
+        (v) => v.formIsPublic === true,
+      );
+    }
+    await ctx.db.patch(args.dbId as Id<"databases">, patch);
   },
 });
 

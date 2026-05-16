@@ -3,6 +3,7 @@ import { useState } from "react";
 import type { Property, PropertyType, PropertyValue } from "@/shared/types/domain";
 import { Input } from "@/shared/ui/input";
 import { Checkbox } from "@/shared/ui/checkbox";
+import { Button } from "@/shared/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
 import { cn } from "@/shared/lib/utils";
 import { colorClass } from "@/shared/lib/format";
@@ -112,30 +113,32 @@ export function PropertyFormInput({
       return (
         <Popover>
           <PopoverTrigger asChild>
-            <button type="button" className="w-full rounded-md border border-border bg-background px-3 py-2 text-left text-sm hover:bg-accent/50">
+            <Button type="button" variant="outline" className="h-auto w-full justify-start bg-background px-3 py-2 text-left text-sm font-normal hover:bg-accent/50">
               {opt ? (
                 <span className={cn("inline-flex items-center rounded-full border px-2 py-0.5 text-xs", colorClass(opt.color))}>{opt.name}</span>
               ) : (
                 <span className="text-muted-foreground">Select…</span>
               )}
-            </button>
+            </Button>
           </PopoverTrigger>
           <PopoverContent className="w-56 p-1">
             <div className="max-h-60 overflow-y-auto space-y-0.5">
               {prop.options?.map(o => (
-                <button
+                <Button
                   key={o.id}
                   type="button"
+                  variant="ghost"
+                  size="sm"
                   onClick={() => onChange(o.id === selectedId ? null : o.id)}
-                  className={cn("flex w-full items-center justify-between px-2 py-1 rounded hover:bg-accent text-xs", o.id === selectedId && "bg-accent")}
+                  className={cn("h-auto w-full justify-between px-2 py-1 text-xs font-normal", o.id === selectedId && "bg-accent")}
                 >
                   <span className={cn("inline-flex items-center rounded-full border px-2 py-0.5", colorClass(o.color))}>{o.name}</span>
-                </button>
+                </Button>
               ))}
               {selectedId && (
-                <button type="button" onClick={() => onChange(null)} className="flex w-full items-center px-2 py-1 rounded hover:bg-accent text-xs text-muted-foreground">
+                <Button type="button" variant="ghost" size="sm" onClick={() => onChange(null)} className="h-auto w-full justify-start px-2 py-1 text-xs font-normal text-muted-foreground">
                   <X className="mr-1 h-3 w-3" /> Clear
-                </button>
+                </Button>
               )}
             </div>
           </PopoverContent>
@@ -148,24 +151,26 @@ export function PropertyFormInput({
       return (
         <Popover>
           <PopoverTrigger asChild>
-            <button type="button" className="w-full min-h-[38px] rounded-md border border-border bg-background px-3 py-2 text-left text-sm hover:bg-accent/50 flex flex-wrap gap-1">
+            <Button type="button" variant="outline" className="h-auto min-h-[38px] w-full flex-wrap justify-start gap-1 bg-background px-3 py-2 text-left text-sm font-normal hover:bg-accent/50">
               {ids.length === 0 && <span className="text-muted-foreground">Select…</span>}
               {prop.options?.filter(o => ids.includes(o.id)).map(o => (
                 <span key={o.id} className={cn("inline-flex items-center rounded-full border px-2 py-0.5 text-xs", colorClass(o.color))}>{o.name}</span>
               ))}
-            </button>
+            </Button>
           </PopoverTrigger>
           <PopoverContent className="w-56 p-1">
             <div className="max-h-60 overflow-y-auto space-y-0.5">
               {prop.options?.map(o => (
-                <button
+                <Button
                   key={o.id}
                   type="button"
+                  variant="ghost"
+                  size="sm"
                   onClick={() => toggle(o.id)}
-                  className={cn("flex w-full items-center justify-between px-2 py-1 rounded hover:bg-accent text-xs", ids.includes(o.id) && "bg-accent")}
+                  className={cn("h-auto w-full justify-between px-2 py-1 text-xs font-normal", ids.includes(o.id) && "bg-accent")}
                 >
                   <span className={cn("inline-flex items-center rounded-full border px-2 py-0.5", colorClass(o.color))}>{o.name}</span>
-                </button>
+                </Button>
               ))}
             </div>
           </PopoverContent>
@@ -234,7 +239,7 @@ function FormRelationInput({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button type="button" className="w-full min-h-[38px] rounded-md border border-border bg-background px-3 py-2 text-left text-sm hover:bg-accent/50 flex flex-wrap gap-1 items-center">
+        <Button type="button" variant="outline" className="h-auto min-h-[38px] w-full flex-wrap items-center justify-start gap-1 bg-background px-3 py-2 text-left text-sm font-normal hover:bg-accent/50">
           {linkedPages.length === 0 && (
             <span className="text-muted-foreground inline-flex items-center gap-1">
               <Link2 className="h-3 w-3" /> Link a row…
@@ -246,7 +251,7 @@ function FormRelationInput({
               <span className="truncate max-w-[120px]">{p.title || "Untitled"}</span>
             </span>
           ))}
-        </button>
+        </Button>
       </PopoverTrigger>
       <PopoverContent className="w-72 p-1">
         <Input
@@ -261,19 +266,21 @@ function FormRelationInput({
             <div className="px-2 py-2 text-xs text-muted-foreground">No matching rows.</div>
           )}
           {candidates.map((p) => (
-            <button
+            <Button
               key={p.id}
               type="button"
+              variant="ghost"
+              size="sm"
               onClick={() => toggle(p.id)}
               className={cn(
-                "flex w-full items-center gap-2 px-2 py-1 rounded hover:bg-accent text-xs",
+                "h-auto w-full justify-start gap-2 px-2 py-1 text-xs font-normal",
                 linkedIds.includes(p.id) && "bg-accent",
               )}
             >
               <DynamicIcon value={p.icon} className="text-xs" />
               <span className="truncate flex-1 text-left">{p.title || "Untitled"}</span>
               {linkedIds.includes(p.id) && <X className="h-3 w-3 text-muted-foreground" />}
-            </button>
+            </Button>
           ))}
         </div>
       </PopoverContent>

@@ -135,6 +135,11 @@ export default defineSchema({
     subItemsParentPropId: v.optional(v.union(v.string(), v.null())),
     locked: v.optional(v.boolean()),
     trashed: v.optional(v.boolean()),
+    /** Denormalized: any view in `views` has `formIsPublic === true`.
+     *  Stamped by `databases.update` whenever views is patched. Powers
+     *  the `by_has_public_form` index so `convex/forms/public.ts` can
+     *  skip the full-table scan when resolving an anonymous form slug. */
+    hasPublicForm: v.optional(v.boolean()),
   })
     .index("by_user", ["userId"])
     .index("by_workspace", ["workspaceId"])
@@ -142,6 +147,7 @@ export default defineSchema({
     // the (undefined → false) coalescing happens in the cron handler
     // since indexes can't filter on undefined directly.
     .index("by_trashed_updated", ["trashed", "updatedAt"])
+    .index("by_has_public_form", ["hasPublicForm"])
     .searchIndex("search_name", {
       searchField: "name",
       filterFields: ["userId", "workspaceId"],

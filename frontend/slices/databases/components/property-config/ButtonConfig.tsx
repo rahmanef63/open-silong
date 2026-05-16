@@ -1,4 +1,5 @@
 import type { Database, Property } from "@/shared/types/domain";
+import { Button } from "@/shared/ui/button";
 
 export function ButtonConfig({ db, prop, updateProperty }: {
   db: Database;
@@ -38,7 +39,7 @@ export function ButtonConfig({ db, prop, updateProperty }: {
           <div key={i} className="rounded-md border border-border p-2 space-y-1">
             <div className="flex items-center justify-between text-[10px] uppercase tracking-wider text-muted-foreground">
               <span>{a.kind.replace("_", " ")}</span>
-              <button onClick={() => removeAction(i)} className="text-destructive hover:underline">remove</button>
+              <Button variant="ghost" size="sm" onClick={() => removeAction(i)} className="h-auto px-0 py-0 text-[10px] font-normal uppercase tracking-wider text-destructive hover:bg-transparent hover:underline">remove</Button>
             </div>
             {a.kind === "open_url" && (
               <input value={a.url} onChange={(e) => updateAction(i, { url: e.target.value })}
@@ -55,9 +56,9 @@ export function ButtonConfig({ db, prop, updateProperty }: {
           </div>
         ))}
         <div className="flex flex-wrap gap-1">
-          <button onClick={() => addAction("open_url")} className="rounded border border-border px-2 py-0.5 text-[11px] hover:bg-accent">+ Open URL</button>
-          <button onClick={() => addAction("open_page")} className="rounded border border-border px-2 py-0.5 text-[11px] hover:bg-accent">+ Open page</button>
-          <button onClick={() => addAction("show_confirmation")} className="rounded border border-border px-2 py-0.5 text-[11px] hover:bg-accent">+ Confirm</button>
+          <Button variant="outline" size="sm" onClick={() => addAction("open_url")} className="h-auto px-2 py-0.5 text-[11px] font-normal">+ Open URL</Button>
+          <Button variant="outline" size="sm" onClick={() => addAction("open_page")} className="h-auto px-2 py-0.5 text-[11px] font-normal">+ Open page</Button>
+          <Button variant="outline" size="sm" onClick={() => addAction("show_confirmation")} className="h-auto px-2 py-0.5 text-[11px] font-normal">+ Confirm</Button>
         </div>
       </div>
     </>
