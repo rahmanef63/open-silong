@@ -1,6 +1,6 @@
 import type { Database, Page, Property, PropertyType, SelectOption } from "@/shared/types/domain";
 import { valueFromString, type ParsedCsv } from "../../lib/csv";
-import { NEW_PREFIX, OPTION_COLORS, SKIP, TITLE, uid } from "./constants";
+import { NEW_PREFIX, CSV_MAPPING_COLORS, SKIP, TITLE, uid } from "./constants";
 
 interface StoreOps {
   addRow: (dbId: string) => Promise<{ id: string }>;
@@ -55,7 +55,7 @@ export async function runCsvImport(
       options = optionNames.map((n, idx) => ({
         id: `${propId}_opt_${idx}`,
         name: n,
-        color: OPTION_COLORS[idx % OPTION_COLORS.length],
+        color: CSV_MAPPING_COLORS[idx % CSV_MAPPING_COLORS.length],
       }));
     }
 

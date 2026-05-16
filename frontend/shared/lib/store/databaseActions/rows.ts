@@ -4,7 +4,7 @@ import { api } from "@convex/_generated/api";
 import type {
   Database, Page, Property, PropertyValue,
 } from "@/shared/types/domain";
-import { applyMirrorToInverse, planRelationMirror } from "@/slices/databases/lib/relationMirror";
+import { applyMirrorToInverse, planRelationMirror } from "@/shared/lib/databases/relationMirror";
 import { DEFAULT_ROW_ICON } from "@/shared/components/icon-picker";
 import { type StructuralAction } from "./constants";
 

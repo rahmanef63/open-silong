@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import type {
   Database, Property, PropertyType, SelectOption,
 } from "@/shared/types/domain";
-import { defaultPropName } from "@/slices/databases/lib/propertyTypeMeta";
+import { defaultPropName } from "@/shared/lib/databases/propertyTypeMeta";
 import { uid, pickColor, type StructuralAction } from "./constants";
 
 interface Args {
