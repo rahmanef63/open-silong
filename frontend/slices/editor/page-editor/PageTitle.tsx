@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { ImagePlus } from "lucide-react";
 import { useStore } from "@/shared/lib/store";
 import { cn } from "@/shared/lib/utils";
@@ -15,15 +14,12 @@ interface Props {
 
 export function PageTitle({ page, fullPageDb, firstBlockRef }: Props) {
   const { updatePage, updateDatabase } = useStore();
-  const [iconPick, setIconPick] = useState(false);
   return (
     <>
       <IconPickerPopover
         value={page.icon}
-        onChange={(next) => { updatePage(page.id, { icon: next }); setIconPick(false); }}
-        onClear={() => { updatePage(page.id, { icon: DEFAULT_PAGE_ICON }); setIconPick(false); }}
-        open={iconPick}
-        onOpenChange={setIconPick}
+        onChange={(next) => updatePage(page.id, { icon: next })}
+        onClear={() => updatePage(page.id, { icon: DEFAULT_PAGE_ICON })}
       >
         <button type="button" className="text-6xl leading-none hover:bg-accent rounded-md p-1 transition" aria-label="Change icon">
           <DynamicIcon value={page.icon} />
