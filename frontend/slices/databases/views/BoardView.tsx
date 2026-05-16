@@ -31,10 +31,9 @@ export function BoardView({ db, view, rows, onOpenRow }: Props) {
   if (!groupProp || !groupProp.options) {
     return (
       <div className="p-6 text-sm text-muted-foreground">
-        Board view needs a Select or Status property.{" "}
-        <button onClick={() => { /* opens settings via PropertiesMenu in toolbar */ }} className="underline">
-          Add one in Properties.
-        </button>
+        Board view needs a Select or Status property. Add one from the
+        column header → Change type, or via the Properties menu in the
+        view toolbar.
       </div>
     );
   }
@@ -92,8 +91,24 @@ export function BoardView({ db, view, rows, onOpenRow }: Props) {
       return;
     }
 
-    const colId = overId.startsWith("col_") ? overId.slice(4) : null;
-    setRowValue(db.id, activeId, groupProp.id, colId === "null" || colId === null ? null : colId);
+    // Dropping a card onto a column → cross-column move (common case).
+    // Dropping a card onto another CARD → look up which column owns the
+    // target card and treat as a drop into that column. Without this
+    // fallback, the user can drag halfway across the board and have
+    // nothing happen because the cursor landed on a sibling card —
+    // silent UX failure flagged in the 2026-05-16 DnD audit.
+    let colId: string | null;
+    if (overId.startsWith("col_")) {
+      const raw = overId.slice(4);
+      colId = raw === "null" ? null : raw;
+    } else {
+      const targetCol = columns.find((c) => c.rows.some((r) => r.id === overId));
+      if (!targetCol) return;
+      colId = targetCol.id;
+    }
+    const currentColId = (rows.find((r) => r.id === activeId)?.rowProps?.[groupProp.id] as string | null | undefined) ?? null;
+    if (currentColId === colId) return; // already in target column — no-op
+    setRowValue(db.id, activeId, groupProp.id, colId);
   };
 
   return (
