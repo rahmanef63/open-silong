@@ -11,6 +11,7 @@
 
 export { DynamicIcon, RawIcon } from "./components/DynamicIcon";
 export { IconPickerInline, IconPickerPopover } from "./components/IconPicker";
+export { PickerSkeleton } from "./components/PickerSkeleton";
 
 export {
   parseIconValue,
