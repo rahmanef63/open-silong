@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { Upload, Loader2 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
+import { Button } from "@/shared/ui/button";
 
 interface Props {
   uploading: boolean;
@@ -56,13 +57,14 @@ export function UploadDropzone({ uploading, onFile, onUrl }: Props) {
           <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Uploading…</>
         ) : (
           <>Drop an image here, paste a URL, or
-            <button
+            <Button
               type="button"
+              variant="link"
               onClick={() => fileInputRef.current?.click()}
-              className="inline-flex items-center gap-1 underline-offset-2 hover:underline"
+              className="inline-flex h-auto p-0 items-center gap-1 underline-offset-2 text-sm font-normal text-muted-foreground hover:text-foreground [&_svg]:size-3"
             >
               <Upload className="h-3 w-3" /> upload
-            </button>
+            </Button>
           </>
         )}
       </div>
@@ -77,13 +79,13 @@ export function UploadDropzone({ uploading, onFile, onUrl }: Props) {
           disabled={uploading}
           className="flex-1 rounded-md border border-border bg-transparent px-3 py-1.5 text-sm outline-none focus:ring-2 ring-brand/30 disabled:opacity-60"
         />
-        <button
+        <Button
           type="submit"
           disabled={uploading || !urlInput.trim()}
-          className="rounded-md bg-foreground text-background px-3 py-1.5 text-sm disabled:opacity-60"
+          className="h-auto rounded-md bg-foreground text-background px-3 py-1.5 text-sm hover:bg-foreground/90"
         >
           Embed
-        </button>
+        </Button>
       </form>
     </div>
   );

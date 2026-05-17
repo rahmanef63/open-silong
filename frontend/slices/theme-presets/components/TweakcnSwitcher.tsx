@@ -99,19 +99,20 @@ export function TweakcnSwitcher({ size = "sm", triggerClassName }: TweakcnSwitch
             Tweakcn Preset{" "}
             <span className="font-normal text-muted-foreground/70">({presetCount})</span>
           </span>
-          <button
+          <Button
             type="button"
+            variant="ghost"
             onClick={resetDefault}
             onMouseEnter={() => previewTweakcnPreset(null)}
             onMouseLeave={() => restore()}
             className={cn(
-              "flex items-center gap-1 rounded-md px-2 py-1 text-[11px] text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground",
+              "h-auto gap-1 px-2 py-1 text-[11px] font-normal text-muted-foreground [&_svg]:size-3",
               presetName === null && "text-brand",
             )}
           >
             <RotateCcw className="h-3 w-3" />
             Default
-          </button>
+          </Button>
         </div>
 
         <PresetList

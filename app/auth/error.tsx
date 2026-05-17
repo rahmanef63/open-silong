@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { AlertTriangle, RefreshCw } from "lucide-react";
+import { Button } from "@/shared/ui/button";
 
 export default function AuthError({
   error,
@@ -22,12 +23,12 @@ export default function AuthError({
         </div>
         <h2 className="text-base font-semibold mb-1">Sign-in failed</h2>
         <p className="text-sm text-muted-foreground mb-4">{error.message || "Unknown error"}</p>
-        <button
+        <Button
           onClick={reset}
-          className="inline-flex items-center gap-1.5 rounded-md bg-foreground text-background px-3 py-1.5 text-sm hover:opacity-90"
+          className="h-auto gap-1.5 rounded-md bg-foreground text-background px-3 py-1.5 text-sm hover:bg-foreground/90 [&_svg]:size-3.5"
         >
           <RefreshCw className="h-3.5 w-3.5" /> Try again
-        </button>
+        </Button>
       </div>
     </div>
   );

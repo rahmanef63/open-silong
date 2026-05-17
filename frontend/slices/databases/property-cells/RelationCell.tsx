@@ -7,6 +7,7 @@ import { filterRelationCandidates } from "../lib/relationCandidates";
 import {
   Popover, PopoverContent, PopoverTrigger,
 } from "@/shared/ui/popover";
+import { Button } from "@/shared/ui/button";
 import type { CellProps } from "./types";
 import { DynamicIcon } from "@/shared/components/icon-picker";
 
@@ -52,7 +53,7 @@ export function RelationCell({ db, prop, row, value, onSet, cellClass }: CellPro
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button className={cn(cellClass, "w-full text-left px-2 py-1 rounded hover:bg-accent/50 flex items-center gap-1")}>
+        <Button variant="ghost" className={cn(cellClass, "w-full h-auto text-left px-2 py-1 rounded hover:bg-accent/50 flex items-center gap-1 font-normal justify-start [&_svg]:size-3.5")}>
           {targetDbMissing ? (
             <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0" />
           ) : (
@@ -78,7 +79,7 @@ export function RelationCell({ db, prop, row, value, onSet, cellClass }: CellPro
           ) : (
             <span className="text-muted-foreground">Link rows</span>
           )}
-        </button>
+        </Button>
       </PopoverTrigger>
       <PopoverContent className="w-72 p-2">
         <div className="space-y-2">
@@ -91,13 +92,14 @@ export function RelationCell({ db, prop, row, value, onSet, cellClass }: CellPro
             </div>
           )}
           {linkedStale.length > 0 && !targetDbMissing && (
-            <button
+            <Button
+              variant="outline"
               onClick={stripStale}
-              className="flex w-full items-center gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-1.5 text-[11px] text-amber-700 hover:bg-amber-500/20 dark:text-amber-300"
+              className="w-full h-auto gap-2 rounded-md border-amber-500/40 bg-amber-500/10 px-2 py-1.5 text-[11px] font-normal text-amber-700 hover:bg-amber-500/20 dark:text-amber-300 justify-start [&_svg]:size-3"
             >
               <X className="h-3 w-3" />
               Remove {linkedStale.length} stale link{linkedStale.length === 1 ? "" : "s"}
-            </button>
+            </Button>
           )}
           <select
             value={prop.relationDatabaseId ?? ""}
@@ -121,15 +123,16 @@ export function RelationCell({ db, prop, row, value, onSet, cellClass }: CellPro
             {candidates.map((p) => {
               const selected = linkedIds.includes(p.id);
               return (
-                <button
+                <Button
                   key={p.id}
+                  variant="ghost"
                   onClick={() => toggle(p.id)}
-                  className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm hover:bg-accent"
+                  className="flex w-full h-auto items-center gap-2 rounded px-2 py-1.5 text-left text-sm font-normal justify-start [&_svg]:size-3.5"
                 >
                   {selected ? <Check className="h-3.5 w-3.5 text-brand" /> : <span className="w-3.5" />}
                   <DynamicIcon value={p.icon} className="text-sm" />
                   <span className="min-w-0 flex-1 truncate">{p.title || "Untitled"}</span>
-                </button>
+                </Button>
               );
             })}
             {candidates.length === 0 && (
@@ -137,18 +140,19 @@ export function RelationCell({ db, prop, row, value, onSet, cellClass }: CellPro
             )}
           </div>
           {targetDb && (
-            <button
+            <Button
+              variant="outline"
               onClick={onCreateNew}
-              className="flex w-full items-center gap-2 rounded-md border border-dashed border-border px-2 py-1.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
+              className="w-full h-auto gap-2 rounded-md border-dashed px-2 py-1.5 text-xs font-normal text-muted-foreground hover:text-foreground justify-start [&_svg]:size-3.5"
             >
               <Plus className="h-3.5 w-3.5" />
               {query.trim() ? `Create "${query.trim()}" in ${targetDb.name}` : `Create new row in ${targetDb.name}`}
-            </button>
+            </Button>
           )}
           {linkedIds.length > 0 && (
-            <button onClick={() => onSet([])} className="text-xs text-muted-foreground hover:text-foreground">
+            <Button variant="ghost" onClick={() => onSet([])} className="h-auto p-0 text-xs font-normal text-muted-foreground hover:bg-transparent hover:text-foreground">
               Clear relation
-            </button>
+            </Button>
           )}
         </div>
       </PopoverContent>

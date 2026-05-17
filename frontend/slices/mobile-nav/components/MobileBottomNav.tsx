@@ -7,6 +7,7 @@ import {
   Search, Sparkles, Bot, Inbox, MoreHorizontal,
 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
+import { Button } from "@/shared/ui/button";
 import { ROUTES } from "@/shared/lib/routes";
 import { useAdminRole } from "@/slices/admin-panel";
 import { TemplateGalleryDialog } from "@/slices/templates";
@@ -58,13 +59,14 @@ export function MobileBottomNav({ onOpenSearch }: Props) {
         <ul className="grid grid-cols-5 h-14 items-stretch max-w-md mx-auto">
           {slots.map((s) => (
             <li key={s.id} className="flex">
-              <button
+              <Button
                 type="button"
+                variant="ghost"
                 onClick={(e) => { e.currentTarget.blur(); s.onClick(); }}
                 aria-label={s.label}
                 aria-current={s.active ? "page" : undefined}
                 className={cn(
-                  "relative flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-medium transition-colors active:scale-95 transition-transform",
+                  "relative flex-1 h-auto flex flex-col items-center justify-center gap-0.5 text-[10px] font-medium rounded-none px-0 py-0 hover:bg-transparent active:scale-95",
                   s.active ? "text-brand" : "text-muted-foreground hover:text-foreground",
                 )}
               >
@@ -80,7 +82,7 @@ export function MobileBottomNav({ onOpenSearch }: Props) {
                 </span>
                 {!s.primary && <span className="leading-none truncate max-w-[60px]">{s.label}</span>}
                 {s.primary && <span className="sr-only">{s.label}</span>}
-              </button>
+              </Button>
             </li>
           ))}
         </ul>

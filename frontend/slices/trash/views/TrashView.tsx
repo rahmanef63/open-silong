@@ -5,6 +5,7 @@ import { Trash2, RotateCcw, X, Table2, FileText } from "lucide-react";
 import { DynamicIcon, DEFAULT_DATABASE_ICON } from "@/shared/components/icon-picker";
 import { useConfirm } from "@/shared/components/ConfirmProvider";
 import { formatDateTime } from "@/shared/lib/format";
+import { Button } from "@/shared/ui/button";
 
 export function TrashView() {
   const {
@@ -29,7 +30,8 @@ export function TrashView() {
             </p>
           </div>
           {!isEmpty && (
-            <button
+            <Button
+              variant="outline"
               onClick={async () => {
                 const total = trash.length + trashedDatabases.length;
                 const ok = await confirm({
@@ -42,10 +44,10 @@ export function TrashView() {
                 trash.forEach((p) => permanentlyDelete(p.id));
                 trashedDatabases.forEach((db) => permanentlyDeleteDatabase(db.id));
               }}
-              className="flex items-center gap-1 rounded-md border border-destructive/40 bg-destructive/5 px-3 py-1.5 text-xs text-destructive hover:bg-destructive/10 transition"
+              className="h-auto gap-1 border-destructive/40 bg-destructive/5 px-3 py-1.5 text-xs font-normal text-destructive hover:bg-destructive/10 [&_svg]:size-3.5"
             >
               <Trash2 className="h-3.5 w-3.5" /> Empty trash
-            </button>
+            </Button>
           )}
         </div>
 
@@ -70,13 +72,15 @@ export function TrashView() {
                         <div className="truncate text-sm font-medium">{p.title || "Untitled"}</div>
                         <div className="text-xs text-muted-foreground">Deleted {formatDateTime(p.updatedAt)}</div>
                       </div>
-                      <button
+                      <Button
+                        variant="ghost"
                         onClick={() => restorePage(p.id)}
-                        className="flex items-center gap-1 rounded-md px-2.5 py-1 text-xs hover:bg-accent"
+                        className="h-auto gap-1 px-2.5 py-1 text-xs font-normal [&_svg]:size-3.5"
                       >
                         <RotateCcw className="h-3.5 w-3.5" /> Restore
-                      </button>
-                      <button
+                      </Button>
+                      <Button
+                        variant="ghost"
                         onClick={async () => {
                           const ok = await confirm({
                             title: "Permanently delete page?",
@@ -85,10 +89,10 @@ export function TrashView() {
                           });
                           if (ok) permanentlyDelete(p.id);
                         }}
-                        className="flex items-center gap-1 rounded-md px-2.5 py-1 text-xs text-destructive hover:bg-destructive/10"
+                        className="h-auto gap-1 px-2.5 py-1 text-xs font-normal text-destructive hover:bg-destructive/10 hover:text-destructive [&_svg]:size-3.5"
                       >
                         <X className="h-3.5 w-3.5" /> Delete
-                      </button>
+                      </Button>
                     </li>
                   ))}
                 </ul>
@@ -110,13 +114,15 @@ export function TrashView() {
                           {db.rowIds.length} row{db.rowIds.length === 1 ? "" : "s"} · trashed {formatDateTime(db.updatedAt)}
                         </div>
                       </div>
-                      <button
+                      <Button
+                        variant="ghost"
                         onClick={() => restoreDatabase(db.id)}
-                        className="flex items-center gap-1 rounded-md px-2.5 py-1 text-xs hover:bg-accent"
+                        className="h-auto gap-1 px-2.5 py-1 text-xs font-normal [&_svg]:size-3.5"
                       >
                         <RotateCcw className="h-3.5 w-3.5" /> Restore
-                      </button>
-                      <button
+                      </Button>
+                      <Button
+                        variant="ghost"
                         onClick={async () => {
                           const ok = await confirm({
                             title: `Delete "${db.name || "Untitled database"}"?`,
@@ -125,10 +131,10 @@ export function TrashView() {
                           });
                           if (ok) permanentlyDeleteDatabase(db.id);
                         }}
-                        className="flex items-center gap-1 rounded-md px-2.5 py-1 text-xs text-destructive hover:bg-destructive/10"
+                        className="h-auto gap-1 px-2.5 py-1 text-xs font-normal text-destructive hover:bg-destructive/10 hover:text-destructive [&_svg]:size-3.5"
                       >
                         <X className="h-3.5 w-3.5" /> Delete
-                      </button>
+                      </Button>
                     </li>
                   ))}
                 </ul>

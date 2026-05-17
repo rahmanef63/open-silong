@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { Property } from "@/shared/types/domain";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
+import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
 import { formatDateValue, type DateValue } from "../../lib/dateFormat";
 import { DateEditor } from "./Editor";
@@ -29,16 +30,17 @@ export function DatePicker({ value, prop, onChange, onPropPatch, triggerClass, e
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button
+        <Button
           type="button"
+          variant="ghost"
           className={cn(
-            "w-full text-left px-2 py-1 rounded hover:bg-accent/50 outline-none focus-visible:ring-1 focus-visible:ring-ring",
+            "w-full h-auto text-left px-2 py-1 rounded hover:bg-accent/50 font-normal justify-start",
             !display && "text-muted-foreground",
             triggerClass,
           )}
         >
           {display || emptyPlaceholder}
-        </button>
+        </Button>
       </PopoverTrigger>
       <PopoverContent align="start" className="p-0 w-auto">
         <DateEditor

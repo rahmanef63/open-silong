@@ -1,5 +1,6 @@
 import { Key } from "lucide-react";
 import { Input } from "@/shared/ui/input";
+import { Button } from "@/shared/ui/button";
 
 export function ApiKeyPanel({
   apiKey, onApiKeyChange, model, onModelChange, showKey, onToggleShow,
@@ -13,14 +14,15 @@ export function ApiKeyPanel({
 }) {
   return (
     <div className="rounded-md border border-border p-2 text-xs">
-      <button
+      <Button
         type="button"
+        variant="ghost"
         onClick={onToggleShow}
-        className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground"
+        className="flex h-auto p-0 items-center gap-1.5 text-xs font-normal text-muted-foreground hover:bg-transparent hover:text-foreground [&_svg]:size-3"
       >
         <Key className="h-3 w-3" />
         {apiKey ? "Anthropic API key set · click to edit" : "Add Anthropic API key"}
-      </button>
+      </Button>
       {showKey && (
         <div className="mt-2 space-y-1.5">
           <Input

@@ -3,6 +3,7 @@
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/shared/ui/drawer";
 import { FileBox, Settings, User, Trash2, ShieldAlert } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
+import { Button } from "@/shared/ui/button";
 import { ROUTES, ROUTES_ABS } from "@/shared/lib/routes";
 
 interface Props {
@@ -53,18 +54,19 @@ export function MoreDrawer({ open, onOpenChange, isAdmin, onNavigate, onOpenTemp
         </DrawerHeader>
         <div className="px-3 pb-4 grid grid-cols-2 gap-2">
           {tiles.map((t) => (
-            <button
+            <Button
               key={t.id}
               type="button"
+              variant="outline"
               onClick={(e) => { e.currentTarget.blur(); t.onClick(); }}
-              className="text-left rounded-xl border border-border bg-card hover:bg-accent transition p-3 active:scale-[0.98]"
+              className="text-left h-auto flex-col items-start rounded-xl bg-card p-3 font-normal active:scale-[0.98] [&_svg]:size-4"
             >
               <div className={cn("w-9 h-9 rounded-lg bg-gradient-to-br grid place-items-center text-white mb-2", t.hue)}>
                 <t.icon className="h-4 w-4" />
               </div>
               <div className="text-sm font-medium">{t.label}</div>
               <div className="text-xs text-muted-foreground truncate">{t.hint}</div>
-            </button>
+            </Button>
           ))}
         </div>
       </DrawerContent>

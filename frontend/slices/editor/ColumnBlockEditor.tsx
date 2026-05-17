@@ -5,6 +5,7 @@ import { Block, BlockType } from "@/shared/types/domain";
 import { cn } from "@/shared/lib/utils";
 import { uid } from "@/shared/lib/uid";
 import { Plus } from "lucide-react";
+import { Button } from "@/shared/ui/button";
 import { requireNested } from "./blocks/nestedRegistry";
 
 const MIN_COL = 10;
@@ -90,12 +91,13 @@ function ColumnPane({
           })}
         </SortableContext>
       </div>
-      <button
+      <Button
+        variant="ghost"
         onClick={() => onAdd(blocks.length - 1)}
-        className="mt-1 flex items-center gap-1 text-xs text-muted-foreground/60 hover:text-muted-foreground opacity-0 group-hover/col:opacity-100 transition"
+        className="mt-1 h-auto p-0 gap-1 text-xs font-normal text-muted-foreground/60 hover:bg-transparent hover:text-muted-foreground opacity-0 group-hover/col:opacity-100 transition [&_svg]:size-3"
       >
         <Plus className="h-3 w-3" /> Add block
-      </button>
+      </Button>
     </div>
   );
 }

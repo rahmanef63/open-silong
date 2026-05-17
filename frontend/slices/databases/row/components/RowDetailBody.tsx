@@ -13,6 +13,7 @@ import { useStore } from "@/shared/lib/store";
 import { BlockEditor, RowPropertiesPanel, useFullPage } from "@/slices/editor";
 import { PageCommentsProvider } from "@/slices/comments";
 import { DynamicIcon, IconPickerPopover, DEFAULT_ROW_ICON } from "@/shared/components/icon-picker";
+import { Button } from "@/shared/ui/button";
 import type { Block } from "@/shared/types/domain";
 
 interface Props {
@@ -78,14 +79,16 @@ export function RowDetailBody({ pageId, headerExtras, onClose }: Props) {
           <div className="flex items-center gap-2 shrink-0">
             {headerExtras}
             {onClose && (
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="icon"
                 onClick={onClose}
                 aria-label="Close"
-                className="h-6 w-6 grid place-items-center rounded text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                className="h-6 w-6 p-0 rounded text-muted-foreground hover:text-foreground [&_svg]:size-3.5"
               >
                 <X className="h-3.5 w-3.5" />
-              </button>
+              </Button>
             )}
           </div>
         </header>
@@ -97,13 +100,14 @@ export function RowDetailBody({ pageId, headerExtras, onClose }: Props) {
             onChange={(next) => updatePage(page.id, { icon: next })}
             onClear={() => updatePage(page.id, { icon: DEFAULT_ROW_ICON })}
           >
-            <button
+            <Button
               type="button"
-              className="text-4xl leading-none hover:bg-accent rounded-md p-1"
+              variant="ghost"
+              className="h-auto text-4xl leading-none rounded-md p-1 font-normal"
               aria-label="Change icon"
             >
               <DynamicIcon value={page.icon} />
-            </button>
+            </Button>
           </IconPickerPopover>
         </div>
         <input
@@ -131,7 +135,8 @@ export function RowDetailBody({ pageId, headerExtras, onClose }: Props) {
               ))}
             </SortableContext>
           </DndContext>
-          <button
+          <Button
+            variant="ghost"
             onClick={async () => {
               const newId = await addBlock(page.id, page.blocks.length - 1);
               setTimeout(
@@ -139,10 +144,10 @@ export function RowDetailBody({ pageId, headerExtras, onClose }: Props) {
                 0,
               );
             }}
-            className="mt-2 flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+            className="mt-2 h-auto p-0 gap-1 text-xs font-normal text-muted-foreground hover:bg-transparent hover:text-foreground [&_svg]:size-3"
           >
             <Plus className="h-3 w-3" /> Add block
-          </button>
+          </Button>
         </div>
       </div>
     </PageCommentsProvider>

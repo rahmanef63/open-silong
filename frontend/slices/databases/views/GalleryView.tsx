@@ -9,6 +9,7 @@ import { Plus, MoreHorizontal, Trash2 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
+import { Button } from "@/shared/ui/button";
 import { QuickCreateDialog } from "../components/QuickCreateDialog";
 import { DynamicIcon } from "@/shared/components/icon-picker";
 import { useState } from "react";
@@ -72,9 +73,9 @@ export function GalleryView({ db, view, rows, onOpenRow }: Props) {
           >
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="absolute top-1 right-1 z-10 opacity-0 group-hover:opacity-100 rounded bg-card/90 backdrop-blur p-1 hover:bg-accent text-muted-foreground" aria-label="Row actions">
+                <Button variant="ghost" size="icon" className="absolute top-1 right-1 z-10 opacity-0 group-hover:opacity-100 h-auto w-auto rounded bg-card/90 backdrop-blur p-1 text-muted-foreground [&_svg]:size-3.5" aria-label="Row actions">
                   <MoreHorizontal className="h-3.5 w-3.5" />
-                </button>
+                </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => onOpenRow(r.id)}>Open</DropdownMenuItem>
@@ -83,7 +84,8 @@ export function GalleryView({ db, view, rows, onOpenRow }: Props) {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          <button
+          <Button
+            variant="ghost"
             onClick={() => onOpenRow(r.id)}
             onKeyDown={(e) => {
               if (e.key === "ArrowDown" || e.key === "ArrowUp" || e.key === "ArrowLeft" || e.key === "ArrowRight") {
@@ -93,7 +95,7 @@ export function GalleryView({ db, view, rows, onOpenRow }: Props) {
               }
             }}
             data-db-nav-item
-            className="block w-full rounded-lg p-3 text-left"
+            className="block w-full h-auto rounded-lg p-3 text-left font-normal whitespace-normal hover:bg-transparent"
           >
             {(view.galleryCoverSource ?? "cover") !== "none" && (
               <div className={cn("w-full rounded-md mb-2 bg-muted overflow-hidden flex items-center justify-center", aspectClass)}>
@@ -129,16 +131,17 @@ export function GalleryView({ db, view, rows, onOpenRow }: Props) {
                 ))}
               </div>
             )}
-          </button>
+          </Button>
           </div>
         );
       })}
-      <button
+      <Button
+        variant="outline"
         onClick={() => setQuickOpen(true)}
-        className="rounded-lg border border-dashed border-border p-3 text-sm text-muted-foreground hover:bg-accent hover:border-border-strong transition flex items-center justify-center min-h-[120px]"
+        className="rounded-lg border-dashed h-auto p-3 text-sm text-muted-foreground hover:border-border-strong transition flex items-center justify-center min-h-[120px] font-normal"
       >
         <Plus className="mr-1 h-4 w-4" /> New
-      </button>
+      </Button>
       <QuickCreateDialog db={db} view={view} open={quickOpen} onOpenChange={setQuickOpen} onCreated={onOpenRow} />
     </div>
   );

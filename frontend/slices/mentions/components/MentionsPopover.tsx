@@ -1,6 +1,7 @@
 import { AtSign } from "lucide-react";
 import { useNavigate } from "@/shared/lib/router";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
+import { Button } from "@/shared/ui/button";
 import { useStore } from "@/shared/lib/store";
 import { useMentions } from "../hooks/useMentions";
 
@@ -20,9 +21,9 @@ export function MentionsPopover({ handle, trigger }: Props) {
     <Popover>
       <PopoverTrigger asChild>
         {trigger ?? (
-          <button className="flex h-8 w-8 items-center justify-center rounded hover:bg-accent text-muted-foreground" aria-label="Mentions">
+          <Button variant="ghost" size="icon" className="h-8 w-8 rounded text-muted-foreground" aria-label="Mentions">
             <AtSign className="h-4 w-4" />
-          </button>
+          </Button>
         )}
       </PopoverTrigger>
       <PopoverContent align="end" className="w-80 p-0">
@@ -36,10 +37,11 @@ export function MentionsPopover({ handle, trigger }: Props) {
             </div>
           )}
           {mentions.map((m, i) => (
-            <button
+            <Button
               key={`${m.blockId}-${i}`}
+              variant="ghost"
               onClick={() => navigate(`/p/${m.pageId}`)}
-              className="flex w-full items-start gap-2 px-3 py-2 text-left hover:bg-accent border-b border-border last:border-0"
+              className="flex w-full h-auto items-start gap-2 px-3 py-2 text-left font-normal border-b border-border last:border-0 rounded-none justify-start"
             >
               <span className="mt-0.5 text-base shrink-0">{m.pageIcon}</span>
               <div className="min-w-0 flex-1">
@@ -48,7 +50,7 @@ export function MentionsPopover({ handle, trigger }: Props) {
                   …{m.excerpt}…
                 </div>
               </div>
-            </button>
+            </Button>
           ))}
         </div>
       </PopoverContent>

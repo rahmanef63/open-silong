@@ -3,6 +3,7 @@ import { useNavigate } from "@/shared/lib/router";
 import { useStore } from "@/shared/lib/store";
 import { Plus, Star, Clock, FileText, Table2, Sparkles } from "lucide-react";
 import { DynamicIcon, DEFAULT_DATABASE_ICON } from "@/shared/components/icon-picker";
+import { Button } from "@/shared/ui/button";
 import { formatRelTime as relTime } from "@/shared/lib/format";
 import { TemplateGalleryDialog } from "@/slices/templates";
 import { Section, Grid, ActionCard, PageCard, EmptyState } from "./dashboard/parts";
@@ -113,10 +114,11 @@ export function Dashboard() {
                 .slice()
                 .sort((a, b) => b.updatedAt - a.updatedAt)
                 .map(p => (
-                  <button
+                  <Button
                     key={p.id}
+                    variant="ghost"
                     onClick={() => navigate(`/p/${p.id}`)}
-                    className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-accent transition"
+                    className="flex w-full h-auto items-center gap-3 px-4 py-3 text-left font-normal rounded-none justify-start"
                   >
                     <DynamicIcon value={p.icon} className="text-lg" />
                     <div className="min-w-0 flex-1">
@@ -124,7 +126,7 @@ export function Dashboard() {
                       <div className="truncate text-xs text-muted-foreground">{p.previewText || "Empty page"}</div>
                     </div>
                     <span className="text-xs text-muted-foreground shrink-0">{relTime(p.updatedAt)}</span>
-                  </button>
+                  </Button>
                 ))
             )}
           </div>

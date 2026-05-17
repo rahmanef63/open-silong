@@ -5,6 +5,7 @@ import { AlertTriangle, RefreshCw } from "lucide-react";
 import { isChunkLoadError } from "@/shared/components/ChunkErrorBoundary";
 import { hardReload } from "@/shared/components/VersionWatcher";
 import { sanitizeError, logError } from "@/shared/lib/error";
+import { Button } from "@/shared/ui/button";
 
 export default function Error({
   error,
@@ -42,12 +43,12 @@ export default function Error({
           <p className="text-sm text-muted-foreground mb-4">
             The app was updated while you were here. Reloading…
           </p>
-          <button
+          <Button
             onClick={hardReload}
-            className="rounded-md bg-foreground text-background px-3 py-1.5 text-sm hover:opacity-90"
+            className="h-auto rounded-md bg-foreground text-background px-3 py-1.5 text-sm hover:bg-foreground/90"
           >
             Reload now
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -67,18 +68,19 @@ export default function Error({
           <p className="text-xs text-muted-foreground/70 mb-4 font-mono">id: {error.digest}</p>
         )}
         <div className="flex justify-center gap-2">
-          <button
+          <Button
             onClick={reset}
-            className="flex items-center gap-1.5 rounded-md bg-foreground text-background px-3 py-1.5 text-sm hover:opacity-90"
+            className="h-auto gap-1.5 rounded-md bg-foreground text-background px-3 py-1.5 text-sm hover:bg-foreground/90 [&_svg]:size-3.5"
           >
             <RefreshCw className="h-3.5 w-3.5" /> Try again
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="outline"
             onClick={hardReload}
-            className="rounded-md border border-border px-3 py-1.5 text-sm hover:bg-accent"
+            className="h-auto px-3 py-1.5 text-sm font-normal"
           >
             Hard reload
-          </button>
+          </Button>
         </div>
       </div>
     </div>

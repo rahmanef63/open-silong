@@ -1,4 +1,5 @@
 import { cn } from "@/shared/lib/utils";
+import { Button } from "@/shared/ui/button";
 import {
   previewTweakcnPreset, tweakcnSwatches,
   type TweakcnPresetGroup, type TweakcnPresetItem,
@@ -30,15 +31,15 @@ export function PresetList({
             const selected = p.name === presetName;
             const swatches = tweakcnSwatches(p);
             return (
-              <button
+              <Button
                 key={p.name}
                 type="button"
+                variant="ghost"
                 onClick={() => onCommit(p.name)}
                 onMouseEnter={() => previewTweakcnPreset(p.name)}
                 onFocus={() => previewTweakcnPreset(p.name)}
                 className={cn(
-                  "flex w-full items-center gap-3 border-b border-border/40 px-3 py-2 text-left text-sm transition-colors",
-                  "hover:bg-accent hover:text-accent-foreground",
+                  "flex w-full h-auto items-center gap-3 border-b border-border/40 px-3 py-2 text-left text-sm font-normal rounded-none justify-start",
                   selected && "bg-accent text-accent-foreground",
                 )}
                 aria-pressed={selected}
@@ -57,7 +58,7 @@ export function PresetList({
                 {selected && (
                   <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-brand" />
                 )}
-              </button>
+              </Button>
             );
           })}
         </div>

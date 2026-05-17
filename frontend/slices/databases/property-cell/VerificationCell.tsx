@@ -3,6 +3,7 @@ import type { PropertyValue } from "@/shared/types/domain";
 import { cn } from "@/shared/lib/utils";
 import { useStore } from "@/shared/lib/store";
 import { formatRelTime } from "@/shared/lib/format";
+import { Button } from "@/shared/ui/button";
 
 interface Props {
   value: PropertyValue;
@@ -30,18 +31,19 @@ export function VerificationCell({ value, onSet, cellClass }: Props) {
     ? `Verified by ${user.name === user.id ? user.id : user.name} · ${formatRelTime(v.at)}`
     : "Not verified — click to verify";
   return (
-    <button
+    <Button
       type="button"
+      variant="ghost"
       onClick={flip}
       title={audit}
       className={cn(
         cellClass,
-        "inline-flex items-center gap-1.5 rounded px-2 py-1 hover:bg-accent/50 transition",
-        verified ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground",
+        "h-auto gap-1.5 rounded px-2 py-1 font-normal hover:bg-accent/50 [&_svg]:size-3.5",
+        verified ? "text-emerald-600 dark:text-emerald-400 hover:text-emerald-600" : "text-muted-foreground",
       )}
     >
       <Icon className="h-3.5 w-3.5" />
       <span className="text-xs">{verified ? "Verified" : "Verify"}</span>
-    </button>
+    </Button>
   );
 }

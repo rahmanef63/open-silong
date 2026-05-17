@@ -3,6 +3,7 @@ import { Switch } from "@/shared/ui/switch";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
+import { Button } from "@/shared/ui/button";
 import { ChevronRight } from "lucide-react";
 import type { Property } from "@/shared/types/domain";
 import {
@@ -133,7 +134,7 @@ export function DateEditor({ value, prop, onChange, onClear, onPropPatch }: Prop
         </SubmenuRow>
       </div>
 
-      <button onClick={onClear} className="mt-2 w-full text-left px-2 py-1 text-sm text-muted-foreground hover:bg-accent rounded">Clear</button>
+      <Button variant="ghost" onClick={onClear} className="mt-2 w-full h-auto text-left px-2 py-1 text-sm font-normal text-muted-foreground justify-start">Clear</Button>
     </div>
   );
 }
@@ -151,10 +152,10 @@ function SubmenuRow({ label, value, children }: { label: string; value: string; 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="flex w-full items-center justify-between px-2 py-1 text-sm hover:bg-accent rounded">
+        <Button variant="ghost" className="flex w-full h-auto items-center justify-between px-2 py-1 text-sm font-normal [&_svg]:size-3">
           <span>{label}</span>
           <span className="flex items-center gap-1 text-xs text-muted-foreground">{value}<ChevronRight className="h-3 w-3" /></span>
-        </button>
+        </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent side="right" align="start" className="w-48">
         {children}

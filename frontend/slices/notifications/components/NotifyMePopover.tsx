@@ -1,5 +1,6 @@
 import { Bell, BellOff } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
+import { Button } from "@/shared/ui/button";
 import { useSubscription } from "../hooks/useSubscription";
 import { SUBSCRIPTION_SCOPE_LABELS, type SubscriptionScope } from "../types";
 import { cn } from "@/shared/lib/utils";
@@ -18,12 +19,14 @@ export function NotifyMePopover({ pageId, trigger }: Props) {
     <Popover>
       <PopoverTrigger asChild>
         {trigger ?? (
-          <button
-            className={cn("flex h-8 w-8 items-center justify-center rounded hover:bg-accent", isSubscribed ? "text-brand" : "text-muted-foreground")}
+          <Button
+            variant="ghost"
+            size="icon"
+            className={cn("h-8 w-8 rounded", isSubscribed ? "text-brand" : "text-muted-foreground")}
             aria-label="Notify me"
           >
             {isSubscribed ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
-          </button>
+          </Button>
         )}
       </PopoverTrigger>
       <PopoverContent align="end" className="w-64 p-0">
@@ -34,10 +37,11 @@ export function NotifyMePopover({ pageId, trigger }: Props) {
           {SCOPES.map((scope) => {
             const on = scopes.includes(scope);
             return (
-              <button
+              <Button
                 key={scope}
+                variant="ghost"
                 onClick={() => toggleScope(scope)}
-                className="flex w-full items-center justify-between rounded px-2 py-1.5 text-xs hover:bg-accent text-left"
+                className="flex w-full h-auto items-center justify-between rounded px-2 py-1.5 text-xs font-normal text-left"
               >
                 <span>{SUBSCRIPTION_SCOPE_LABELS[scope]}</span>
                 <span className={cn(
@@ -51,18 +55,19 @@ export function NotifyMePopover({ pageId, trigger }: Props) {
                     )}
                   />
                 </span>
-              </button>
+              </Button>
             );
           })}
         </div>
         {isSubscribed && (
           <div className="border-t border-border p-1">
-            <button
+            <Button
+              variant="ghost"
               onClick={unsubscribe}
-              className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs text-destructive hover:bg-accent"
+              className="flex w-full h-auto items-center gap-2 rounded px-2 py-1.5 text-xs font-normal text-destructive hover:text-destructive justify-start [&_svg]:size-3.5"
             >
               <BellOff className="h-3.5 w-3.5" /> Unsubscribe from page
-            </button>
+            </Button>
           </div>
         )}
       </PopoverContent>

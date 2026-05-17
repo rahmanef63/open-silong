@@ -7,6 +7,7 @@ import { api } from "@convex/_generated/api";
 import { Input } from "@/shared/ui/input";
 import { Search } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
+import { Button } from "@/shared/ui/button";
 import type { Id } from "@convex/_generated/dataModel";
 import { ViewSwitcher, type AdminView } from "./ViewSwitcher";
 import { useAdminView } from "../hooks/useAdminView";
@@ -88,19 +89,20 @@ export function UsersPanel() {
           </div>
           <div className="inline-flex items-center gap-0.5 rounded-md border border-border bg-card p-0.5">
             {(["", "superadmin", "admin", "user"] as const).map((r) => (
-              <button
+              <Button
                 key={r || "all"}
                 type="button"
+                variant="ghost"
                 onClick={() => setRoleFilter(r)}
                 className={cn(
-                  "px-2.5 h-7 text-xs rounded transition",
+                  "px-2.5 h-7 text-xs rounded font-normal",
                   roleFilter === r
                     ? "bg-accent text-accent-foreground font-medium shadow-sm"
-                    : "text-muted-foreground hover:text-foreground hover:bg-accent/50",
+                    : "text-muted-foreground hover:text-foreground",
                 )}
               >
                 {r === "" ? "All" : r}
-              </button>
+              </Button>
             ))}
           </div>
           <div className="text-xs text-muted-foreground">

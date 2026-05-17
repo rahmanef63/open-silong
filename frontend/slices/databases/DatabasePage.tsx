@@ -9,6 +9,7 @@ import { DatabaseSkeleton } from "@/shared/components/RouteSkeleton";
 import { PageHeaderSlot } from "@/shared/components/PageHeaderSlot";
 import { DynamicIcon } from "@/shared/components/icon-picker";
 import { DEFAULT_DATABASE_ICON } from "@/shared/components/icon-picker";
+import { Button } from "@/shared/ui/button";
 import type { Block } from "@/shared/types/domain";
 
 /**
@@ -58,13 +59,14 @@ export function DatabasePage() {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-3 text-sm text-muted-foreground">
         <div>Database not found.</div>
-        <button
+        <Button
           type="button"
+          variant="outline"
           onClick={() => navigate(ROUTES.dashboard)}
-          className="rounded-md border border-border px-3 py-1.5 hover:bg-accent"
+          className="h-auto px-3 py-1.5 text-sm font-normal"
         >
           Back to dashboard
-        </button>
+        </Button>
       </div>
     );
   }
@@ -75,13 +77,14 @@ export function DatabasePage() {
         <div className="font-medium text-amber-700 dark:text-amber-400">
           Database is in Trash
         </div>
-        <button
+        <Button
           type="button"
+          variant="outline"
           onClick={() => navigate(ROUTES.trash)}
-          className="rounded-md border border-border px-3 py-1.5 hover:bg-accent"
+          className="h-auto px-3 py-1.5 text-sm font-normal"
         >
           Open Trash
-        </button>
+        </Button>
       </div>
     );
   }

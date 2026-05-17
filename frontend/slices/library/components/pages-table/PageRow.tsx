@@ -81,27 +81,30 @@ export function PageRow({
       </td>
       <td className="px-2 py-1.5 align-middle">
         <div className="flex items-center gap-1 min-w-0" style={{ paddingLeft: depth * 16 }}>
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="icon"
             onClick={onToggleExpand}
             disabled={!hasChildren}
             aria-label={hasChildren ? (isExpanded ? "Collapse" : "Expand") : undefined}
             className={cn(
-              "h-5 w-5 grid place-items-center rounded shrink-0 transition",
-              hasChildren ? "hover:bg-accent text-muted-foreground" : "opacity-0 pointer-events-none",
+              "h-5 w-5 p-0 rounded shrink-0 [&_svg]:size-3.5",
+              hasChildren ? "text-muted-foreground" : "opacity-0 pointer-events-none",
             )}
           >
             <ChevronRight className={cn("h-3.5 w-3.5 transition-transform", isExpanded && "rotate-90")} />
-          </button>
+          </Button>
           <IconPickerPopover value={page.icon} onChange={setIcon}>
-            <button
+            <Button
               type="button"
-              className="text-base shrink-0 hover:bg-accent rounded p-0.5 transition"
+              variant="ghost"
+              className="h-auto text-base shrink-0 rounded p-0.5 font-normal"
               aria-label="Change icon"
               onClick={(e) => e.stopPropagation()}
             >
               <DynamicIcon value={page.icon} className="text-base" />
-            </button>
+            </Button>
           </IconPickerPopover>
           {renaming ? (
             <Input
@@ -116,11 +119,12 @@ export function PageRow({
               className="h-7 text-sm flex-1 min-w-0"
             />
           ) : (
-            <button
+            <Button
               type="button"
+              variant="ghost"
               onClick={onOpen}
               onDoubleClick={() => { setDraft(page.title); setRenaming(true); }}
-              className="flex-1 min-w-0 truncate text-left font-medium"
+              className="flex-1 h-auto min-w-0 truncate text-left font-medium px-0 py-0 hover:bg-transparent justify-start"
             >
               <span className="truncate">{page.title || "Untitled"}</span>
               {hasChildren && (
@@ -128,7 +132,7 @@ export function PageRow({
                   {childCount} sub
                 </span>
               )}
-            </button>
+            </Button>
           )}
           {page.favorite && <Star className="h-3 w-3 fill-yellow-400 text-yellow-400 shrink-0" />}
         </div>

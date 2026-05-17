@@ -5,6 +5,7 @@ import { cn } from "@/shared/lib/utils";
 import {
   Popover, PopoverContent, PopoverTrigger,
 } from "@/shared/ui/popover";
+import { Button } from "@/shared/ui/button";
 import { computeRollup } from "../lib/formula";
 
 interface Props {
@@ -56,7 +57,7 @@ export function RollupCell({ db, prop, row, cellClass }: Props) {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button className={cn(cellClass, "w-full text-left px-2 py-1 rounded hover:bg-accent/50 flex items-center gap-1")}>
+        <Button variant="ghost" className={cn(cellClass, "w-full h-auto text-left px-2 py-1 rounded hover:bg-accent/50 flex items-center gap-1 font-normal justify-start [&_svg]:size-3.5")}>
           {errored ? (
             <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0" />
           ) : (
@@ -68,7 +69,7 @@ export function RollupCell({ db, prop, row, cellClass }: Props) {
           )}>
             {errored ? value : (relationProp ? value : "Pick relation")}
           </span>
-        </button>
+        </Button>
       </PopoverTrigger>
       <PopoverContent className="w-72 p-2">
         <div className="space-y-2">

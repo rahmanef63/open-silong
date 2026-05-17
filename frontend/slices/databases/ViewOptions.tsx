@@ -1,5 +1,6 @@
 import { Database, DatabaseViewConfig } from "@/shared/types/domain";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
+import { Button } from "@/shared/ui/button";
 import { Sliders } from "lucide-react";
 import { TableOptions, ListOptions, FeedOptions, MapOptions } from "./view-options/simple";
 import { BoardOptions, GalleryOptions } from "./view-options/cards";
@@ -14,9 +15,9 @@ export function ViewOptions({ db, view }: Props) {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button className="flex items-center gap-1 rounded-md px-2 py-1 text-xs hover:bg-accent text-muted-foreground">
+        <Button variant="ghost" className="h-auto gap-1 px-2 py-1 text-xs font-normal text-muted-foreground [&_svg]:size-3">
           <Sliders className="h-3 w-3" /> Options
-        </button>
+        </Button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-80 p-3 space-y-3 max-h-[70vh] overflow-y-auto">
         <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">

@@ -6,6 +6,7 @@ import { cn } from "@/shared/lib/utils";
 import {
   Popover, PopoverContent, PopoverTrigger,
 } from "@/shared/ui/popover";
+import { Button } from "@/shared/ui/button";
 import { evaluateFormulaWithError } from "../lib/formula";
 
 interface Props {
@@ -45,14 +46,14 @@ export function FormulaCell({ db, prop, row, cellClass }: Props) {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button className={cn(cellClass, "w-full text-left px-2 py-1 rounded hover:bg-accent/50 flex items-center gap-1")}>
+        <Button variant="ghost" className={cn(cellClass, "w-full h-auto text-left px-2 py-1 rounded hover:bg-accent/50 flex items-center gap-1 font-normal justify-start [&_svg]:size-3.5")}>
           {cellResult.error ? (
             <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0" />
           ) : (
             <Calculator className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
           )}
           <span className="min-w-0 truncate">{cellResult.error ? "Invalid formula" : (cellResult.display || "-")}</span>
-        </button>
+        </Button>
       </PopoverTrigger>
       <PopoverContent className="w-80 p-2">
         <form
@@ -71,17 +72,18 @@ export function FormulaCell({ db, prop, row, cellClass }: Props) {
             )}
           />
           {liveResult.error && (
-            <button
+            <Button
               type="button"
+              variant="outline"
               onClick={jumpToErrorPos}
-              className="flex w-full items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-1.5 text-left text-[11px] text-amber-700 hover:bg-amber-500/20 dark:text-amber-300"
+              className="flex w-full h-auto items-start gap-2 rounded-md border-amber-500/40 bg-amber-500/10 px-2 py-1.5 text-left text-[11px] font-normal text-amber-700 hover:bg-amber-500/20 dark:text-amber-300 justify-start [&_svg]:size-3"
             >
               <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
               <span>
                 {liveResult.error.message}
                 <span className="text-amber-600/70"> · pos {liveResult.error.pos} (click to jump)</span>
               </span>
-            </button>
+            </Button>
           )}
           <div className="rounded-md bg-muted/50 px-2 py-1.5 text-[11px] text-muted-foreground space-y-1">
             <div>Refs: <code className="rounded bg-background px-1">{"{{title}}"}</code> · <code className="rounded bg-background px-1">{"{{Property}}"}</code></div>
@@ -96,13 +98,13 @@ export function FormulaCell({ db, prop, row, cellClass }: Props) {
             <span className="min-w-0 truncate text-xs text-muted-foreground">
               Preview: {liveResult.error ? "—" : (liveResult.display || "-")}
             </span>
-            <button
+            <Button
               type="submit"
               disabled={!!liveResult.error}
-              className="rounded-md bg-foreground px-2 py-1 text-xs text-background disabled:opacity-50 disabled:cursor-not-allowed"
+              className="h-auto rounded-md bg-foreground px-2 py-1 text-xs text-background hover:bg-foreground/90"
             >
               Save
-            </button>
+            </Button>
           </div>
         </form>
       </PopoverContent>

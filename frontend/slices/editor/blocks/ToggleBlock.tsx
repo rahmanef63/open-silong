@@ -62,12 +62,14 @@ export function ToggleContent({
       )}
     >
       <div className="flex items-start gap-1">
-        <button
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={() => onUpdate({ collapsed: !collapsed })}
-          className="mt-1.5 shrink-0 text-muted-foreground hover:text-foreground transition"
+          className="h-auto w-auto p-0 mt-1.5 shrink-0 text-muted-foreground hover:bg-transparent hover:text-foreground"
         >
           <ChevronRight className={cn("h-4 w-4 transition-transform", !collapsed && "rotate-90")} />
-        </button>
+        </Button>
         <div
           ref={headRef}
           data-block-id={block.id}
@@ -128,12 +130,13 @@ export function ToggleContent({
               );
             })}
           </SortableContext>
-          <button
+          <Button
+            variant="ghost"
             onClick={addChild}
-            className="flex items-center gap-1 text-xs text-muted-foreground/50 hover:text-muted-foreground"
+            className="h-auto p-0 gap-1 text-xs font-normal text-muted-foreground/50 hover:bg-transparent hover:text-muted-foreground [&_svg]:size-3"
           >
             <Plus className="h-3 w-3" /> Add inside toggle
-          </button>
+          </Button>
         </div>
       )}
     </div>

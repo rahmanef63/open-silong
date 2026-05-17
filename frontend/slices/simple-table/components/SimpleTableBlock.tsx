@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { Plus, Trash2, X, Database as DatabaseIcon } from "lucide-react";
 import { useStore } from "@/shared/lib/store";
 import { cn } from "@/shared/lib/utils";
+import { Button } from "@/shared/ui/button";
 import { toast } from "sonner";
 import type { SimpleTableBlockProps } from "../types";
 
@@ -72,14 +73,15 @@ export function SimpleTableBlock({ block, onUpdate, onReplace }: SimpleTableBloc
           </label>
         </div>
         {onReplace && (
-          <button
+          <Button
             type="button"
+            variant="outline"
             onClick={turnIntoDatabase}
-            className="inline-flex items-center gap-1 rounded border border-border bg-background px-2 py-0.5 text-[11px] hover:bg-accent"
+            className="h-auto gap-1 px-2 py-0.5 text-[11px] font-normal [&_svg]:size-3"
             title="Convert to a real database with views, filters, and properties"
           >
             <DatabaseIcon className="h-3 w-3" /> Turn into database
-          </button>
+          </Button>
         )}
       </div>
       <table className="w-full text-sm border-collapse">
@@ -101,46 +103,52 @@ export function SimpleTableBlock({ block, onUpdate, onReplace }: SimpleTableBloc
                     className="w-full bg-transparent px-2 py-1 outline-none text-sm"
                   />
                   {r === 0 && (
-                    <button
+                    <Button
                       type="button"
+                      size="icon"
+                      variant="destructive"
                       onClick={() => delCol(c)}
-                      className="absolute -top-2 right-0 hidden group-hover/cell:flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-destructive-foreground"
+                      className="absolute -top-2 right-0 hidden group-hover/cell:flex h-4 w-4 p-0 rounded-full [&_svg]:size-2.5"
                       aria-label="Delete column"
                     >
                       <X className="h-2.5 w-2.5" />
-                    </button>
+                    </Button>
                   )}
                 </td>
               ))}
               <td className="w-6 border-l border-border align-middle text-center">
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="icon"
                   onClick={() => delRow(r)}
-                  className="opacity-0 group-hover/row:opacity-100 text-muted-foreground hover:text-destructive"
+                  className="h-auto w-auto p-0 opacity-0 group-hover/row:opacity-100 text-muted-foreground hover:text-destructive hover:bg-transparent [&_svg]:size-3"
                   aria-label="Delete row"
                 >
                   <Trash2 className="h-3 w-3" />
-                </button>
+                </Button>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
       <div className="flex border-t border-border">
-        <button
+        <Button
           type="button"
+          variant="ghost"
           onClick={addRow}
-          className="flex flex-1 items-center justify-center gap-1 py-1 text-[11px] text-muted-foreground hover:bg-accent"
+          className="flex-1 h-auto gap-1 py-1 text-[11px] font-normal text-muted-foreground rounded-none [&_svg]:size-3"
         >
           <Plus className="h-3 w-3" /> Add row
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
+          variant="ghost"
           onClick={addCol}
-          className="flex flex-1 items-center justify-center gap-1 border-l border-border py-1 text-[11px] text-muted-foreground hover:bg-accent"
+          className="flex-1 h-auto gap-1 border-l border-border py-1 text-[11px] font-normal text-muted-foreground rounded-none [&_svg]:size-3"
         >
           <Plus className="h-3 w-3" /> Add column
-        </button>
+        </Button>
       </div>
     </div>
   );

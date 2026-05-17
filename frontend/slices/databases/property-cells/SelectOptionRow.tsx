@@ -4,6 +4,7 @@ import type { Database, SelectOption } from "@/shared/types/domain";
 import { useStore } from "@/shared/lib/store";
 import { cn } from "@/shared/lib/utils";
 import { colorClass } from "@/shared/lib/format";
+import { Button } from "@/shared/ui/button";
 import { OPTION_COLORS } from "./types";
 
 export function OptionRow({ db, propId, option, selected, onSelect }: {
@@ -22,7 +23,7 @@ export function OptionRow({ db, propId, option, selected, onSelect }: {
 
   return (
     <div className="flex items-center gap-1 group/opt px-1 rounded hover:bg-accent">
-      <button onClick={onSelect} className="flex-1 flex items-center gap-1 py-1 text-sm text-left min-w-0">
+      <Button variant="ghost" onClick={onSelect} className="flex-1 h-auto py-1 px-0 gap-1 text-sm font-normal text-left min-w-0 justify-start hover:bg-transparent [&_svg]:size-3">
         {selected && <Check className="h-3 w-3 text-brand shrink-0" />}
         {!selected && <span className="h-3 w-3 shrink-0" />}
         {editing ? (
@@ -40,37 +41,44 @@ export function OptionRow({ db, propId, option, selected, onSelect }: {
             {option.name}
           </span>
         )}
-      </button>
+      </Button>
       <div className="flex items-center gap-0.5 opacity-0 group-hover/opt:opacity-100 shrink-0">
-        <button
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={(e) => { e.stopPropagation(); setShowColors(v => !v); }}
-          className="rounded p-0.5 hover:bg-muted text-muted-foreground text-[10px] leading-none"
+          className="h-auto w-auto p-0.5 hover:bg-muted text-muted-foreground text-[10px] leading-none"
           title="Change color"
         >
           o
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={(e) => { e.stopPropagation(); setDraft(option.name); setEditing(true); }}
-          className="rounded p-0.5 hover:bg-muted text-muted-foreground"
+          className="h-auto w-auto p-0.5 hover:bg-muted text-muted-foreground [&_svg]:size-3"
           title="Rename"
         >
           <Pencil className="h-3 w-3" />
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={(e) => { e.stopPropagation(); deleteSelectOption(db.id, propId, option.id); }}
-          className="rounded p-0.5 hover:bg-muted text-muted-foreground hover:text-destructive"
+          className="h-auto w-auto p-0.5 hover:bg-muted text-muted-foreground hover:text-destructive [&_svg]:size-3"
           title="Delete"
         >
           <X className="h-3 w-3" />
-        </button>
+        </Button>
       </div>
       {showColors && (
         <div className="absolute z-50 flex flex-wrap gap-1 p-2 rounded-md border border-border bg-popover shadow-md mt-8 ml-4 w-40">
           {OPTION_COLORS.map(c => (
-            <button
+            <Button
               key={c}
+              size="icon"
               onClick={(e) => { e.stopPropagation(); updateSelectOption(db.id, propId, option.id, { color: c }); setShowColors(false); }}
-              className={cn("h-5 w-5 rounded-full border-2", colorClass(c), option.color === c ? "border-foreground" : "border-transparent")}
+              className={cn("h-5 w-5 p-0 rounded-full border-2", colorClass(c), option.color === c ? "border-foreground" : "border-transparent")}
               title={c}
             />
           ))}
@@ -93,7 +101,7 @@ export function AddOption({ db, propId }: { db: Database; propId: string }) {
           value={name} onChange={e => setName(e.target.value)} placeholder="New option"
           className="flex-1 bg-transparent text-xs outline-none px-2 py-1 rounded hover:bg-accent"
         />
-        <button type="submit" className="rounded p-1 hover:bg-accent text-muted-foreground"><Plus className="h-3 w-3" /></button>
+        <Button type="submit" variant="ghost" size="icon" className="h-auto w-auto p-1 text-muted-foreground [&_svg]:size-3"><Plus className="h-3 w-3" /></Button>
       </form>
     </div>
   );

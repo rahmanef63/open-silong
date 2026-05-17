@@ -116,6 +116,7 @@ export function MentionTypeahead() {
       onMouseDown={(e) => e.preventDefault()}
     >
       {matches.map((p, i) => (
+        // shadcn Button skipped: role="option" listbox semantics
         <button
           key={p.id}
           type="button"

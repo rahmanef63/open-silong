@@ -4,6 +4,7 @@ import {
 } from "@/shared/ui/dropdown-menu";
 import { Plus, Maximize2, Link2, Lock } from "lucide-react";
 import { DynamicIcon, IconPickerPopover, DEFAULT_DATABASE_ICON } from "@/shared/components/icon-picker";
+import { Button } from "@/shared/ui/button";
 import { ViewTab } from "./ViewTab";
 import { DatabaseMenu } from "./DatabaseMenu";
 import { VIEW_META } from "./lazyViews";
@@ -42,9 +43,9 @@ export function DatabaseHeaderBar({
           onChange={(next) => updateDatabase(db.id, { icon: next })}
           onClear={() => updateDatabase(db.id, { icon: DEFAULT_DATABASE_ICON })}
         >
-          <button type="button" className="rounded hover:bg-accent p-0.5 text-base leading-none" aria-label="Change database icon">
+          <Button type="button" variant="ghost" className="h-auto p-0.5 text-base leading-none font-normal" aria-label="Change database icon">
             <DynamicIcon value={db.icon} fallback={DEFAULT_DATABASE_ICON} />
-          </button>
+          </Button>
         </IconPickerPopover>
         <input
           value={db.name}
@@ -52,15 +53,17 @@ export function DatabaseHeaderBar({
           className="bg-transparent text-sm font-semibold outline-none flex-1 min-w-0 max-w-xs"
         />
         {isInline && (
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="icon"
             onClick={onOpenAsPage}
             title="Open as page"
             aria-label="Open database as page"
-            className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground transition"
+            className="h-auto w-auto p-1 text-muted-foreground hover:text-foreground [&_svg]:size-3.5"
           >
             <Maximize2 className="h-3.5 w-3.5" />
-          </button>
+          </Button>
         )}
         {isLinked && (
           <span
@@ -106,14 +109,16 @@ export function DatabaseHeaderBar({
         ))}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button
-              className="rounded p-1 hover:bg-accent text-muted-foreground disabled:opacity-40 disabled:cursor-not-allowed"
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-auto w-auto p-1 text-muted-foreground disabled:opacity-40 disabled:cursor-not-allowed [&_svg]:size-3.5"
               aria-label="Add view"
               title={db.locked ? "Database locked — unlock to add views" : "Add view"}
               disabled={db.locked}
             >
               <Plus className="h-3.5 w-3.5" />
-            </button>
+            </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel className="text-xs">Add view</DropdownMenuLabel>

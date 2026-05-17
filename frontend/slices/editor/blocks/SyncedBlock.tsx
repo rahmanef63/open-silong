@@ -8,6 +8,7 @@ import { cn } from "@/shared/lib/utils";
 import { uid } from "@/shared/lib/uid";
 import { Link } from "@/shared/lib/router";
 import { ROUTES } from "@/shared/lib/routes";
+import { Button } from "@/shared/ui/button";
 import { findSyncedSource } from "../lib/syncedBlocks";
 import { focusBlockSoon, findBlockNode } from "../lib/focusBlock";
 import { requireNested } from "./nestedRegistry";
@@ -118,31 +119,34 @@ function SyncedSourceView({
         <span>Synced — original</span>
         <span className="ml-auto inline-flex items-center gap-2">
           <code className="rounded bg-card/60 px-1 py-0.5 font-mono text-[9px] normal-case tracking-normal">{block.syncId?.slice(0, 8)}</code>
-          <button
+          <Button
+            variant="ghost"
             onClick={copyLink}
             title="Copy sync link — paste anywhere as a synced reference"
-            className="inline-flex items-center gap-1 rounded px-1 py-0.5 hover:bg-card/60 normal-case"
+            className="h-auto gap-1 px-1 py-0.5 text-[10px] font-normal hover:bg-card/60 normal-case [&_svg]:size-3"
           >
             {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
             {copied ? "Copied" : "Copy link"}
-          </button>
+          </Button>
         </span>
       </div>
       <SyncedChildrenList children={children} setChildren={setChildren} pageId={pageId} editable />
       <div className="mt-1 flex items-center gap-3">
-        <button
+        <Button
+          variant="ghost"
           onClick={addChild}
-          className="flex items-center gap-1 text-xs text-muted-foreground/60 hover:text-muted-foreground"
+          className="h-auto p-0 gap-1 text-xs font-normal text-muted-foreground/60 hover:bg-transparent hover:text-muted-foreground [&_svg]:size-3"
         >
           <Plus className="h-3 w-3" /> Add inside synced block
-        </button>
+        </Button>
         {children.length === 0 && !pasting && (
-          <button
+          <Button
+            variant="ghost"
             onClick={() => setPasting(true)}
-            className="text-xs text-muted-foreground/60 hover:text-muted-foreground"
+            className="h-auto p-0 text-xs font-normal text-muted-foreground/60 hover:bg-transparent hover:text-muted-foreground"
           >
             …or paste a sync link to mirror existing content
-          </button>
+          </Button>
         )}
         {pasting && (
           <form
@@ -156,8 +160,8 @@ function SyncedSourceView({
               placeholder="nosion://sync/<id>"
               className="rounded border border-border bg-background px-2 py-0.5 text-xs outline-none focus:border-brand"
             />
-            <button type="submit" className="rounded bg-brand text-white px-2 py-0.5 text-xs">Mirror</button>
-            <button type="button" onClick={() => { setPasting(false); setPasteValue(""); }} className="text-xs text-muted-foreground hover:text-foreground">Cancel</button>
+            <Button type="submit" className="h-auto rounded bg-brand text-white px-2 py-0.5 text-xs hover:bg-brand/90">Mirror</Button>
+            <Button type="button" variant="ghost" onClick={() => { setPasting(false); setPasteValue(""); }} className="h-auto p-0 text-xs font-normal text-muted-foreground hover:bg-transparent hover:text-foreground">Cancel</Button>
           </form>
         )}
       </div>

@@ -87,14 +87,15 @@ export function AIGenerateDialog({ open, onOpenChange, onAccept }: Props) {
             />
             <div className="mt-2 flex flex-wrap gap-1.5">
               {SAMPLE_INTENTS.map((s, i) => (
-                <button
+                <Button
                   key={i}
                   type="button"
+                  variant="outline"
                   onClick={() => setIntent(s)}
-                  className="rounded-full border border-border bg-card px-2.5 py-0.5 text-[11px] text-muted-foreground hover:bg-accent transition"
+                  className="h-auto rounded-full bg-card px-2.5 py-0.5 text-[11px] font-normal text-muted-foreground"
                 >
                   {s.slice(0, 60)}{s.length > 60 ? "…" : ""}
-                </button>
+                </Button>
               ))}
             </div>
           </div>
@@ -109,18 +110,19 @@ export function AIGenerateDialog({ open, onOpenChange, onAccept }: Props) {
             </p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {AI_PROVIDERS.map((p) => (
-                <button
+                <Button
                   key={p.id}
                   type="button"
+                  variant="outline"
                   onClick={() => openAi(p.url)}
-                  className="group flex flex-col items-start gap-1 rounded-lg border border-border bg-card px-3 py-2 text-left hover:bg-accent transition"
+                  className="group flex h-auto flex-col items-start gap-1 rounded-lg bg-card px-3 py-2 text-left font-normal [&_svg]:size-3"
                 >
                   <div className="flex items-center justify-between w-full">
                     <span className="text-base">{p.emoji} {p.label}</span>
                     <ExternalLink className="h-3 w-3 text-muted-foreground group-hover:text-foreground" />
                   </div>
                   <span className="text-[11px] text-muted-foreground">{p.hint}</span>
-                </button>
+                </Button>
               ))}
             </div>
             <div className="mt-2 flex justify-end">

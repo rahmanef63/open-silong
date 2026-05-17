@@ -16,6 +16,7 @@ import { Choice } from "@/shared/components/forms/Choice";
 import { useDebouncedCommit } from "@/shared/hooks/useDebouncedCommit";
 import { downloadFile, pickFile } from "@/shared/lib/markdown";
 import { reportError } from "@/shared/lib/error";
+import { Button } from "@/shared/ui/button";
 import { McpTokensSection } from "./McpTokensSection";
 import { WorkspacesSection } from "./WorkspacesSection";
 
@@ -138,13 +139,14 @@ export default function SettingsPage() {
             value={workspace.emoji}
             onChange={(emoji) => updateWorkspace({ emoji })}
           >
-            <button
+            <Button
               type="button"
-              className="inline-flex h-12 w-12 items-center justify-center rounded-md border border-border text-2xl hover:bg-accent transition"
+              variant="outline"
+              className="h-12 w-12 p-0 rounded-md text-2xl font-normal"
               aria-label="Change workspace icon"
             >
               <DynamicIcon value={workspace.emoji} className="text-2xl" />
-            </button>
+            </Button>
           </IconPickerPopover>
         </Field>
       </Section>
@@ -198,25 +200,27 @@ export default function SettingsPage() {
 
       <Section title="Backup">
         <Field label="Workspace export">
-          <button
+          <Button
             type="button"
+            variant="outline"
             onClick={onExportWorkspace}
-            className="inline-flex items-center gap-2 rounded-md border border-border bg-background px-3 py-1.5 text-sm hover:bg-accent transition"
+            className="h-auto gap-2 bg-background px-3 py-1.5 text-sm font-normal [&_svg]:size-3.5"
           >
             <Download className="h-3.5 w-3.5" />
             Download JSON backup
-          </button>
+          </Button>
           <p className="mt-2 text-xs text-muted-foreground">
             Single-file backup of every live page, database, and version
             snapshot, plus your preferences. Trashed items are excluded.
           </p>
         </Field>
         <Field label="Workspace import">
-          <button
+          <Button
             type="button"
+            variant="outline"
             onClick={onImportWorkspace}
             disabled={importing}
-            className="inline-flex items-center gap-2 rounded-md border border-border bg-background px-3 py-1.5 text-sm hover:bg-accent transition disabled:opacity-60"
+            className="h-auto gap-2 bg-background px-3 py-1.5 text-sm font-normal disabled:opacity-60 [&_svg]:size-3.5"
           >
             {importing ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -224,7 +228,7 @@ export default function SettingsPage() {
               <Upload className="h-3.5 w-3.5" />
             )}
             {importing ? "Importing…" : "Restore from JSON"}
-          </button>
+          </Button>
           <p className="mt-2 text-xs text-muted-foreground">
             Additive — your existing pages and databases stay. Imported
             pages and blocks get fresh ids; cross-references (parent

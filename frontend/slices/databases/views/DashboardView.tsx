@@ -5,6 +5,7 @@ import { cn } from "@/shared/lib/utils";
 import { colorClass, formatDate } from "@/shared/lib/format";
 import { getVisibleProps } from "../lib/visibility";
 import { DynamicIcon } from "@/shared/components/icon-picker";
+import { Button } from "@/shared/ui/button";
 
 interface Props { db: Database; view: DatabaseViewConfig; rows: Page[]; onOpenRow: (id: string) => void }
 
@@ -89,10 +90,11 @@ export function DashboardView({ db, view, rows, onOpenRow }: Props) {
         <div className="divide-y divide-border">
           {recent.length === 0 && <div className="py-4 text-center text-xs text-muted-foreground">No rows yet</div>}
           {recent.map(r => (
-            <button
+            <Button
               key={r.id}
+              variant="ghost"
               onClick={() => onOpenRow(r.id)}
-              className="flex w-full items-center justify-between gap-2 py-1.5 text-left hover:bg-accent/50 px-1 rounded"
+              className="flex w-full h-auto items-center justify-between gap-2 py-1.5 text-left hover:bg-accent/50 px-1 rounded font-normal"
             >
               <span className="flex items-center gap-1.5 min-w-0 text-sm">
                 <DynamicIcon value={r.icon} className="text-sm" />
@@ -101,7 +103,7 @@ export function DashboardView({ db, view, rows, onOpenRow }: Props) {
               <span className="text-[10px] text-muted-foreground shrink-0">
                 {formatDate(r.updatedAt ?? Date.now())}
               </span>
-            </button>
+            </Button>
           ))}
         </div>
       </div>
