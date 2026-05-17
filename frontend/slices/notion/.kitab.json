@@ -1,0 +1,18 @@
+{
+  "$schema": "https://resource.rahmanef.com/schemas/kitab-consumer.json",
+  "kitabSlug": "notion",
+  "kitabVersion": "0.0.0",
+  "consumerVersion": "0.1.0",
+  "syncDirection": "up-only",
+  "generalization": {
+    "status": "needs-adapter",
+    "auditedAt": "2026-05-17",
+    "blockers": [
+      "Sub-slices (editor, databases, workspace-sidebar, workspace-members, dashboard, admin-panel, wiki, sharing, …) still have hardcoded routes / role enums / Convex table names — see scripts/audit-kitab.mjs output. Lift UP must wait until sub-slice generalization is complete (each sub-slice's .kitab.json now lists structured blockers from the auditor).",
+      "i18n labels in JSX text nodes are scattered — auditor doesn't yet catch them. Manual pass needed against the NotionAppConfig.i18n surface before push UP.",
+      "Backend (convex/) ships as a separate kitab artifact — not bundled here. Consumers without Convex need a back-end adapter layer that the mega-slice does not yet provide."
+    ]
+  },
+  "lastPullAt": null,
+  "lastPushAt": null
+}

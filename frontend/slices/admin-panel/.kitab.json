@@ -6,9 +6,9 @@
   "syncDirection": "down-only",
   "generalization": {
     "status": "needs-adapter",
-    "auditedAt": "2026-05-16",
+    "auditedAt": "2026-05-17",
     "blockers": [
-      "unaudited - mass backfill, run /rr-prep before push UP"
+      "CONVEX_TABLE (5× — e.g. components/UsersPanel.tsx:54, components/ai/UserModelOverrideSection.tsx:66, components/feedback/types.ts:7)"
     ]
   },
   "lastPullAt": null,

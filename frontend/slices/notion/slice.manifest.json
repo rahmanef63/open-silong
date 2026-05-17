@@ -1,0 +1,52 @@
+{
+  "name": "notion",
+  "description": "Mega-slice: bundles editor + databases + templates + workspace-io + wrappers + config provider as one drop-in. Re-exported from frontend/slices/notion/. Target for kitab UP-sync.",
+  "deps": {
+    "shared": [
+      "components/notion",
+      "providers"
+    ],
+    "slices": [
+      "editor",
+      "databases",
+      "database-csv",
+      "database-json",
+      "database-templates",
+      "database-presets",
+      "database-cell-selection",
+      "templates",
+      "workspace-io",
+      "command-palette",
+      "comments",
+      "mentions",
+      "notifications",
+      "snapshots",
+      "sharing",
+      "wiki",
+      "trash",
+      "inbox",
+      "library",
+      "search",
+      "files",
+      "ai-agent",
+      "backlinks",
+      "block-selection",
+      "code-block",
+      "equation",
+      "simple-table",
+      "theme-presets"
+    ],
+    "convex": [
+      "_generated",
+      "_shared",
+      "pages",
+      "databases",
+      "templates",
+      "snapshots",
+      "import/workspace",
+      "import/zip",
+      "features"
+    ]
+  },
+  "notes": "Backend (convex/) is co-required but not part of this barrel — consumers ship their own convex/ dir or use the npm-published convex package once it exists. NotionAppConfig defaults match Nosion's own conventions; override via NotionAppProvider config prop."
+}

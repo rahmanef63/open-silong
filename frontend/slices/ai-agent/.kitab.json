@@ -5,11 +5,9 @@
   "consumerVersion": "0.1.0",
   "syncDirection": "down-only",
   "generalization": {
-    "status": "needs-adapter",
-    "auditedAt": "2026-05-16",
-    "blockers": [
-      "unaudited - mass backfill, run /rr-prep before push UP"
-    ]
+    "status": "portable",
+    "auditedAt": "2026-05-17",
+    "blockers": []
   },
   "lastPullAt": null,
   "lastPushAt": null

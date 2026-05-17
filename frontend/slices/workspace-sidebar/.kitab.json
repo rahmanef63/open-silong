@@ -6,9 +6,10 @@
   "syncDirection": "down-only",
   "generalization": {
     "status": "needs-adapter",
-    "auditedAt": "2026-05-16",
+    "auditedAt": "2026-05-17",
     "blockers": [
-      "unaudited - mass backfill, run /rr-prep before push UP"
+      "ROUTE_LITERAL (22× — e.g. components/AppSidebar.tsx:61, components/AppSidebar.tsx:76, components/AppSidebar.tsx:76)",
+      "ROLE_ENUM (5× — e.g. components/WorkspaceSwitcher.tsx:37, components/WorkspaceSwitcher.tsx:88, components/WorkspaceSwitcher.tsx:90)"
     ]
   },
   "lastPullAt": null,

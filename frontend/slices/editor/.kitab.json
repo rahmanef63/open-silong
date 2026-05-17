@@ -6,9 +6,11 @@
   "syncDirection": "down-only",
   "generalization": {
     "status": "needs-adapter",
-    "auditedAt": "2026-05-16",
+    "auditedAt": "2026-05-17",
     "blockers": [
-      "unaudited - mass backfill, run /rr-prep before push UP"
+      "ROUTE_LITERAL (5× — e.g. block-editor/PageRefBlock.tsx:15, blocks/nested-block/NestedContent.tsx:111, page-actions/usePageActions.ts:66)",
+      "CONVEX_TABLE (2× — e.g. hooks/useReadReceipt.ts:21, page-editor/SeenByBadge.tsx:27)",
+      "ROLE_ENUM (2× — e.g. slice.contract.ts:2, slice.contract.ts:11)"
     ]
   },
   "lastPullAt": null,
