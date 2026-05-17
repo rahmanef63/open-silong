@@ -9,6 +9,7 @@ import { Button } from "@/shared/ui/button";
 import { Alert, AlertDescription } from "@/shared/ui/alert";
 import type { CoverData } from "@/shared/types/domain";
 import type { UnsplashPhoto } from "@convex/features/unsplash/actions";
+import { CURATED_UNSPLASH } from "../../lib/unsplashCurated";
 
 interface Props {
   onPick: (cover: CoverData) => void;
@@ -17,7 +18,11 @@ interface Props {
 export function UnsplashTab({ onPick }: Props) {
   const search = useAction(api["features/unsplash/actions"].search);
   const [q, setQ] = useState("");
-  const [photos, setPhotos] = useState<UnsplashPhoto[]>([]);
+  // Default to curated photos so the tab is useful even without the
+  // UNSPLASH_ACCESS_KEY env var set on the backend. Search replaces
+  // this list with live API results when invoked.
+  const [photos, setPhotos] = useState<UnsplashPhoto[]>(CURATED_UNSPLASH);
+  const [isCurated, setIsCurated] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,6 +33,7 @@ export function UnsplashTab({ onPick }: Props) {
     try {
       const res = await search({ query: q, perPage: 24 });
       setPhotos(res.photos);
+      setIsCurated(false);
       if (res.error) setError(res.error);
     } finally {
       setBusy(false);
@@ -80,7 +86,13 @@ export function UnsplashTab({ onPick }: Props) {
 
       {photos.length === 0 && !busy && !error && (
         <p className="py-6 text-center text-xs text-muted-foreground">
-          Search photos by keyword. Powered by Unsplash.
+          No matches. Try another keyword.
+        </p>
+      )}
+
+      {photos.length > 0 && (
+        <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+          {isCurated ? "Curated photos · type to search Unsplash" : `${photos.length} result${photos.length === 1 ? "" : "s"}`}
         </p>
       )}
 

@@ -115,7 +115,12 @@ export function PageEditor() {
             className={cn(
               "mx-auto px-4 sm:px-6 md:px-12",
               fullPageDb || page.fullWidth ? "max-w-none" : "max-w-3xl",
-              page.cover ? "-mt-10" : "pt-16",
+              // relative + z-10 lifts content above the cover banner —
+              // cover wrapper has position:relative so it paints at
+              // step 6 of CSS stacking; without this lift the title/
+              // icon (normal-flow step 3) gets buried under the banner
+              // when the -mt-10 overlap kicks in.
+              page.cover ? "relative z-10 -mt-10" : "pt-16",
               page.font === "serif" && "font-serif",
               page.font === "mono" && "font-mono",
               page.smallText && "text-[14px]",
