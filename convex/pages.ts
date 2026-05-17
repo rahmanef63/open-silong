@@ -291,7 +291,16 @@ export const update = mutation({
     patch: v.object({
       title: v.optional(v.string()),
       icon: v.optional(v.string()),
-      cover: v.optional(v.union(v.string(), v.null())),
+      cover: v.optional(v.union(
+        v.string(),
+        v.null(),
+        v.object({
+          type: v.string(),
+          value: v.string(),
+          positionY: v.optional(v.number()),
+          metadata: v.optional(v.any()),
+        }),
+      )),
       blocks: v.optional(v.array(v.any())),
       favorite: v.optional(v.boolean()),
       parentId: v.optional(v.union(v.id("pages"), v.null())),

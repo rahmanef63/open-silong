@@ -40,6 +40,7 @@ import type * as features_files_mutations from "../features/files/mutations.js";
 import type * as features_files_queries from "../features/files/queries.js";
 import type * as features_inbox_mutations from "../features/inbox/mutations.js";
 import type * as features_inbox_queries from "../features/inbox/queries.js";
+import type * as features_unsplash_actions from "../features/unsplash/actions.js";
 import type * as features_search_index from "../features/search/index.js";
 import type * as features_search_lib from "../features/search/lib.js";
 import type * as features_search_mutations from "../features/search/mutations.js";
@@ -153,6 +154,7 @@ declare const fullApi: ApiFromModules<{
   "features/files/queries": typeof features_files_queries;
   "features/inbox/mutations": typeof features_inbox_mutations;
   "features/inbox/queries": typeof features_inbox_queries;
+  "features/unsplash/actions": typeof features_unsplash_actions;
   "features/search/index": typeof features_search_index;
   "features/search/lib": typeof features_search_lib;
   "features/search/mutations": typeof features_search_mutations;

@@ -1,5 +1,5 @@
 import type {
-  Block, DatabaseTemplate, DatabaseViewConfig, Property, PropertyValue,
+  Block, CoverField, DatabaseTemplate, DatabaseViewConfig, Property, PropertyValue,
 } from "@/shared/types/domain";
 
 /* Wire format (versioned) */
@@ -24,7 +24,7 @@ export interface DatabaseExportV1 {
 export interface RowExport {
   title: string;
   icon: string;
-  cover?: string | null;
+  cover?: CoverField;
   blocks?: Block[];
   rowProps?: Record<string, PropertyValue>;
   favorite?: boolean;

@@ -9,15 +9,16 @@
 import { ReactNode } from "react";
 import { NotionHeader, NotionHeaderProps } from "./NotionHeader";
 import { cn } from "@/shared/lib/utils";
+import type { CoverField, CoverData } from "@/shared/types/domain";
 
 export interface NotionPageProps {
   /** Header fields (icon + title + cover). All optional callbacks. */
   icon: string;
   title: string;
-  cover?: string | null;
+  cover?: CoverField;
   onIconChange?: (icon: string) => void;
   onTitleChange?: (title: string) => void;
-  onCoverChange?: (cover: string | null) => void;
+  onCoverChange?: (cover: CoverData | null) => void;
   /** Right-side header actions slot (share / more / history). */
   actions?: NotionHeaderProps["actions"];
   /** Page body — your blocks list, database embed, etc. */

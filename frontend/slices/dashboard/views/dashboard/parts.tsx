@@ -1,7 +1,17 @@
+import type { CSSProperties } from "react";
 import { DynamicIcon } from "@/shared/components/icon-picker";
 import { cn } from "@/shared/lib/utils";
 import { Button } from "@/shared/ui/button";
-import type { Page } from "@/shared/types/domain";
+import { parseCover, coverStyle } from "@/slices/cover";
+import type { CoverField, Page } from "@/shared/types/domain";
+
+function pageCardCoverStyle(cover: CoverField | undefined): CSSProperties {
+  const parsed = parseCover(cover);
+  if (!parsed) {
+    return { background: "linear-gradient(135deg, hsl(var(--accent)), hsl(var(--secondary)))" };
+  }
+  return coverStyle(parsed);
+}
 
 export function Section({ title, icon: Icon, children }: any) {
   return (
@@ -52,7 +62,7 @@ export function PageCard({ page, onClick }: { page: Page; onClick: () => void })
     >
       <div
         className="h-16 w-full rounded-md"
-        style={{ background: page.cover || "linear-gradient(135deg, hsl(var(--accent)), hsl(var(--secondary)))" }}
+        style={pageCardCoverStyle(page.cover)}
       />
       <div className="flex items-center gap-2">
         <DynamicIcon value={page.icon} className="text-lg" />
