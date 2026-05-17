@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
 import { cn } from "@/shared/lib/utils";
+import { Button } from "@/shared/ui/button";
 
 interface Props {
   rowId: string;
@@ -31,11 +32,12 @@ export function SelectableCell({
     >
       {children}
       {showFillHandle && (
-        <button
+        <Button
+          variant="ghost"
           data-fill-handle
           type="button"
           onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); onStartFill(e); }}
-          className="absolute -bottom-1 -right-1 h-2 w-2 rounded-sm bg-brand border border-background cursor-crosshair z-10"
+          className="absolute -bottom-1 -right-1 z-10 h-2 w-2 cursor-crosshair rounded-sm border border-background bg-brand p-0 hover:bg-brand"
           aria-label="Fill down"
         />
       )}

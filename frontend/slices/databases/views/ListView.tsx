@@ -9,6 +9,7 @@ import { DynamicIcon } from "@/shared/components/icon-picker";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
+import { Button } from "@/shared/ui/button";
 import { QuickCreateDialog } from "../components/QuickCreateDialog";
 import { useState } from "react";
 
@@ -43,7 +44,8 @@ export function ListView({ db, view, rows, onOpenRow }: Props) {
             compact ? "py-1" : "py-2"
           )}
         >
-          <button
+          <Button
+            variant="ghost"
             onClick={() => onOpenRow(r.id)}
             onKeyDown={(e) => {
               if (e.key === "ArrowDown" || e.key === "ArrowUp") {
@@ -52,11 +54,11 @@ export function ListView({ db, view, rows, onOpenRow }: Props) {
               }
             }}
             data-db-nav-item
-            className="flex-1 flex items-center gap-3 px-3 text-left min-w-0"
+            className="h-auto min-w-0 flex-1 justify-start gap-3 rounded-none px-3 text-left font-normal hover:bg-transparent"
           >
             <DynamicIcon value={r.icon} className={cn(compact ? "text-sm" : "text-base")} />
             <span className={cn("flex-1 truncate", compact ? "text-xs" : "text-sm")}>{r.title || "Untitled"}</span>
-          </button>
+          </Button>
           {summaries.map(p => (
             <div key={p.id} onClick={e => e.stopPropagation()}>
               <PropertyCell db={db} prop={p} row={r} compact />
@@ -64,9 +66,9 @@ export function ListView({ db, view, rows, onOpenRow }: Props) {
           ))}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="opacity-0 group-hover:opacity-100 rounded p-1 hover:bg-accent text-muted-foreground" aria-label="Row actions">
+              <Button variant="ghost" className="h-auto rounded p-1 text-muted-foreground opacity-0 group-hover:opacity-100 [&_svg]:size-3.5" aria-label="Row actions">
                 <MoreHorizontal className="h-3.5 w-3.5" />
-              </button>
+              </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => onOpenRow(r.id)}>Open</DropdownMenuItem>
@@ -77,12 +79,13 @@ export function ListView({ db, view, rows, onOpenRow }: Props) {
           </DropdownMenu>
         </div>
       ))}
-      <button
+      <Button
+        variant="ghost"
         onClick={() => setQuickOpen(true)}
-        className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-muted-foreground hover:bg-accent"
+        className="h-auto w-full justify-start gap-2 rounded-none px-3 py-2 text-left text-xs font-normal text-muted-foreground [&_svg]:size-3.5"
       >
         <Plus className="h-3.5 w-3.5" /> New row
-      </button>
+      </Button>
       <QuickCreateDialog db={db} view={view} open={quickOpen} onOpenChange={setQuickOpen} onCreated={onOpenRow} />
     </div>
   );

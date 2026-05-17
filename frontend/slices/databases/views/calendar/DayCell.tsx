@@ -8,6 +8,7 @@ import {
 } from "@/shared/ui/dropdown-menu";
 import { DynamicIcon } from "@/shared/components/icon-picker";
 import { useConfirm } from "@/shared/components/ConfirmProvider";
+import { Button } from "@/shared/ui/button";
 import type { Page, Property } from "@/shared/types/domain";
 
 export function DayCell({
@@ -51,13 +52,14 @@ export function DayCell({
             {d.getDate()}
           </div>
           {hasDateProp && (
-            <button
+            <Button
+              variant="ghost"
               onClick={(e) => { e.stopPropagation(); onAddOnDay(); }}
               title="Add row on this date"
-              className="rounded p-0.5 text-muted-foreground/30 hover:text-foreground hover:bg-accent transition opacity-60 group-hover:opacity-100"
+              className="h-auto rounded p-0.5 text-muted-foreground/30 opacity-60 transition hover:text-foreground group-hover:opacity-100 [&_svg]:size-3"
             >
               <Plus className="h-3 w-3" />
-            </button>
+            </Button>
           )}
         </div>
       )}
@@ -102,7 +104,8 @@ function DraggableEvent({
       style={{ transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined }}
       className={cn("relative group/event", isDragging && "opacity-40")}
     >
-      <button
+      <Button
+        variant="ghost"
         {...attributes} {...listeners}
         onClick={() => onOpenRow(row.id)}
         onKeyDown={(e) => {
@@ -124,21 +127,22 @@ function DraggableEvent({
         data-db-nav-item
         title={colorOptName ?? "Click to open · Drag to change date · Right-click to delete"}
         className={cn(
-          "w-full text-left truncate rounded px-1 py-0.5 text-[11px] border pr-5 cursor-grab active:cursor-grabbing touch-none",
+          "h-auto w-full cursor-grab touch-none justify-start truncate rounded border px-1 py-0.5 pr-5 text-left text-[11px] font-normal active:cursor-grabbing",
           tone,
         )}
       >
         <DynamicIcon value={row.icon} className="text-[11px] mr-1 inline-flex" />{row.title || "Untitled"}
-      </button>
+      </Button>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button
+          <Button
+            variant="ghost"
             onClick={(e) => e.stopPropagation()}
-            className="absolute top-0.5 right-0.5 opacity-0 group-hover/event:opacity-100 rounded p-0.5 hover:bg-background/60 text-current"
+            className="absolute top-0.5 right-0.5 h-auto rounded p-0.5 text-current opacity-0 hover:bg-background/60 group-hover/event:opacity-100 [&_svg]:size-3"
             aria-label="Event actions"
           >
             <MoreHorizontal className="h-3 w-3" />
-          </button>
+          </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={() => onOpenRow(row.id)}>Open</DropdownMenuItem>

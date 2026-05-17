@@ -3,6 +3,7 @@ import { Trash2 } from "lucide-react";
 import { useStore } from "@/shared/lib/store";
 import type { Property } from "@/shared/types/domain";
 import { PROPERTY_TYPE_ICONS } from "@/slices/databases";
+import { Button } from "@/shared/ui/button";
 
 export function PropertyNameCell({ dbId, prop }: { dbId: string; prop: Property }) {
   const { updateProperty, deleteProperty } = useStore();
@@ -50,13 +51,14 @@ export function PropertyNameCell({ dbId, prop }: { dbId: string; prop: Property 
           >
             {prop.name}
           </span>
-          <button
+          <Button
+            variant="ghost"
             onClick={() => deleteProperty(dbId, prop.id)}
-            className="opacity-0 group-hover/name:opacity-100 transition-opacity rounded p-0.5 hover:bg-accent hover:text-destructive text-muted-foreground shrink-0"
+            className="h-auto shrink-0 rounded p-0.5 text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover/name:opacity-100 [&_svg]:size-3"
             title="Delete property"
           >
             <Trash2 className="h-3 w-3" />
-          </button>
+          </Button>
         </>
       )}
     </div>

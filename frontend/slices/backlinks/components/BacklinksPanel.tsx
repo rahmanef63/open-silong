@@ -3,6 +3,7 @@ import { useNavigate } from "@/shared/lib/router";
 import { useState } from "react";
 import { cn } from "@/shared/lib/utils";
 import { useBacklinks } from "../hooks/useBacklinks";
+import { Button } from "@/shared/ui/button";
 
 interface Props {
   pageId: string;
@@ -24,31 +25,34 @@ export function BacklinksPanel({ pageId }: Props) {
 
   return (
     <section className="mt-8 border-t border-border pt-6">
-      <button
+      <Button
+        variant="ghost"
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1.5 text-xs uppercase tracking-wider font-semibold text-muted-foreground hover:text-foreground"
+        className="h-auto gap-1.5 p-0 text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:bg-transparent hover:text-foreground [&_svg]:size-3"
       >
         {open ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
         <Link2 className="h-3 w-3" />
         Backlinks <span className="text-brand normal-case">({items.length})</span>
-      </button>
+      </Button>
       {open && (
         <div className="mt-3 space-y-3">
           {Array.from(grouped.entries()).map(([pid, group]) => (
             <div key={pid} className="rounded-md border border-border bg-card overflow-hidden">
-              <button
+              <Button
+                variant="ghost"
                 onClick={() => navigate(`/p/${pid}`)}
-                className="flex w-full items-center gap-1.5 px-3 py-2 hover:bg-accent text-sm font-medium border-b border-border/40"
+                className="h-auto w-full justify-start gap-1.5 rounded-none border-b border-border/40 px-3 py-2 text-sm font-medium"
               >
                 <span>{group[0].pageIcon}</span>
                 <span className="flex-1 truncate text-left">{group[0].pageTitle}</span>
                 <span className="text-[10px] text-muted-foreground uppercase tracking-wider">{group.length}</span>
-              </button>
+              </Button>
               {group.map((bl, i) => (
-                <button
+                <Button
+                  variant="ghost"
                   key={`${bl.blockId}-${i}`}
                   onClick={() => navigate(`/p/${bl.pageId}`)}
-                  className="flex w-full items-start gap-2 px-3 py-1.5 text-left text-xs hover:bg-accent/50 last:border-0"
+                  className="h-auto w-full items-start justify-start gap-2 rounded-none px-3 py-1.5 text-left text-xs font-normal last:border-0 hover:bg-accent/50"
                 >
                   <span
                     className={cn(
@@ -61,7 +65,7 @@ export function BacklinksPanel({ pageId }: Props) {
                     {bl.kind === "page-link" ? "Link" : "Mention"}
                   </span>
                   <span className="flex-1 text-muted-foreground line-clamp-2">{bl.preview || "(empty)"}</span>
-                </button>
+                </Button>
               ))}
             </div>
           ))}

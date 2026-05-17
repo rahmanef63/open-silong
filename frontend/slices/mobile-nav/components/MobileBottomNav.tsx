@@ -13,6 +13,7 @@ import { TemplateGalleryDialog } from "@/slices/templates";
 import { AIAgentConsole } from "@/slices/ai-agent";
 import { MoreDrawer } from "./MoreDrawer";
 import { InboxBadge } from "@/slices/inbox";
+import { Button } from "@/shared/ui/button";
 
 interface Props {
   onOpenSearch: () => void;
@@ -58,14 +59,15 @@ export function MobileBottomNav({ onOpenSearch }: Props) {
         <ul className="grid grid-cols-5 h-14 items-stretch max-w-md mx-auto">
           {slots.map((s) => (
             <li key={s.id} className="flex">
-              <button
+              <Button
+                variant="ghost"
                 type="button"
                 onClick={(e) => { e.currentTarget.blur(); s.onClick(); }}
                 aria-label={s.label}
                 aria-current={s.active ? "page" : undefined}
                 className={cn(
-                  "relative flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-medium transition-colors active:scale-95 transition-transform",
-                  s.active ? "text-brand" : "text-muted-foreground hover:text-foreground",
+                  "relative h-auto flex-1 flex-col items-center justify-center gap-0.5 rounded-none px-0 py-0 text-[10px] font-medium transition-colors transition-transform active:scale-95",
+                  s.active ? "text-brand" : "text-muted-foreground hover:bg-transparent hover:text-foreground",
                 )}
               >
                 <span
@@ -80,7 +82,7 @@ export function MobileBottomNav({ onOpenSearch }: Props) {
                 </span>
                 {!s.primary && <span className="leading-none truncate max-w-[60px]">{s.label}</span>}
                 {s.primary && <span className="sr-only">{s.label}</span>}
-              </button>
+              </Button>
             </li>
           ))}
         </ul>

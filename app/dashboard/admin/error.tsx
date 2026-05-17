@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { ShieldAlert, RefreshCw, Home } from "lucide-react";
+import { Button } from "@/shared/ui/button";
 
 export default function AdminError({
   error,
@@ -29,12 +30,12 @@ export default function AdminError({
           <p className="text-xs text-muted-foreground/70 mb-4 font-mono">id: {error.digest}</p>
         )}
         <div className="flex justify-center gap-2">
-          <button
+          <Button
             onClick={reset}
-            className="inline-flex items-center gap-1.5 rounded-md bg-foreground text-background px-3 py-1.5 text-sm hover:opacity-90"
+            className="inline-flex h-auto items-center gap-1.5 rounded-md bg-foreground px-3 py-1.5 text-sm text-background hover:bg-foreground hover:opacity-90 [&_svg]:size-3.5"
           >
             <RefreshCw className="h-3.5 w-3.5" /> Try again
-          </button>
+          </Button>
           <Link
             href="/dashboard"
             className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm hover:bg-accent"

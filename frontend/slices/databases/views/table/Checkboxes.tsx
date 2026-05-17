@@ -14,6 +14,7 @@ export function HeaderCheckboxGutter({ rowIds }: { rowIds: string[] }) {
   };
   return (
     <div className="w-12 shrink-0 flex items-center justify-center border-r border-border">
+      {/* shadcn Button skipped: role="checkbox" listbox semantics — shadcn Button erases role context */}
       <button
         type="button"
         role="checkbox"
@@ -40,6 +41,7 @@ export function RowCheckbox({ rowId }: { rowId: string }) {
   const checked = sel.isSelected(rowId);
   const onClick = (e: React.MouseEvent) => { e.stopPropagation(); sel.toggle(rowId); };
   return (
+    // shadcn Button skipped: role="checkbox" listbox semantics — shadcn Button erases role context
     <button
       type="button"
       role="checkbox"

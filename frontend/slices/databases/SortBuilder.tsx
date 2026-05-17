@@ -1,6 +1,7 @@
 import { Database, DatabaseSort, DatabaseViewConfig } from "@/shared/types/domain";
 import { Plus, X, ArrowUp, ArrowDown } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
+import { Button } from "@/shared/ui/button";
 
 interface Props {
   db: Database;
@@ -44,26 +45,28 @@ export function SortBuilder({ db, view, writeView }: Props) {
             </SelectContent>
           </Select>
 
-          <button
+          <Button
+            variant="outline"
             onClick={() => toggle(i)}
-            className="flex items-center gap-1 rounded border border-border px-2 py-1 text-xs hover:bg-accent"
+            className="h-auto gap-1 rounded px-2 py-1 text-xs font-normal [&_svg]:size-3"
           >
             {s.direction === "asc"
               ? <><ArrowUp className="h-3 w-3" /> Asc</>
               : <><ArrowDown className="h-3 w-3" /> Desc</>}
-          </button>
+          </Button>
 
-          <button onClick={() => remove(i)} className="rounded p-1 hover:bg-accent text-muted-foreground">
+          <Button variant="ghost" onClick={() => remove(i)} className="h-auto rounded p-1 text-muted-foreground [&_svg]:size-3">
             <X className="h-3 w-3" />
-          </button>
+          </Button>
         </div>
       ))}
-      <button
+      <Button
+        variant="ghost"
         onClick={addSort}
-        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground mt-1"
+        className="mt-1 h-auto gap-1 p-0 text-xs font-normal text-muted-foreground hover:bg-transparent hover:text-foreground [&_svg]:size-3"
       >
         <Plus className="h-3 w-3" /> Add sort
-      </button>
+      </Button>
     </div>
   );
 }
