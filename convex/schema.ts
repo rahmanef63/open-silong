@@ -257,6 +257,37 @@ export default defineSchema({
     // whether any superadmin already exists without scanning the table.
     .index("by_role", ["role"]),
 
+  /** Outbound webhook endpoints registered per user. Each endpoint
+   *  subscribes to a list of event names (e.g. "page.created",
+   *  "page.updated"). When a matching event fires, a POST is sent
+   *  to `url` with HMAC-SHA256 signature header derived from `secret`.
+   *  Auto-dispatch from page/db mutations is wired incrementally —
+   *  for v1, manually trigger via `webhooks.deliver` action. */
+  webhookEndpoints: defineTable({
+    userId: v.id("users"),
+    url: v.string(),
+    events: v.array(v.string()),
+    secret: v.string(),
+    enabled: v.boolean(),
+    createdAt: v.number(),
+    lastSuccessAt: v.optional(v.number()),
+    lastErrorAt: v.optional(v.number()),
+    lastError: v.optional(v.string()),
+  }).index("by_user", ["userId"]),
+
+  /** Append-only audit log of every webhook delivery attempt. Pruned
+   *  by `maintenance.pruneWebhookDeliveries` (TBD) after 30 days. */
+  webhookDeliveries: defineTable({
+    endpointId: v.id("webhookEndpoints"),
+    event: v.string(),
+    payload: v.any(),
+    attemptedAt: v.number(),
+    statusCode: v.optional(v.number()),
+    error: v.optional(v.string()),
+  })
+    .index("by_endpoint", ["endpointId"])
+    .index("by_attempted", ["attemptedAt"]),
+
   /** Read receipts — last time a user viewed a page. Touched by the
    *  client on PageEditor mount, debounced to ~30s. Powers the
    *  "Seen by N" badge in PageHeaderSlot + Notion-style presence
