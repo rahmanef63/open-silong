@@ -345,13 +345,32 @@ export default defineSchema({
     .index("by_created", ["createdAt"])
     .index("by_actor", ["actorId"]),
 
-  // === feedback inbox ===
+  // === feedback inbox / user tickets ===
+  // Single table backs both casual feedback (kind=praise/other, no
+  // title) and formal tickets (kind=bug/idea with title+priority).
+  // Admin reply lives inline so the user-side "My tickets" view can
+  // render the back-and-forth without a separate comments table.
   feedbackEntries: defineTable({
     userId: v.id("users"),
     userEmail: v.optional(v.string()),
     kind: v.union(v.literal("bug"), v.literal("idea"), v.literal("praise"), v.literal("other")),
+    /** Short title — populated for formal tickets, optional for
+     *  casual feedback (legacy rows lack it). */
+    title: v.optional(v.string()),
     message: v.string(),
-    status: v.union(v.literal("open"), v.literal("resolved")),
+    /** Severity per the user submitting. Admin can override on review. */
+    priority: v.optional(v.union(v.literal("low"), v.literal("med"), v.literal("high"))),
+    status: v.union(
+      v.literal("open"),
+      v.literal("in_review"),
+      v.literal("resolved"),
+      v.literal("closed"),
+    ),
+    /** Admin response visible to the reporter. Single field instead of
+     *  a comments thread — simple enough for the current scale. */
+    adminReply: v.optional(v.string()),
+    repliedAt: v.optional(v.number()),
+    repliedBy: v.optional(v.id("users")),
     createdAt: v.number(),
     resolvedAt: v.optional(v.number()),
   })
