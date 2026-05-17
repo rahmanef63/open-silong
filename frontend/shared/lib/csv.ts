@@ -35,7 +35,7 @@ function formatDate(iso: string | undefined): string {
   return `${m[2]}/${m[3]}/${m[1]}`;
 }
 
-function valueToCell(prop: Property, value: PropertyValue, allPages?: Page[]): string {
+export function valueToCell(prop: Property, value: PropertyValue, allPages?: Page[]): string {
   if (value == null) return "";
   switch (prop.type) {
     case "text":

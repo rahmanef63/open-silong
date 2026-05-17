@@ -26,6 +26,8 @@
  */
 
 import type { Block, Page } from "../types/domain";
+import { lookupDb, type ExportContext } from "./exportContext";
+import { databaseToHtmlTable } from "./databaseTable";
 
 function escape(s: string): string {
   return s
@@ -38,7 +40,7 @@ function escape(s: string): string {
 const TABLE_ROW_DELIM = "\n";
 const TABLE_CELL_DELIM = "|";
 
-export function blockToHtml(b: Block): string {
+export function blockToHtml(b: Block, ctx?: ExportContext): string {
   const t = escape(b.text ?? "");
   switch (b.type) {
     case "paragraph": return `<p>${t}</p>`;
@@ -85,11 +87,15 @@ export function blockToHtml(b: Block): string {
     }
     case "page":
       return `<p><a href="#page-${escape(b.pageId ?? "")}">${t || "Subpage"}</a></p>`;
-    case "database":
-      return `<p>[Database: ${t || "embedded"}]</p>`;
+    case "database": {
+      const hit = lookupDb(ctx, b.databaseId);
+      if (!hit) return `<p>[Database: ${t || "embedded"}]</p>`;
+      const title = t || escape(hit.db.name || "Database");
+      return `<section class="db-embed"><h3>🗂️ ${title}</h3>${databaseToHtmlTable(hit.db, hit.rows, ctx?.allPages)}</section>`;
+    }
     case "toggle": {
       const head = `<summary>${t}</summary>`;
-      const body = (b.children ?? []).map(blockToHtml).filter(Boolean).join("");
+      const body = (b.children ?? []).map((c) => blockToHtml(c, ctx)).filter(Boolean).join("");
       return `<details>${head}${body}</details>`;
     }
     case "columns2":
@@ -97,7 +103,7 @@ export function blockToHtml(b: Block): string {
     case "columns4":
     case "columns5": {
       const cols = (b.columns ?? [])
-        .map((col) => `<div class="column">${col.map(blockToHtml).filter(Boolean).join("")}</div>`)
+        .map((col) => `<div class="column">${col.map((c) => blockToHtml(c, ctx)).filter(Boolean).join("")}</div>`)
         .join("");
       return `<div class="columns">${cols}</div>`;
     }
@@ -127,9 +133,9 @@ img,video,audio{max-width:100%}
 details{margin:.5em 0}summary{cursor:pointer;font-weight:600}
 `.trim();
 
-export function pageToHtml(page: Page, includeStyles = true): string {
+export function pageToHtml(page: Page, includeStyles = true, ctx?: ExportContext): string {
   const title = escape(page.title || "Untitled");
-  const body = page.blocks.map(blockToHtml).filter(Boolean).join("\n");
+  const body = page.blocks.map((b) => blockToHtml(b, ctx)).filter(Boolean).join("\n");
   const head = `<title>${title}</title>${includeStyles ? `<style>${HTML_STYLE}</style>` : ""}`;
   return `<!doctype html><html><head><meta charset="utf-8">${head}</head><body><h1>${title}</h1>\n${body}</body></html>`;
 }
@@ -137,8 +143,8 @@ export function pageToHtml(page: Page, includeStyles = true): string {
 /** Inline fragment — no <html>/<head>, just block elements. Used by
  *  multi-format clipboard so paste targets (Notion / Google Docs)
  *  receive a semantic snippet not a full document. */
-export function pageToHtmlFragment(page: Page): string {
+export function pageToHtmlFragment(page: Page, ctx?: ExportContext): string {
   const title = escape(page.title || "Untitled");
-  const body = page.blocks.map(blockToHtml).filter(Boolean).join("\n");
+  const body = page.blocks.map((b) => blockToHtml(b, ctx)).filter(Boolean).join("\n");
   return `<h1>${title}</h1>\n${body}`;
 }

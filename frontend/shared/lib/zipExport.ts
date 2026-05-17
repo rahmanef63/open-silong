@@ -24,6 +24,7 @@ import JSZip from "jszip";
 import type { Database, Page } from "../types/domain";
 import { pageToMarkdown } from "./markdown";
 import { databaseToCsv } from "./csv";
+import { buildExportContext } from "./exportContext";
 
 interface Bundle {
   pages: Page[];
@@ -57,24 +58,26 @@ function addPageTree(
   parentId: string | null,
   tree: Map<string | null, Page[]>,
   pathPrefix: string,
+  ctx: ReturnType<typeof buildExportContext>,
 ): void {
   const pages = tree.get(parentId) ?? [];
   for (const p of pages) {
     const filename = `${safeFilename(p.title, "untitled")}.md`;
-    zip.file(`${pathPrefix}${filename}`, pageToMarkdown(p));
+    zip.file(`${pathPrefix}${filename}`, pageToMarkdown(p, ctx));
     // Folder named after the page holds its children — same convention
     // Notion uses on export.
     const childPrefix = `${pathPrefix}${safeFilename(p.title, "untitled")}/`;
-    if (tree.has(p.id)) addPageTree(zip, p.id, tree, childPrefix);
+    if (tree.has(p.id)) addPageTree(zip, p.id, tree, childPrefix, ctx);
   }
 }
 
 export async function buildWorkspaceZip(bundle: Bundle): Promise<Blob> {
   const zip = new JSZip();
   const tree = buildTree(bundle.pages);
+  const ctx = buildExportContext(bundle.databases, bundle.pages);
 
   // Page tree → nested folders.
-  addPageTree(zip, null, tree, "");
+  addPageTree(zip, null, tree, "", ctx);
 
   // Databases → flat /databases/X.csv.
   if (bundle.databases.length > 0) {
