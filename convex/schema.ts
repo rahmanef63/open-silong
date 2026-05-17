@@ -252,7 +252,10 @@ export default defineSchema({
     activeWorkspaceId: v.optional(v.id("workspaces")),
   })
     .index("by_user", ["userId"])
-    .index("by_lastSeen", ["lastSeenAt"]),
+    .index("by_lastSeen", ["lastSeenAt"])
+    // Powers `admin.claimSuperAdmin` — first-deployer escape hatch checks
+    // whether any superadmin already exists without scanning the table.
+    .index("by_role", ["role"]),
 
   // === MCP per-user tokens ===
   mcpTokens: defineTable({

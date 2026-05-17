@@ -36,14 +36,20 @@ export const claimSuperAdmin = mutation({
   args: {},
   handler: async (ctx) => {
     const userId = await requireAuth(ctx);
-    // Full-table scan is acceptable here — `claimSuperAdmin` runs at most
-    // once per self-hosted deployment (first-deployer escape hatch). After
-    // the first claim, line below throws and the path stops being hit.
-    const allProfiles = await ctx.db.query("userProfiles").collect();
-    if (allProfiles.some((p) => p.role === "superadmin")) {
+    // Cheap O(log n) probe via by_role — no full-table scan even on a
+    // freshly-deployed instance. After the first claim, the if-throw fires
+    // and the path stops being hit anyway.
+    const existingSuperadmin = await ctx.db
+      .query("userProfiles")
+      .withIndex("by_role", (q) => q.eq("role", "superadmin"))
+      .first();
+    if (existingSuperadmin) {
       throw new Error("Superadmin already claimed — ask the existing superadmin to grant you a role.");
     }
-    const existing = allProfiles.find((p) => p.userId === userId);
+    const existing = await ctx.db
+      .query("userProfiles")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .unique();
     if (existing) {
       await ctx.db.patch(existing._id, { role: "superadmin" });
     } else {
