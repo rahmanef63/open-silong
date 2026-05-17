@@ -56,6 +56,7 @@ import type * as maintenance from "../maintenance.js";
 import type * as mcp_http from "../mcp/http.js";
 import type * as mcp_internal from "../mcp/internal.js";
 import type * as mcp_tokens from "../mcp/tokens.js";
+import type * as pageViews from "../pageViews.js";
 import type * as pages from "../pages.js";
 import type * as preferences from "../preferences.js";
 import type * as recents from "../recents.js";
@@ -148,6 +149,7 @@ declare const fullApi: ApiFromModules<{
   "mcp/http": typeof mcp_http;
   "mcp/internal": typeof mcp_internal;
   "mcp/tokens": typeof mcp_tokens;
+  pageViews: typeof pageViews;
   pages: typeof pages;
   preferences: typeof preferences;
   recents: typeof recents;

@@ -13,7 +13,7 @@ import {
   Palette, Lock, Unlock,
   Sparkles, MessageSquare, Languages,
   Upload, Download, BarChart3, History, Bell, AtSign,
-  FileJson, FileArchive,
+  FileJson, FileArchive, FileText,
 } from "lucide-react";
 import { FONT_OPTIONS } from "./page-actions/fonts";
 import { RowButton, Row, ToggleRow, SectionLabel } from "./page-actions/MenuRows";
@@ -141,10 +141,11 @@ export function PageActionsMenu({ page, onShowHistory }: Props) {
           </div>
         )}
 
-        {groupVisible("Export JSON", "Export Markdown", "Import JSON", "Import Markdown", "Import ZIP", "Turn into wiki", "Updates & analytics", "Version history", "Notify me", "Mentions") && (
+        {groupVisible("Export JSON", "Export Markdown", "Export PDF", "Import JSON", "Import Markdown", "Import ZIP", "Turn into wiki", "Updates & analytics", "Version history", "Notify me", "Mentions") && (
           <div className="py-1">
             {match("Export JSON") && <Row icon={FileJson} label="Export JSON (this page + subtree)" onClick={actions.onExportJson} />}
             {match("Export Markdown") && <Row icon={Download} label="Export as Markdown" onClick={actions.onExportMd} />}
+            {match("Export PDF") && <Row icon={FileText} label="Export as PDF (print)" onClick={actions.onExportPdf} />}
             {match("Import JSON") && <Row icon={FileJson} label="Import JSON" onClick={actions.onImportJson} />}
             {match("Import Markdown") && <Row icon={Upload} label="Import Markdown" onClick={actions.onImportMd} />}
             {match("Import ZIP") && <Row icon={FileArchive} label="Import ZIP under this page" onClick={actions.onImportZip} />}

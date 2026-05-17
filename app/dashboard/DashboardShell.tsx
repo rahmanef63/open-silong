@@ -113,14 +113,16 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
             <MentionTypeahead />
 
             <SidebarProvider defaultOpen style={SIDEBAR_STYLE}>
-              <AppSidebar onOpenSearch={() => setSearchOpen(true)} />
+              <div className="print:hidden contents">
+                <AppSidebar onOpenSearch={() => setSearchOpen(true)} />
+              </div>
               {/* h-svh + overflow-hidden deviate from shadcn canonical:
                   PageEditor uses an internal-scroll model (`h-full overflow-hidden`
                   + inner `overflow-y-auto`), so SidebarInset needs a definite
                   viewport-bound height instead of free flow. */}
               <SidebarInset className="h-svh overflow-hidden">
                 <PageHeaderSlotProvider>
-                  <header className="flex h-12 shrink-0 items-center gap-2 border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-10">
+                  <header className="flex h-12 shrink-0 items-center gap-2 border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-10 print:hidden">
                     <div className="flex w-full items-center gap-2 px-3">
                       <SidebarTrigger className="-ml-1" />
                       <Separator
