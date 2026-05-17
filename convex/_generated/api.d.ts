@@ -95,6 +95,7 @@ import type * as templates_seed_weddingPlanner from "../templates/seed/weddingPl
 import type * as templates_seed_workoutLog from "../templates/seed/workoutLog.js";
 import type * as users from "../users.js";
 import type * as webhooks_deliver from "../webhooks/deliver.js";
+import type * as webhooks_deliveries from "../webhooks/deliveries.js";
 import type * as webhooks_mutations from "../webhooks/mutations.js";
 import type * as webhooks_queries from "../webhooks/queries.js";
 import type * as workspaces from "../workspaces.js";
@@ -193,6 +194,7 @@ declare const fullApi: ApiFromModules<{
   "templates/seed/workoutLog": typeof templates_seed_workoutLog;
   users: typeof users;
   "webhooks/deliver": typeof webhooks_deliver;
+  "webhooks/deliveries": typeof webhooks_deliveries;
   "webhooks/mutations": typeof webhooks_mutations;
   "webhooks/queries": typeof webhooks_queries;
   workspaces: typeof workspaces;

@@ -362,6 +362,11 @@ export const trash = mutation({
     for (const id of ids) {
       await ctx.db.patch(id as Id<"pages">, { trashed: true, updatedAt: now });
     }
+    await ctx.scheduler.runAfter(0, internal.webhooks.deliver.run, {
+      ownerId: userId,
+      event: "page.deleted",
+      payload: { pageId: args.pageId, title: page.title, soft: true, cascadeCount: ids.length },
+    });
   },
 });
 
@@ -398,6 +403,11 @@ export const permanentlyDelete = mutation({
       for (const s of snaps) await ctx.db.delete(s._id);
       await ctx.db.delete(id as Id<"pages">);
     }
+    await ctx.scheduler.runAfter(0, internal.webhooks.deliver.run, {
+      ownerId: userId,
+      event: "page.deleted",
+      payload: { pageId: args.pageId, title: page.title, soft: false, cascadeCount: ids.length },
+    });
   },
 });
 

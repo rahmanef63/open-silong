@@ -17,13 +17,15 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 import { toast } from "sonner";
-import { Copy, Trash2, Loader2, Webhook } from "lucide-react";
+import { Copy, Trash2, Loader2, Webhook, ChevronRight } from "lucide-react";
 import { Field } from "@/shared/components/forms/Field";
 import { useAsyncError } from "@/shared/hooks/useAsyncError";
 import { formatRelTime } from "@/shared/lib/format";
 import { Button } from "@/shared/ui/button";
 import { Checkbox } from "@/shared/ui/checkbox";
 import { Switch } from "@/shared/ui/switch";
+import { WebhookDeliveryLog } from "./WebhookDeliveryLog";
+import { cn } from "@/shared/lib/utils";
 
 const EVENT_OPTIONS = [
   { id: "page.created", label: "Page created" },
@@ -47,6 +49,7 @@ export function WebhooksSection() {
   const [url, setUrl] = useState("");
   const [events, setEvents] = useState<Set<string>>(new Set(["page.updated"]));
   const [issued, setIssued] = useState<IssuedWebhook | null>(null);
+  const [openLog, setOpenLog] = useState<Id<"webhookEndpoints"> | null>(null);
 
   const toggleEvent = (id: string) => {
     setEvents((prev) => {
@@ -147,58 +150,75 @@ export function WebhooksSection() {
           </div>
         )}
         <ul className="space-y-2">
-          {(list ?? []).map((w) => (
-            <li key={String(w.id)} className="rounded-md border border-border bg-card p-3">
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <Webhook className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                    <code className="truncate text-xs">{w.url}</code>
+          {(list ?? []).map((w) => {
+            const expanded = openLog === w.id;
+            return (
+              <li key={String(w.id)} className="rounded-md border border-border bg-card p-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <Webhook className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                      <code className="truncate text-xs">{w.url}</code>
+                    </div>
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {w.events.map((e) => (
+                        <span key={e} className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground">
+                          {e}
+                        </span>
+                      ))}
+                    </div>
+                    <div className="mt-1 flex gap-3 text-[10px] text-muted-foreground">
+                      {w.lastSuccessAt && <span>Last success: {formatRelTime(w.lastSuccessAt)}</span>}
+                      {w.lastError && <span className="text-destructive">Last error: {w.lastError}</span>}
+                      {!w.lastSuccessAt && !w.lastError && <span>No deliveries yet</span>}
+                    </div>
                   </div>
-                  <div className="mt-1 flex flex-wrap gap-1">
-                    {w.events.map((e) => (
-                      <span key={e} className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground">
-                        {e}
-                      </span>
-                    ))}
-                  </div>
-                  <div className="mt-1 flex gap-3 text-[10px] text-muted-foreground">
-                    {w.lastSuccessAt && <span>Last success: {formatRelTime(w.lastSuccessAt)}</span>}
-                    {w.lastError && <span className="text-destructive">Last error: {w.lastError}</span>}
-                    {!w.lastSuccessAt && !w.lastError && <span>No deliveries yet</span>}
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Switch
+                      checked={w.enabled}
+                      onCheckedChange={() => void onToggle(w.id)}
+                      disabled={toggling.pending}
+                      className="scale-75"
+                      aria-label="Enable/disable"
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => void copy(w.url)}
+                      className="h-7 w-7 text-muted-foreground"
+                      title="Copy URL"
+                    >
+                      <Copy className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => void onRemove(w.id, w.url)}
+                      disabled={removing.pending}
+                      className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                      title="Delete"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
                   </div>
                 </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  <Switch
-                    checked={w.enabled}
-                    onCheckedChange={() => void onToggle(w.id)}
-                    disabled={toggling.pending}
-                    className="scale-75"
-                    aria-label="Enable/disable"
-                  />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => void copy(w.url)}
-                    className="h-7 w-7 text-muted-foreground"
-                    title="Copy URL"
-                  >
-                    <Copy className="h-3.5 w-3.5" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => void onRemove(w.id, w.url)}
-                    disabled={removing.pending}
-                    className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                    title="Delete"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
-              </div>
-            </li>
-          ))}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setOpenLog(expanded ? null : w.id)}
+                  className="mt-2 h-auto w-full justify-start gap-1 px-1 py-1 text-[11px] font-normal text-muted-foreground hover:bg-accent/50"
+                >
+                  <ChevronRight className={cn("h-3 w-3 transition", expanded && "rotate-90")} />
+                  {expanded ? "Hide" : "Show"} delivery history
+                </Button>
+                {expanded && (
+                  <div className="mt-2 rounded border border-border bg-muted/20 p-2">
+                    <WebhookDeliveryLog endpointId={w.id} />
+                  </div>
+                )}
+              </li>
+            );
+          })}
         </ul>
       </Field>
     </>
