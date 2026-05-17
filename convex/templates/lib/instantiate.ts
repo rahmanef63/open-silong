@@ -1,6 +1,7 @@
 import type { MutationCtx } from "../../_generated/server";
 import type { Id } from "../../_generated/dataModel";
 import { uid } from "../../_shared/uid";
+import { requireActiveWorkspaceWritable } from "../../_shared/workspace";
 import type {
   TemplateJson, TplBlockT, TplDatabaseT, TplPageT, TplViewT,
 } from "./validate";
@@ -136,6 +137,14 @@ export async function instantiateTemplate(
   userId: Id<"users">,
   rootParentId: Id<"pages"> | null,
 ): Promise<InstantiateResult> {
+  // Resolve active workspace once; every insert (pages, databases, row
+  // pages) MUST stamp `workspaceId` or the workspace-scoped reads will
+  // hide the freshly seeded content (databases.list / pages.listMeta
+  // both filter through `by_workspace`). Skipping this is what caused
+  // template databases to render forever as <DatabaseSkeleton/>.
+  const active = await requireActiveWorkspaceWritable(ctx, userId);
+  const workspaceId = active._id;
+
   const dbMap = new Map<string, Id<"databases">>();
   const pageMap = new Map<string, Id<"pages">>();
   let rowsInserted = 0;
@@ -145,6 +154,7 @@ export async function instantiateTemplate(
   for (const db of allDbs) {
     const id = await ctx.db.insert("databases", {
       userId,
+      workspaceId,
       name: db.name,
       icon: db.icon,
       properties: [],
@@ -178,6 +188,7 @@ export async function instantiateTemplate(
     const blocks = buildBlocks(p.blocks, dbMap, pageMap);
     const pageId = await ctx.db.insert("pages", {
       userId,
+      workspaceId,
       parentId,
       title: p.title,
       icon: p.icon,
@@ -233,6 +244,7 @@ export async function instantiateTemplate(
       const titleVal = titleProp ? row.props[titleProp.id] : "";
       const rowPageId = await ctx.db.insert("pages", {
         userId,
+        workspaceId,
         parentId: null,
         title: typeof titleVal === "string" ? titleVal : (titleVal != null ? String(titleVal) : ""),
         icon: "📄",
