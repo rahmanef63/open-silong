@@ -83,6 +83,14 @@ export function usePageActions(page: Page, close: () => void) {
   const onImportJson = () => { close(); workspaceIO.open({ tab: "import-json", zipParentId: page.id }); };
   const onImportZip = () => { close(); workspaceIO.open({ tab: "import-zip", zipParentId: page.id }); };
 
+  /** Browser-native PDF export — print stylesheet hides chrome (sidebar/
+   *  header), leaving a clean reading layout. User picks "Save as PDF"
+   *  from the system print dialog. Zero dep, works in every browser. */
+  const onExportPdf = () => {
+    close();
+    setTimeout(() => window.print(), 50);
+  };
+
   const stub = (label: string) => () => {
     toast.info(`${label} — coming soon`);
     close();
@@ -104,6 +112,7 @@ export function usePageActions(page: Page, close: () => void) {
     setFont, toggleSmall, toggleFull, toggleLock,
     copyLink, copyContents, onDuplicate, onTrash,
     onExportMd, onImportMd, onExportJson, onImportJson, onImportZip,
+    onExportPdf,
     stub,
   };
 }

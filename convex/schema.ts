@@ -257,6 +257,19 @@ export default defineSchema({
     // whether any superadmin already exists without scanning the table.
     .index("by_role", ["role"]),
 
+  /** Read receipts — last time a user viewed a page. Touched by the
+   *  client on PageEditor mount, debounced to ~30s. Powers the
+   *  "Seen by N" badge in PageHeaderSlot + Notion-style presence
+   *  hints in the sidebar. */
+  pageViews: defineTable({
+    userId: v.id("users"),
+    pageId: v.id("pages"),
+    lastViewedAt: v.number(),
+  })
+    .index("by_page", ["pageId"])
+    .index("by_page_user", ["pageId", "userId"])
+    .index("by_user", ["userId"]),
+
   // === MCP per-user tokens ===
   mcpTokens: defineTable({
     userId: v.id("users"),

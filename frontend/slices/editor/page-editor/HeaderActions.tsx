@@ -4,6 +4,7 @@ import { cn } from "@/shared/lib/utils";
 import { Button } from "@/shared/ui/button";
 import type { Page } from "@/shared/types/domain";
 import { PageActionsMenu } from "../PageActionsMenu";
+import { SeenByBadge } from "./SeenByBadge";
 
 interface Props {
   page: Page;
@@ -16,6 +17,7 @@ export function HeaderActions({ page, onShare, onHistory, historyOpen }: Props) 
   const { toggleFavorite, saving } = useStore();
   return (
     <div className="flex items-center gap-1 shrink-0">
+      <SeenByBadge pageId={page.id} className="mr-1 hidden sm:inline-flex" />
       <span className={cn("text-xs text-muted-foreground mr-1 hidden sm:inline", saving && "animate-pulse-soft")}>
         {saving ? "Saving…" : "Saved"}
       </span>
