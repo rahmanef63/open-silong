@@ -75,6 +75,7 @@ export function FormulaCell({ db, prop, row, cellClass }: Props) {
             <Button
               variant="ghost"
               type="button"
+              variant="outline"
               onClick={jumpToErrorPos}
               className="h-auto w-full items-start justify-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-1.5 text-left text-[11px] font-normal text-amber-700 hover:bg-amber-500/20 dark:text-amber-300 [&_svg]:size-3"
             >

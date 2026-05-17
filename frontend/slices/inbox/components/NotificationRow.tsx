@@ -2,6 +2,7 @@ import { useNavigate } from "@/shared/lib/router";
 import { Check, Trash2 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { formatRelTime } from "@/shared/lib/format";
+import { Button } from "@/shared/ui/button";
 import type { Notification } from "../types";
 import { KIND_ICON } from "../lib/format";
 import { Button } from "@/shared/ui/button";

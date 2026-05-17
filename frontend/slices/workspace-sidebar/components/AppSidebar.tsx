@@ -20,6 +20,7 @@ import {
   SidebarSeparator,
   useSidebar,
 } from "@/shared/ui/sidebar";
+import { Button } from "@/shared/ui/button";
 import { useStore } from "@/shared/lib/store";
 import { Button } from "@/shared/ui/button";
 import { useAdminRole } from "@/slices/admin-panel";

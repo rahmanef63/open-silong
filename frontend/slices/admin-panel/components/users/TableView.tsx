@@ -21,13 +21,14 @@ export function UsersTableView({
     const Icon = !active ? ArrowUpDown : sortDir === "asc" ? ArrowUp : ArrowDown;
     return (
       <TableHead className={cn("cursor-pointer select-none", className)}>
-        <button
+        <Button
           type="button"
+          variant="ghost"
           onClick={() => onSort(key)}
-          className="inline-flex items-center gap-1 hover:text-foreground"
+          className="h-auto p-0 gap-1 text-xs font-normal hover:bg-transparent hover:text-foreground [&_svg]:size-3"
         >
           {label} <Icon className={cn("h-3 w-3", active ? "text-foreground" : "text-muted-foreground/50")} />
-        </button>
+        </Button>
       </TableHead>
     );
   }

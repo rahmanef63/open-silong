@@ -5,6 +5,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { Block, BlockType } from "@/shared/types/domain";
 import { cn } from "@/shared/lib/utils";
+import { Button } from "@/shared/ui/button";
 import { SlashMenu } from "../SlashMenu";
 import { bgColorClass, colorClass } from "../lib/colors";
 import { nestedRegistry } from "./nestedRegistry";
@@ -96,6 +97,8 @@ export function NestedBlock({
         variant="ghost"
         {...listeners}
         type="button"
+        variant="ghost"
+        size="icon"
         aria-label="Drag block"
         className="mt-1 h-5 w-4 shrink-0 cursor-grab rounded p-0 text-muted-foreground/50 opacity-0 active:cursor-grabbing group-hover/nested:opacity-100 [&_svg]:size-3.5"
       >

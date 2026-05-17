@@ -3,6 +3,7 @@ import { useStore } from "@/shared/lib/store";
 import { cn } from "@/shared/lib/utils";
 import { Button } from "@/shared/ui/button";
 import { IconPickerPopover, DynamicIcon, DEFAULT_PAGE_ICON } from "@/shared/components/icon-picker";
+import { Button } from "@/shared/ui/button";
 import { WikiBadge } from "@/slices/wiki";
 import type { Database, Page } from "@/shared/types/domain";
 import { COVERS } from "../lib/covers";

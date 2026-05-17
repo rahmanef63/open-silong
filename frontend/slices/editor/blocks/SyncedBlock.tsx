@@ -8,6 +8,7 @@ import { cn } from "@/shared/lib/utils";
 import { uid } from "@/shared/lib/uid";
 import { Link } from "@/shared/lib/router";
 import { ROUTES } from "@/shared/lib/routes";
+import { Button } from "@/shared/ui/button";
 import { findSyncedSource } from "../lib/syncedBlocks";
 import { focusBlockSoon, findBlockNode } from "../lib/focusBlock";
 import { requireNested } from "./nestedRegistry";

@@ -4,6 +4,7 @@ import { BookOpen, BookCheck } from "lucide-react";
 import { toast } from "sonner";
 import { reportError } from "@/shared/lib/error";
 import { useWiki } from "../hooks/useWiki";
+import { Button } from "@/shared/ui/button";
 
 interface Props {
   pageId: string;
@@ -32,12 +33,13 @@ export function WikiToggleAction({ pageId, onClose }: Props) {
 
   const Icon = enabled ? BookCheck : BookOpen;
   return (
-    <button
+    <Button
+      variant="ghost"
       onClick={onClick}
-      className="flex w-full items-center gap-2 px-3 py-1.5 text-sm hover:bg-accent text-left"
+      className="flex w-full h-auto items-center gap-2 px-3 py-1.5 text-sm font-normal justify-start rounded-none [&_svg]:size-3.5"
     >
       <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
       <span className="flex-1 truncate">{enabled ? "Remove wiki" : "Turn into wiki"}</span>
-    </button>
+    </Button>
   );
 }

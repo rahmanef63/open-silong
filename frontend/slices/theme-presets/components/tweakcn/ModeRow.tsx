@@ -28,6 +28,7 @@ export function ModeRow({
         {MODES.map(({ id, label, Icon }) => {
           const active = id === activeMode;
           return (
+            // shadcn Button skipped: role="tab" tablist semantics
             <button
               key={id}
               role="tab"

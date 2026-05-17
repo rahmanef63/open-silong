@@ -146,12 +146,13 @@ export function WorkspacesSection() {
               <div>
                 <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Icon</label>
                 <IconPickerPopover value={newEmoji} onChange={setNewEmoji}>
-                  <button
+                  <Button
                     type="button"
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-border text-2xl hover:bg-accent transition"
+                    variant="outline"
+                    className="h-10 w-10 p-0 rounded-md text-2xl font-normal"
                   >
                     <DynamicIcon value={newEmoji} />
-                  </button>
+                  </Button>
                 </IconPickerPopover>
               </div>
               <div className="flex-1">

@@ -33,6 +33,7 @@ export function DatePicker({ value, prop, onChange, onPropPatch, triggerClass, e
         <Button
           variant="ghost"
           type="button"
+          variant="ghost"
           className={cn(
             "h-auto w-full justify-start rounded px-2 py-1 text-left font-normal outline-none hover:bg-accent/50 focus-visible:ring-1 focus-visible:ring-ring",
             !display && "text-muted-foreground",

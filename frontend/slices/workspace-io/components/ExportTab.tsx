@@ -103,16 +103,17 @@ export function ExportTab({ preselectPageId }: { preselectPageId?: string }) {
           className="mt-1 mb-1"
         />
         <div className="rounded-md border border-border bg-card max-h-72 overflow-y-auto">
-          <button
+          <Button
             type="button"
+            variant="ghost"
             onClick={toggleAll}
-            className="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground border-b border-border hover:bg-accent transition"
+            className="w-full h-auto justify-start gap-2 px-3 py-2 text-xs font-normal text-muted-foreground border-b border-border rounded-none [&_svg]:size-3"
           >
             <input type="checkbox" checked={allFilteredSelected} readOnly className="h-3.5 w-3.5" />
             <FolderTree className="h-3 w-3" />
             {allFilteredSelected ? "Deselect all" : `Select all (${filtered.length})`}
             <span className="ml-auto">{selected.size} picked</span>
-          </button>
+          </Button>
           {filtered.length === 0 && (
             <div className="px-3 py-6 text-center text-sm text-muted-foreground">No pages match.</div>
           )}
@@ -139,20 +140,21 @@ export function ExportTab({ preselectPageId }: { preselectPageId?: string }) {
         <Label className="text-xs uppercase text-muted-foreground">Sub-page depth</Label>
         <div className="mt-1 flex flex-wrap gap-1.5">
           {DEPTH_OPTIONS.map((opt) => (
-            <button
+            <Button
               key={opt.value}
               type="button"
+              variant="outline"
               onClick={() => setDepth(opt.value)}
               title={opt.hint}
               className={cn(
-                "rounded-md border px-2.5 py-1 text-xs transition",
+                "h-auto rounded-md px-2.5 py-1 text-xs font-normal",
                 depth === opt.value
-                  ? "border-brand bg-brand/10 text-foreground"
-                  : "border-border bg-card text-muted-foreground hover:bg-accent",
+                  ? "border-brand bg-brand/10 text-foreground hover:bg-brand/10"
+                  : "bg-card text-muted-foreground",
               )}
             >
               {opt.label}
-            </button>
+            </Button>
           ))}
         </div>
         <p className="mt-1.5 text-[11px] text-muted-foreground">

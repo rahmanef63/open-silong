@@ -62,6 +62,7 @@ export function Segmented<T extends string | number>({ value, options, onChange 
         <Button
           variant="ghost"
           key={String(o.value)}
+          variant="ghost"
           onClick={() => onChange(o.value)}
           className={cn(
             "h-auto flex-1 rounded px-2 py-1 text-xs font-normal transition",

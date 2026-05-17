@@ -10,6 +10,7 @@ export function AddRowFooter({ onAdd }: Props) {
     <Button
       variant="ghost"
       type="button"
+      variant="ghost"
       onClick={onAdd}
       className="h-auto w-full justify-start gap-2 rounded-none border-t border-border px-3 py-2 text-xs font-normal text-muted-foreground transition [&_svg]:size-3"
     >

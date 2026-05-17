@@ -9,6 +9,7 @@ import { Copy, Trash2, Plus, Loader2, KeyRound } from "lucide-react";
 import { Field } from "@/shared/components/forms/Field";
 import { useAsyncError } from "@/shared/hooks/useAsyncError";
 import { formatRelTime } from "@/shared/lib/format";
+import { Button } from "@/shared/ui/button";
 
 interface IssuedToken { id: Id<"mcpTokens">; token: string; label: string }
 
@@ -60,15 +61,16 @@ export function McpTokensSection() {
             maxLength={60}
             className="flex-1 min-w-[12rem] rounded-md border border-border bg-card px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-ring"
           />
-          <button
+          <Button
             type="button"
+            variant="outline"
             onClick={() => void onIssue()}
             disabled={!label.trim() || issuing.pending}
-            className="inline-flex items-center gap-2 rounded-md border border-border bg-background px-3 py-1.5 text-sm hover:bg-accent transition disabled:opacity-60"
+            className="h-auto gap-2 bg-background px-3 py-1.5 text-sm font-normal disabled:opacity-60 [&_svg]:size-3.5"
           >
             {issuing.pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
             Issue token
-          </button>
+          </Button>
         </div>
         {issuing.error && (
           <p className="mt-2 text-xs text-destructive">{issuing.error.message}</p>
@@ -82,26 +84,28 @@ export function McpTokensSection() {
           </div>
           <div className="flex items-center gap-2 rounded border border-border bg-card p-1">
             <code className="flex-1 px-2 py-1 text-xs font-mono break-all">{issued.token}</code>
-            <button
+            <Button
               type="button"
+              variant="ghost"
               onClick={() => void copy(issued.token)}
-              className="inline-flex h-7 items-center gap-1 rounded px-2 text-xs hover:bg-accent"
+              className="h-7 gap-1 rounded px-2 text-xs font-normal [&_svg]:size-3.5"
             >
               <Copy className="h-3.5 w-3.5" /> Copy
-            </button>
+            </Button>
           </div>
           <div className="flex items-center justify-between">
             <p className="text-[11px] text-muted-foreground">
               Send as <code>Authorization: Bearer …</code> to <code>/mcp/v1</code>.
               We only stored the SHA-256 hash; you can&apos;t see this token again.
             </p>
-            <button
+            <Button
               type="button"
+              variant="ghost"
               onClick={() => setIssued(null)}
-              className="text-xs text-muted-foreground hover:text-foreground"
+              className="h-auto p-0 text-xs font-normal text-muted-foreground hover:bg-transparent hover:text-foreground"
             >
               Dismiss
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -124,14 +128,15 @@ export function McpTokensSection() {
                       : " · never used"}
                   </div>
                 </div>
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
                   onClick={() => void onRevoke(t.id, t.label)}
                   disabled={revoking.pending}
-                  className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs text-destructive hover:bg-destructive/10 disabled:opacity-50"
+                  className="h-auto gap-1 px-2 py-1 text-xs font-normal text-destructive hover:bg-destructive/10 hover:text-destructive disabled:opacity-50 [&_svg]:size-3.5"
                 >
                   <Trash2 className="h-3.5 w-3.5" /> Revoke
-                </button>
+                </Button>
               </li>
             ))}
           </ul>

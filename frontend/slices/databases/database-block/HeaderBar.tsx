@@ -5,6 +5,7 @@ import {
 import { Plus, Maximize2, Link2, Lock } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { DynamicIcon, IconPickerPopover, DEFAULT_DATABASE_ICON } from "@/shared/components/icon-picker";
+import { Button } from "@/shared/ui/button";
 import { ViewTab } from "./ViewTab";
 import { DatabaseMenu } from "./DatabaseMenu";
 import { VIEW_META } from "./lazyViews";
@@ -56,6 +57,8 @@ export function DatabaseHeaderBar({
           <Button
             variant="ghost"
             type="button"
+            variant="ghost"
+            size="icon"
             onClick={onOpenAsPage}
             title="Open as page"
             aria-label="Open database as page"

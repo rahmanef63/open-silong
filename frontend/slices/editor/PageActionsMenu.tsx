@@ -72,6 +72,7 @@ export function PageActionsMenu({ page, onShowHistory }: Props) {
                 <Button
                   variant="outline"
                   key={opt.id}
+                  variant="outline"
                   onClick={() => actions.setFont(opt.id)}
                   className={cn(
                     "h-auto flex-col rounded-md py-2 text-center font-normal transition",

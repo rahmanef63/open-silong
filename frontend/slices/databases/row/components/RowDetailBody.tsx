@@ -82,6 +82,8 @@ export function RowDetailBody({ pageId, headerExtras, onClose }: Props) {
               <Button
                 variant="ghost"
                 type="button"
+                variant="ghost"
+                size="icon"
                 onClick={onClose}
                 aria-label="Close"
                 className="h-6 w-6 rounded p-0 text-muted-foreground transition-colors hover:text-foreground [&_svg]:size-3.5"

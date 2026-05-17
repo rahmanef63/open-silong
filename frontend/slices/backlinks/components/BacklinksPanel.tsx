@@ -2,6 +2,7 @@ import { Link2, ChevronDown, ChevronRight } from "lucide-react";
 import { useNavigate } from "@/shared/lib/router";
 import { useState } from "react";
 import { cn } from "@/shared/lib/utils";
+import { Button } from "@/shared/ui/button";
 import { useBacklinks } from "../hooks/useBacklinks";
 import { Button } from "@/shared/ui/button";
 
@@ -51,6 +52,7 @@ export function BacklinksPanel({ pageId }: Props) {
                 <Button
                   variant="ghost"
                   key={`${bl.blockId}-${i}`}
+                  variant="ghost"
                   onClick={() => navigate(`/p/${bl.pageId}`)}
                   className="h-auto w-full items-start justify-start gap-2 rounded-none px-3 py-1.5 text-left text-xs font-normal last:border-0 hover:bg-accent/50"
                 >

@@ -35,6 +35,8 @@ export function CommentComposer({ onSubmit, placeholder = "Write a comment…" }
       <Button
         variant="ghost"
         type="submit"
+        variant="ghost"
+        size="icon"
         disabled={!text.trim()}
         aria-label="Send"
         className="h-auto rounded p-1 text-muted-foreground [&_svg]:size-3.5"

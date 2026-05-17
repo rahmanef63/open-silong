@@ -3,6 +3,7 @@ import { Download, Upload } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
+import { Button } from "@/shared/ui/button";
 import { useStore } from "@/shared/lib/store";
 import { downloadCsv, exportDatabaseToCsv } from "../lib/csv";
 import type { Database, Page } from "@/shared/types/domain";
@@ -26,12 +27,13 @@ export function CsvActions({ db, rows }: Props) {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button
-            className="flex items-center gap-1 rounded-md px-2 py-1 text-xs hover:bg-accent text-muted-foreground"
+          <Button
+            variant="ghost"
+            className="h-auto gap-1 rounded-md px-2 py-1 text-xs font-normal text-muted-foreground"
             aria-label="CSV import / export"
           >
             CSV
-          </button>
+          </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuLabel className="text-xs">Data</DropdownMenuLabel>

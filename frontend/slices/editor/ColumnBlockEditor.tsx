@@ -5,6 +5,7 @@ import { Block, BlockType } from "@/shared/types/domain";
 import { cn } from "@/shared/lib/utils";
 import { uid } from "@/shared/lib/uid";
 import { Plus } from "lucide-react";
+import { Button } from "@/shared/ui/button";
 import { requireNested } from "./blocks/nestedRegistry";
 import { Button } from "@/shared/ui/button";
 

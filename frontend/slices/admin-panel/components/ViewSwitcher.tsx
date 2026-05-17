@@ -40,6 +40,7 @@ export function ViewSwitcher({
           return (
             <Tooltip key={v}>
               <TooltipTrigger asChild>
+                {/* shadcn Button skipped: role="tab" tablist semantics */}
                 <button
                   role="tab"
                   aria-selected={active}

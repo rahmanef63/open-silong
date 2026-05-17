@@ -62,6 +62,7 @@ export function DatabasePage() {
         <Button
           variant="outline"
           type="button"
+          variant="outline"
           onClick={() => navigate(ROUTES.dashboard)}
           className="h-auto rounded-md px-3 py-1.5 text-sm font-normal"
         >
@@ -80,6 +81,7 @@ export function DatabasePage() {
         <Button
           variant="outline"
           type="button"
+          variant="outline"
           onClick={() => navigate(ROUTES.trash)}
           className="h-auto rounded-md px-3 py-1.5 text-sm font-normal"
         >

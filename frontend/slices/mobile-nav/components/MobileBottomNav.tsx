@@ -7,6 +7,7 @@ import {
   Search, Sparkles, Bot, Inbox, MoreHorizontal,
 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
+import { Button } from "@/shared/ui/button";
 import { ROUTES } from "@/shared/lib/routes";
 import { useAdminRole } from "@/slices/admin-panel";
 import { TemplateGalleryDialog } from "@/slices/templates";
@@ -62,6 +63,7 @@ export function MobileBottomNav({ onOpenSearch }: Props) {
               <Button
                 variant="ghost"
                 type="button"
+                variant="ghost"
                 onClick={(e) => { e.currentTarget.blur(); s.onClick(); }}
                 aria-label={s.label}
                 aria-current={s.active ? "page" : undefined}

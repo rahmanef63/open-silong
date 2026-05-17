@@ -3,6 +3,7 @@ import { useStore } from "@/shared/lib/store";
 import { cn } from "@/shared/lib/utils";
 import { formatRelTime } from "@/shared/lib/format";
 import { Checkbox } from "@/shared/ui/checkbox";
+import { Button } from "@/shared/ui/button";
 import { RelationCell } from "./property-cells/RelationCell";
 import { FilesCell } from "./property-cells/FilesCell";
 import { RollupCell } from "./property-cells/RollupCell";

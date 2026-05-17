@@ -74,6 +74,7 @@ export function OptionRow({ db, propId, option, selected, onSelect }: {
             <Button
               variant="ghost"
               key={c}
+              size="icon"
               onClick={(e) => { e.stopPropagation(); updateSelectOption(db.id, propId, option.id, { color: c }); setShowColors(false); }}
               className={cn("h-5 w-5 rounded-full border-2 p-0", colorClass(c), option.color === c ? "border-foreground" : "border-transparent")}
               title={c}
