@@ -120,7 +120,7 @@ export function TrashView() {
                         className="h-auto gap-1 px-2.5 py-1 text-xs font-normal [&_svg]:size-3.5"
                       >
                         <RotateCcw className="h-3.5 w-3.5" /> Restore
-                      </button>
+                      </Button>
                       <Button
                         variant="ghost"
                         onClick={async () => {

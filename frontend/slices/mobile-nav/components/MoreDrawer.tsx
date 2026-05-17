@@ -5,7 +5,6 @@ import { FileBox, Settings, User, Trash2, ShieldAlert } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { Button } from "@/shared/ui/button";
 import { ROUTES, ROUTES_ABS } from "@/shared/lib/routes";
-import { Button } from "@/shared/ui/button";
 
 interface Props {
   open: boolean;
@@ -59,7 +58,6 @@ export function MoreDrawer({ open, onOpenChange, isAdmin, onNavigate, onOpenTemp
               variant="outline"
               key={t.id}
               type="button"
-              variant="outline"
               onClick={(e) => { e.currentTarget.blur(); t.onClick(); }}
               className="h-auto flex-col items-start rounded-xl bg-card p-3 text-left font-normal transition hover:bg-accent active:scale-[0.98]"
             >

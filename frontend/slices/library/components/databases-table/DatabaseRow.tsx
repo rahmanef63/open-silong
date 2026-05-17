@@ -105,7 +105,6 @@ export function DatabaseRow({
             <Button
               variant="ghost"
               type="button"
-              variant="ghost"
               onClick={onOpen}
               onDoubleClick={() => { setDraft(db.name); setRenaming(true); }}
               className="h-auto min-w-0 flex-1 justify-start truncate p-0 text-left font-medium hover:bg-transparent"
@@ -127,7 +126,6 @@ export function DatabaseRow({
             <Button
               variant="ghost"
               type="button"
-              variant="ghost"
               onClick={() => onOpenSource("page", host.id)}
               className="h-auto max-w-full justify-start truncate p-0 text-xs font-normal hover:bg-transparent hover:text-foreground"
             >

@@ -21,7 +21,6 @@ export function ButtonCell({ prop, row }: { prop: Property; row: Page }) {
     <Button
       variant="outline"
       type="button"
-      variant="outline"
       onClick={onClick}
       disabled={actions.length === 0}
       className="m-1 inline-flex h-auto items-center gap-1 rounded-md bg-card px-2 py-0.5 text-xs font-normal"

@@ -5,7 +5,6 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { Block, BlockType } from "@/shared/types/domain";
 import { cn } from "@/shared/lib/utils";
-import { Button } from "@/shared/ui/button";
 import { SlashMenu } from "../SlashMenu";
 import { bgColorClass, colorClass } from "../lib/colors";
 import { nestedRegistry } from "./nestedRegistry";
@@ -94,7 +93,6 @@ export function NestedBlock({
       )}
     >
       <Button
-        variant="ghost"
         {...listeners}
         type="button"
         variant="ghost"

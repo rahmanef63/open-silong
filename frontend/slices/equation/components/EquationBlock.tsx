@@ -73,7 +73,6 @@ export function EquationBlock({ text, onText, registerRef }: EquationBlockProps)
       <Button
         variant="ghost"
         type="button"
-        variant="ghost"
         size="icon"
         onClick={(e) => { e.stopPropagation(); setDraft(text); setEditing(true); }}
         className="absolute right-2 top-2 h-auto rounded p-1 text-muted-foreground opacity-0 group-hover/eq:opacity-100 [&_svg]:size-3"

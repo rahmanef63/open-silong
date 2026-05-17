@@ -12,7 +12,6 @@ import { Button } from "@/shared/ui/button";
 import { DENSITY, type DensityConfig } from "../lib/density";
 import { handleTreeKey, type TreeItem } from "../lib/keyboard";
 import { DynamicIcon } from "@/shared/components/icon-picker";
-import { Button } from "@/shared/ui/button";
 
 interface Props {
   item: TreeItem;

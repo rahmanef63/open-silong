@@ -35,7 +35,6 @@ export function CommentComposer({ onSubmit, placeholder = "Write a comment…" }
       <Button
         variant="ghost"
         type="submit"
-        variant="ghost"
         size="icon"
         disabled={!text.trim()}
         aria-label="Send"

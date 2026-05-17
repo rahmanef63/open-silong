@@ -5,7 +5,6 @@ import { formatRelTime } from "@/shared/lib/format";
 import { Button } from "@/shared/ui/button";
 import type { Notification } from "../types";
 import { KIND_ICON } from "../lib/format";
-import { Button } from "@/shared/ui/button";
 
 interface Props {
   note: Notification;

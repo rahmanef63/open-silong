@@ -82,7 +82,6 @@ export function RowDetailBody({ pageId, headerExtras, onClose }: Props) {
               <Button
                 variant="ghost"
                 type="button"
-                variant="ghost"
                 size="icon"
                 onClick={onClose}
                 aria-label="Close"

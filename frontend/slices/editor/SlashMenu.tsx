@@ -97,7 +97,6 @@ export function SlashMenu({ query, onSelect, onClose, onSelectLinkedDatabase }: 
           <Button
             variant="ghost"
             key={key}
-            variant="ghost"
             onClick={() => fire(it)}
             onMouseEnter={() => setActive(i)}
             className={cn(

@@ -57,7 +57,6 @@ export function MoveToSubmenu({ page, close }: { page: Page; close: () => void }
             <Button
               variant="ghost"
               key={p.id}
-              variant="ghost"
               onClick={() => { movePage(page.id, p.id); toast.success(`Moved into ${p.title || "Untitled"}`); close(); }}
               className={cn(
                 "h-auto w-full justify-start gap-2 rounded-none px-5 py-1.5 text-xs font-normal [&_svg]:size-3",

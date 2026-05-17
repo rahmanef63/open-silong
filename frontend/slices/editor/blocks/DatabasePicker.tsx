@@ -66,7 +66,6 @@ export function DatabasePicker({ open, onOpenChange, onPick }: Props) {
                 variant="ghost"
                 key={r.id}
                 type="button"
-                variant="ghost"
                 onMouseEnter={() => setActive(i)}
                 onClick={() => choose(r.id)}
                 className={cn(

@@ -7,7 +7,6 @@ import { Search, FileText, Clock, Database as DatabaseIcon, Loader2 } from "luci
 import { DynamicIcon } from "@/shared/components/icon-picker";
 import { Button } from "@/shared/ui/button";
 import { ROUTES } from "@/shared/lib/routes";
-import { Button } from "@/shared/ui/button";
 import { DEFAULT_SEARCH_LABELS, type SearchModalLabels } from "../lib/types";
 
 interface Props {

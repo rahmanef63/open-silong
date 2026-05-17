@@ -34,7 +34,6 @@ export function SourceCell({
       <Button
         variant="ghost"
         type="button"
-        variant="ghost"
         onClick={() => onOpenSource(source.kind === "database" ? "database" : "page", source.targetId!)}
         className="h-auto max-w-full justify-start truncate p-0 text-xs font-normal hover:bg-transparent hover:text-foreground"
       >
