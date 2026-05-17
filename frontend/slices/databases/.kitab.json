@@ -6,9 +6,11 @@
   "syncDirection": "down-only",
   "generalization": {
     "status": "needs-adapter",
-    "auditedAt": "2026-05-16",
+    "auditedAt": "2026-05-17",
     "blockers": [
-      "unaudited - mass backfill, run /rr-prep before push UP"
+      "ROUTE_LITERAL (2× — e.g. DatabaseBlock.tsx:31, property-cell/ButtonCell.tsx:12)",
+      "CONVEX_TABLE (1× — e.g. DatabasePage.tsx:32)",
+      "ROLE_ENUM (1× — e.g. slice.contract.ts:17)"
     ]
   },
   "lastPullAt": null,

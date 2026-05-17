@@ -6,9 +6,10 @@
   "syncDirection": "down-only",
   "generalization": {
     "status": "needs-adapter",
-    "auditedAt": "2026-05-16",
+    "auditedAt": "2026-05-17",
     "blockers": [
-      "unaudited - mass backfill, run /rr-prep before push UP"
+      "ROLE_ENUM (11× — e.g. MembersDialog.tsx:33, MembersDialog.tsx:33, MembersDialog.tsx:33)",
+      "CONVEX_TABLE (1× — e.g. MembersDialog.tsx:25)"
     ]
   },
   "lastPullAt": null,

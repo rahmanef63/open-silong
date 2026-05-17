@@ -6,9 +6,9 @@
   "syncDirection": "down-only",
   "generalization": {
     "status": "needs-adapter",
-    "auditedAt": "2026-05-16",
+    "auditedAt": "2026-05-17",
     "blockers": [
-      "unaudited - mass backfill, run /rr-prep before push UP"
+      "CONVEX_TABLE (2× — e.g. components/ShareDialog.tsx:43, components/ShareDialog.tsx:126)"
     ]
   },
   "lastPullAt": null,
