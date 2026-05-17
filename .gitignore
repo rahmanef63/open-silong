@@ -29,4 +29,5 @@ out/
 *.sln
 *.sw?
 .claude/scheduled_tasks.lock
+.claude/worktrees/
 tsconfig.tsbuildinfo
