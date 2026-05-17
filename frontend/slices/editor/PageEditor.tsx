@@ -19,6 +19,7 @@ import { PageHeaderSlot } from "@/shared/components/PageHeaderSlot";
 import { useFullPage } from "./hooks/useFullPage";
 import { usePageHashScroll } from "./hooks/usePageHashScroll";
 import { useReadReceipt } from "./hooks/useReadReceipt";
+import { useInlineAiShortcut } from "./hooks/useInlineAiShortcut";
 import { useBlockMoveShortcut } from "./hooks/useBlockMoveShortcut";
 import { useLegacyHostRedirect, legacyHostDbIdOf } from "./hooks/useLegacyHostRedirect";
 import { handlePageDragEnd } from "./lib/pageDragEnd";
@@ -50,6 +51,7 @@ export function PageEditor() {
   useEffect(() => { if (id && page) pushRecent(id); }, [id, page?.id]);
   usePageHashScroll(id);
   useReadReceipt(id);
+  useInlineAiShortcut();
   useBlockMoveShortcut({ pageId: id, blocksRef, updatePage });
 
   const registerRef = useCallback((bid: string, el: HTMLElement | null) => {
