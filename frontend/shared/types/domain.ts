@@ -23,7 +23,10 @@ export type BlockType =
   | "table"      // simple table (rows × cols of strings)
   | "embed"      // iframe embed (YouTube / Vimeo / Loom / Figma / generic)
   | "button"     // CTA button → URL or page
-  | "synced";    // synced block — source (owns children) or ref (mirrors source)
+  | "synced"     // synced block — source (owns children) or ref (mirrors source)
+  | "toc"        // table of contents — auto-derived from sibling headings
+  | "audio"      // audio file embed (uploaded to convex storage)
+  | "video";     // video file embed (uploaded to convex storage)
 
 export interface Block {
   id: string;

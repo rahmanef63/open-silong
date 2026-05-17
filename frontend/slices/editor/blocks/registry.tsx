@@ -6,6 +6,9 @@ import { Skeleton } from "@/shared/ui/skeleton";
 import { ImageBlock } from "./ImageBlock";
 import { EmbedBlock } from "./EmbedBlock";
 import { ButtonBlock } from "./ButtonBlock";
+import { TocBlock } from "./TocBlock";
+import { AudioBlock } from "./AudioBlock";
+import { VideoBlock } from "./VideoBlock";
 
 export type { BlockRendererProps };
 
@@ -42,6 +45,9 @@ export const BLOCK_RENDERERS: Partial<Record<BlockType, ComponentType<BlockRende
   equation: EquationAdapter,
   table: SimpleTableBlockLazy as unknown as ComponentType<BlockRendererProps>,
   divider: DividerAdapter,
+  toc: TocBlock,
+  audio: AudioBlock,
+  video: VideoBlock,
 };
 
 export function getBlockRenderer(type: BlockType): ComponentType<BlockRendererProps> | undefined {

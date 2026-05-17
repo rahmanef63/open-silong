@@ -12,4 +12,7 @@ export interface BaseBlockProps {
 export interface BlockRendererProps extends BaseBlockProps {
   onReplace?: (next: Block) => void;
   registerRef?: (el: HTMLElement | null) => void;
+  /** Set by `BlockEditor` so derived blocks (TOC, mentions, AI) can
+   *  query the page's full block list / metadata without prop-drilling. */
+  pageId?: string;
 }

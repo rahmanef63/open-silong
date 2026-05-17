@@ -140,6 +140,7 @@ function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerR
       <BlockShell {...shellProps} controls={controls}>
         <Renderer
           block={block}
+          pageId={pageId}
           onUpdate={(patch) => updateBlock(pageId, block.id, patch)}
           onReplace={(next) => replaceBlock(pageId, block.id, next)}
           registerRef={(el) => registerRef(block.id, el)}

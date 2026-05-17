@@ -3,6 +3,7 @@ import {
   Type, Heading1, Heading2, Heading3, Heading4, ListTodo, List, ListOrdered,
   Quote, Code, Minus, Lightbulb, FileText, Database, Columns2, Columns3, Columns4,
   ChevronRight, Image, Sigma, Table, Tv2, MousePointer, RefreshCw,
+  ListTree, Mic, Video,
 } from "lucide-react";
 
 export interface BlockSpec {
@@ -39,4 +40,7 @@ export const BLOCK_SPECS: BlockSpec[] = [
   { type: "embed", label: "Embed", hint: "YouTube · Vimeo · Loom · Figma · CodePen · Spotify", icon: Tv2, keywords: ["embed", "iframe", "video", "youtube", "vimeo", "loom", "figma", "codepen", "spotify"] },
   { type: "button", label: "Button", hint: "Call-to-action button → URL or page", icon: MousePointer, keywords: ["button", "cta", "link", "action"] },
   { type: "synced", label: "Synced block", hint: "Reusable content — edits propagate to every reference", icon: RefreshCw, keywords: ["synced", "sync", "reusable", "shared", "transclusion", "embed"] },
+  { type: "toc", label: "Table of contents", hint: "Auto-generated nav from page headings", icon: ListTree, keywords: ["toc", "table of contents", "outline", "nav", "anchors"] },
+  { type: "audio", label: "Audio", hint: "Upload or embed an audio file", icon: Mic, keywords: ["audio", "sound", "mp3", "wav", "voice", "music"] },
+  { type: "video", label: "Video", hint: "Upload or embed a video file", icon: Video, keywords: ["video", "mp4", "mov", "webm", "movie", "clip"] },
 ];
