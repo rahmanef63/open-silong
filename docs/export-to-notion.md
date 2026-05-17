@@ -65,7 +65,7 @@ property names, rows are pages.
 | Headings / paragraphs / lists / quotes / code / toggles | ✅ |
 | Tables (GFM) | ✅ |
 | Columns (2/3/4/5) | ⚠️ rendered sequentially (Notion's MD importer doesn't reconstruct columns) |
-| `database` block | ✅ as separate database (linked via the sibling CSV) |
+| `database` block | ✅ inline GFM table in the page MD (Notion creates a simple table) + sibling `databases/<name>.csv` in ZIP (Notion creates a real database) |
 | Math / equation | ⚠️ rendered as `$expr$` text; Notion preserves as text |
 | Audio / video / embed | ⚠️ rendered as `[caption](url)` link |
 | Page mentions | ⚠️ rendered as `[📄 title](#page-id)` link |

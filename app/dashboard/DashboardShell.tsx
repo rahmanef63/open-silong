@@ -101,8 +101,8 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
         <AuthGuard>
           <RouterProvider basename="/dashboard">
           <StoreProvider>
-            <WorkspaceIOProvider>
             <ConfirmProvider>
+            <WorkspaceIOProvider>
             <Suspense fallback={null}>
               <CommandPalette />
             </Suspense>
@@ -166,8 +166,8 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
                 is fixed-positioned. */}
             <SearchModal open={searchOpen} onOpenChange={setSearchOpen} />
             <MobileBottomNav onOpenSearch={() => setSearchOpen(true)} />
-            </ConfirmProvider>
             </WorkspaceIOProvider>
+            </ConfirmProvider>
           </StoreProvider>
           </RouterProvider>
         </AuthGuard>

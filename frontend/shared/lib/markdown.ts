@@ -1,7 +1,9 @@
 import { Block, Page } from "../types";
 import { uid } from "./uid";
+import { lookupDb, type ExportContext } from "./exportContext";
+import { databaseToMarkdownTable } from "./databaseTable";
 
-export function blockToMarkdown(b: Block, depth = 0): string {
+export function blockToMarkdown(b: Block, depth = 0, ctx?: ExportContext): string {
   const indent = "  ".repeat(depth);
   switch (b.type) {
     case "h1": return `${indent}# ${b.text}`;
@@ -39,18 +41,23 @@ export function blockToMarkdown(b: Block, depth = 0): string {
     }
     case "toggle": {
       const head = `${indent}<details><summary>${b.text}</summary>`;
-      const body = (b.children ?? []).map(c => blockToMarkdown(c, depth + 1)).join("\n");
+      const body = (b.children ?? []).map(c => blockToMarkdown(c, depth + 1, ctx)).join("\n");
       return `${head}\n\n${body}\n\n${indent}</details>`;
     }
     case "columns2":
     case "columns3":
     case "columns4":
     case "columns5":
-      return (b.columns ?? []).flatMap(col => col.map(c => blockToMarkdown(c, depth))).join("\n\n");
+      return (b.columns ?? []).flatMap(col => col.map(c => blockToMarkdown(c, depth, ctx))).join("\n\n");
     case "page":
       return `${indent}[📄 ${b.text || "Subpage"}](#page-${b.pageId ?? ""})`;
-    case "database":
-      return `${indent}[🗂️ ${b.text || "Database"}](#db-${b.databaseId ?? ""})`;
+    case "database": {
+      const hit = lookupDb(ctx, b.databaseId);
+      if (!hit) return `${indent}[🗂️ ${b.text || "Database"}](#db-${b.databaseId ?? ""})`;
+      const heading = `${indent}### 🗂️ ${b.text || hit.db.name || "Database"}`;
+      const table = databaseToMarkdownTable(hit.db, hit.rows, ctx?.allPages);
+      return `${heading}\n\n${table}`;
+    }
     case "synced":
       return `${indent}${b.text ?? ""}`;
     case "toc":
@@ -60,9 +67,9 @@ export function blockToMarkdown(b: Block, depth = 0): string {
   }
 }
 
-export function pageToMarkdown(page: Page): string {
+export function pageToMarkdown(page: Page, ctx?: ExportContext): string {
   const head = `# ${page.title || "Untitled"}\n\n`;
-  return head + page.blocks.map(b => blockToMarkdown(b)).filter(Boolean).join("\n\n");
+  return head + page.blocks.map(b => blockToMarkdown(b, 0, ctx)).filter(Boolean).join("\n\n");
 }
 
 export function pageToPlainText(page: Page): string {

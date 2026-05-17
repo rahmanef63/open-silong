@@ -8,12 +8,14 @@ import {
   downloadFile, pickFile,
 } from "@/shared/lib/markdown";
 import { pageToHtml, pageToHtmlFragment } from "@/shared/lib/html";
+import { buildExportContext } from "@/shared/lib/exportContext";
 import { useWorkspaceIO } from "@/slices/workspace-io";
 
 export function usePageActions(page: Page, close: () => void) {
-  const { updatePage, duplicatePage, deletePage, addBlock } = useStore();
+  const { updatePage, duplicatePage, deletePage, addBlock, pages, databases } = useStore();
   const navigate = useNavigate();
   const workspaceIO = useWorkspaceIO();
+  const exportCtx = buildExportContext(databases, pages);
 
   const setFont = (font: PageFont) => updatePage(page.id, { font });
   const toggleSmall = () => updatePage(page.id, { smallText: !page.smallText });
@@ -40,7 +42,7 @@ export function usePageActions(page: Page, close: () => void) {
    *  browsers without ClipboardItem get plain text only. */
   const copyContents = async () => {
     const plain = pageToPlainText(page);
-    const html = pageToHtmlFragment(page);
+    const html = pageToHtmlFragment(page, exportCtx);
     try {
       if (typeof window !== "undefined" && "ClipboardItem" in window) {
         const item = new ClipboardItem({
@@ -74,13 +76,13 @@ export function usePageActions(page: Page, close: () => void) {
   const safeTitle = (page.title || "untitled").replace(/[^a-z0-9-_ ]/gi, "_").trim() || "untitled";
 
   const onExportMd = () => {
-    downloadFile(`${safeTitle}.md`, pageToMarkdown(page));
+    downloadFile(`${safeTitle}.md`, pageToMarkdown(page, exportCtx));
     toast.success("Exported as Markdown");
     close();
   };
 
   const onExportHtml = () => {
-    downloadFile(`${safeTitle}.html`, pageToHtml(page), "text/html");
+    downloadFile(`${safeTitle}.html`, pageToHtml(page, true, exportCtx), "text/html");
     toast.success("Exported as HTML");
     close();
   };
