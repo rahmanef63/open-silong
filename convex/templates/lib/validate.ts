@@ -6,6 +6,7 @@ const BLOCK_TYPES = [
   "page", "database",
   "columns2", "columns3", "columns4", "columns5", "toggle",
   "image", "equation", "table", "embed", "button",
+  "synced", "toc", "audio", "video",
 ] as const;
 
 const PROPERTY_TYPES = [

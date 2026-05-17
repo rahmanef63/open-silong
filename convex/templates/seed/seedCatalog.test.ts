@@ -5,8 +5,8 @@ import { SEED_TEMPLATES } from "./index";
 /** Smoke test the entire seed catalog — every template must pass
  *  validation, otherwise `seedDefaults` would throw in production. */
 describe("SEED_TEMPLATES catalog", () => {
-  it("contains 25 templates", () => {
-    expect(SEED_TEMPLATES).toHaveLength(25);
+  it("contains 26 templates", () => {
+    expect(SEED_TEMPLATES).toHaveLength(26);
   });
 
   for (const tpl of SEED_TEMPLATES) {
