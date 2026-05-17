@@ -12,12 +12,12 @@ import {
   Link2, ClipboardCopy, Files, Trash2,
   Palette, Lock, Unlock,
   Sparkles, MessageSquare, Languages,
-  Upload, Download, BarChart3, History, Bell, AtSign,
-  FileJson, FileArchive, FileText,
+  BarChart3, History, Bell, AtSign,
 } from "lucide-react";
 import { FONT_OPTIONS } from "./page-actions/fonts";
 import { RowButton, Row, ToggleRow, SectionLabel } from "./page-actions/MenuRows";
 import { MoveToSubmenu } from "./page-actions/MoveToSubmenu";
+import { DataSubmenu } from "./page-actions/DataSubmenu";
 import { usePageActions } from "./page-actions/usePageActions";
 
 interface Props {
@@ -141,14 +141,20 @@ export function PageActionsMenu({ page, onShowHistory }: Props) {
           </div>
         )}
 
-        {groupVisible("Export JSON", "Export Markdown", "Export PDF", "Import JSON", "Import Markdown", "Import ZIP", "Turn into wiki", "Updates & analytics", "Version history", "Notify me", "Mentions") && (
+        {groupVisible("Data", "Turn into wiki", "Updates & analytics", "Version history", "Notify me", "Mentions") && (
           <div className="py-1">
-            {match("Export JSON") && <Row icon={FileJson} label="Export JSON (this page + subtree)" onClick={actions.onExportJson} />}
-            {match("Export Markdown") && <Row icon={Download} label="Export as Markdown" onClick={actions.onExportMd} />}
-            {match("Export PDF") && <Row icon={FileText} label="Export as PDF (print)" onClick={actions.onExportPdf} />}
-            {match("Import JSON") && <Row icon={FileJson} label="Import JSON" onClick={actions.onImportJson} />}
-            {match("Import Markdown") && <Row icon={Upload} label="Import Markdown" onClick={actions.onImportMd} />}
-            {match("Import ZIP") && <Row icon={FileArchive} label="Import ZIP under this page" onClick={actions.onImportZip} />}
+            {match("Data") && (
+              <DataSubmenu
+                actions={{
+                  onExportPdf: actions.onExportPdf,
+                  onExportMd: actions.onExportMd,
+                  onExportJson: actions.onExportJson,
+                  onImportMd: actions.onImportMd,
+                  onImportJson: actions.onImportJson,
+                  onImportZip: actions.onImportZip,
+                }}
+              />
+            )}
             {match("Turn into wiki") && <WikiToggleAction pageId={page.id} onClose={close} />}
             {match("Updates & analytics") && (
               <AnalyticsPopover page={page} trigger={<RowButton icon={BarChart3} label="Updates & analytics" />} />
@@ -168,7 +174,7 @@ export function PageActionsMenu({ page, onShowHistory }: Props) {
         {q && !groupVisible(
           "Small text", "Full width", "Copy link", "Copy page contents", "Duplicate",
           "Move to", "Move to Trash", "Customize page", "Lock page", "Use with AI",
-          "Suggest edits", "Translate", "Import", "Export", "Turn into wiki",
+          "Suggest edits", "Translate", "Data", "Turn into wiki",
           "Updates & analytics", "Version history", "Notify me", "Mentions",
         ) && (
           <div className="px-3 py-6 text-center text-xs text-muted-foreground">No matching actions</div>
