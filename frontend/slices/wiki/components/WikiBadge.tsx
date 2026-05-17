@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { cn } from "@/shared/lib/utils";
 import { reportError } from "@/shared/lib/error";
 import { DynamicIcon } from "@/shared/components/icon-picker";
+import { Button } from "@/shared/ui/button";
 import { useWiki } from "../hooks/useWiki";
 
 interface Props {
@@ -53,21 +54,24 @@ export function WikiBadge({ pageId, isOwner = true }: Props) {
       <span className="truncate">{meta.ownerName}</span>
       {isOwner && (
         <div className="ml-auto flex items-center gap-1">
-          <button
+          <Button
             type="button"
+            variant="ghost"
             onClick={onToggleVerify}
-            className="rounded px-2 py-0.5 hover:bg-background/40 transition"
+            className="h-auto rounded px-2 py-0.5 text-xs font-normal hover:bg-background/40"
           >
             {meta.verified ? "Unverify" : "Verify"}
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="ghost"
+            size="icon"
             onClick={onDisable}
-            className="rounded px-2 py-0.5 hover:bg-background/40 transition"
+            className="h-auto w-auto rounded px-2 py-0.5 hover:bg-background/40 [&_svg]:size-3"
             aria-label="Remove wiki mode"
           >
             <BookCheck className="h-3 w-3" />
-          </button>
+          </Button>
         </div>
       )}
     </div>

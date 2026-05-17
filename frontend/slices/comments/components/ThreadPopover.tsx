@@ -2,6 +2,7 @@
 
 import { MessageSquare } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
+import { Button } from "@/shared/ui/button";
 import { useThreadComments } from "../lib/CommentsContext";
 import { CommentItem } from "./CommentItem";
 import { CommentComposer } from "./CommentComposer";
@@ -63,10 +64,12 @@ export function ThreadPopover({
     <Popover>
       <PopoverTrigger asChild>
         {trigger ?? (
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             aria-label={t.triggerAriaLabel}
             className={cn(
-              "rounded p-1 hover:bg-accent text-muted-foreground relative",
+              "h-auto w-auto p-1 text-muted-foreground relative [&_svg]:size-3.5",
               openCount > 0 && "text-brand",
             )}
           >
@@ -76,7 +79,7 @@ export function ThreadPopover({
                 {openCount}
               </span>
             )}
-          </button>
+          </Button>
         )}
       </PopoverTrigger>
       <PopoverContent align="end" className="w-80 p-2">

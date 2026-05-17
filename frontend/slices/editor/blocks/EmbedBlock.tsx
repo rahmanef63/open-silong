@@ -82,7 +82,7 @@ export function EmbedBlock({ block, onUpdate }: Props) {
     return (
       <div className="rounded-md border border-dashed border-destructive/50 p-3 text-xs text-destructive my-1">
         Could not embed this URL.
-        <button onClick={() => onUpdate({ url: undefined })} className="ml-2 underline">Reset</button>
+        <Button variant="link" onClick={() => onUpdate({ url: undefined })} className="h-auto p-0 ml-2 text-xs font-normal underline text-destructive">Reset</Button>
       </div>
     );
   }
@@ -101,12 +101,13 @@ export function EmbedBlock({ block, onUpdate }: Props) {
       </div>
       <div className="mt-1 flex items-center justify-between text-[11px] text-muted-foreground">
         <span>{embed.provider}</span>
-        <button
+        <Button
+          variant="ghost"
           onClick={() => onUpdate({ url: undefined })}
-          className="opacity-0 group-hover/embed:opacity-100 hover:text-foreground transition"
+          className="h-auto p-0 text-[11px] font-normal opacity-0 group-hover/embed:opacity-100 hover:text-foreground hover:bg-transparent transition"
         >
           Replace
-        </button>
+        </Button>
       </div>
     </div>
   );

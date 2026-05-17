@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import katex from "katex";
 import "katex/dist/katex.min.css";
 import { Sigma, Pencil } from "lucide-react";
+import { Button } from "@/shared/ui/button";
 import type { EquationBlockProps } from "../types";
 
 export function EquationBlock({ text, onText, registerRef }: EquationBlockProps) {
@@ -45,7 +46,7 @@ export function EquationBlock({ text, onText, registerRef }: EquationBlockProps)
         />
         <div className="flex items-center justify-between text-[11px] text-muted-foreground">
           <span>⌘+Enter to render • Esc to cancel</span>
-          <button onClick={commit} className="rounded bg-foreground text-background px-2 py-0.5">Render</button>
+          <Button onClick={commit} className="h-auto rounded bg-foreground text-background px-2 py-0.5 text-xs hover:bg-foreground/90">Render</Button>
         </div>
         {draft && (
           <div className="rounded border border-border bg-card px-3 py-2 overflow-x-auto">
@@ -69,14 +70,16 @@ export function EquationBlock({ text, onText, registerRef }: EquationBlockProps)
       ) : (
         <span className="text-sm text-muted-foreground/60 italic">Empty equation — click to edit</span>
       )}
-      <button
+      <Button
         type="button"
+        variant="ghost"
+        size="icon"
         onClick={(e) => { e.stopPropagation(); setDraft(text); setEditing(true); }}
-        className="absolute right-2 top-2 opacity-0 group-hover/eq:opacity-100 rounded p-1 text-muted-foreground hover:bg-accent"
+        className="absolute right-2 top-2 h-auto w-auto p-1 opacity-0 group-hover/eq:opacity-100 text-muted-foreground [&_svg]:size-3"
         aria-label="Edit equation"
       >
         <Pencil className="h-3 w-3" />
-      </button>
+      </Button>
     </div>
   );
 }

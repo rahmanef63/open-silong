@@ -4,6 +4,7 @@ import { cn } from "@/shared/lib/utils";
 import { useStore } from "@/shared/lib/store";
 import type { Page } from "@/shared/types/domain";
 import { DynamicIcon } from "@/shared/components/icon-picker";
+import { Button } from "@/shared/ui/button";
 
 interface Props {
   row: Page;
@@ -57,25 +58,27 @@ export function InlineRowTitle({ row, onOpen, autoEdit, onAutoEditConsumed }: Pr
           className="flex-1 bg-background border border-brand rounded px-1 text-sm outline-none min-w-0"
         />
       ) : (
-        <button
+        <Button
           type="button"
+          variant="ghost"
           onClick={() => setEditing(true)}
           className={cn(
-            "flex-1 truncate text-left text-sm rounded px-1 hover:bg-accent/40",
+            "flex-1 h-auto truncate text-left text-sm rounded px-1 py-0 hover:bg-accent/40 font-normal justify-start",
             !row.title && "text-muted-foreground italic",
           )}
         >
           {row.title || "Untitled"}
-        </button>
+        </Button>
       )}
-      <button
+      <Button
         type="button"
+        variant="outline"
         onClick={(e) => { e.stopPropagation(); onOpen(); }}
-        className="opacity-0 group-hover/title:opacity-100 flex items-center gap-1 rounded border border-border bg-background px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground hover:text-foreground hover:border-border-strong transition shrink-0"
+        className="opacity-0 group-hover/title:opacity-100 h-auto gap-1 bg-background px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground hover:text-foreground hover:border-border-strong shrink-0 [&_svg]:size-3"
         aria-label="Open row"
       >
         <Maximize2 className="h-3 w-3" /> Open
-      </button>
+      </Button>
     </div>
   );
 }

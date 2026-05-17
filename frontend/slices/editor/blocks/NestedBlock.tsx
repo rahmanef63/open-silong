@@ -4,6 +4,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { Block, BlockType } from "@/shared/types/domain";
 import { cn } from "@/shared/lib/utils";
+import { Button } from "@/shared/ui/button";
 import { SlashMenu } from "../SlashMenu";
 import { bgColorClass, colorClass } from "../lib/colors";
 import { nestedRegistry } from "./nestedRegistry";
@@ -91,14 +92,16 @@ export function NestedBlock({
         isOver && !isDragging && "before:absolute before:inset-x-0 before:-top-0.5 before:h-0.5 before:bg-brand before:rounded",
       )}
     >
-      <button
+      <Button
         {...listeners}
         type="button"
+        variant="ghost"
+        size="icon"
         aria-label="Drag block"
-        className="mt-1 flex h-5 w-4 shrink-0 cursor-grab items-center justify-center rounded text-muted-foreground/50 opacity-0 hover:bg-accent group-hover/nested:opacity-100 active:cursor-grabbing"
+        className="mt-1 h-5 w-4 p-0 shrink-0 cursor-grab rounded text-muted-foreground/50 opacity-0 group-hover/nested:opacity-100 active:cursor-grabbing [&_svg]:size-3.5"
       >
         <GripVertical className="h-3.5 w-3.5" />
-      </button>
+      </Button>
       <div className={cn("relative flex-1 min-w-0", bgCls && "-mx-1 px-1 rounded", bgCls)}>
         <NestedContent
           block={block}

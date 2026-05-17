@@ -7,6 +7,7 @@ import { Skeleton } from "@/shared/ui/skeleton";
 import { useStore } from "@/shared/lib/store";
 import { cn } from "@/shared/lib/utils";
 import { DynamicIcon } from "@/shared/components/icon-picker";
+import { Button } from "@/shared/ui/button";
 import type { Block } from "@/shared/types/domain";
 import { getBlockRenderer } from "../registry";
 import { ColumnBlockEditor } from "../../ColumnBlockEditor";
@@ -105,14 +106,15 @@ export function NestedContent({ block, baseProps, setRef, handleKeyDown, onUpdat
   case "page": {
     const target = block.pageId ? getPage(block.pageId) : undefined;
     return (
-      <button
+      <Button
+        variant="outline"
         onClick={() => target && navigate(`/p/${target.id}`)}
-        className="flex w-full items-center gap-2 rounded-md border border-border bg-card px-2 py-1.5 text-left hover:bg-accent transition text-sm"
+        className="flex w-full h-auto items-center gap-2 rounded-md bg-card px-2 py-1.5 text-left text-sm font-normal justify-start [&_svg]:size-3.5"
       >
         <DynamicIcon value={target?.icon} className="text-base shrink-0" />
         <span className="flex-1 truncate">{target?.title || "Untitled"}</span>
         <FileText className="h-3.5 w-3.5 text-muted-foreground" />
-      </button>
+      </Button>
     );
   }
   case "toggle":

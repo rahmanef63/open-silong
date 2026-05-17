@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import { Upload } from "lucide-react";
+import { Button } from "@/shared/ui/button";
 import { useFileUpload } from "../hooks/useFileUpload";
 import type { FileRef } from "../types";
 
@@ -36,14 +37,15 @@ export function FileUploadButton({ onUploaded, multiple = false, className, labe
         className="hidden"
         onChange={(e) => onPick(e.target.files)}
       />
-      <button
+      <Button
+        variant="ghost"
         onClick={() => inputRef.current?.click()}
         disabled={uploading}
-        className={className ?? "flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground disabled:opacity-60"}
+        className={className ?? "h-auto p-0 gap-1 text-xs font-normal text-muted-foreground hover:bg-transparent hover:text-foreground disabled:opacity-60 [&_svg]:size-3"}
       >
         <Upload className="h-3 w-3" />
         {uploading ? "Uploading…" : label}
-      </button>
+      </Button>
     </>
   );
 }

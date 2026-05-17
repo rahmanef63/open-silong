@@ -1,5 +1,6 @@
 import { BarChart3 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
+import { Button } from "@/shared/ui/button";
 import { usePageAnalytics } from "../hooks/usePageAnalytics";
 import type { Page } from "@/shared/types/domain";
 
@@ -35,9 +36,9 @@ export function AnalyticsPopover({ page, trigger }: Props) {
     <Popover>
       <PopoverTrigger asChild>
         {trigger ?? (
-          <button className="flex h-8 w-8 items-center justify-center rounded hover:bg-accent text-muted-foreground" aria-label="Analytics">
+          <Button variant="ghost" size="icon" className="h-8 w-8 rounded text-muted-foreground" aria-label="Analytics">
             <BarChart3 className="h-4 w-4" />
-          </button>
+          </Button>
         )}
       </PopoverTrigger>
       <PopoverContent align="end" className="w-64 p-0">

@@ -4,6 +4,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
+import { Button } from "@/shared/ui/button";
 import { useStore } from "@/shared/lib/store";
 import type { Database, Page } from "@/shared/types/domain";
 import { CsvImportDialog, downloadCsv, exportDatabaseToCsv } from "@/slices/database-csv";
@@ -36,13 +37,14 @@ export function DataMenu({ db, rows }: Props) {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button
-            className="flex items-center gap-1 rounded-md px-2 py-1 text-xs hover:bg-accent text-muted-foreground"
+          <Button
+            variant="ghost"
+            className="h-auto gap-1 px-2 py-1 text-xs font-normal text-muted-foreground [&_svg]:size-3.5"
             aria-label="Import / export / AI"
             title="Import / export / AI"
           >
             <DbIcon className="h-3.5 w-3.5" /> Data
-          </button>
+          </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56">
           <DropdownMenuLabel className="text-xs">CSV</DropdownMenuLabel>

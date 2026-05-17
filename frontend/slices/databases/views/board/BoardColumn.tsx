@@ -5,6 +5,7 @@ import { GripVertical, Plus } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { colorClass } from "@/shared/lib/format";
 import type { Page } from "@/shared/types/domain";
+import { Button } from "@/shared/ui/button";
 import { BoardCard } from "./BoardCard";
 
 export function BoardColumn({ db, col, groupProp, onAdd, onOpen, cardPadding, cardSpacing, colorByProp, cardPropIds, viewVisible }: any) {
@@ -52,14 +53,16 @@ export function BoardColumn({ db, col, groupProp, onAdd, onOpen, cardPadding, ca
       <div className="flex items-center justify-between px-1 mb-2">
         <div className="flex items-center gap-2">
           {col.id !== null && (
-            <button
+            <Button
+              variant="ghost"
+              size="icon"
               {...sortable.attributes}
               {...sortable.listeners}
               aria-label="Reorder column"
-              className="rounded p-0.5 text-muted-foreground hover:bg-accent cursor-grab active:cursor-grabbing"
+              className="h-auto w-auto p-0.5 text-muted-foreground cursor-grab active:cursor-grabbing [&_svg]:size-3"
             >
               <GripVertical className="h-3 w-3" />
-            </button>
+            </Button>
           )}
           {col.option ? (
             <span className={cn("inline-flex items-center rounded-full border px-2 py-0.5 text-xs", colorClass(col.option.color))}>{col.option.name}</span>
@@ -68,7 +71,7 @@ export function BoardColumn({ db, col, groupProp, onAdd, onOpen, cardPadding, ca
           )}
           <span className="text-xs text-muted-foreground">{col.rows.length}</span>
         </div>
-        <button onClick={onAdd} className="rounded p-1 hover:bg-accent text-muted-foreground"><Plus className="h-3 w-3" /></button>
+        <Button variant="ghost" size="icon" onClick={onAdd} className="h-auto w-auto p-1 text-muted-foreground [&_svg]:size-3"><Plus className="h-3 w-3" /></Button>
       </div>
       <div className={cardSpacing}>
         {col.rows.map((r: Page) => (

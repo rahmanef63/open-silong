@@ -6,6 +6,7 @@ import { useInbox } from "../hooks/useInbox";
 import { NotificationRow } from "../components/NotificationRow";
 import { InboxEmpty } from "../components/InboxEmpty";
 import { cn } from "@/shared/lib/utils";
+import { Button } from "@/shared/ui/button";
 
 type FilterMode = "all" | "unread";
 
@@ -33,12 +34,13 @@ export function InboxPage() {
           <div className="flex items-center gap-2">
             <FilterTabs mode={mode} setMode={setMode} unreadCount={unreadCount} />
             {unreadCount > 0 && (
-              <button
+              <Button
+                variant="outline"
                 onClick={() => markAllRead()}
-                className="flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs hover:bg-accent"
+                className="h-auto gap-1.5 px-2.5 py-1.5 text-xs font-normal [&_svg]:size-3.5"
               >
                 <CheckCheck className="h-3.5 w-3.5" /> Mark all read
-              </button>
+              </Button>
             )}
           </div>
         </header>
@@ -69,18 +71,20 @@ function FilterTabs({
 }: { mode: FilterMode; setMode: (m: FilterMode) => void; unreadCount: number }) {
   return (
     <div className="flex items-center rounded-md border border-border p-0.5 text-xs">
-      <button
+      <Button
+        variant="ghost"
         onClick={() => setMode("all")}
-        className={cn("rounded px-2 py-0.5 transition", mode === "all" ? "bg-accent" : "text-muted-foreground")}
+        className={cn("h-auto rounded px-2 py-0.5 text-xs font-normal", mode === "all" ? "bg-accent" : "text-muted-foreground")}
       >
         <Filter className="inline h-3 w-3 mr-1" /> All
-      </button>
-      <button
+      </Button>
+      <Button
+        variant="ghost"
         onClick={() => setMode("unread")}
-        className={cn("rounded px-2 py-0.5 transition", mode === "unread" ? "bg-accent" : "text-muted-foreground")}
+        className={cn("h-auto rounded px-2 py-0.5 text-xs font-normal", mode === "unread" ? "bg-accent" : "text-muted-foreground")}
       >
         Unread {unreadCount > 0 && <span className="ml-1 text-brand">{unreadCount}</span>}
-      </button>
+      </Button>
     </div>
   );
 }

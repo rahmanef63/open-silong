@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Property } from "@/shared/types/domain";
 import { cn } from "@/shared/lib/utils";
+import { Button } from "@/shared/ui/button";
 import { formatPropertyNumber } from "../lib/numberFormat";
 
 interface Props {
@@ -63,17 +64,18 @@ export function NumberCell({ prop, value, onSet, cellClass }: Props) {
 
   const display = formatPropertyNumber(value, prop);
   return (
-    <button
+    <Button
       type="button"
+      variant="ghost"
       onClick={() => { setEditing(true); }}
       onFocus={() => setEditing(true)}
       className={cn(
         cellClass,
-        "w-full bg-transparent outline-none px-2 py-1 rounded hover:bg-accent/50 tabular-nums text-left",
+        "w-full h-auto bg-transparent outline-none px-2 py-1 rounded hover:bg-accent/50 tabular-nums text-left font-normal justify-start",
         !display && "text-muted-foreground",
       )}
     >
       {display || "—"}
-    </button>
+    </Button>
   );
 }

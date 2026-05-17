@@ -175,14 +175,15 @@ export function SelectionToolbar() {
             onMouseDown={(e) => e.preventDefault()}
           >
             {(Object.keys(AI_PROMPTS) as AIPreset[]).map((k) => (
-              <button
+              <Button
                 key={k}
                 type="button"
+                variant="ghost"
                 onClick={() => applyAI(k)}
-                className="block w-full px-3 py-1.5 text-left text-xs hover:bg-accent"
+                className="block h-auto w-full px-3 py-1.5 text-left text-xs font-normal rounded-none justify-start"
               >
                 {AI_PROMPTS[k].label}
-              </button>
+              </Button>
             ))}
           </div>
         )}

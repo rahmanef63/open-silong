@@ -1,6 +1,7 @@
 "use client";
 
 import type { Status } from "./types";
+import { Button } from "@/shared/ui/button";
 
 export function CountChip({
   label,
@@ -45,19 +46,20 @@ export function StatusPills({
   return (
     <div className="inline-flex items-center gap-0.5 rounded-md border border-border bg-card p-0.5">
       {pills.map((p) => (
-        <button
+        <Button
           key={p.key}
           type="button"
+          variant="ghost"
           onClick={() => onChange(p.key)}
-          className={`px-2.5 h-7 text-xs rounded transition ${
+          className={`px-2.5 h-7 text-xs rounded font-normal ${
             value === p.key
               ? "bg-accent text-accent-foreground font-medium shadow-sm"
-              : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+              : "text-muted-foreground hover:text-foreground"
           }`}
         >
           {p.label}
           <span className="ml-1 tabular-nums opacity-60">{p.count}</span>
-        </button>
+        </Button>
       ))}
     </div>
   );
@@ -96,16 +98,17 @@ function ChipButton({
   children: React.ReactNode;
 }) {
   return (
-    <button
+    <Button
       type="button"
+      variant="outline"
       onClick={onClick}
-      className={`px-2.5 h-7 text-xs rounded-full border transition ${
+      className={`px-2.5 h-7 text-xs rounded-full font-normal ${
         active
           ? "border-foreground/40 bg-accent text-accent-foreground"
-          : "border-border text-muted-foreground hover:text-foreground hover:bg-accent/50"
+          : "text-muted-foreground"
       }`}
     >
       {children}
-    </button>
+    </Button>
   );
 }

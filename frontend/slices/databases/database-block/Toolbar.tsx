@@ -3,6 +3,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
+import { Button } from "@/shared/ui/button";
 import { Search, Filter, ArrowUpDown, LayoutGrid, Check } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { FilterBuilder } from "../FilterBuilder";
@@ -39,18 +40,19 @@ export function DatabaseToolbar({ db, view, writeView }: ToolbarProps) {
       <div className="flex flex-wrap items-center gap-1">
         <Popover>
           <PopoverTrigger asChild>
-            <button
+            <Button
+              variant="ghost"
               disabled={locked}
               title={locked ? lockTitle : undefined}
               className={cn(
-                "flex items-center gap-1 rounded-md px-2 py-1 text-xs hover:bg-accent transition disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent",
-                activeFilters > 0 ? "text-brand bg-brand/10" : "text-muted-foreground",
+                "h-auto gap-1 rounded-md px-2 py-1 text-xs font-normal disabled:opacity-50 disabled:cursor-not-allowed [&_svg]:size-3",
+                activeFilters > 0 ? "text-brand bg-brand/10 hover:bg-brand/10 hover:text-brand" : "text-muted-foreground",
               )}
             >
               <Filter className="h-3 w-3" />
               Filter
               {activeFilters > 0 && <span className="ml-0.5 rounded-full bg-brand text-white text-[10px] px-1">{activeFilters}</span>}
-            </button>
+            </Button>
           </PopoverTrigger>
           <PopoverContent align="end" className="p-0 w-auto">
             <FilterBuilder db={db} view={view} writeView={writeView} />
@@ -59,18 +61,19 @@ export function DatabaseToolbar({ db, view, writeView }: ToolbarProps) {
 
         <Popover>
           <PopoverTrigger asChild>
-            <button
+            <Button
+              variant="ghost"
               disabled={locked}
               title={locked ? lockTitle : undefined}
               className={cn(
-                "flex items-center gap-1 rounded-md px-2 py-1 text-xs hover:bg-accent transition disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent",
-                activeSorts > 0 ? "text-brand bg-brand/10" : "text-muted-foreground",
+                "h-auto gap-1 rounded-md px-2 py-1 text-xs font-normal disabled:opacity-50 disabled:cursor-not-allowed [&_svg]:size-3",
+                activeSorts > 0 ? "text-brand bg-brand/10 hover:bg-brand/10 hover:text-brand" : "text-muted-foreground",
               )}
             >
               <ArrowUpDown className="h-3 w-3" />
               Sort
               {activeSorts > 0 && <span className="ml-0.5 rounded-full bg-brand text-white text-[10px] px-1">{activeSorts}</span>}
-            </button>
+            </Button>
           </PopoverTrigger>
           <PopoverContent align="end" className="p-0 w-auto">
             <SortBuilder db={db} view={view} writeView={writeView} />
@@ -93,14 +96,15 @@ function GroupByButton({ db, view, writeView }: ToolbarProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button
+        <Button
+          variant="ghost"
           disabled={locked}
           title={locked ? "View is locked — unlock from the view tab menu" : undefined}
-          className="flex items-center gap-1 rounded-md px-2 py-1 text-xs hover:bg-accent text-muted-foreground disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+          className="h-auto gap-1 rounded-md px-2 py-1 text-xs font-normal text-muted-foreground disabled:opacity-50 disabled:cursor-not-allowed [&_svg]:size-3"
         >
           <LayoutGrid className="h-3 w-3" />
           Group: {current?.name ?? "—"}
-        </button>
+        </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuLabel className="text-xs">Group by</DropdownMenuLabel>

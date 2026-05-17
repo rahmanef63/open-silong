@@ -124,16 +124,17 @@ export function AuthForm() {
 
       <p className="text-center text-sm text-muted-foreground">
         {flow === "signIn" ? "Don't have an account?" : "Already have an account?"}{" "}
-        <button
+        <Button
           type="button"
-          className="underline text-foreground"
+          variant="link"
+          className="h-auto p-0 text-sm underline text-foreground font-normal"
           onClick={() => {
             setFlow(flow === "signIn" ? "signUp" : "signIn");
             setError("");
           }}
         >
           {flow === "signIn" ? "Sign up" : "Sign in"}
-        </button>
+        </Button>
       </p>
     </>
   );

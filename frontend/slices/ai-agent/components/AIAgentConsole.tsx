@@ -60,14 +60,15 @@ export function AIAgentConsole({ open, onOpenChange, context }: Props) {
               <div>Ask anything or use a slash command.</div>
               <div className="grid grid-cols-1 gap-1 mt-3 text-left">
                 {SLASH_COMMANDS.map((c) => (
-                  <button
+                  <Button
                     key={c.id}
-                    className="rounded border border-border hover:bg-accent px-2 py-1 text-xs"
+                    variant="outline"
+                    className="h-auto px-2 py-1 text-xs font-normal justify-start"
                     onClick={() => setInput(c.trigger + " ")}
                   >
                     <span className="font-mono text-brand">{c.trigger}</span>
                     <span className="text-muted-foreground"> · {c.label}</span>
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>
@@ -102,15 +103,16 @@ export function AIAgentConsole({ open, onOpenChange, context }: Props) {
             {SLASH_COMMANDS
               .filter((c) => c.trigger.startsWith(input.split(" ")[0]))
               .map((c) => (
-                <button
+                <Button
                   key={c.id}
-                  className="w-full text-left px-3 py-2 hover:bg-accent text-sm flex items-baseline gap-2"
+                  variant="ghost"
+                  className="w-full h-auto text-left px-3 py-2 text-sm font-normal flex items-baseline gap-2 justify-start rounded-none"
                   onMouseDown={(e) => { e.preventDefault(); setInput(c.trigger + " "); }}
                 >
                   <span className="font-mono text-brand text-xs">{c.trigger}</span>
                   <span>{c.label}</span>
                   <span className="text-xs text-muted-foreground truncate">{c.hint}</span>
-                </button>
+                </Button>
               ))}
           </div>
         )}

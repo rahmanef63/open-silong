@@ -5,6 +5,7 @@ import {
   SidebarGroup, SidebarGroupAction, SidebarGroupContent, SidebarGroupLabel,
 } from "@/shared/ui/sidebar";
 import { cn } from "@/shared/lib/utils";
+import { Button } from "@/shared/ui/button";
 import {
   DENSITY, SortablePageRow, DragGhost, type TreeItem, useSidebarDnd,
 } from "@/slices/workspace-sidebar";
@@ -93,16 +94,17 @@ export function WorkspaceTree({
           </DragOverlay>
         </DndContext>
         {rootPages.length === 0 && (
-          <button
+          <Button
             type="button"
+            variant="ghost"
             onClick={onNewPage}
             className={cn(
-              "flex w-full items-center gap-2 rounded-md px-2 text-muted-foreground hover:bg-sidebar-accent",
+              "flex w-full h-auto items-center gap-2 rounded-md px-2 text-sm font-normal text-muted-foreground hover:bg-sidebar-accent justify-start [&_svg]:size-3.5",
               density.pageLink,
             )}
           >
             <Plus className="h-3.5 w-3.5" /> New page
-          </button>
+          </Button>
         )}
       </SidebarGroupContent>
     </SidebarGroup>

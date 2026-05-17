@@ -4,6 +4,7 @@ import {
 } from "@/shared/ui/dropdown-menu";
 import { MoreHorizontal, Pencil, Copy, Trash2, Lock, Unlock } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
+import { Button } from "@/shared/ui/button";
 import type { Database, DatabaseViewConfig } from "@/shared/types/domain";
 import { VIEW_META } from "./lazyViews";
 
@@ -53,26 +54,29 @@ export function ViewTab({ db: _db, v, active, onActivate, onRename, onDuplicate,
       "group/tab flex items-center rounded-md text-xs transition select-none",
       active ? "bg-accent text-foreground font-medium" : "hover:bg-accent",
     )}>
-      <button
+      <Button
+        variant="ghost"
         onClick={onActivate}
         onDoubleClick={(e) => { e.preventDefault(); setEditing(true); }}
         title="Click to activate · Double-click to rename"
-        className="flex items-center gap-1 px-2 py-1"
+        className="h-auto gap-1 px-2 py-1 text-xs font-normal hover:bg-transparent [&_svg]:size-3.5"
       >
         <Meta.icon className="h-3.5 w-3.5" />
         <span className="hidden sm:inline">{v.name}</span>
         {locked && <Lock className="h-3 w-3 text-amber-600 dark:text-amber-400" aria-label="View locked" />}
-      </button>
+      </Button>
       {active && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button
+            <Button
+              variant="ghost"
+              size="icon"
               aria-label="View actions"
               title="View actions"
-              className="flex h-6 w-5 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-background"
+              className="h-6 w-5 p-0 rounded-md text-muted-foreground hover:text-foreground hover:bg-background [&_svg]:size-3.5"
             >
               <MoreHorizontal className="h-3.5 w-3.5" />
-            </button>
+            </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start">
             <DropdownMenuItem onClick={() => { setDraft(v.name); setEditing(true); }}>

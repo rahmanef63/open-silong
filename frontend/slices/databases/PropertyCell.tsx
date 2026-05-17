@@ -3,6 +3,7 @@ import { useStore } from "@/shared/lib/store";
 import { cn } from "@/shared/lib/utils";
 import { formatRelTime } from "@/shared/lib/format";
 import { Checkbox } from "@/shared/ui/checkbox";
+import { Button } from "@/shared/ui/button";
 import { RelationCell } from "./property-cells/RelationCell";
 import { FilesCell } from "./property-cells/FilesCell";
 import { RollupCell } from "./property-cells/RollupCell";
@@ -75,14 +76,14 @@ export function PropertyCell({ db, prop, row, compact = false }: Props) {
       return <MultiSelectCell db={db} prop={prop} value={value} onSet={set} cellClass={cellClass} />;
     case "person":
       return (
-        <button onClick={() => set([user.id])} className={cn(cellClass, "w-full text-left px-2 py-1 rounded hover:bg-accent/50")}>
+        <Button variant="ghost" onClick={() => set([user.id])} className={cn(cellClass, "w-full h-auto text-left px-2 py-1 rounded hover:bg-accent/50 font-normal justify-start")}>
           {(value as string[])?.includes(user.id) ? (
             <span className="inline-flex items-center gap-1 text-xs">
               <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand/20">{user.icon}</span>
               {user.name}
             </span>
           ) : <span className="text-muted-foreground text-xs">Click to assign me</span>}
-        </button>
+        </Button>
       );
     case "files":
       return <FilesCell db={db} prop={prop} row={row} value={value} onSet={set} cellClass={cellClass} />;

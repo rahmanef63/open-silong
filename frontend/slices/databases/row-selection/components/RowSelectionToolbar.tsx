@@ -4,6 +4,7 @@ import { useStore } from "@/shared/lib/store";
 import { useRowSelection } from "./RowSelectionProvider";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
 import { Separator } from "@/shared/ui/separator";
+import { Button } from "@/shared/ui/button";
 import {
   PropertyFormInput,
   FormField,
@@ -72,12 +73,13 @@ export function RowSelectionToolbar({ databaseId }: Props) {
       <Separator orientation="vertical" className="h-5" />
       <Popover open={editOpen} onOpenChange={(o) => { setEditOpen(o); if (!o) { setEditProp(null); setEditValue(null); } }}>
         <PopoverTrigger asChild>
-          <button
+          <Button
+            variant="ghost"
             title="Edit property across selection"
-            className="flex items-center gap-1 rounded px-2 py-1 text-xs hover:bg-accent"
+            className="h-auto gap-1 rounded px-2 py-1 text-xs font-normal [&_svg]:size-3.5"
           >
             <Pencil className="h-3.5 w-3.5" /> Edit
-          </button>
+          </Button>
         </PopoverTrigger>
         <PopoverContent align="center" side="top" className="w-72 p-2">
           {!editProp ? (
@@ -85,17 +87,18 @@ export function RowSelectionToolbar({ databaseId }: Props) {
               <div className="px-2 py-1 text-[11px] font-medium text-muted-foreground">Set property…</div>
               <div className="max-h-64 overflow-y-auto">
                 {editableProps.map((p) => (
-                  <button
+                  <Button
                     key={p.id}
+                    variant="ghost"
                     onClick={() => {
                       setEditProp(p);
                       setEditValue(p.type === "checkbox" ? false : p.type === "multi_select" ? [] : null);
                     }}
-                    className="w-full text-left rounded px-2 py-1.5 text-xs hover:bg-accent"
+                    className="w-full h-auto text-left justify-start rounded px-2 py-1.5 text-xs font-normal"
                   >
                     {p.name}
                     <span className="ml-2 text-[10px] text-muted-foreground">{p.type}</span>
-                  </button>
+                  </Button>
                 ))}
                 {editableProps.length === 0 && (
                   <div className="px-2 py-2 text-xs text-muted-foreground">No editable properties.</div>
@@ -108,46 +111,51 @@ export function RowSelectionToolbar({ databaseId }: Props) {
                 <PropertyFormInput prop={editProp} value={editValue} onChange={setEditValue} />
               </FormField>
               <div className="flex justify-between gap-2 pt-1">
-                <button
+                <Button
+                  variant="ghost"
                   onClick={() => { setEditProp(null); setEditValue(null); }}
-                  className="rounded px-2 py-1 text-xs text-muted-foreground hover:bg-accent"
+                  className="h-auto rounded px-2 py-1 text-xs font-normal text-muted-foreground"
                 >
                   Back
-                </button>
+                </Button>
                 <div className="flex gap-1">
-                  <button
+                  <Button
+                    variant="ghost"
                     onClick={() => { editableIds.forEach((id) => setRowValue(databaseId, id, editProp.id, null)); setEditOpen(false); setEditProp(null); }}
-                    className="rounded px-2 py-1 text-xs text-muted-foreground hover:bg-accent"
+                    className="h-auto rounded px-2 py-1 text-xs font-normal text-muted-foreground"
                   >
                     Clear
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     onClick={onApply}
-                    className="rounded bg-brand px-2 py-1 text-xs text-brand-foreground hover:bg-brand/90"
+                    className="h-auto rounded bg-brand px-2 py-1 text-xs text-brand-foreground hover:bg-brand/90"
                   >
                     Apply
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>
           )}
         </PopoverContent>
       </Popover>
-      <button
+      <Button
+        variant="ghost"
         onClick={onDelete}
         title="Delete (Del/Backspace)"
-        className="flex items-center gap-1 rounded px-2 py-1 text-xs text-destructive hover:bg-destructive/10"
+        className="h-auto gap-1 rounded px-2 py-1 text-xs font-normal text-destructive hover:bg-destructive/10 hover:text-destructive [&_svg]:size-3.5"
       >
         <Trash2 className="h-3.5 w-3.5" /> Delete
-      </button>
-      <button
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon"
         onClick={clear}
         aria-label="Clear (Esc)"
         title="Clear (Esc)"
-        className="ml-1 flex h-7 w-7 items-center justify-center rounded text-muted-foreground hover:bg-accent"
+        className="ml-1 h-7 w-7 rounded text-muted-foreground [&_svg]:size-3.5"
       >
         <X className="h-3.5 w-3.5" />
-      </button>
+      </Button>
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { Database, DatabaseViewConfig, Page } from "@/shared/types/domain";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { useStore } from "@/shared/lib/store";
+import { Button } from "@/shared/ui/button";
 import { QuickCreateDialog } from "../components/QuickCreateDialog";
 import type { PropertyValue } from "@/shared/types/domain";
 import {
@@ -79,16 +80,16 @@ export function CalendarView({ db, view, rows, onOpenRow }: Props) {
     <div className="p-3">
       <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
         <div className="flex items-center gap-1">
-          <button onClick={nav.prev} className="rounded p-1 hover:bg-accent text-muted-foreground">
+          <Button variant="ghost" size="icon" onClick={nav.prev} className="h-auto w-auto p-1 text-muted-foreground">
             <ChevronLeft className="h-4 w-4" />
-          </button>
-          <button onClick={nav.next} className="rounded p-1 hover:bg-accent text-muted-foreground">
+          </Button>
+          <Button variant="ghost" size="icon" onClick={nav.next} className="h-auto w-auto p-1 text-muted-foreground">
             <ChevronRight className="h-4 w-4" />
-          </button>
+          </Button>
           {!nav.isCurrentNav && (
-            <button onClick={nav.goToday} className="ml-1 rounded px-2 py-1 text-xs hover:bg-accent text-muted-foreground border border-border">
+            <Button variant="outline" onClick={nav.goToday} className="ml-1 h-auto px-2 py-1 text-xs font-normal text-muted-foreground">
               Today
-            </button>
+            </Button>
           )}
           <ModeToggle db={db} view={view} />
         </div>
@@ -97,15 +98,16 @@ export function CalendarView({ db, view, rows, onOpenRow }: Props) {
           {!dateProp && (
             <span className="text-xs text-muted-foreground">(add a Date property)</span>
           )}
-          <button
+          <Button
+            variant="outline"
             onClick={() => {
               setQuickPrefill(dateProp ? { [dateProp.id]: { date: ymd(nav.now) } } : {});
               setQuickOpen(true);
             }}
-            className="ml-1 flex items-center gap-1 rounded-md border border-border bg-card px-2 py-1 text-xs hover:bg-accent text-muted-foreground"
+            className="ml-1 h-auto gap-1 bg-card px-2 py-1 text-xs font-normal text-muted-foreground [&_svg]:size-3"
           >
             <Plus className="h-3 w-3" /> New
-          </button>
+          </Button>
         </div>
       </div>
 

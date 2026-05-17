@@ -2,6 +2,7 @@ import { ChevronDown } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
+import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
 
 export function Empty({ msg }: { msg: string }) {
@@ -17,14 +18,12 @@ export function Picker({ label, icon: Icon, value, items }: {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className={cn(
-          "flex items-center gap-1 rounded-md border border-border bg-card px-2 py-1 hover:bg-accent",
-        )}>
+        <Button variant="outline" className="h-auto gap-1 bg-card px-2 py-1 text-xs font-normal [&_svg]:size-3">
           <span className="text-muted-foreground">{label}:</span>
           {Icon && <Icon className="h-3 w-3" />}
           <span className="font-medium">{value}</span>
           <ChevronDown className="h-3 w-3 text-muted-foreground" />
-        </button>
+        </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">
         <DropdownMenuLabel className="text-xs">{label}</DropdownMenuLabel>

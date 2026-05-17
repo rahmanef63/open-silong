@@ -126,7 +126,7 @@ export function FormView({ db, view }: Props) {
 
         {shown.length === 0 && (
           <p className="text-xs text-muted-foreground italic">
-            No properties to fill. <button type="button" onClick={() => setEditing(true)} className="underline">Configure form</button>
+            No properties to fill. <Button type="button" variant="link" onClick={() => setEditing(true)} className="h-auto p-0 text-xs underline font-normal">Configure form</Button>
           </p>
         )}
 
@@ -137,9 +137,9 @@ export function FormView({ db, view }: Props) {
         )}
 
         <div className="flex items-center justify-between pt-2 border-t border-border">
-          <button type="button" onClick={reset} className="text-xs text-muted-foreground hover:text-foreground">
+          <Button type="button" variant="ghost" onClick={reset} className="h-auto p-0 text-xs font-normal text-muted-foreground hover:bg-transparent hover:text-foreground">
             Clear
-          </button>
+          </Button>
           <Button type="submit" size="sm">Submit</Button>
         </div>
       </form>

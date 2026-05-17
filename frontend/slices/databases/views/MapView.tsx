@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Database, DatabaseViewConfig, Page } from "@/shared/types/domain";
 import { useStore } from "@/shared/lib/store";
 import { Plus } from "lucide-react";
+import { Button } from "@/shared/ui/button";
 import { QuickCreateDialog } from "../components/QuickCreateDialog";
 import { COLOR_HEX, project } from "./map/constants";
 import { MapSvg, type Pin } from "./map/MapSvg";
@@ -68,12 +69,13 @@ export function MapView({ db, view, rows, onOpenRow }: Props) {
         <span className="ml-auto text-muted-foreground">
           {pins.length} of {rows.length} pinned
         </span>
-        <button
+        <Button
+          variant="outline"
           onClick={() => setQuickOpen(true)}
-          className="flex items-center gap-1 rounded-md border border-border bg-card px-2 py-1 hover:bg-accent text-muted-foreground"
+          className="h-auto gap-1 bg-card px-2 py-1 text-xs font-normal text-muted-foreground [&_svg]:size-3"
         >
           <Plus className="h-3 w-3" /> New row
-        </button>
+        </Button>
       </div>
 
       {(!latProp || !lngProp) ? (

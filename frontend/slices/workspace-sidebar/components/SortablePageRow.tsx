@@ -11,6 +11,7 @@ import {
 import { DENSITY, type DensityConfig } from "../lib/density";
 import { handleTreeKey, type TreeItem } from "../lib/keyboard";
 import { DynamicIcon } from "@/shared/components/icon-picker";
+import { Button } from "@/shared/ui/button";
 
 interface Props {
   item: TreeItem;
@@ -84,13 +85,15 @@ function SortablePageRowImpl({
         )}
         style={{ paddingLeft: `${item.depth * density.indent}px` }}
       >
-        <button
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={() => setOpen(!isOpen)}
-          className={cn("flex items-center justify-center rounded hover:bg-background/60 text-muted-foreground", density.toggle)}
+          className={cn("flex items-center justify-center rounded hover:bg-background/60 text-muted-foreground p-0 [&_svg]:size-3.5", density.toggle)}
           aria-label="Toggle"
         >
           <ChevronRight className={cn("h-3.5 w-3.5 transition-transform", isOpen && "rotate-90", kidsCount === 0 && "opacity-30")} />
-        </button>
+        </Button>
         <Link
           to={`/p/${item.page.id}`}
           onClick={onClose}
@@ -123,19 +126,21 @@ function SortablePageRowImpl({
           )}
         </Link>
         <div className="flex items-center opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition">
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             {...attributes}
             {...listeners}
-            className={cn("flex items-center justify-center rounded hover:bg-background/60 text-muted-foreground cursor-grab active:cursor-grabbing", density.toggle)}
+            className={cn("flex items-center justify-center rounded hover:bg-background/60 text-muted-foreground cursor-grab active:cursor-grabbing p-0 [&_svg]:size-3.5", density.toggle)}
             aria-label="Drag page"
           >
             <GripVertical className="h-3.5 w-3.5" />
-          </button>
+          </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className={cn("flex items-center justify-center rounded hover:bg-background/60 text-muted-foreground", density.toggle)} aria-label="More">
+              <Button variant="ghost" size="icon" className={cn("flex items-center justify-center rounded hover:bg-background/60 text-muted-foreground p-0 [&_svg]:size-3.5", density.toggle)} aria-label="More">
                 <MoreHorizontal className="h-3.5 w-3.5" />
-              </button>
+              </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" side="right">
               <DropdownMenuItem onClick={() => toggleFavorite(item.page.id)}>
@@ -161,18 +166,20 @@ function SortablePageRowImpl({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={async () => {
               const child = await createPage(item.page.id);
               setOpen(true);
               navigate(`/p/${child.id}`);
               onClose?.();
             }}
-            className={cn("flex items-center justify-center rounded hover:bg-background/60 text-muted-foreground", density.toggle)}
+            className={cn("flex items-center justify-center rounded hover:bg-background/60 text-muted-foreground p-0 [&_svg]:size-3.5", density.toggle)}
             aria-label="Add subpage"
           >
             <Plus className="h-3.5 w-3.5" />
-          </button>
+          </Button>
         </div>
       </div>
     </div>

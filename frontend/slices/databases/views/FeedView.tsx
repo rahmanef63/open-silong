@@ -10,6 +10,7 @@ import { getVisibleProps } from "../lib/visibility";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
+import { Button } from "@/shared/ui/button";
 import { QuickCreateDialog } from "../components/QuickCreateDialog";
 import { DynamicIcon } from "@/shared/components/icon-picker";
 import { useState } from "react";
@@ -71,24 +72,27 @@ export function FeedView({ db, view, rows, onOpenRow }: Props) {
   return (
     <div className="p-3">
       <div className="flex items-center justify-between gap-1 text-xs mb-2">
-        <button
+        <Button
+          variant="outline"
           onClick={() => setQuickOpen(true)}
-          className="flex items-center gap-1 rounded-md border border-border bg-card px-2 py-1 hover:bg-accent text-muted-foreground"
+          className="h-auto gap-1 bg-card px-2 py-1 text-xs font-normal text-muted-foreground [&_svg]:size-3"
         >
           <Plus className="h-3 w-3" /> New row
-        </button>
+        </Button>
         <div className="flex items-center gap-1">
           <span className="text-muted-foreground">Sort by:</span>
-          <button
+          <Button
+            variant="ghost"
             onClick={() => updateView(db.id, view.id, { feedTimestamp: "updatedAt" })}
-            className={cn("rounded px-2 py-0.5 hover:bg-accent",
+            className={cn("h-auto rounded px-2 py-0.5 text-xs font-normal",
               source === "updatedAt" ? "bg-accent font-medium" : "text-muted-foreground")}
-          >Last edited</button>
-          <button
+          >Last edited</Button>
+          <Button
+            variant="ghost"
             onClick={() => updateView(db.id, view.id, { feedTimestamp: "createdAt" })}
-            className={cn("rounded px-2 py-0.5 hover:bg-accent",
+            className={cn("h-auto rounded px-2 py-0.5 text-xs font-normal",
               source === "createdAt" ? "bg-accent font-medium" : "text-muted-foreground")}
-          >Created</button>
+          >Created</Button>
         </div>
       </div>
 
@@ -114,9 +118,9 @@ export function FeedView({ db, view, rows, onOpenRow }: Props) {
                   <div key={r.id} className="relative group">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <button className="absolute top-1 right-1 z-10 opacity-0 group-hover:opacity-100 rounded bg-card/90 backdrop-blur p-1 hover:bg-accent text-muted-foreground" aria-label="Row actions">
+                      <Button variant="ghost" size="icon" className="absolute top-1 right-1 z-10 opacity-0 group-hover:opacity-100 h-auto w-auto rounded bg-card/90 backdrop-blur p-1 text-muted-foreground [&_svg]:size-3.5" aria-label="Row actions">
                         <MoreHorizontal className="h-3.5 w-3.5" />
-                      </button>
+                      </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={() => onOpenRow(r.id)}>Open</DropdownMenuItem>
@@ -125,7 +129,8 @@ export function FeedView({ db, view, rows, onOpenRow }: Props) {
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
-                  <button
+                  <Button
+                    variant="outline"
                     onClick={() => onOpenRow(r.id)}
                     onKeyDown={(e) => {
                       if (e.key === "ArrowDown" || e.key === "ArrowUp") {
@@ -135,7 +140,7 @@ export function FeedView({ db, view, rows, onOpenRow }: Props) {
                     }}
                     data-db-nav-item
                     className={cn(
-                      "block w-full text-left rounded-lg border border-border bg-card hover:border-border-strong hover:bg-accent/40 transition",
+                      "block w-full h-auto text-left rounded-lg bg-card hover:border-border-strong hover:bg-accent/40 transition font-normal whitespace-normal",
                       compact ? "p-2" : "p-3",
                     )}
                   >
@@ -155,7 +160,7 @@ export function FeedView({ db, view, rows, onOpenRow }: Props) {
                         ))}
                       </div>
                     )}
-                  </button>
+                  </Button>
                   </div>
                 );
               })}

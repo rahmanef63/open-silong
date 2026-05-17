@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { FileText, Rows3, Database } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { DynamicIcon } from "@/shared/components/icon-picker";
+import { Button } from "@/shared/ui/button";
 import { templateStats } from "../../lib/previewTemplate";
 
 export interface TemplateMeta {
@@ -40,15 +41,16 @@ export function CategoryChip({
   onClick: () => void;
 }) {
   return (
-    <button
+    <Button
       type="button"
+      variant="outline"
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        "flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs whitespace-nowrap transition-colors shrink-0",
+        "h-auto gap-1.5 rounded-full px-3 py-1 text-xs font-normal whitespace-nowrap shrink-0",
         active
-          ? "border-brand bg-brand/15 text-brand"
-          : "border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground",
+          ? "border-brand bg-brand/15 text-brand hover:bg-brand/15 hover:text-brand"
+          : "text-muted-foreground hover:border-foreground/30 hover:text-foreground",
       )}
     >
       <span>{label}</span>
@@ -56,7 +58,7 @@ export function CategoryChip({
         "tabular-nums text-[10px]",
         active ? "text-brand/80" : "text-muted-foreground/60",
       )}>{count}</span>
-    </button>
+    </Button>
   );
 }
 
@@ -70,15 +72,16 @@ export function TemplateCard({
   const [bg, fg] = tintFor(tpl.category);
   const hero = tpl.images?.[0];
   return (
-    <button
+    <Button
       type="button"
+      variant="outline"
       onClick={onSelect}
       aria-pressed={active}
       className={cn(
-        "group flex flex-col rounded-xl border bg-card text-left overflow-hidden transition-all",
+        "group flex h-auto flex-col rounded-xl bg-card text-left overflow-hidden transition-all p-0 font-normal whitespace-normal",
         active
           ? "border-brand ring-2 ring-brand/30 shadow-md"
-          : "border-border hover:border-foreground/40 hover:shadow-md hover:-translate-y-0.5",
+          : "hover:border-foreground/40 hover:shadow-md hover:-translate-y-0.5",
       )}
     >
       <div className={cn("relative h-32 grid place-items-center overflow-hidden", !hero && "bg-gradient-to-br", !hero && bg)}>
@@ -106,7 +109,7 @@ export function TemplateCard({
         </div>
         <div className="text-[11px] text-muted-foreground truncate">{tpl.category}</div>
       </div>
-    </button>
+    </Button>
   );
 }
 
@@ -119,11 +122,12 @@ export function FeaturedBanner({
   const [bg, fg] = tintFor(tpl.name);
   const hero = tpl.images?.[0];
   return (
-    <button
+    <Button
       type="button"
+      variant="outline"
       onClick={onSelect}
       className={cn(
-        "group relative flex items-stretch rounded-2xl overflow-hidden border border-border text-left transition-all hover:shadow-lg",
+        "group relative flex h-auto items-stretch rounded-2xl overflow-hidden text-left transition-all hover:shadow-lg p-0 font-normal whitespace-normal",
         !hero && "bg-gradient-to-br",
         !hero && bg,
       )}
@@ -157,7 +161,7 @@ export function FeaturedBanner({
           <DynamicIcon value={tpl.icon} />
         </div>
       )}
-    </button>
+    </Button>
   );
 }
 
