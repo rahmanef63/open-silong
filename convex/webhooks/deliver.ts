@@ -9,9 +9,8 @@
  */
 
 import { v } from "convex/values";
-import { action, internalMutation } from "../_generated/server";
+import { internalAction, internalMutation, internalQuery } from "../_generated/server";
 import { internal } from "../_generated/api";
-import type { Id } from "../_generated/dataModel";
 
 const TIMEOUT_MS = 5000;
 
@@ -30,7 +29,7 @@ async function hmacHex(secret: string, body: string): Promise<string> {
     .join("");
 }
 
-export const run = action({
+export const run = internalAction({
   args: {
     ownerId: v.id("users"),
     event: v.string(),
@@ -80,8 +79,6 @@ export const run = action({
     return { fanOut: endpoints.length, delivered };
   },
 });
-
-import { internalQuery } from "../_generated/server";
 
 export const listEnabledForOwner = internalQuery({
   args: { ownerId: v.id("users") },

@@ -32,15 +32,18 @@ export const create = mutation({
     if (url.length > MAX_URL_LEN) throw new Error("URL too long");
     if (args.events.length === 0) throw new Error("Subscribe to at least one event");
     if (args.events.length > MAX_EVENTS) throw new Error("Too many event subscriptions");
+    const secret = args.secret?.trim() || randomSecret();
     const id = await ctx.db.insert("webhookEndpoints", {
       userId,
       url,
       events: args.events,
-      secret: args.secret?.trim() || randomSecret(),
+      secret,
       enabled: true,
       createdAt: Date.now(),
     });
-    return id;
+    // Secret returned ONCE — `listMine` strips it from subsequent
+    // responses. UI shows it in a copy-once toast.
+    return { id, secret };
   },
 });
 
