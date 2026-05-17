@@ -1,60 +1,12 @@
-import type { Database, Page, Property, PropertyValue } from "@/shared/types/domain";
+/** Slice-local CSV: import parsing + value coercion. Export side
+ *  delegates to the canonical Notion-strict exporter in shared. */
 
-const CSV_DELIM = ",";
-const CSV_NL = "\n";
+import type { Page, Property, PropertyValue } from "@/shared/types/domain";
+export { databaseToCsv, downloadCsv } from "@/shared/lib/csv";
+import { databaseToCsv } from "@/shared/lib/csv";
 
-function escapeCell(s: string): string {
-  if (s == null) return "";
-  const needsQuote = /[",\n\r]/.test(s);
-  const escaped = s.replace(/"/g, '""');
-  return needsQuote ? `"${escaped}"` : escaped;
-}
-
-function valueToString(value: PropertyValue | undefined, prop: Property, allPages: Page[]): string {
-  if (value === undefined || value === null) return "";
-  if (prop.type === "checkbox") return value === true ? "true" : "false";
-  if (prop.type === "date" && typeof value === "object" && "date" in value) return value.date ?? "";
-  if (prop.type === "select" || prop.type === "status") {
-    return prop.options?.find((o) => o.id === value)?.name ?? String(value);
-  }
-  if (prop.type === "multi_select") {
-    const ids = Array.isArray(value) ? value : [];
-    return ids.map((id) => prop.options?.find((o) => o.id === id)?.name ?? id).join("; ");
-  }
-  if (prop.type === "relation") {
-    const ids = Array.isArray(value) ? value : [];
-    return ids.map((id) => allPages.find((p) => p.id === id)?.title ?? id).join("; ");
-  }
-  if (Array.isArray(value)) return value.join("; ");
-  return String(value);
-}
-
-export function exportDatabaseToCsv(db: Database, rows: Page[], allPages: Page[]): string {
-  const headers = ["Title", ...db.properties.map((p) => p.name)];
-  const lines: string[] = [headers.map(escapeCell).join(CSV_DELIM)];
-  for (const row of rows) {
-    const cells = [
-      escapeCell(row.title || ""),
-      ...db.properties.map((p) =>
-        escapeCell(valueToString(row.rowProps?.[p.id], p, allPages)),
-      ),
-    ];
-    lines.push(cells.join(CSV_DELIM));
-  }
-  return lines.join(CSV_NL);
-}
-
-export function downloadCsv(filename: string, content: string) {
-  const blob = new Blob([content], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename.endsWith(".csv") ? filename : `${filename}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
+/** Back-compat alias — old call sites used (db, rows, pages). */
+export const exportDatabaseToCsv = databaseToCsv;
 
 export interface ParsedCsv {
   headers: string[];
@@ -85,7 +37,9 @@ export function parseCsv(text: string): ParsedCsv {
     cell += ch; i++;
   }
   if (cell !== "" || row.length > 0) { row.push(cell); rows.push(row); }
+  // Strip UTF-8 BOM from first header if present (Notion-emitted CSVs ship it).
   const headers = rows.shift() ?? [];
+  if (headers[0]?.charCodeAt(0) === 0xfeff) headers[0] = headers[0].slice(1);
   return { headers, rows };
 }
 
@@ -110,8 +64,17 @@ export function valueFromString(
       const n = Number(trimmed);
       return Number.isFinite(n) ? n : null;
     }
-    case "date":
+    case "date": {
+      // Accept ISO YYYY-MM-DD or Notion's MM/DD/YYYY; normalize to ISO.
+      const iso = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (iso) return { date: trimmed };
+      const us = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+      if (us) {
+        const [, mm, dd, yyyy] = us;
+        return { date: `${yyyy}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}` };
+      }
       return { date: trimmed };
+    }
     case "select":
     case "status": {
       const opt = prop.options?.find((o) => o.name.toLowerCase() === trimmed.toLowerCase());
@@ -141,8 +104,6 @@ export function valueFromString(
     }
     case "person":
     case "files":
-      // Raw CSV strings aren't real person ids / file refs; skip rather than
-      // write garbage that the UI can't render.
       return null;
     case "url":
     case "email":
