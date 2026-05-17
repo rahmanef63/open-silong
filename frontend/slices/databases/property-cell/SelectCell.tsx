@@ -1,5 +1,6 @@
 import type { Database, Property, PropertyValue } from "@/shared/types/domain";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
+import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
 import { colorClass } from "@/shared/lib/format";
 import { X } from "lucide-react";
@@ -19,11 +20,11 @@ export function SelectCell({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button className={cn(cellClass, "w-full text-left px-2 py-1 rounded hover:bg-accent/50")}>
+        <Button variant="ghost" className={cn(cellClass, "h-auto w-full justify-start rounded px-2 py-1 text-left font-normal hover:bg-accent/50")}>
           {opt
             ? <span className={cn("inline-flex items-center rounded-full border px-2 py-0.5 text-xs", colorClass(opt.color))}>{opt.name}</span>
             : <span className="text-muted-foreground">-</span>}
-        </button>
+        </Button>
       </PopoverTrigger>
       <PopoverContent className="w-64 p-1">
         <div className="space-y-0.5 max-h-60 overflow-y-auto">
@@ -37,9 +38,9 @@ export function SelectCell({
               onSelect={() => onSet(o.id === selectedId ? null : o.id)}
             />
           ))}
-          <button onClick={() => onSet(null)} className="flex w-full items-center px-2 py-1 rounded hover:bg-accent text-xs text-muted-foreground">
+          <Button variant="ghost" onClick={() => onSet(null)} className="h-auto w-full justify-start rounded px-2 py-1 text-xs font-normal text-muted-foreground [&_svg]:size-3">
             <X className="mr-1 h-3 w-3" /> Clear
-          </button>
+          </Button>
         </div>
         <AddOption db={db} propId={prop.id} />
       </PopoverContent>
@@ -61,12 +62,12 @@ export function MultiSelectCell({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button className={cn(cellClass, "w-full text-left px-2 py-1 rounded hover:bg-accent/50 flex flex-wrap gap-1")}>
+        <Button variant="ghost" className={cn(cellClass, "h-auto w-full flex-wrap justify-start gap-1 rounded px-2 py-1 text-left font-normal hover:bg-accent/50")}>
           {selected.length === 0 && <span className="text-muted-foreground">-</span>}
           {selected.map((o) => (
             <span key={o.id} className={cn("inline-flex items-center rounded-full border px-2 py-0.5 text-xs", colorClass(o.color))}>{o.name}</span>
           ))}
-        </button>
+        </Button>
       </PopoverTrigger>
       <PopoverContent className="w-64 p-1">
         <div className="max-h-60 overflow-y-auto space-y-0.5">

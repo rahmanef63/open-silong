@@ -6,6 +6,7 @@ import { useThreadComments } from "../lib/CommentsContext";
 import { CommentItem } from "./CommentItem";
 import { CommentComposer } from "./CommentComposer";
 import { cn } from "@/shared/lib/utils";
+import { Button } from "@/shared/ui/button";
 
 export interface ThreadPopoverLabels {
   /** Heading inside the popover. Default: "Comments". */
@@ -63,10 +64,11 @@ export function ThreadPopover({
     <Popover>
       <PopoverTrigger asChild>
         {trigger ?? (
-          <button
+          <Button
+            variant="ghost"
             aria-label={t.triggerAriaLabel}
             className={cn(
-              "rounded p-1 hover:bg-accent text-muted-foreground relative",
+              "relative h-auto rounded p-1 text-muted-foreground [&_svg]:size-3.5",
               openCount > 0 && "text-brand",
             )}
           >
@@ -76,7 +78,7 @@ export function ThreadPopover({
                 {openCount}
               </span>
             )}
-          </button>
+          </Button>
         )}
       </PopoverTrigger>
       <PopoverContent align="end" className="w-80 p-2">

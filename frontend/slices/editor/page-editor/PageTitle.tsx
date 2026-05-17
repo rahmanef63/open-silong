@@ -1,6 +1,7 @@
 import { ImagePlus } from "lucide-react";
 import { useStore } from "@/shared/lib/store";
 import { cn } from "@/shared/lib/utils";
+import { Button } from "@/shared/ui/button";
 import { IconPickerPopover, DynamicIcon, DEFAULT_PAGE_ICON } from "@/shared/components/icon-picker";
 import { WikiBadge } from "@/slices/wiki";
 import type { Database, Page } from "@/shared/types/domain";
@@ -21,16 +22,16 @@ export function PageTitle({ page, fullPageDb, firstBlockRef }: Props) {
         onChange={(next) => updatePage(page.id, { icon: next })}
         onClear={() => updatePage(page.id, { icon: DEFAULT_PAGE_ICON })}
       >
-        <button type="button" className="text-6xl leading-none hover:bg-accent rounded-md p-1 transition" aria-label="Change icon">
+        <Button variant="ghost" type="button" className="h-auto rounded-md p-1 text-6xl font-normal leading-none transition" aria-label="Change icon">
           <DynamicIcon value={page.icon} />
-        </button>
+        </Button>
       </IconPickerPopover>
 
       <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
         {!page.cover && (
-          <button onClick={() => updatePage(page.id, { cover: COVERS[Math.floor(Math.random() * COVERS.length)] })} className="flex items-center gap-1 hover:text-foreground transition">
+          <Button variant="ghost" onClick={() => updatePage(page.id, { cover: COVERS[Math.floor(Math.random() * COVERS.length)] })} className="h-auto gap-1 p-0 text-xs font-normal text-muted-foreground hover:bg-transparent hover:text-foreground [&_svg]:size-3.5">
             <ImagePlus className="h-3.5 w-3.5" /> Add cover
-          </button>
+          </Button>
         )}
       </div>
 
@@ -64,9 +65,9 @@ export function PageTitle({ page, fullPageDb, firstBlockRef }: Props) {
         <div className="mt-3 flex items-center gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-xs text-amber-700 dark:text-amber-400">
           <span>🔒</span>
           <span className="flex-1">Page is locked. Editing is disabled.</span>
-          <button onClick={() => updatePage(page.id, { locked: false })} className="rounded px-2 py-0.5 hover:bg-amber-500/20">
+          <Button variant="ghost" onClick={() => updatePage(page.id, { locked: false })} className="h-auto rounded px-2 py-0.5 text-xs font-normal text-amber-700 hover:bg-amber-500/20 dark:text-amber-400">
             Unlock
-          </button>
+          </Button>
         </div>
       )}
     </>

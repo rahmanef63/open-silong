@@ -69,18 +69,19 @@ export function PageActionsMenu({ page, onShowHistory }: Props) {
             {FONT_OPTIONS.map((opt) => {
               const active = (page.font ?? "default") === opt.id;
               return (
-                <button
+                <Button
+                  variant="outline"
                   key={opt.id}
                   onClick={() => actions.setFont(opt.id)}
                   className={cn(
-                    "rounded-md border py-2 text-center transition",
+                    "h-auto flex-col rounded-md py-2 text-center font-normal transition",
                     opt.className,
-                    active ? "border-foreground bg-accent" : "border-border hover:bg-accent/50",
+                    active ? "border-foreground bg-accent" : "hover:bg-accent/50",
                   )}
                 >
                   <div className="text-base font-semibold leading-none">Ag</div>
                   <div className="mt-1 text-[10px] text-muted-foreground">{opt.label}</div>
-                </button>
+                </Button>
               );
             })}
           </div>

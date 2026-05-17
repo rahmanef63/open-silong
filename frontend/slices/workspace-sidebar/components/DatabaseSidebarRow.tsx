@@ -7,6 +7,7 @@ import { cn } from "@/shared/lib/utils";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
+import { Button } from "@/shared/ui/button";
 import type { DensityConfig } from "../lib/density";
 
 interface Props {
@@ -24,24 +25,26 @@ export function DatabaseSidebarRow({ db, density }: Props) {
         density.pageLink,
       )}
     >
-      <button
+      <Button
+        variant="ghost"
         onClick={() => navigate(ROUTES.database(db.id))}
-        className="flex flex-1 min-w-0 items-center gap-1.5 text-left"
+        className="h-auto min-w-0 flex-1 justify-start gap-1.5 p-0 text-left text-sm font-normal hover:bg-transparent"
         title={`Open ${db.name || "database"}`}
       >
         <Table2 className={cn("shrink-0 text-muted-foreground", density.actionIcon)} />
         <span className="flex-1 truncate">{db.name}</span>
         <span className="text-[10px] text-muted-foreground shrink-0">{db.rowIds.length}</span>
-      </button>
+      </Button>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button
-            className="opacity-0 group-hover/db:opacity-100 rounded p-0.5 hover:bg-background text-muted-foreground"
+          <Button
+            variant="ghost"
+            className="h-auto rounded p-0.5 text-muted-foreground opacity-0 hover:bg-background group-hover/db:opacity-100 [&_svg]:size-3"
             aria-label="Database actions"
             onClick={(e) => e.stopPropagation()}
           >
             <MoreHorizontal className="h-3 w-3" />
-          </button>
+          </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={() => navigate(ROUTES.database(db.id))}>

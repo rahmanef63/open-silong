@@ -12,6 +12,7 @@ import { SelectCell, MultiSelectCell } from "./property-cell/SelectCell";
 import { ButtonCell } from "./property-cell/ButtonCell";
 import { DateCell } from "./property-cell/DateCell";
 import { VerificationCell } from "./property-cell/VerificationCell";
+import { Button } from "@/shared/ui/button";
 
 interface Props {
   db: Database;
@@ -75,14 +76,14 @@ export function PropertyCell({ db, prop, row, compact = false }: Props) {
       return <MultiSelectCell db={db} prop={prop} value={value} onSet={set} cellClass={cellClass} />;
     case "person":
       return (
-        <button onClick={() => set([user.id])} className={cn(cellClass, "w-full text-left px-2 py-1 rounded hover:bg-accent/50")}>
+        <Button variant="ghost" onClick={() => set([user.id])} className={cn(cellClass, "h-auto w-full justify-start rounded px-2 py-1 text-left font-normal hover:bg-accent/50")}>
           {(value as string[])?.includes(user.id) ? (
             <span className="inline-flex items-center gap-1 text-xs">
               <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand/20">{user.icon}</span>
               {user.name}
             </span>
           ) : <span className="text-muted-foreground text-xs">Click to assign me</span>}
-        </button>
+        </Button>
       );
     case "files":
       return <FilesCell db={db} prop={prop} row={row} value={value} onSet={set} cellClass={cellClass} />;

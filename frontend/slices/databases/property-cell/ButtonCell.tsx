@@ -1,4 +1,5 @@
 import type { Page, Property } from "@/shared/types/domain";
+import { Button } from "@/shared/ui/button";
 
 export function ButtonCell({ prop, row }: { prop: Property; row: Page }) {
   const label = prop.buttonLabel || "Run";
@@ -17,14 +18,15 @@ export function ButtonCell({ prop, row }: { prop: Property; row: Page }) {
     }
   };
   return (
-    <button
+    <Button
+      variant="outline"
       type="button"
       onClick={onClick}
       disabled={actions.length === 0}
-      className="m-1 inline-flex items-center gap-1 rounded-md border border-border bg-card px-2 py-0.5 text-xs hover:bg-accent disabled:opacity-50"
+      className="m-1 inline-flex h-auto items-center gap-1 rounded-md bg-card px-2 py-0.5 text-xs font-normal"
       title={actions.length === 0 ? "Configure actions in Edit property" : label}
     >
       {label}
-    </button>
+    </Button>
   );
 }

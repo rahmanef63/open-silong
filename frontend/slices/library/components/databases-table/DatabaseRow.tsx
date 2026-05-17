@@ -79,14 +79,15 @@ export function DatabaseRow({
         <div className="flex items-center gap-1 min-w-0">
           <span className="h-5 w-5 shrink-0" aria-hidden />
           <IconPickerPopover value={db.icon} onChange={setIcon}>
-            <button
+            <Button
+              variant="ghost"
               type="button"
-              className="text-base shrink-0 hover:bg-accent rounded p-0.5 transition"
+              className="h-auto shrink-0 rounded p-0.5 text-base font-normal transition"
               aria-label="Change icon"
               onClick={(e) => e.stopPropagation()}
             >
               <DynamicIcon value={db.icon} className="text-base" />
-            </button>
+            </Button>
           </IconPickerPopover>
           {renaming ? (
             <Input
@@ -101,17 +102,18 @@ export function DatabaseRow({
               className="h-7 text-sm flex-1 min-w-0"
             />
           ) : (
-            <button
+            <Button
+              variant="ghost"
               type="button"
               onClick={onOpen}
               onDoubleClick={() => { setDraft(db.name); setRenaming(true); }}
-              className="flex-1 min-w-0 truncate text-left font-medium"
+              className="h-auto min-w-0 flex-1 justify-start truncate p-0 text-left font-medium hover:bg-transparent"
             >
               <span className="truncate">{db.name || "Untitled database"}</span>
               <span className="ml-2 text-[10px] text-muted-foreground tabular-nums">
                 {rowCount} {rowCount === 1 ? "row" : "rows"}
               </span>
-            </button>
+            </Button>
           )}
         </div>
       </td>
@@ -121,10 +123,11 @@ export function DatabaseRow({
       <td className="hidden lg:table-cell px-2 py-1.5 text-xs text-muted-foreground truncate align-middle">
         {host ? (
           onOpenSource ? (
-            <button
+            <Button
+              variant="ghost"
               type="button"
               onClick={() => onOpenSource("page", host.id)}
-              className="hover:text-foreground transition truncate max-w-full"
+              className="h-auto max-w-full justify-start truncate p-0 text-xs font-normal hover:bg-transparent hover:text-foreground"
             >
               <span className="inline-flex items-center gap-1.5 min-w-0">
                 {host.icon ? (
@@ -134,7 +137,7 @@ export function DatabaseRow({
                 )}
                 <span className="truncate">{host.title || "Untitled"}</span>
               </span>
-            </button>
+            </Button>
           ) : (
             <span className="inline-flex items-center gap-1.5">
               <FileText className="h-3 w-3 opacity-60" />

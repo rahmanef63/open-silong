@@ -1,5 +1,6 @@
 import { DynamicIcon } from "@/shared/components/icon-picker";
 import { cn } from "@/shared/lib/utils";
+import { Button } from "@/shared/ui/button";
 import type { Page } from "@/shared/types/domain";
 
 export function Section({ title, icon: Icon, children }: any) {
@@ -20,12 +21,13 @@ export function Grid({ children }: any) {
 
 export function ActionCard({ icon: Icon, title, subtitle, onClick, primary }: any) {
   return (
-    <button
+    <Button
+      variant="ghost"
       onClick={onClick}
       className={cn(
-        "group flex flex-col items-start gap-3 rounded-xl border p-5 text-left transition shadow-soft",
+        "group flex h-auto flex-col items-start gap-3 rounded-xl border p-5 text-left font-normal shadow-soft transition",
         primary
-          ? "bg-foreground text-background border-foreground hover:opacity-90"
+          ? "bg-foreground text-background border-foreground hover:bg-foreground hover:opacity-90 hover:text-background"
           : "bg-card border-border hover:border-border-strong"
       )}
     >
@@ -36,16 +38,17 @@ export function ActionCard({ icon: Icon, title, subtitle, onClick, primary }: an
         <div className="font-semibold">{title}</div>
         <div className={cn("text-sm", primary ? "text-background/70" : "text-muted-foreground")}>{subtitle}</div>
       </div>
-    </button>
+    </Button>
   );
 }
 
 export function PageCard({ page, onClick }: { page: Page; onClick: () => void }) {
   const preview = page.previewText || "Empty page";
   return (
-    <button
+    <Button
+      variant="ghost"
       onClick={onClick}
-      className="group flex flex-col items-start gap-3 rounded-xl border border-border bg-card p-4 text-left transition hover:border-border-strong shadow-soft"
+      className="group flex h-auto flex-col items-start gap-3 rounded-xl border border-border bg-card p-4 text-left font-normal shadow-soft transition hover:border-border-strong"
     >
       <div
         className="h-16 w-full rounded-md"
@@ -56,7 +59,7 @@ export function PageCard({ page, onClick }: { page: Page; onClick: () => void })
         <div className="font-medium text-sm truncate">{page.title || "Untitled"}</div>
       </div>
       <div className="text-xs text-muted-foreground line-clamp-2">{preview}</div>
-    </button>
+    </Button>
   );
 }
 
@@ -66,7 +69,7 @@ export function EmptyState({ onCreate }: { onCreate: () => void }) {
       <div className="text-4xl mb-3">📭</div>
       <div className="font-medium">No pages yet</div>
       <p className="text-sm text-muted-foreground mt-1 mb-4">Create your first page to get started.</p>
-      <button onClick={onCreate} className="rounded-md bg-foreground text-background px-4 py-2 text-sm hover:opacity-90">Create page</button>
+      <Button onClick={onCreate} className="rounded-md bg-foreground px-4 py-2 text-sm text-background hover:bg-foreground hover:opacity-90">Create page</Button>
     </div>
   );
 }

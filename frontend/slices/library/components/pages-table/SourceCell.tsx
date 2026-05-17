@@ -1,5 +1,6 @@
 import { Folder, FileText, Database as DbIcon } from "lucide-react";
 import { DynamicIcon } from "@/shared/components/icon-picker";
+import { Button } from "@/shared/ui/button";
 import type { pageSource } from "../../lib/groupPages";
 
 export function SourceCell({
@@ -30,13 +31,14 @@ export function SourceCell({
   );
   if (onOpenSource && source.targetId) {
     return (
-      <button
+      <Button
+        variant="ghost"
         type="button"
         onClick={() => onOpenSource(source.kind === "database" ? "database" : "page", source.targetId!)}
-        className="hover:text-foreground transition truncate max-w-full"
+        className="h-auto max-w-full justify-start truncate p-0 text-xs font-normal hover:bg-transparent hover:text-foreground"
       >
         {label}
-      </button>
+      </Button>
     );
   }
   return label;

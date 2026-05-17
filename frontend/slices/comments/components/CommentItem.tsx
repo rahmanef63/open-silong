@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Check, Pencil, Trash2, X, RotateCcw } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
+import { Button } from "@/shared/ui/button";
 import { formatRelTime as relTime } from "@/shared/lib/format";
 import type { Comment } from "../types";
 
@@ -56,12 +57,12 @@ export function CommentItem({
                 }}
               />
               <div className="flex justify-end gap-1">
-                <button onClick={() => { setEditing(false); setDraft(comment.text); }} className="text-[11px] text-muted-foreground hover:text-foreground px-2 py-0.5">
+                <Button variant="ghost" onClick={() => { setEditing(false); setDraft(comment.text); }} className="h-auto px-2 py-0.5 text-[11px] font-normal text-muted-foreground hover:bg-transparent hover:text-foreground">
                   Cancel
-                </button>
-                <button onClick={commit} className="text-[11px] rounded bg-foreground text-background px-2 py-0.5">
+                </Button>
+                <Button onClick={commit} className="h-auto rounded bg-foreground px-2 py-0.5 text-[11px] text-background hover:bg-foreground/90">
                   Save
-                </button>
+                </Button>
               </div>
             </div>
           ) : (
@@ -94,12 +95,13 @@ function IconBtn({
   children: React.ReactNode; label: string; onClick: () => void; destructive?: boolean;
 }) {
   return (
-    <button
+    <Button
+      variant="ghost"
       onClick={onClick}
       aria-label={label}
-      className={cn("rounded p-1 text-muted-foreground hover:bg-accent", destructive && "hover:text-destructive")}
+      className={cn("h-auto rounded p-1 text-muted-foreground [&_svg]:size-3", destructive && "hover:text-destructive")}
     >
       {children}
-    </button>
+    </Button>
   );
 }

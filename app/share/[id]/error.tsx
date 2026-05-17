@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { AlertTriangle, RefreshCw, Home } from "lucide-react";
+import { Button } from "@/shared/ui/button";
 
 export default function ShareError({
   error,
@@ -22,12 +23,12 @@ export default function ShareError({
         <h2 className="text-base font-semibold mb-1">This shared page can't load</h2>
         <p className="text-sm text-muted-foreground mb-4">{error.message || "Unknown error"}</p>
         <div className="flex justify-center gap-2">
-          <button
+          <Button
             onClick={reset}
-            className="inline-flex items-center gap-1.5 rounded-md bg-foreground text-background px-3 py-1.5 text-sm hover:opacity-90"
+            className="inline-flex h-auto items-center gap-1.5 rounded-md bg-foreground px-3 py-1.5 text-sm text-background hover:bg-foreground hover:opacity-90 [&_svg]:size-3.5"
           >
             <RefreshCw className="h-3.5 w-3.5" /> Retry
-          </button>
+          </Button>
           <Link
             href="/"
             className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm hover:bg-accent"
