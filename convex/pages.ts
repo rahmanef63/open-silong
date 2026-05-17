@@ -1,4 +1,5 @@
 import { mutation, query } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { requireAuth, requireOwned, requireWorkspaceAccess } from "./_shared/auth";
@@ -252,7 +253,7 @@ export const create = mutation({
     const active = await requireActiveWorkspaceWritable(ctx, userId);
     const now = Date.now();
     const blocks = [emptyBlock()];
-    return await ctx.db.insert("pages", {
+    const pageId = await ctx.db.insert("pages", {
       userId,
       workspaceId: active._id,
       parentId: args.parentId as Id<"pages"> | null,
@@ -269,6 +270,13 @@ export const create = mutation({
       createdAt: now,
       updatedAt: now,
     });
+    // Fire-and-forget webhook fan-out — no await blocks the caller.
+    await ctx.scheduler.runAfter(0, internal.webhooks.deliver.run, {
+      ownerId: userId,
+      event: "page.created",
+      payload: { pageId, title: args.title ?? "", parentId: args.parentId },
+    });
+    return pageId;
   },
 });
 
@@ -313,6 +321,17 @@ export const update = mutation({
       ...(touchesContent ? { searchText: buildSearchText(nextTitle, nextBlocks) } : {}),
       updatedAt: Date.now(),
     });
+    if (touchesContent) {
+      await ctx.scheduler.runAfter(0, internal.webhooks.deliver.run, {
+        ownerId: userId,
+        event: "page.updated",
+        payload: {
+          pageId: args.pageId,
+          title: nextTitle,
+          changedFields: Object.keys(args.patch),
+        },
+      });
+    }
   },
 });
 

@@ -19,6 +19,7 @@ import { reportError } from "@/shared/lib/error";
 import { Button } from "@/shared/ui/button";
 import { McpTokensSection } from "./McpTokensSection";
 import { WorkspacesSection } from "./WorkspacesSection";
+import { WebhooksSection } from "./WebhooksSection";
 
 const THEME_OPTIONS = [
   ["light", "Light"], ["dark", "Dark"], ["system", "System"],
@@ -244,6 +245,10 @@ export default function SettingsPage() {
 
       <Section title="MCP tokens">
         <McpTokensSection />
+      </Section>
+
+      <Section title="Webhooks">
+        <WebhooksSection />
       </Section>
     </>
   );
