@@ -24,7 +24,6 @@ export function ActionCard({ icon: Icon, title, subtitle, onClick, primary }: an
     <Button
       variant="ghost"
       onClick={onClick}
-      variant={primary ? "default" : "outline"}
       className={cn(
         "group flex h-auto flex-col items-start gap-3 rounded-xl border p-5 text-left font-normal shadow-soft transition",
         primary

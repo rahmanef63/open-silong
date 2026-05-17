@@ -4,7 +4,6 @@ import { useStore } from "@/shared/lib/store";
 import { Button } from "@/shared/ui/button";
 import type { Property } from "@/shared/types/domain";
 import { PROPERTY_TYPE_ICONS } from "@/slices/databases";
-import { Button } from "@/shared/ui/button";
 
 export function PropertyNameCell({ dbId, prop }: { dbId: string; prop: Property }) {
   const { updateProperty, deleteProperty } = useStore();

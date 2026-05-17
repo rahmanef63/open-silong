@@ -3,7 +3,6 @@ import { Check, Pencil, Trash2, X, RotateCcw } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { Button } from "@/shared/ui/button";
 import { formatRelTime as relTime } from "@/shared/lib/format";
-import { Button } from "@/shared/ui/button";
 import type { Comment } from "../types";
 
 interface Props {

@@ -90,7 +90,6 @@ export function RowSelectionToolbar({ databaseId }: Props) {
                   <Button
                     variant="ghost"
                     key={p.id}
-                    variant="ghost"
                     onClick={() => {
                       setEditProp(p);
                       setEditValue(p.type === "checkbox" ? false : p.type === "multi_select" ? [] : null);

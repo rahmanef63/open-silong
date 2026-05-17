@@ -5,7 +5,6 @@ import {
 } from "@/shared/ui/dropdown-menu";
 import { Button } from "@/shared/ui/button";
 import { Search, Filter, ArrowUpDown, LayoutGrid, Check } from "lucide-react";
-import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
 import { FilterBuilder } from "../FilterBuilder";
 import { SortBuilder } from "../SortBuilder";

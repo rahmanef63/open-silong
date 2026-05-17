@@ -13,7 +13,6 @@ import { SelectCell, MultiSelectCell } from "./property-cell/SelectCell";
 import { ButtonCell } from "./property-cell/ButtonCell";
 import { DateCell } from "./property-cell/DateCell";
 import { VerificationCell } from "./property-cell/VerificationCell";
-import { Button } from "@/shared/ui/button";
 
 interface Props {
   db: Database;

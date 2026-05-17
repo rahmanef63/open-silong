@@ -7,7 +7,6 @@ import { uid } from "@/shared/lib/uid";
 import { Plus } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { requireNested } from "./blocks/nestedRegistry";
-import { Button } from "@/shared/ui/button";
 
 const MIN_COL = 10;
 

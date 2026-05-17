@@ -35,7 +35,6 @@ function SubpagesImpl({ page, subpages }: { page: Page; subpages: Page[] }) {
             <Button
               variant="outline"
               key={sp.id}
-              variant="outline"
               onClick={() => navigate(`/p/${sp.id}`)}
               draggable
               onDragStart={(e) => {

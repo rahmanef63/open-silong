@@ -14,7 +14,6 @@ import { TemplateGalleryDialog } from "@/slices/templates";
 import { AIAgentConsole } from "@/slices/ai-agent";
 import { MoreDrawer } from "./MoreDrawer";
 import { InboxBadge } from "@/slices/inbox";
-import { Button } from "@/shared/ui/button";
 
 interface Props {
   onOpenSearch: () => void;
@@ -63,7 +62,6 @@ export function MobileBottomNav({ onOpenSearch }: Props) {
               <Button
                 variant="ghost"
                 type="button"
-                variant="ghost"
                 onClick={(e) => { e.currentTarget.blur(); s.onClick(); }}
                 aria-label={s.label}
                 aria-current={s.active ? "page" : undefined}

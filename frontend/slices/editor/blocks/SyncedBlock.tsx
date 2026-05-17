@@ -13,7 +13,6 @@ import { findSyncedSource } from "../lib/syncedBlocks";
 import { focusBlockSoon, findBlockNode } from "../lib/focusBlock";
 import { requireNested } from "./nestedRegistry";
 import { bgColorClass } from "../lib/colors";
-import { Button } from "@/shared/ui/button";
 
 /** Synced block — Notion-canonical reusable content.
  *

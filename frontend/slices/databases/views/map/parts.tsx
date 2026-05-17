@@ -4,7 +4,6 @@ import {
 import { Button } from "@/shared/ui/button";
 import { ChevronDown, MapPin, MoreHorizontal, Trash2 } from "lucide-react";
 import { DynamicIcon } from "@/shared/components/icon-picker";
-import { Button } from "@/shared/ui/button";
 import type { Property } from "@/shared/types/domain";
 import type { Pin } from "./MapSvg";
 

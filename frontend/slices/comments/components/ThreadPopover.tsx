@@ -7,7 +7,6 @@ import { useThreadComments } from "../lib/CommentsContext";
 import { CommentItem } from "./CommentItem";
 import { CommentComposer } from "./CommentComposer";
 import { cn } from "@/shared/lib/utils";
-import { Button } from "@/shared/ui/button";
 
 export interface ThreadPopoverLabels {
   /** Heading inside the popover. Default: "Comments". */

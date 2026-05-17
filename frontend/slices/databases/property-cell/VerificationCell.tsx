@@ -34,7 +34,6 @@ export function VerificationCell({ value, onSet, cellClass }: Props) {
     <Button
       variant="ghost"
       type="button"
-      variant="ghost"
       onClick={flip}
       title={audit}
       className={cn(

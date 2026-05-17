@@ -67,7 +67,6 @@ export function NumberCell({ prop, value, onSet, cellClass }: Props) {
     <Button
       variant="ghost"
       type="button"
-      variant="ghost"
       onClick={() => { setEditing(true); }}
       onFocus={() => setEditing(true)}
       className={cn(

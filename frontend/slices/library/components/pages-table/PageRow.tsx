@@ -84,7 +84,6 @@ export function PageRow({
           <Button
             variant="ghost"
             type="button"
-            variant="ghost"
             size="icon"
             onClick={onToggleExpand}
             disabled={!hasChildren}
@@ -123,7 +122,6 @@ export function PageRow({
             <Button
               variant="ghost"
               type="button"
-              variant="ghost"
               onClick={onOpen}
               onDoubleClick={() => { setDraft(page.title); setRenaming(true); }}
               className="h-auto min-w-0 flex-1 justify-start truncate p-0 text-left font-medium hover:bg-transparent"
