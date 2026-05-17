@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 /** Slice portability auditor — scans every `frontend/slices/<slug>/` for
- *  blockers that prevent kitab UP-sync (push to rahman-resources).
+ *  blockers that prevent re-use of a slice in a different project
+ *  (different routes, different role enums, different convex schema,
+ *  different env layout).
  *
  *  Categories scanned:
  *    1. ROUTE_LITERAL    — `/dashboard`, `/p/`, `/db/`, `/admin/` baked
@@ -8,32 +10,24 @@
  *                          `ROUTES`/`ROUTES_ABS` or a config prop).
  *    2. ROLE_ENUM        — `"editor"`/`"viewer"`/`"super-admin"`
  *                          literal in code (must be configurable).
- *    3. CONVEX_TABLE     — direct `ctx.db.query("pages"|...)` or
- *                          `Id<"pages">` outside a boundary cast
- *                          (must accept table names via config).
+ *    3. CONVEX_TABLE     — `Id<"pages">` / table-name literal outside
+ *                          a boundary cast (must accept table names
+ *                          via config).
  *    4. ENV_LEAK         — `process.env.NEXT_PUBLIC_*` read inside
  *                          slice code (must arrive via prop).
- *    5. DOMAIN_LABEL     — Indonesian/English UI labels hardcoded in
- *                          JSX text nodes (must come from i18n prop).
- *                          Heuristic — flagged for human review.
  *
  *  Usage:
- *    node scripts/audit-kitab.mjs           # console summary
- *    node scripts/audit-kitab.mjs --json    # full per-slice JSON
- *    node scripts/audit-kitab.mjs --write   # patch each .kitab.json
- *                                              with structured blockers
- *                                              (replaces the generic stub)
+ *    node scripts/audit-portability.mjs           # console summary
+ *    node scripts/audit-portability.mjs --json    # per-slice JSON
  *
- *  Idempotent. Re-runnable. Designed to be the front-end of `/rr-prep`. */
+ *  Idempotent. Re-runnable. Diff the summary across commits to track
+ *  generalisation work. */
 
-import { readdirSync, statSync, readFileSync, writeFileSync, existsSync } from "node:fs";
+import { readdirSync, statSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
 
 const SLICES_DIR = "frontend/slices";
-const AUDIT_DATE = new Date().toISOString().slice(0, 10);
-
 const ARGS = new Set(process.argv.slice(2));
-const WRITE = ARGS.has("--write");
 const JSON_OUT = ARGS.has("--json");
 
 const PATTERNS = [
@@ -133,7 +127,7 @@ for (const slug of slices) {
 if (JSON_OUT) {
   console.log(JSON.stringify(report, null, 2));
 } else {
-  console.log(`\nKitab portability audit — ${slices.length} slices, ${totalHits} blockers\n`);
+  console.log(`\nSlice portability audit — ${slices.length} slices, ${totalHits} blockers\n`);
   const rows = Object.entries(report).sort((a, b) => b[1].hitCount - a[1].hitCount);
   for (const [slug, r] of rows) {
     const badge = r.status === "portable" ? "✓ portable" : `✗ ${r.hitCount} blockers`;
@@ -145,20 +139,3 @@ if (JSON_OUT) {
   console.log("");
 }
 
-if (WRITE) {
-  let patched = 0;
-  for (const [slug, r] of Object.entries(report)) {
-    const kitabPath = join(SLICES_DIR, slug, ".kitab.json");
-    if (!existsSync(kitabPath)) continue;
-    const cur = JSON.parse(readFileSync(kitabPath, "utf8"));
-    cur.generalization = {
-      ...cur.generalization,
-      status: r.status,
-      auditedAt: AUDIT_DATE,
-      blockers: r.blockers,
-    };
-    writeFileSync(kitabPath, JSON.stringify(cur, null, 2) + "\n");
-    patched++;
-  }
-  console.log(`Patched ${patched} .kitab.json files with structured blockers.`);
-}

@@ -84,7 +84,7 @@ Cross-cutting concerns. Selection + comments are concerns, not features.
 **Fix:** Hoist to `shared/`:
 
 - `block-selection` → `shared/state/selection/` (Zustand store + hooks).
-- `comments` → `shared/comments/` (already partially harvested in resources kitab PR #35).
+- `comments` → `shared/comments/`.
 
 Editor imports `shared/state/selection` instead of `slices/block-selection`. Block-selection slice becomes a **thin UI layer** over the shared state.
 
@@ -155,7 +155,7 @@ node ~/.agents/skills/audit-structure/scripts/audit-structure.mjs --verbose 2>&1
 | # | Patch | Effort | Unblocks |
 |---|---|---|---|
 | 1 | Hoist `block-selection` → `shared/state/selection/` | 2 hr | 4 edges |
-| 2 | Hoist comments rendering into `shared/comments/` (or use resources kitab) | 3 hr | 3 edges |
+| 2 | Hoist comments rendering into `shared/comments/` | 3 hr | 3 edges |
 | 3 | Introduce `shared/block-renderer/` registry — break editor ↔ databases | 6 hr | 8 edges |
 | 4 | Introduce `shared/admin/registry/` — admin-panel doesn't import slices | 4 hr | 6 edges |
 | 5 | Sidebar uses feature registry — no direct slice imports | 2 hr | 6 edges |

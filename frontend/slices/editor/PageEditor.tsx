@@ -30,6 +30,8 @@ import { HeaderBreadcrumbs } from "./page-editor/HeaderBreadcrumbs";
 import { HeaderActions } from "./page-editor/HeaderActions";
 import { Subpages } from "./page-editor/Subpages";
 import { PageTitle } from "./page-editor/PageTitle";
+import { CoverBanner } from "@/slices/cover";
+import type { CoverData } from "@/shared/types/domain";
 
 export function PageEditor() {
   const { id } = useParams<{ id: string }>();
@@ -100,7 +102,14 @@ export function PageEditor() {
 
       <div className="flex flex-1 min-h-0">
         <div ref={scrollRef} className="relative flex-1 overflow-y-auto scrollbar-thin">
-          {page.cover && <div className="h-44 md:h-56 w-full" style={{ background: page.cover }} />}
+          {page.cover && (
+            <div className="relative">
+              <CoverBanner
+                cover={page.cover}
+                onChange={(next: CoverData | null) => updatePage(page.id, { cover: next })}
+              />
+            </div>
+          )}
 
           <div
             className={cn(

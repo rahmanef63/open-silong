@@ -1,6 +1,6 @@
 {
   "name": "notion",
-  "description": "Mega-slice: bundles editor + databases + templates + workspace-io + wrappers + config provider as one drop-in. Re-exported from frontend/slices/notion/. Target for kitab UP-sync.",
+  "description": "Mega-slice: bundles editor + databases + templates + workspace-io + wrappers + config provider as one drop-in. Re-exported from frontend/slices/notion/. Portable bundle for embedding the Notion experience in other React projects.",
   "deps": {
     "shared": [
       "components/notion",

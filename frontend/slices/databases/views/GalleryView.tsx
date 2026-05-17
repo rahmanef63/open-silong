@@ -1,4 +1,5 @@
 import { Database, DatabaseViewConfig, Page, Property } from "@/shared/types/domain";
+import { parseCover, isImageCover } from "@/slices/cover";
 import Image from "next/image";
 import { PropertyCell } from "../PropertyCell";
 import { focusSiblingBySelector } from "@/shared/lib/keyboard";
@@ -31,7 +32,12 @@ function pickCover(view: DatabaseViewConfig, db: Database, r: Page): string | un
       return (raw as string) ?? undefined;
     }
   }
-  return r.cover ?? undefined;
+  // Cover field may be the new CoverData object — only return image-typed
+  // covers as a URL (gallery card uses <Image src=...>; color/gradient
+  // covers fall back to undefined so the card renders its placeholder).
+  const parsed = parseCover(r.cover);
+  if (parsed && isImageCover(parsed)) return parsed.value;
+  return undefined;
 }
 
 export function GalleryView({ db, view, rows, onOpenRow }: Props) {

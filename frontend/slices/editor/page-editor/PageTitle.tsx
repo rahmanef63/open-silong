@@ -1,11 +1,10 @@
-import { ImagePlus } from "lucide-react";
 import { useStore } from "@/shared/lib/store";
 import { cn } from "@/shared/lib/utils";
 import { Button } from "@/shared/ui/button";
 import { IconPickerPopover, DynamicIcon, DEFAULT_PAGE_ICON } from "@/shared/components/icon-picker";
 import { WikiBadge } from "@/slices/wiki";
+import { AddCoverButton } from "@/slices/cover";
 import type { Database, Page } from "@/shared/types/domain";
-import { COVERS } from "../lib/covers";
 
 interface Props {
   page: Page;
@@ -29,9 +28,10 @@ export function PageTitle({ page, fullPageDb, firstBlockRef }: Props) {
 
       <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
         {!page.cover && (
-          <Button variant="ghost" onClick={() => updatePage(page.id, { cover: COVERS[Math.floor(Math.random() * COVERS.length)] })} className="h-auto gap-1 p-0 text-xs font-normal text-muted-foreground hover:bg-transparent hover:text-foreground [&_svg]:size-3.5">
-            <ImagePlus className="h-3.5 w-3.5" /> Add cover
-          </Button>
+          <AddCoverButton
+            onPick={(c) => updatePage(page.id, { cover: c })}
+            className="h-auto gap-1 p-0 text-xs font-normal text-muted-foreground hover:bg-transparent hover:text-foreground [&_svg]:size-3.5"
+          />
         )}
       </div>
 

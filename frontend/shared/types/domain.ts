@@ -90,12 +90,30 @@ export interface Block {
 
 export type PageFont = "default" | "serif" | "mono";
 
+/** Cover image data — Notion-style. Stored as object for new covers;
+ *  legacy string values (raw URL / CSS color) still tolerated and
+ *  normalized via `parseCover` in the cover slice. */
+export type CoverType = "color" | "gradient" | "texture" | "upload" | "link" | "unsplash";
+
+export interface CoverData {
+  type: CoverType;
+  /** For color/gradient: CSS value (e.g. "#ff0000", "linear-gradient(...)").
+   *  For texture/upload/link/unsplash: image URL or FileRef. */
+  value: string;
+  /** Vertical position 0–100, default 50 (centre). */
+  positionY?: number;
+  /** Free-form per-type metadata. Unsplash: { photographer, source, thumb }. */
+  metadata?: Record<string, unknown>;
+}
+
+export type CoverField = string | null | CoverData;
+
 export interface Page {
   id: string;
   parentId: string | null;
   title: string;
   icon: string;
-  cover?: string | null;
+  cover?: CoverField;
   blocks: Block[];
   favorite: boolean;
   trashed: boolean;
@@ -534,7 +552,7 @@ export interface PageSnapshot {
   takenAt: number;
   title: string;
   icon: string;
-  cover?: string | null;
+  cover?: CoverField;
   blocks: Block[];
   rowProps?: Record<string, PropertyValue>;
 }

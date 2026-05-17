@@ -16,19 +16,20 @@
  */
 
 import { ReactNode, useState } from "react";
-import { Image as ImageIcon, X } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { IconPickerPopover, DynamicIcon } from "@/shared/components/icon-picker";
+import { CoverBanner, AddCoverButton } from "@/slices/cover";
 import { cn } from "@/shared/lib/utils";
+import type { CoverField, CoverData } from "@/shared/types/domain";
 
 export interface NotionHeaderProps {
   icon: string;
   title: string;
-  cover?: string | null;
+  cover?: CoverField;
   onIconChange?: (icon: string) => void;
   onTitleChange?: (title: string) => void;
-  onCoverChange?: (cover: string | null) => void;
+  onCoverChange?: (cover: CoverData | null) => void;
   /** Slot for right-side action buttons (share, more, history, etc). */
   actions?: ReactNode;
   placeholder?: string;
@@ -44,22 +45,9 @@ export function NotionHeader({
   const readonly = !onTitleChange;
   return (
     <div className={cn("w-full", className)}>
-      {cover && (
-        <div
-          className="relative h-44 w-full md:h-56"
-          style={{ background: cover }}
-        >
-          {onCoverChange && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onCoverChange(null)}
-              className="absolute right-3 top-3 h-7 w-7 bg-background/70 text-muted-foreground backdrop-blur hover:bg-background"
-              aria-label="Remove cover"
-            >
-              <X className="h-3.5 w-3.5" />
-            </Button>
-          )}
+      {cover && onCoverChange && (
+        <div className="relative">
+          <CoverBanner cover={cover} onChange={onCoverChange} />
         </div>
       )}
       <div className="mx-auto flex w-full max-w-3xl items-start gap-3 px-4 pt-6">
@@ -84,18 +72,10 @@ export function NotionHeader({
               <DynamicIcon value={icon} className="text-5xl" />
             )}
             {!cover && onCoverChange && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() =>
-                  onCoverChange(
-                    `linear-gradient(135deg, hsl(${Math.floor(Math.random() * 360)},70%,75%), hsl(${Math.floor(Math.random() * 360)},70%,55%))`,
-                  )
-                }
+              <AddCoverButton
+                onPick={onCoverChange}
                 className="ml-auto h-auto gap-1 px-2 py-1 text-xs font-normal text-muted-foreground hover:text-foreground"
-              >
-                <ImageIcon className="h-3.5 w-3.5" /> Add cover
-              </Button>
+              />
             )}
           </div>
           {readonly ? (

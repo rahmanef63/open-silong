@@ -3,10 +3,7 @@
 Block-based notes app. Next 16 (App Router) + React 19 + Convex 1.36 self-hosted.
 Live: https://nosion.rahmanef.com · Convex: https://api-notion-page-clone.rahmanef.com
 
-## Stack baseline (rr conventions — adapted)
-
-Nosion follows Rahman Resources (rr) conventions with 3 documented divergences
-(slice-metadata, CLI, MCP). Drift on the pins below breaks kitab compatibility.
+## Stack baseline
 
 ### Hard pins
 - **Next ^16 + React ^19, Tailwind v4** — `proxy.ts` only, no `middleware.ts`.
@@ -52,15 +49,17 @@ Nosion follows Rahman Resources (rr) conventions with 3 documented divergences
 - Local CI: `/sc-git ci --repo notion-page-clone` or pre-push hook —
   no GitHub Actions cloud minutes.
 
-### Divergences from canonical rr
+### Slice metadata
 
-1. **Slice metadata** — Nosion ships `.kitab.json` (BSDL consumer manifest)
-   + `slice.manifest.json`. NO `slice.json` / `slice.contract.ts`
-   (rr-canonical, not adopted). See BSDL section below.
-2. **CLI** — `npx rahman-resources@latest add <slug>` to adopt,
-   `/rr-send <slug>` to lift UP. NOT `npx rr add`.
-3. **MCP** — `convex/mcp/` is a Notion-canonical JSON HTTP surface
-   (not OAuth/PKCE client). EXEMPT from "use create-your-mcp slice" rule.
+Each slice ships a `slice.manifest.json` declaring its shared/slices/
+convex dependency list. Regenerate via
+`node scripts/generate-slice-manifests.mjs`. Portability blockers
+(hardcoded routes / role enums / table-name leaks) are tracked by
+`node scripts/audit-portability.mjs`.
+
+### MCP
+
+`convex/mcp/` is a Notion-canonical JSON HTTP surface.
 
 ### Before writing code
 1. Check if the change crosses a rule above — apply even if user didn't
@@ -164,7 +163,7 @@ new commits, never amend.
 
 ## SSOT — rahman-shared adopted (2026-05-13, commit 8238969)
 
-- `pnpm add rahman-shared@^0.2.0` — kitab npm utils
+- `pnpm add rahman-shared@^0.2.0` — shared npm utils
 - `frontend/shared/lib/utils.ts` is a 1-line re-export from `rahman-shared/lib/utils` — DO NOT inline cn back
 - `next.config.mjs` has `transpilePackages: ["rahman-shared"]` (Turbopack TS hint, REQUIRED)
 - 165 `@/shared/lib/utils` import sites continue working — only resolution chain changed
@@ -326,77 +325,21 @@ Every feature lives in `frontend/slices/<name>/` and exports through
 
 ---
 
-## Rahman Resources kitab — Bidirectional Sync (BSDL)
+## Slice portability + `notion` mega-slice
 
-> Added 2026-05-15 by Wave N+3 (BSDL).
+This project ships a `notion` mega-slice (`frontend/slices/notion/`)
+that bundles editor + databases + templates + workspace-io + wrappers
+as one drop-in for embedding inside other React projects. See
+`docs/notion-mega-slice.md` for the API contract + generalisation
+roadmap.
 
-This project is a **consumer** of slices from the
-[Rahman Resources kitab](https://github.com/rahmanef63/resource-site).
-Slices live in `frontend/slices/<slug>/` and should each ship a
-`.kitab.json` so the kitab can detect drift, route sync direction
-(UP via `/rr-send`, DOWN via `npx rahman-resources update`), and enforce
-the generalisation gate before accepting an upstream push.
-
-### Adopt a slice from kitab
+Track per-slice portability blockers with:
 
 ```bash
-npx rahman-resources@latest add <slug>
-# Then write .kitab.json next to the slice files (template below).
+node scripts/audit-portability.mjs
 ```
 
-### `.kitab.json` template
-
-Drop at `frontend/slices/<slug>/.kitab.json`:
-
-```json
-{
-  "$schema": "https://resource.rahmanef.com/schemas/kitab-consumer.json",
-  "kitabSlug": "<slug>",
-  "kitabVersion": "0.1.0",
-  "consumerVersion": "0.1.0",
-  "syncDirection": "bidirectional",
-  "generalization": {
-    "status": "portable",
-    "auditedAt": "2026-05-15",
-    "blockers": []
-  },
-  "lastPullAt": null,
-  "lastPushAt": null
-}
-```
-
-Fields:
-
-| Field | Notes |
-|---|---|
-| `kitabSlug` | kebab-case, must match a kitab `slice.contract.ts` `id`. |
-| `kitabVersion` | semver of last kitab version pulled DOWN. |
-| `consumerVersion` | bump after each local edit. |
-| `syncDirection` | `bidirectional` \| `down-only` \| `up-only` \| `frozen`. |
-| `generalization.status` | `portable` \| `needs-adapter` \| `consumer-locked`. |
-| `generalization.blockers[]` | required if status ≠ `portable`. |
-
-### Trigger prompts (paste in Claude Code)
-
-| Goal | Prompt |
-|---|---|
-| Pull latest kitab version | `pull latest <slug> from kitab and update my .kitab.json (kitabVersion + lastPullAt)` |
-| Bump after local edit | `i edited <slug> — bump consumerVersion in .kitab.json and re-audit generalization` |
-| Audit before push UP | `/rr-prep <slug> --fix` |
-| Push UP to kitab | `/rr-send <slug>` |
-| Adopt new slice from kitab | `adopt slice <slug> from kitab and create .kitab.json` |
-| Show sync status | (run from kitab repo) `npm run scan:consumers` |
-
-### Generalisation rules (UP-sync gate)
-
-The kitab refuses ingestion of slices that bake in this project's domain.
-Replace consumer-specific bits with props before push UP:
-
-| ❌ Locked | ✅ Portable |
-|---|---|
-| `<Link href="/dashboard/applications">` | `<Link href={\`${basePath}/${labels.list}\`}>` |
-| Convex table `applications` | Generic `<slug>_records` |
-| `requirePermission("apply.create")` hardcoded | `requirePermission(props.permission)` |
-| Hero text literal `"Lamar"` | `<Hero text={t.applyCta} />` from props |
-
-Spec: [`docs/consumer-manifest.md`](https://github.com/rahmanef63/resource-site/blob/main/docs/consumer-manifest.md).
+Categories scanned: hardcoded `/dashboard` routes, role-enum literals,
+`Id<"table">` leaks, `process.env.NEXT_PUBLIC_*` reads inside slice
+code. Fix path: replace with `useNotionConfig().routes.*` /
+`config.roles.*` / props at the call site.

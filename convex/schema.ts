@@ -67,7 +67,16 @@ export default defineSchema({
     parentId: v.union(v.id("pages"), v.null()),
     title: v.string(),
     icon: v.string(),
-    cover: v.union(v.string(), v.null()),
+    cover: v.union(
+      v.string(),
+      v.null(),
+      v.object({
+        type: v.string(),
+        value: v.string(),
+        positionY: v.optional(v.number()),
+        metadata: v.optional(v.any()),
+      }),
+    ),
     blocks: v.array(v.any()),
     favorite: v.boolean(),
     trashed: v.boolean(),
@@ -172,7 +181,16 @@ export default defineSchema({
     takenAt: v.number(),
     title: v.string(),
     icon: v.string(),
-    cover: v.union(v.string(), v.null()),
+    cover: v.union(
+      v.string(),
+      v.null(),
+      v.object({
+        type: v.string(),
+        value: v.string(),
+        positionY: v.optional(v.number()),
+        metadata: v.optional(v.any()),
+      }),
+    ),
     blocks: v.array(v.any()),
     rowProps: v.optional(v.any()),
   })
