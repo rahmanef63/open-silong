@@ -60,13 +60,14 @@ export function CreatePageDialog({ open, onOpenChange, parentId, onSubmit }: Pro
           <div>
             <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Icon</label>
             <IconPickerPopover value={icon} onChange={setIcon} onClear={() => setIcon(DEFAULT_ICON)}>
-              <button
+              <Button
                 type="button"
-                className="inline-flex h-12 w-12 items-center justify-center rounded-md border border-border text-2xl hover:bg-accent transition"
+                variant="outline"
+                className="h-12 w-12 p-0 rounded-md text-2xl font-normal"
                 aria-label="Change icon"
               >
                 <DynamicIcon value={icon} />
-              </button>
+              </Button>
             </IconPickerPopover>
           </div>
 

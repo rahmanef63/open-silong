@@ -61,6 +61,7 @@ export function InlineRowTitle({ row, onOpen, autoEdit, onAutoEditConsumed }: Pr
         <Button
           variant="ghost"
           type="button"
+          variant="ghost"
           onClick={() => setEditing(true)}
           className={cn(
             "h-auto flex-1 truncate justify-start rounded px-1 text-left text-sm font-normal hover:bg-accent/40",
@@ -73,6 +74,7 @@ export function InlineRowTitle({ row, onOpen, autoEdit, onAutoEditConsumed }: Pr
       <Button
         variant="outline"
         type="button"
+        variant="outline"
         onClick={(e) => { e.stopPropagation(); onOpen(); }}
         className="h-auto shrink-0 gap-1 rounded bg-background px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground opacity-0 transition hover:border-border-strong hover:text-foreground group-hover/title:opacity-100 [&_svg]:size-3"
         aria-label="Open row"

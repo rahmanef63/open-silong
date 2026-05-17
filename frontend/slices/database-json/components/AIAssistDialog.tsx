@@ -104,22 +104,24 @@ export function AIAssistDialog({ db, open, onOpenChange, onImported }: Props) {
         </DialogHeader>
 
         <div className="flex items-center gap-1 rounded-md bg-muted p-1 text-xs">
-          <button
+          <Button
             type="button"
+            variant="ghost"
             onClick={() => setMode("database")}
-            className={`flex-1 rounded px-2 py-1 ${mode === "database" ? "bg-background shadow-sm" : "text-muted-foreground"}`}
+            className={`flex-1 h-auto px-2 py-1 text-xs font-normal ${mode === "database" ? "bg-background shadow-sm" : "text-muted-foreground hover:bg-transparent"}`}
           >
             Generate database
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="ghost"
             onClick={() => setMode("rows")}
             disabled={!db}
-            className={`flex-1 rounded px-2 py-1 disabled:opacity-40 ${mode === "rows" ? "bg-background shadow-sm" : "text-muted-foreground"}`}
+            className={`flex-1 h-auto px-2 py-1 text-xs font-normal disabled:opacity-40 ${mode === "rows" ? "bg-background shadow-sm" : "text-muted-foreground hover:bg-transparent"}`}
             title={db ? "" : "Open a database first to generate rows"}
           >
             Generate rows{db ? ` for ${db.name}` : ""}
-          </button>
+          </Button>
         </div>
 
         {!done && (

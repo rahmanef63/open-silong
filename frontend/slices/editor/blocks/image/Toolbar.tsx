@@ -24,6 +24,8 @@ export function ImageToolbar({
           variant="ghost"
           key={value}
           type="button"
+          variant="ghost"
+          size="icon"
           onClick={() => onAlign(value)}
           aria-label={`Align ${value}`}
           className={cn(
@@ -38,6 +40,7 @@ export function ImageToolbar({
       <Button
         variant="ghost"
         type="button"
+        variant="ghost"
         onClick={onChange}
         className="h-auto rounded px-1 text-[11px] font-normal text-muted-foreground hover:bg-transparent hover:text-foreground"
       >

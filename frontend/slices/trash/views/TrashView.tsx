@@ -114,9 +114,10 @@ export function TrashView() {
                           {db.rowIds.length} row{db.rowIds.length === 1 ? "" : "s"} · trashed {formatDateTime(db.updatedAt)}
                         </div>
                       </div>
-                      <button
+                      <Button
+                        variant="ghost"
                         onClick={() => restoreDatabase(db.id)}
-                        className="flex items-center gap-1 rounded-md px-2.5 py-1 text-xs hover:bg-accent"
+                        className="h-auto gap-1 px-2.5 py-1 text-xs font-normal [&_svg]:size-3.5"
                       >
                         <RotateCcw className="h-3.5 w-3.5" /> Restore
                       </button>

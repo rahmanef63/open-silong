@@ -6,6 +6,7 @@ import { cn } from "@/shared/lib/utils";
 import { colorClass } from "@/shared/lib/format";
 import { Button } from "@/shared/ui/button";
 import type { Page } from "@/shared/types/domain";
+import { Button } from "@/shared/ui/button";
 import { BoardCard } from "./BoardCard";
 
 export function BoardColumn({ db, col, groupProp, onAdd, onOpen, cardPadding, cardSpacing, colorByProp, cardPropIds, viewVisible }: any) {

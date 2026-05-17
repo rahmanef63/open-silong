@@ -1,5 +1,6 @@
 import { Check } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
+import { Button } from "@/shared/ui/button";
 import { useThemePreset } from "../useThemePreset";
 
 export function ThemePicker() {
@@ -9,11 +10,12 @@ export function ThemePicker() {
       {presets.map((p) => {
         const active = p.id === presetId;
         return (
-          <button
+          <Button
             key={p.id}
+            variant="outline"
             onClick={() => setPresetId(p.id)}
             className={cn(
-              "group relative flex flex-col items-stretch gap-2 rounded-lg border bg-card p-2 text-left transition hover:shadow-soft",
+              "group relative h-auto flex flex-col items-stretch gap-2 rounded-lg p-2 text-left font-normal transition hover:shadow-soft justify-start [&_svg]:size-3",
               active ? "border-brand ring-2 ring-brand/40" : "border-border hover:border-border-strong",
             )}
             title={p.name}
@@ -31,7 +33,7 @@ export function ThemePicker() {
               </span>
               {active && <Check className="h-3 w-3 text-brand" />}
             </span>
-          </button>
+          </Button>
         );
       })}
     </div>

@@ -8,6 +8,7 @@ import { MoreHorizontal, Pencil, Trash2, Eye, EyeOff, Settings2, Plus, Copy, Loc
 import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
 import { DynamicIcon, IconPickerPopover, DEFAULT_DATABASE_ICON } from "@/shared/components/icon-picker";
+import { Button } from "@/shared/ui/button";
 import { useConfirm } from "@/shared/components/ConfirmProvider";
 import { ViewOptions } from "../ViewOptions";
 import { DataMenu } from "@/slices/database-json";

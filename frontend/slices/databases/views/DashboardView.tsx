@@ -93,6 +93,7 @@ export function DashboardView({ db, view, rows, onOpenRow }: Props) {
             <Button
               variant="ghost"
               key={r.id}
+              variant="ghost"
               onClick={() => onOpenRow(r.id)}
               className="h-auto w-full justify-between gap-2 rounded px-1 py-1.5 text-left font-normal hover:bg-accent/50"
             >

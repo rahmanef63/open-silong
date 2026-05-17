@@ -179,6 +179,7 @@ export function SelectionToolbar() {
                 variant="ghost"
                 key={k}
                 type="button"
+                variant="ghost"
                 onClick={() => applyAI(k)}
                 className="block h-auto w-full justify-start rounded-none px-3 py-1.5 text-left text-xs font-normal"
               >

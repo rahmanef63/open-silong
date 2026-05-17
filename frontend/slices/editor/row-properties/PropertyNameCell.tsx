@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Trash2 } from "lucide-react";
 import { useStore } from "@/shared/lib/store";
+import { Button } from "@/shared/ui/button";
 import type { Property } from "@/shared/types/domain";
 import { PROPERTY_TYPE_ICONS } from "@/slices/databases";
 import { Button } from "@/shared/ui/button";

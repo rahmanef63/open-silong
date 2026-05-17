@@ -20,10 +20,11 @@ export function TemplateCard({ tpl, handlers }: { tpl: Template; handlers: Handl
   const stats = useMemo(() => templateStats(tpl.json), [tpl.json]);
   return (
     <div className="group rounded-xl border border-border bg-card overflow-hidden hover:border-foreground/30 hover:shadow-sm transition flex flex-col">
-      <button
+      <Button
         type="button"
+        variant="ghost"
         onClick={() => handlers.onPreview(tpl)}
-        className="text-left p-4 flex items-start gap-3 hover:bg-accent/30 transition"
+        className="text-left h-auto p-4 flex items-start gap-3 hover:bg-accent/30 rounded-none justify-start font-normal whitespace-normal"
         title="Preview template"
       >
         <div className="shrink-0 h-11 w-11 rounded-lg border border-border bg-background flex items-center justify-center text-2xl">
@@ -44,7 +45,7 @@ export function TemplateCard({ tpl, handlers }: { tpl: Template; handlers: Handl
             <div className="mt-1.5 text-xs text-muted-foreground line-clamp-2">{tpl.description}</div>
           )}
         </div>
-      </button>
+      </Button>
 
       <div className="px-4 py-2 border-t border-border/60 bg-muted/20 flex items-center gap-3.5 text-[11px] text-muted-foreground">
         <span className="inline-flex items-center gap-1" title="Pages">

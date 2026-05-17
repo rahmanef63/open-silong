@@ -138,17 +138,19 @@ export function UserModelOverrideSection({ providerSpec, globalModel }: Props) {
                     {new Date(o.updatedAt).toLocaleString()}
                   </td>
                   <td className="px-1 py-1">
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
+                      size="icon"
                       onClick={() => onClear(o.userId, o.email)}
                       disabled={pendingClear === String(o.userId)}
-                      className="rounded p-1 text-muted-foreground hover:text-destructive hover:bg-accent disabled:opacity-50"
+                      className="h-auto w-auto p-1 text-muted-foreground hover:text-destructive disabled:opacity-50 [&_svg]:size-3.5"
                       aria-label="Clear override"
                     >
                       {pendingClear === String(o.userId)
                         ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
                         : <X className="h-3.5 w-3.5" />}
-                    </button>
+                    </Button>
                   </td>
                 </tr>
               ))}

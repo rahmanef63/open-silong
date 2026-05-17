@@ -65,18 +65,19 @@ export function TemplatesDialog({ db, open, onOpenChange }: Props) {
         <div className="grid grid-cols-[200px_1fr] gap-4 min-h-[320px]">
           <div className="border-r border-border pr-3 space-y-1">
             {templates.map((t) => (
-              <button
+              <Button
                 key={t.id}
+                variant="ghost"
                 onClick={() => setEditingId(t.id)}
                 className={cn(
-                  "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-accent",
+                  "flex w-full h-auto items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm font-normal justify-start",
                   editingId === t.id && "bg-accent",
                 )}
               >
                 <span>{t.icon ?? "📋"}</span>
                 <span className="flex-1 truncate">{t.name}</span>
                 {db.defaultTemplateId === t.id && <Star className="h-3 w-3 fill-brand text-brand" />}
-              </button>
+              </Button>
             ))}
             <Button variant="outline" size="sm" className="w-full mt-2" onClick={create}>
               <Plus className="h-3 w-3 mr-1" /> Add template

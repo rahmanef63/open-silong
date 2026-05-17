@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { api } from "@convex/_generated/api";
 import { ViewSwitcher, type AdminView } from "./ViewSwitcher";
 import { useAdminView } from "../hooks/useAdminView";
+import { Button } from "@/shared/ui/button";
 import type { Row, Status } from "./feedback/types";
 import { TableView, GalleryView, FeedView } from "./feedback/views";
 
@@ -35,18 +36,19 @@ export function FeedbackPanel() {
         <div className="flex flex-wrap items-center gap-2">
           <div className="inline-flex items-center gap-0.5 rounded-md border border-border bg-card p-0.5">
             {(["open", "resolved", "all"] as const).map((f) => (
-              <button
+              <Button
                 key={f}
                 type="button"
+                variant="ghost"
                 onClick={() => setFilter(f)}
-                className={`px-2.5 h-7 text-xs rounded transition capitalize ${
+                className={`px-2.5 h-7 text-xs rounded capitalize font-normal ${
                   filter === f
                     ? "bg-accent text-accent-foreground font-medium shadow-sm"
-                    : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 {f}
-              </button>
+              </Button>
             ))}
           </div>
           <div className="text-xs text-muted-foreground">{rows.length} entries</div>

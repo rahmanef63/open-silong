@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import { Upload } from "lucide-react";
+import { Button } from "@/shared/ui/button";
 import { useFileUpload } from "../hooks/useFileUpload";
 import type { FileRef } from "../types";
 import { Button } from "@/shared/ui/button";

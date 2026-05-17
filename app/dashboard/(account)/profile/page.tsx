@@ -7,6 +7,7 @@ import { cn } from "@/shared/lib/utils";
 import { USER_AVATARS } from "@/shared/constants/icons";
 import { Field } from "@/shared/components/forms/Field";
 import { useDebouncedCommit } from "@/shared/hooks/useDebouncedCommit";
+import { Button } from "@/shared/ui/button";
 
 const INPUT_CLASS =
   "w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring";
@@ -47,18 +48,19 @@ export default function ProfilePage() {
         <Field label="Avatar">
           <div className="flex flex-wrap gap-1">
             {USER_AVATARS.map((a) => (
-              <button
+              <Button
                 key={a}
                 type="button"
+                variant="ghost"
                 aria-pressed={user.icon === a}
                 onClick={() => updateUser({ icon: a })}
                 className={cn(
-                  "text-2xl rounded p-2 hover:bg-accent transition-colors",
+                  "h-auto text-2xl rounded p-2 font-normal",
                   user.icon === a && "bg-accent ring-1 ring-ring",
                 )}
               >
                 {a}
-              </button>
+              </Button>
             ))}
           </div>
         </Field>

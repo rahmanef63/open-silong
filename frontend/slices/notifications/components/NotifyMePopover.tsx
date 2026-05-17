@@ -1,5 +1,6 @@
 import { Bell, BellOff } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
+import { Button } from "@/shared/ui/button";
 import { useSubscription } from "../hooks/useSubscription";
 import { SUBSCRIPTION_SCOPE_LABELS, type SubscriptionScope } from "../types";
 import { cn } from "@/shared/lib/utils";
@@ -40,6 +41,7 @@ export function NotifyMePopover({ pageId, trigger }: Props) {
               <Button
                 variant="ghost"
                 key={scope}
+                variant="ghost"
                 onClick={() => toggleScope(scope)}
                 className="h-auto w-full justify-between rounded px-2 py-1.5 text-xs font-normal"
               >

@@ -60,6 +60,7 @@ export function UploadDropzone({ uploading, onFile, onUrl }: Props) {
             <Button
               variant="link"
               type="button"
+              variant="link"
               onClick={() => fileInputRef.current?.click()}
               className="inline-flex h-auto items-center gap-1 p-0 text-sm font-normal text-muted-foreground underline-offset-2 hover:underline [&_svg]:size-3"
             >

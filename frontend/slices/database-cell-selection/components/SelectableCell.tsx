@@ -36,6 +36,7 @@ export function SelectableCell({
           variant="ghost"
           data-fill-handle
           type="button"
+          size="icon"
           onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); onStartFill(e); }}
           className="absolute -bottom-1 -right-1 z-10 h-2 w-2 cursor-crosshair rounded-sm border border-background bg-brand p-0 hover:bg-brand"
           aria-label="Fill down"

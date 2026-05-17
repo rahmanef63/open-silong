@@ -9,6 +9,7 @@ import {
 import { useInstantiateTemplate } from "../hooks/useInstantiateTemplate";
 import { useAsyncError } from "@/shared/hooks/useAsyncError";
 import { ArrowLeft, Boxes, X } from "lucide-react";
+import { Button } from "@/shared/ui/button";
 import type { TemplateMeta } from "./gallery/parts";
 import { Discover } from "./gallery/Discover";
 import { PreviewPane } from "./gallery/PreviewPane";
@@ -99,15 +100,16 @@ export function TemplateGalleryDialog({
 
         <header className="flex items-center gap-3 border-b border-border px-4 py-2.5 shrink-0">
           {inDetail ? (
-            <button
+            <Button
               type="button"
+              variant="ghost"
               onClick={() => setSelectedId(null)}
-              className="h-8 px-2 flex items-center gap-1.5 rounded text-muted-foreground hover:bg-accent hover:text-foreground text-sm"
+              className="h-8 px-2 gap-1.5 text-sm font-normal text-muted-foreground hover:text-foreground"
               aria-label="Back to gallery"
             >
               <ArrowLeft className="h-4 w-4" />
               <span className="hidden sm:inline">Templates</span>
-            </button>
+            </Button>
           ) : (
             <div className="flex items-center gap-2 min-w-0 flex-1">
               <Boxes className="h-4 w-4 text-brand shrink-0" />
@@ -118,14 +120,16 @@ export function TemplateGalleryDialog({
             </div>
           )}
           <div className="flex-1" />
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="icon"
             onClick={() => onOpenChange(false)}
             aria-label="Close"
-            className="h-8 w-8 grid place-items-center rounded text-muted-foreground hover:bg-accent hover:text-foreground shrink-0"
+            className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground shrink-0"
           >
             <X className="h-4 w-4" />
-          </button>
+          </Button>
         </header>
 
         {inDetail ? (

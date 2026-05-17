@@ -74,6 +74,8 @@ export function SortableRow({
                       <Button
                         variant="ghost"
                         type="button"
+                        variant="ghost"
+                        size="icon"
                         onClick={(e) => { e.stopPropagation(); onToggleExpand?.(); }}
                         aria-label={expanded ? "Collapse sub-items" : "Expand sub-items"}
                         className="h-5 w-5 rounded p-0 text-muted-foreground [&_svg]:size-3.5"

@@ -14,6 +14,7 @@ import { RouterProvider } from "@/shared/lib/router";
 import { WorkspaceIOProvider } from "@/slices/workspace-io";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/shared/ui/sidebar";
 import { Separator } from "@/shared/ui/separator";
+import { Button } from "@/shared/ui/button";
 import {
   PageHeaderSlotProvider,
   PageHeaderLeftAnchor,
@@ -128,16 +129,17 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
                       />
                       {/* Left slot: route-injected breadcrumb. Falls back to flex spacer. */}
                       <PageHeaderLeftAnchor className="flex min-w-0 flex-1 items-center gap-2" />
-                      <button
+                      <Button
                         type="button"
+                        variant="outline"
                         onClick={() => setSearchOpen(true)}
-                        className="flex items-center gap-2 text-sm text-muted-foreground rounded-md border border-border bg-background/40 px-2 py-1 hover:bg-accent hover:text-foreground transition-colors"
+                        className="h-auto gap-2 text-sm font-normal text-muted-foreground bg-background/40 px-2 py-1 hover:text-foreground [&_svg]:size-3.5"
                         aria-label="Search"
                       >
                         <Search className="h-3.5 w-3.5" />
                         <span className="hidden md:inline">Search</span>
                         <kbd className="hidden sm:inline-flex text-[10px] tracking-wider text-muted-foreground border border-border rounded px-1.5 py-0.5">⌘K</kbd>
-                      </button>
+                      </Button>
                       {/* Right slot: route-injected actions (Share, history, …). */}
                       <PageHeaderRightAnchor className="flex items-center gap-1" />
                     </div>

@@ -4,6 +4,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
+import { Button } from "@/shared/ui/button";
 import { useStore } from "@/shared/lib/store";
 import type { Database } from "@/shared/types/domain";
 import { TemplatesDialog } from "./TemplatesDialog";
@@ -26,21 +27,21 @@ export function NewRowMenu({ db, onCreated }: Props) {
   return (
     <>
       <div className="flex items-stretch overflow-hidden rounded-md bg-foreground text-background">
-        <button
+        <Button
           onClick={() => create(db.defaultTemplateId ?? undefined)}
-          className="flex items-center gap-1 px-2 py-1 text-xs hover:opacity-90"
+          className="h-auto gap-1 rounded-none bg-transparent px-2 py-1 text-xs text-background hover:bg-transparent hover:opacity-90 [&_svg]:size-3"
         >
           <Plus className="h-3 w-3" /> New
-        </button>
+        </Button>
         <div className="w-px bg-background/30" />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button
-              className="flex items-center px-1.5 hover:opacity-90"
+            <Button
+              className="h-auto rounded-none bg-transparent px-1.5 text-background hover:bg-transparent hover:opacity-90 [&_svg]:size-3"
               aria-label="Pick template"
             >
               <ChevronDown className="h-3 w-3" />
-            </button>
+            </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel className="text-xs">New row</DropdownMenuLabel>
