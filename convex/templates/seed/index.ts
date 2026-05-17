@@ -1,4 +1,5 @@
 import type { TemplateJson } from "../lib/validate";
+import { notionWorkspace } from "./notionWorkspace";
 import { expenseTracker } from "./expenseTracker";
 import { readingList } from "./readingList";
 import { habitTracker } from "./habitTracker";
@@ -31,6 +32,8 @@ import { podcastLibrary } from "./podcastLibrary";
  *  this folder, append the import + entry below, bump the count in
  *  seedCatalog.test.ts. */
 export const SEED_TEMPLATES: TemplateJson[] = [
+  // Featured — comprehensive showcase of every block/view/property type
+  notionWorkspace,
   // Starter (single database)
   expenseTracker,
   readingList,
