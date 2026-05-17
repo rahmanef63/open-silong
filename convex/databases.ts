@@ -1,4 +1,5 @@
 import { mutation, query } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { requireAuth, requireWorkspaceAccess } from "./_shared/auth";
@@ -93,7 +94,7 @@ export const create = mutation({
       ],
     };
     const view = { id: uid(), name: "Table", type: "table", sorts: [], filters: [], search: "" };
-    return await ctx.db.insert("databases", {
+    const dbId = await ctx.db.insert("databases", {
       userId,
       workspaceId: active._id,
       name: args.name ?? "Untitled database",
@@ -105,6 +106,12 @@ export const create = mutation({
       createdAt: now,
       updatedAt: now,
     });
+    await ctx.scheduler.runAfter(0, internal.webhooks.deliver.run, {
+      ownerId: userId,
+      event: "db.created",
+      payload: { dbId, name: args.name ?? "Untitled database" },
+    });
+    return dbId;
   },
 });
 
@@ -188,6 +195,11 @@ export const addRow = mutation({
       rowIds: [...db.rowIds, rowId],
       uniqueIdCounter: counter,
       updatedAt: now,
+    });
+    await ctx.scheduler.runAfter(0, internal.webhooks.deliver.run, {
+      ownerId: userId,
+      event: "db.row.added",
+      payload: { dbId: args.dbId, rowId, dbName: db.name },
     });
     return rowId;
   },
