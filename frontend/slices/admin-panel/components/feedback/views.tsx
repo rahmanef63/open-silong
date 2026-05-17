@@ -1,12 +1,12 @@
 import { useMemo } from "react";
-import { Button } from "@/shared/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/ui/table";
 import { groupByDateBucket } from "../../lib/groupByDate";
 import { formatRelTime, formatDateISO } from "@/shared/lib/format";
 import { KIND_LABEL, type Row } from "./types";
 import { StatusBadge } from "./StatusBadge";
+import { TicketActions } from "./TicketActions";
 
-export function TableView({ rows, onToggle }: { rows: Row[]; onToggle: (r: Row) => void }) {
+export function TableView({ rows }: { rows: Row[] }) {
   return (
     <div className="rounded-lg border border-border bg-card overflow-hidden">
       <Table>
@@ -37,9 +37,7 @@ export function TableView({ rows, onToggle }: { rows: Row[]; onToggle: (r: Row) 
                 <div className="text-[10px] opacity-70">{formatRelTime(r.createdAt)}</div>
               </TableCell>
               <TableCell className="text-right">
-                <Button size="sm" variant="outline" onClick={() => onToggle(r)}>
-                  {r.status === "resolved" ? "Reopen" : "Resolve"}
-                </Button>
+                <TicketActions row={r} />
               </TableCell>
             </TableRow>
           ))}
@@ -49,7 +47,7 @@ export function TableView({ rows, onToggle }: { rows: Row[]; onToggle: (r: Row) 
   );
 }
 
-export function GalleryView({ rows, onToggle }: { rows: Row[]; onToggle: (r: Row) => void }) {
+export function GalleryView({ rows }: { rows: Row[] }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
       {rows.map((r) => (
@@ -69,9 +67,7 @@ export function GalleryView({ rows, onToggle }: { rows: Row[]; onToggle: (r: Row
           <div className="text-sm whitespace-pre-wrap line-clamp-5">{r.message}</div>
           <div className="flex items-center justify-between text-[11px] text-muted-foreground border-t border-border/60 pt-2">
             <span>{formatDateISO(r.createdAt)}</span>
-            <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => onToggle(r)}>
-              {r.status === "resolved" ? "Reopen" : "Resolve"}
-            </Button>
+            <TicketActions row={r} />
           </div>
         </div>
       ))}
@@ -79,7 +75,7 @@ export function GalleryView({ rows, onToggle }: { rows: Row[]; onToggle: (r: Row
   );
 }
 
-export function FeedView({ rows, onToggle }: { rows: Row[]; onToggle: (r: Row) => void }) {
+export function FeedView({ rows }: { rows: Row[] }) {
   const groups = useMemo(() => groupByDateBucket(rows, (r) => r.createdAt), [rows]);
   return (
     <div className="space-y-5">
@@ -104,9 +100,7 @@ export function FeedView({ rows, onToggle }: { rows: Row[]; onToggle: (r: Row) =
                 </div>
                 <div className="mt-2 text-sm whitespace-pre-wrap">{r.message}</div>
                 <div className="mt-2 flex justify-end">
-                  <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => onToggle(r)}>
-                    {r.status === "resolved" ? "Reopen" : "Resolve"}
-                  </Button>
+                  <TicketActions row={r} />
                 </div>
               </div>
             ))}
