@@ -8,10 +8,10 @@ import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { Switch } from "@/shared/ui/switch";
-import { downloadFile } from "@/shared/lib/markdown";
 import { DynamicIcon } from "@/shared/components/icon-picker";
 import { cn } from "@/shared/lib/utils";
-import { buildSelectionExport } from "../lib/buildExport";
+import { runExport, type ExportFormat } from "../lib/runExport";
+import { flattenPageTree } from "../lib/pageTree";
 import { DEPTH_OPTIONS, type DepthLevel } from "../lib/types";
 
 export function ExportTab({ preselectPageId }: { preselectPageId?: string }) {
@@ -23,32 +23,12 @@ export function ExportTab({ preselectPageId }: { preselectPageId?: string }) {
   const [includeDatabases, setIncludeDatabases] = useState(true);
   const [includeRows, setIncludeRows] = useState(true);
   const [filter, setFilter] = useState("");
+  const [format, setFormat] = useState<ExportFormat>("json");
 
-  const orderedPages = useMemo(() => {
-    const livePages = pages.filter((p) => !p.trashed);
-    const byParent = new Map<string | null, typeof livePages>();
-    for (const p of livePages) {
-      const arr = byParent.get(p.parentId) ?? [];
-      arr.push(p);
-      byParent.set(p.parentId, arr);
-    }
-    for (const arr of byParent.values()) arr.sort((a, b) => a.title.localeCompare(b.title));
-    const out: Array<{ id: string; title: string; icon: string; depth: number }> = [];
-    function walk(parentId: string | null, lvl: number) {
-      for (const p of byParent.get(parentId) ?? []) {
-        if (p.rowOfDatabaseId) continue;
-        out.push({ id: p.id, title: p.title || "Untitled", icon: p.icon, depth: lvl });
-        if (lvl < 6) walk(p.id, lvl + 1);
-      }
-    }
-    walk(null, 0);
-    return out;
-  }, [pages]);
-
+  const orderedPages = useMemo(() => flattenPageTree(pages), [pages]);
   const filtered = useMemo(() => {
     const q = filter.trim().toLowerCase();
-    if (!q) return orderedPages;
-    return orderedPages.filter((p) => p.title.toLowerCase().includes(q));
+    return q ? orderedPages.filter((p) => p.title.toLowerCase().includes(q)) : orderedPages;
   }, [orderedPages, filter]);
 
   const allFilteredSelected = filtered.length > 0 && filtered.every((p) => selected.has(p.id));
@@ -71,25 +51,19 @@ export function ExportTab({ preselectPageId }: { preselectPageId?: string }) {
     });
   }
 
-  function handleExport() {
+  async function handleExport() {
     const rootIds = [...selected];
     if (rootIds.length === 0) {
       toast.error("Pick at least one page to export");
       return;
     }
-    const r = buildSelectionExport({
-      rootIds,
-      allPages: pages,
-      allDatabases: databases,
-      depth,
-      includeDatabases,
-      includeRows,
+    const { counts } = await runExport({
+      rootIds, allPages: pages, allDatabases: databases,
+      depth, includeDatabases, includeRows,
       workspace: { name: workspace.name, emoji: workspace.emoji },
-      preferences,
+      preferences, format,
     });
-    const stamp = new Date().toISOString().slice(0, 10);
-    downloadFile(`nosion-export-${stamp}.json`, r.json, "application/json");
-    toast.success(`Exported ${r.counts.pages} pages, ${r.counts.databases} databases`);
+    toast.success(`Exported ${counts.pages} pages, ${counts.databases} databases`);
   }
 
   return (
@@ -173,13 +147,40 @@ export function ExportTab({ preselectPageId }: { preselectPageId?: string }) {
         </div>
       </div>
 
+      <div>
+        <Label className="text-xs uppercase text-muted-foreground">Format</Label>
+        <div className="mt-1 flex gap-1.5">
+          {(["json", "zip"] as ExportFormat[]).map((f) => (
+            <Button
+              key={f}
+              type="button"
+              variant="outline"
+              onClick={() => setFormat(f)}
+              className={cn(
+                "h-auto rounded-md px-2.5 py-1 text-xs font-normal",
+                format === f
+                  ? "border-brand bg-brand/10 text-foreground hover:bg-brand/10"
+                  : "bg-card text-muted-foreground",
+              )}
+            >
+              {f === "json" ? "JSON (Nosion native)" : "ZIP (Notion-compatible)"}
+            </Button>
+          ))}
+        </div>
+        <p className="mt-1.5 text-[11px] text-muted-foreground">
+          {format === "json"
+            ? "Full-fidelity round-trip via Settings → Backup → Restore."
+            : "Folder of .md pages + databases/*.csv. Drop into Notion's Import → All in one ZIP."}
+        </p>
+      </div>
+
       <div className="flex items-center justify-between pt-1">
         <p className="text-xs text-muted-foreground">
-          File: <code className="font-mono">nosion-export-YYYY-MM-DD.json</code>
+          File: <code className="font-mono">nosion-export-YYYY-MM-DD.{format}</code>
         </p>
         <Button onClick={handleExport} disabled={selected.size === 0}>
           <Download className="mr-1.5 h-3.5 w-3.5" />
-          Download JSON
+          Download {format.toUpperCase()}
         </Button>
       </div>
     </div>

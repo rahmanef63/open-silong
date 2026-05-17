@@ -7,6 +7,7 @@ export function blockToMarkdown(b: Block, depth = 0): string {
     case "h1": return `${indent}# ${b.text}`;
     case "h2": return `${indent}## ${b.text}`;
     case "h3": return `${indent}### ${b.text}`;
+    case "h4": return `${indent}#### ${b.text}`;
     case "todo": return `${indent}- [${b.checked ? "x" : " "}] ${b.text}`;
     case "bullet": return `${indent}- ${b.text}`;
     case "numbered": return `${indent}1. ${b.text}`;
@@ -15,6 +16,27 @@ export function blockToMarkdown(b: Block, depth = 0): string {
     case "code": return "```" + (b.lang ?? "") + "\n" + b.text + "\n```";
     case "divider": return "---";
     case "image": return b.url ? `![${b.caption ?? ""}](${b.url})` : "";
+    case "audio": return b.url ? `[🔊 ${b.caption ?? "Audio"}](${b.url})` : "";
+    case "video": return b.url ? `[🎬 ${b.caption ?? "Video"}](${b.url})` : "";
+    case "embed": return b.url ? `[${b.url}](${b.url})` : "";
+    case "button": {
+      const url = (b as { url?: string }).url ?? "#";
+      return `[**${b.text || "Button"}**](${url})`;
+    }
+    case "equation": return `$$\n${b.text ?? ""}\n$$`;
+    case "table": {
+      const rows = (b.text ?? "").split("\n").filter(Boolean);
+      if (rows.length === 0) return "";
+      const cells = rows.map((r) => r.split("|").map((c) => c.trim()));
+      const cols = Math.max(...cells.map((r) => r.length));
+      const pad = (r: string[]) => r.concat(Array(Math.max(0, cols - r.length)).fill(""));
+      const sep = Array(cols).fill("---");
+      return [
+        `| ${pad(cells[0]).join(" | ")} |`,
+        `| ${sep.join(" | ")} |`,
+        ...cells.slice(1).map((r) => `| ${pad(r).join(" | ")} |`),
+      ].join("\n");
+    }
     case "toggle": {
       const head = `${indent}<details><summary>${b.text}</summary>`;
       const body = (b.children ?? []).map(c => blockToMarkdown(c, depth + 1)).join("\n");
@@ -22,10 +44,17 @@ export function blockToMarkdown(b: Block, depth = 0): string {
     }
     case "columns2":
     case "columns3":
+    case "columns4":
+    case "columns5":
       return (b.columns ?? []).flatMap(col => col.map(c => blockToMarkdown(c, depth))).join("\n\n");
     case "page":
+      return `${indent}[📄 ${b.text || "Subpage"}](#page-${b.pageId ?? ""})`;
     case "database":
-      return `${indent}[${b.text || "Embedded"}]`;
+      return `${indent}[🗂️ ${b.text || "Database"}](#db-${b.databaseId ?? ""})`;
+    case "synced":
+      return `${indent}${b.text ?? ""}`;
+    case "toc":
+      return ""; // Notion re-derives at import time.
     default:
       return `${indent}${b.text ?? ""}`;
   }

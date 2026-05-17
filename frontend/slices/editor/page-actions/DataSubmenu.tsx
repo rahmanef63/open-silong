@@ -10,7 +10,7 @@
 import {
   ChevronRight, Database,
   FileText, FileJson, Download,
-  Upload, FileArchive,
+  Upload, FileArchive, FileCode, Type,
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
@@ -21,6 +21,8 @@ import { Button } from "@/shared/ui/button";
 interface Actions {
   onExportPdf: () => void;
   onExportMd: () => void;
+  onExportHtml: () => void;
+  onExportTxt: () => void;
   onExportJson: () => void;
   onImportMd: () => void;
   onImportJson: () => void;
@@ -49,21 +51,33 @@ export function DataSubmenu({ actions, close }: Props) {
           <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent side="right" align="start" sideOffset={4} className="w-60">
+      <DropdownMenuContent side="right" align="start" sideOffset={4} className="w-64">
         <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">
-          Export
+          Export — Notion-compatible
         </DropdownMenuLabel>
-        <DropdownMenuItem onClick={fire(actions.onExportPdf)} className="gap-2 text-xs">
-          <FileText className="h-3.5 w-3.5 text-muted-foreground" />
-          Export as PDF (print)
-        </DropdownMenuItem>
         <DropdownMenuItem onClick={fire(actions.onExportMd)} className="gap-2 text-xs">
           <Download className="h-3.5 w-3.5 text-muted-foreground" />
-          Export as Markdown
+          Markdown <span className="ml-auto text-[10px] text-muted-foreground/60">.md</span>
         </DropdownMenuItem>
+        <DropdownMenuItem onClick={fire(actions.onExportHtml)} className="gap-2 text-xs">
+          <FileCode className="h-3.5 w-3.5 text-muted-foreground" />
+          HTML <span className="ml-auto text-[10px] text-muted-foreground/60">.html</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={fire(actions.onExportTxt)} className="gap-2 text-xs">
+          <Type className="h-3.5 w-3.5 text-muted-foreground" />
+          Plain text <span className="ml-auto text-[10px] text-muted-foreground/60">.txt</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={fire(actions.onExportPdf)} className="gap-2 text-xs">
+          <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+          PDF (browser print) <span className="ml-auto text-[10px] text-muted-foreground/60">.pdf</span>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">
+          Export — Nosion-only
+        </DropdownMenuLabel>
         <DropdownMenuItem onClick={fire(actions.onExportJson)} className="gap-2 text-xs">
           <FileJson className="h-3.5 w-3.5 text-muted-foreground" />
-          Export JSON (page + subtree)
+          JSON (page + subtree) <span className="ml-auto text-[10px] text-muted-foreground/60">.json</span>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">

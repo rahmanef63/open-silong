@@ -149,6 +149,8 @@ export function PageActionsMenu({ page, onShowHistory }: Props) {
                 actions={{
                   onExportPdf: actions.onExportPdf,
                   onExportMd: actions.onExportMd,
+                  onExportHtml: actions.onExportHtml,
+                  onExportTxt: actions.onExportTxt,
                   onExportJson: actions.onExportJson,
                   onImportMd: actions.onImportMd,
                   onImportJson: actions.onImportJson,

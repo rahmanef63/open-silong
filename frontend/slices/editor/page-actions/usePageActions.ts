@@ -7,6 +7,7 @@ import {
   pageToMarkdown, pageToPlainText, markdownToBlocks,
   downloadFile, pickFile,
 } from "@/shared/lib/markdown";
+import { pageToHtml, pageToHtmlFragment } from "@/shared/lib/html";
 import { useWorkspaceIO } from "@/slices/workspace-io";
 
 export function usePageActions(page: Page, close: () => void) {
@@ -32,10 +33,25 @@ export function usePageActions(page: Page, close: () => void) {
     close();
   };
 
+  /** Multi-format clipboard. Writes text/plain + text/html via
+   *  ClipboardItem so paste targets pick the richest representation
+   *  they support — Notion picks text/html (preserves headings, lists,
+   *  links), terminal-class targets fall through to text/plain. Old
+   *  browsers without ClipboardItem get plain text only. */
   const copyContents = async () => {
+    const plain = pageToPlainText(page);
+    const html = pageToHtmlFragment(page);
     try {
-      await navigator.clipboard.writeText(pageToPlainText(page));
-      toast.success("Page contents copied");
+      if (typeof window !== "undefined" && "ClipboardItem" in window) {
+        const item = new ClipboardItem({
+          "text/plain": new Blob([plain], { type: "text/plain" }),
+          "text/html": new Blob([html], { type: "text/html" }),
+        });
+        await navigator.clipboard.write([item]);
+      } else {
+        await navigator.clipboard.writeText(plain);
+      }
+      toast.success("Page contents copied (plain + HTML for Notion paste)");
     } catch {
       toast.error("Failed to copy contents");
     }
@@ -55,11 +71,23 @@ export function usePageActions(page: Page, close: () => void) {
     toast.success("Moved to trash");
   };
 
+  const safeTitle = (page.title || "untitled").replace(/[^a-z0-9-_ ]/gi, "_").trim() || "untitled";
+
   const onExportMd = () => {
-    const md = pageToMarkdown(page);
-    const safeTitle = (page.title || "untitled").replace(/[^a-z0-9-_ ]/gi, "_").trim() || "untitled";
-    downloadFile(`${safeTitle}.md`, md);
-    toast.success("Exported as markdown");
+    downloadFile(`${safeTitle}.md`, pageToMarkdown(page));
+    toast.success("Exported as Markdown");
+    close();
+  };
+
+  const onExportHtml = () => {
+    downloadFile(`${safeTitle}.html`, pageToHtml(page), "text/html");
+    toast.success("Exported as HTML");
+    close();
+  };
+
+  const onExportTxt = () => {
+    downloadFile(`${safeTitle}.txt`, pageToPlainText(page), "text/plain");
+    toast.success("Exported as plain text");
     close();
   };
 
@@ -112,7 +140,7 @@ export function usePageActions(page: Page, close: () => void) {
     setFont, toggleSmall, toggleFull, toggleLock,
     copyLink, copyContents, onDuplicate, onTrash,
     onExportMd, onImportMd, onExportJson, onImportJson, onImportZip,
-    onExportPdf,
+    onExportPdf, onExportHtml, onExportTxt,
     stub,
   };
 }

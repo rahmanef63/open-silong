@@ -92,6 +92,10 @@ function projectDatabase(d: Database): unknown {
 export interface BuildExportResult {
   json: string;
   counts: { pages: number; databases: number; snapshots: number };
+  /** Resolved pages/databases (full domain shape). ZIP exporter reuses
+   *  these to avoid re-walking depth + include logic. */
+  pages: Page[];
+  databases: Database[];
 }
 
 /** Build the workspace-shape JSON for a user-chosen page subset. */
@@ -146,16 +150,16 @@ export function buildSelectionExport(input: BuildExportInput): BuildExportResult
     }
   }
 
-  const pages = livePages.filter((p) => pageIds.has(p.id)).map(projectPage);
-  const databases = liveDatabases.filter((d) => dbIds.has(d.id)).map(projectDatabase);
+  const pages = livePages.filter((p) => pageIds.has(p.id));
+  const databases = liveDatabases.filter((d) => dbIds.has(d.id));
 
   const payload = {
     version: 1 as const,
     exportedAt: new Date().toISOString(),
     workspace: input.workspace,
     preferences: input.preferences,
-    pages,
-    databases,
+    pages: pages.map(projectPage),
+    databases: databases.map(projectDatabase),
     // Snapshots are workspace-scoped; per-selection exports skip them
     // to avoid leaking history of pages outside the selection. Use
     // Settings → Backup for the full snapshot bundle.
@@ -165,5 +169,7 @@ export function buildSelectionExport(input: BuildExportInput): BuildExportResult
   return {
     json: JSON.stringify(payload, null, 2),
     counts: { pages: pages.length, databases: databases.length, snapshots: 0 },
+    pages,
+    databases,
   };
 }
