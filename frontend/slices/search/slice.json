@@ -1,0 +1,22 @@
+{
+  "$schema": "https://resource.rahmanef.com/slice-schema.json",
+  "slug": "search",
+  "version": "0.1.0",
+  "category": "uncategorized",
+  "title": "Search",
+  "description": "Search slice.",
+  "namespace": "@/slices/search",
+  "kind": "full",
+  "frontend": {
+    "slicePath": "frontend/slices/search"
+  },
+  "deps": {
+    "shared": [],
+    "slices": [],
+    "convex": [
+      "_generated"
+    ],
+    "shadcn": [],
+    "npm": []
+  }
+}

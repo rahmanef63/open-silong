@@ -1,0 +1,26 @@
+{
+  "$schema": "https://resource.rahmanef.com/slice-schema.json",
+  "slug": "analytics",
+  "version": "0.1.0",
+  "category": "uncategorized",
+  "title": "Analytics",
+  "description": "Analytics slice.",
+  "namespace": "@/slices/analytics",
+  "kind": "full",
+  "frontend": {
+    "slicePath": "frontend/slices/analytics"
+  },
+  "deps": {
+    "shared": [
+      "lib/store",
+      "types/domain",
+      "ui/popover"
+    ],
+    "slices": [
+      "comments"
+    ],
+    "convex": [],
+    "shadcn": [],
+    "npm": []
+  }
+}

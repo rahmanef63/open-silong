@@ -1,0 +1,26 @@
+{
+  "$schema": "https://resource.rahmanef.com/slice-schema.json",
+  "slug": "inbox",
+  "version": "0.1.0",
+  "category": "uncategorized",
+  "title": "Inbox",
+  "description": "Inbox slice.",
+  "namespace": "@/slices/inbox",
+  "kind": "full",
+  "frontend": {
+    "slicePath": "frontend/slices/inbox"
+  },
+  "deps": {
+    "shared": [
+      "lib/format",
+      "lib/router",
+      "lib/utils"
+    ],
+    "slices": [],
+    "convex": [
+      "_generated"
+    ],
+    "shadcn": [],
+    "npm": []
+  }
+}

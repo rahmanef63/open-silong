@@ -1,0 +1,24 @@
+{
+  "$schema": "https://resource.rahmanef.com/slice-schema.json",
+  "slug": "files",
+  "version": "0.1.0",
+  "category": "uncategorized",
+  "title": "Files",
+  "description": "Files slice.",
+  "namespace": "@/slices/files",
+  "kind": "full",
+  "frontend": {
+    "slicePath": "frontend/slices/files"
+  },
+  "deps": {
+    "shared": [
+      "lib/utils"
+    ],
+    "slices": [],
+    "convex": [
+      "_generated"
+    ],
+    "shadcn": [],
+    "npm": []
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "$schema": "https://resource.rahmanef.com/slice-schema.json",
+  "slug": "database-cell-selection",
+  "version": "0.1.0",
+  "category": "uncategorized",
+  "title": "Database Cell Selection",
+  "description": "Database Cell Selection slice.",
+  "namespace": "@/slices/database-cell-selection",
+  "kind": "full",
+  "frontend": {
+    "slicePath": "frontend/slices/database-cell-selection"
+  },
+  "deps": {
+    "shared": [
+      "lib/utils"
+    ],
+    "slices": [],
+    "convex": [],
+    "shadcn": [],
+    "npm": []
+  }
+}

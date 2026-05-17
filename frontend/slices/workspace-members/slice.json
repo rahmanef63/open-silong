@@ -1,0 +1,29 @@
+{
+  "$schema": "https://resource.rahmanef.com/slice-schema.json",
+  "slug": "workspace-members",
+  "version": "0.1.0",
+  "category": "uncategorized",
+  "title": "Workspace Members",
+  "description": "Workspace Members slice.",
+  "namespace": "@/slices/workspace-members",
+  "kind": "full",
+  "frontend": {
+    "slicePath": "frontend/slices/workspace-members"
+  },
+  "deps": {
+    "shared": [
+      "hooks/useAsyncError",
+      "lib/format",
+      "types/domain",
+      "ui/button",
+      "ui/dialog",
+      "ui/dropdown-menu"
+    ],
+    "slices": [],
+    "convex": [
+      "_generated"
+    ],
+    "shadcn": [],
+    "npm": []
+  }
+}
