@@ -4,6 +4,7 @@ import { Popover, PopoverAnchor, PopoverContent } from "@/shared/ui/popover";
 import { useStore } from "@/shared/lib/store";
 import { cn } from "@/shared/lib/utils";
 import { DynamicIcon } from "@/shared/components/icon-picker";
+import { Button } from "@/shared/ui/button";
 import { rankDatabases } from "./databasePickerRank";
 
 interface Props {
@@ -61,20 +62,21 @@ export function DatabasePicker({ open, onOpenChange, onPick }: Props) {
             </div>
           ) : (
             ranked.map((r, i) => (
-              <button
+              <Button
+                variant="ghost"
                 key={r.id}
                 type="button"
                 onMouseEnter={() => setActive(i)}
                 onClick={() => choose(r.id)}
                 className={cn(
-                  "flex w-full items-center gap-2 px-2 py-1.5 text-left text-sm",
+                  "h-auto w-full justify-start gap-2 rounded-none px-2 py-1.5 text-left text-sm font-normal",
                   i === active && "bg-accent",
                 )}
               >
                 <DynamicIcon value={r.icon || "🗂️"} className="text-base shrink-0" fallback="🗂️" />
                 <span className="flex-1 min-w-0 truncate">{r.name}</span>
                 <span className="text-[10px] text-muted-foreground">{r.rowCount} rows</span>
-              </button>
+              </Button>
             ))
           )}
         </div>

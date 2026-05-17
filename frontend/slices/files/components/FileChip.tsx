@@ -3,6 +3,7 @@ import { parseFileRef } from "../lib/parse";
 import { useFileUrl } from "../hooks/useFileUrl";
 import type { FileRef } from "../types";
 import { cn } from "@/shared/lib/utils";
+import { Button } from "@/shared/ui/button";
 
 interface Props {
   fileRef: FileRef;
@@ -38,13 +39,14 @@ export function FileChip({ fileRef, onRemove }: Props) {
         </a>
       )}
       {onRemove && (
-        <button
+        <Button
+          variant="ghost"
           onClick={onRemove}
           aria-label="Remove"
-          className="rounded p-0.5 text-muted-foreground hover:bg-accent hover:text-destructive opacity-0 group-hover:opacity-100"
+          className="h-auto rounded p-0.5 text-muted-foreground opacity-0 hover:text-destructive group-hover:opacity-100 [&_svg]:size-3"
         >
           <X className="h-3 w-3" />
-        </button>
+        </Button>
       )}
     </div>
   );

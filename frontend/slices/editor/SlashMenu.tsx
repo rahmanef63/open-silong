@@ -3,6 +3,7 @@ import { Link2 } from "lucide-react";
 import { BLOCK_SPECS, BlockSpec } from "./blockSpecs";
 import { BlockType } from "@/shared/types/domain";
 import { cn } from "@/shared/lib/utils";
+import { Button } from "@/shared/ui/button";
 
 interface Props {
   query: string;
@@ -93,12 +94,13 @@ export function SlashMenu({ query, onSelect, onClose, onSelectLinkedDatabase }: 
         const hint = it.kind === "block" ? it.spec.hint : it.hint;
         const key = it.kind === "block" ? it.spec.type : "linked-db";
         return (
-          <button
+          <Button
+            variant="ghost"
             key={key}
             onClick={() => fire(it)}
             onMouseEnter={() => setActive(i)}
             className={cn(
-              "flex w-full items-center gap-3 rounded-md px-2 py-1.5 text-left transition",
+              "h-auto w-full justify-start gap-3 rounded-md px-2 py-1.5 text-left font-normal transition",
               i === active && "bg-accent",
             )}
           >
@@ -109,7 +111,7 @@ export function SlashMenu({ query, onSelect, onClose, onSelectLinkedDatabase }: 
               <div className="text-sm font-medium">{label}</div>
               <div className="text-xs text-muted-foreground truncate">{hint}</div>
             </div>
-          </button>
+          </Button>
         );
       })}
     </div>

@@ -6,6 +6,7 @@ import { focusSiblingBySelector, isTextInputTarget } from "@/shared/lib/keyboard
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
+import { Button } from "@/shared/ui/button";
 import { PropertyCell } from "../../PropertyCell";
 import { InlineRowTitle } from "../../row";
 import { SelectableCell } from "@/slices/database-cell-selection";
@@ -50,9 +51,9 @@ export function SortableRow({
     >
       <div className="w-12 shrink-0 flex items-center justify-center gap-0.5 border-r border-border">
         <RowCheckbox rowId={row.id} />
-        <button {...attributes} {...listeners} aria-label="Drag to reorder" className="cursor-grab text-muted-foreground/30 hover:text-foreground opacity-0 group-hover:opacity-100">
+        <Button variant="ghost" {...attributes} {...listeners} aria-label="Drag to reorder" className="h-auto cursor-grab p-0 text-muted-foreground/30 opacity-0 hover:bg-transparent hover:text-foreground group-hover:opacity-100 [&_svg]:size-3">
           <GripVertical className="h-3 w-3" />
-        </button>
+        </Button>
       </div>
       {visibleProps.map((p: any, i: number) => {
         const isSel = selectedCell?.rowId === row.id && selectedCell?.propId === p.id;
@@ -70,16 +71,17 @@ export function SortableRow({
                     style={{ paddingLeft: `${depth * 16}px` }}
                   >
                     {hasChildren ? (
-                      <button
+                      <Button
+                        variant="ghost"
                         type="button"
                         onClick={(e) => { e.stopPropagation(); onToggleExpand?.(); }}
                         aria-label={expanded ? "Collapse sub-items" : "Expand sub-items"}
-                        className="h-5 w-5 grid place-items-center text-muted-foreground hover:bg-accent rounded"
+                        className="h-5 w-5 rounded p-0 text-muted-foreground [&_svg]:size-3.5"
                       >
                         {expanded
                           ? <ChevronDown className="h-3.5 w-3.5" />
                           : <ChevronRight className="h-3.5 w-3.5" />}
-                      </button>
+                      </Button>
                     ) : (
                       <span aria-hidden className="h-5 w-5 inline-block" />
                     )}
@@ -106,7 +108,7 @@ export function SortableRow({
       <div className="w-8 shrink-0 flex items-center justify-center opacity-0 group-hover:opacity-100">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="rounded p-1 hover:bg-accent text-muted-foreground"><MoreHorizontal className="h-3 w-3" /></button>
+            <Button variant="ghost" className="h-auto rounded p-1 text-muted-foreground [&_svg]:size-3"><MoreHorizontal className="h-3 w-3" /></Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={onOpen}>Open</DropdownMenuItem>

@@ -4,6 +4,7 @@ import { cn } from "@/shared/lib/utils";
 import {
   Popover, PopoverContent, PopoverTrigger,
 } from "@/shared/ui/popover";
+import { Button } from "@/shared/ui/button";
 import { FileChip, FileUploadButton } from "@/slices/files";
 import type { CellProps } from "./types";
 
@@ -23,14 +24,14 @@ export function FilesCell({ value, onSet, cellClass }: CellProps) {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button className={cn(cellClass, "w-full text-left px-2 py-1 rounded hover:bg-accent/50 flex items-center gap-1")}>
+        <Button variant="ghost" className={cn(cellClass, "h-auto w-full justify-start gap-1 rounded px-2 py-1 text-left font-normal hover:bg-accent/50 [&_svg]:size-3.5")}>
           <File className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
           {files.length ? (
             <span className="min-w-0 truncate text-xs">{files.length} file{files.length === 1 ? "" : "s"}</span>
           ) : (
             <span className="text-muted-foreground">Attach file</span>
           )}
-        </button>
+        </Button>
       </PopoverTrigger>
       <PopoverContent className="w-72 p-2">
         <div className="space-y-2">
@@ -50,9 +51,9 @@ export function FilesCell({ value, onSet, cellClass }: CellProps) {
               placeholder="Paste URL"
               className="h-8 min-w-0 flex-1 rounded-md border border-border bg-background px-2 text-xs outline-none"
             />
-            <button type="submit" className="h-8 rounded-md bg-foreground px-2 text-xs text-background">
+            <Button type="submit" className="h-8 rounded-md bg-foreground px-2 text-xs text-background hover:bg-foreground/90">
               Add
-            </button>
+            </Button>
           </form>
           <FileUploadButton onUploaded={onUploaded} multiple label="Upload file" />
         </div>

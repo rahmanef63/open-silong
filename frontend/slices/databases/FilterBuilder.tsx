@@ -2,6 +2,7 @@ import { Database, DatabaseFilter, DatabaseViewConfig, Property } from "@/shared
 import { Plus, X } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
 import { Input } from "@/shared/ui/input";
+import { Button } from "@/shared/ui/button";
 
 const OPS: { value: DatabaseFilter["op"]; label: string; needsValue: boolean }[] = [
   { value: "contains", label: "contains", needsValue: true },
@@ -72,18 +73,19 @@ export function FilterBuilder({ db, view, writeView }: Props) {
               />
             )}
 
-            <button onClick={() => remove(i)} className="rounded p-1 hover:bg-accent text-muted-foreground">
+            <Button variant="ghost" onClick={() => remove(i)} className="h-auto rounded p-1 text-muted-foreground [&_svg]:size-3">
               <X className="h-3 w-3" />
-            </button>
+            </Button>
           </div>
         );
       })}
-      <button
+      <Button
+        variant="ghost"
         onClick={addFilter}
-        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground mt-1"
+        className="mt-1 h-auto gap-1 p-0 text-xs font-normal text-muted-foreground hover:bg-transparent hover:text-foreground [&_svg]:size-3"
       >
         <Plus className="h-3 w-3" /> Add filter
-      </button>
+      </Button>
     </div>
   );
 }

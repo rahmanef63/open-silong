@@ -2,6 +2,7 @@ import { AlignLeft, AlignCenter, AlignRight } from "lucide-react";
 import type { Block } from "@/shared/types/domain";
 import { cn } from "@/shared/lib/utils";
 import { Separator } from "@/shared/ui/separator";
+import { Button } from "@/shared/ui/button";
 
 const ALIGN_OPTIONS: { value: NonNullable<Block["align"]>; Icon: typeof AlignLeft }[] = [
   { value: "left", Icon: AlignLeft },
@@ -19,27 +20,29 @@ export function ImageToolbar({
   return (
     <div className="absolute top-1 right-1 flex items-center gap-1 rounded bg-background/85 border border-border px-1 py-0.5 opacity-0 group-hover/img:opacity-100 transition">
       {ALIGN_OPTIONS.map(({ value, Icon }) => (
-        <button
+        <Button
+          variant="ghost"
           key={value}
           type="button"
           onClick={() => onAlign(value)}
           aria-label={`Align ${value}`}
           className={cn(
-            "h-5 w-5 flex items-center justify-center rounded text-muted-foreground hover:bg-accent hover:text-foreground transition",
+            "h-5 w-5 rounded p-0 text-muted-foreground transition hover:text-foreground [&_svg]:size-3",
             align === value && "bg-accent text-foreground",
           )}
         >
           <Icon className="h-3 w-3" />
-        </button>
+        </Button>
       ))}
       <Separator orientation="vertical" className="mx-0.5 h-3" />
-      <button
+      <Button
+        variant="ghost"
         type="button"
         onClick={onChange}
-        className="rounded px-1 text-[11px] text-muted-foreground hover:text-foreground"
+        className="h-auto rounded px-1 text-[11px] font-normal text-muted-foreground hover:bg-transparent hover:text-foreground"
       >
         Change
-      </button>
+      </Button>
     </div>
   );
 }

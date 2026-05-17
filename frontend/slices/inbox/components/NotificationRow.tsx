@@ -4,6 +4,7 @@ import { cn } from "@/shared/lib/utils";
 import { formatRelTime } from "@/shared/lib/format";
 import type { Notification } from "../types";
 import { KIND_ICON } from "../lib/format";
+import { Button } from "@/shared/ui/button";
 
 interface Props {
   note: Notification;
@@ -57,21 +58,23 @@ export function NotificationRow({ note, onMarkRead, onRemove }: Props) {
       </div>
       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
         {!note.read && (
-          <button
+          <Button
+            variant="ghost"
             onClick={(e) => { e.stopPropagation(); onMarkRead(note.id); }}
-            className="rounded p-1 hover:bg-accent text-muted-foreground"
+            className="h-auto rounded p-1 text-muted-foreground [&_svg]:size-3.5"
             aria-label="Mark read"
           >
             <Check className="h-3.5 w-3.5" />
-          </button>
+          </Button>
         )}
-        <button
+        <Button
+          variant="ghost"
           onClick={(e) => { e.stopPropagation(); onRemove(note.id); }}
-          className="rounded p-1 hover:bg-accent text-muted-foreground hover:text-destructive"
+          className="h-auto rounded p-1 text-muted-foreground hover:text-destructive [&_svg]:size-3.5"
           aria-label="Delete"
         >
           <Trash2 className="h-3.5 w-3.5" />
-        </button>
+        </Button>
       </div>
     </div>
   );

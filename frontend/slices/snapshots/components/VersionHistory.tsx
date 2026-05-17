@@ -24,7 +24,7 @@ export function VersionHistory({ pageId, onClose }: { pageId: string; onClose: (
         <div className="flex items-center gap-2 text-sm font-semibold">
           <History className="h-4 w-4" /> Version history
         </div>
-        <button onClick={onClose} className="rounded p-1 hover:bg-accent text-muted-foreground"><X className="h-4 w-4" /></button>
+        <Button variant="ghost" onClick={onClose} className="h-auto rounded p-1 text-muted-foreground [&_svg]:size-4"><X className="h-4 w-4" /></Button>
       </div>
 
       <div className="border-b border-border bg-muted/20 px-4 py-2">
@@ -66,7 +66,7 @@ function PreviewPanel({ snapshot, onClose, onRestore }: { snapshot: PageSnapshot
     <div className="border-t border-border p-3 max-h-[40%] overflow-y-auto bg-card">
       <div className="flex items-center justify-between mb-2">
         <div className="text-xs font-semibold flex items-center gap-1"><Eye className="h-3 w-3" /> Preview</div>
-        <button onClick={onClose} className="text-xs text-muted-foreground hover:text-foreground">Close</button>
+        <Button variant="ghost" onClick={onClose} className="h-auto p-0 text-xs font-normal text-muted-foreground hover:bg-transparent hover:text-foreground">Close</Button>
       </div>
       <div className="text-xs text-muted-foreground mb-2">{formatDateTime(snapshot.takenAt)}</div>
       <div className="font-serif text-base font-bold mb-2 flex items-center gap-1.5">
