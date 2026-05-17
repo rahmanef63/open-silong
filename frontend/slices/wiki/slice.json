@@ -1,0 +1,27 @@
+{
+  "$schema": "https://resource.rahmanef.com/slice-schema.json",
+  "slug": "wiki",
+  "version": "0.1.0",
+  "category": "uncategorized",
+  "title": "Wiki",
+  "description": "Wiki slice.",
+  "namespace": "@/slices/wiki",
+  "kind": "full",
+  "frontend": {
+    "slicePath": "frontend/slices/wiki"
+  },
+  "deps": {
+    "shared": [
+      "components/icon-picker",
+      "lib/error",
+      "lib/store",
+      "lib/utils"
+    ],
+    "slices": [],
+    "convex": [
+      "_generated"
+    ],
+    "shadcn": [],
+    "npm": []
+  }
+}

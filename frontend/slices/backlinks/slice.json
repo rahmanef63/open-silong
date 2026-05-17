@@ -1,0 +1,25 @@
+{
+  "$schema": "https://resource.rahmanef.com/slice-schema.json",
+  "slug": "backlinks",
+  "version": "0.1.0",
+  "category": "uncategorized",
+  "title": "Backlinks",
+  "description": "Backlinks slice.",
+  "namespace": "@/slices/backlinks",
+  "kind": "full",
+  "frontend": {
+    "slicePath": "frontend/slices/backlinks"
+  },
+  "deps": {
+    "shared": [
+      "lib/router",
+      "lib/store",
+      "lib/utils",
+      "types/domain"
+    ],
+    "slices": [],
+    "convex": [],
+    "shadcn": [],
+    "npm": []
+  }
+}

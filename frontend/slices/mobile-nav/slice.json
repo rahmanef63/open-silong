@@ -1,0 +1,30 @@
+{
+  "$schema": "https://resource.rahmanef.com/slice-schema.json",
+  "slug": "mobile-nav",
+  "version": "0.1.0",
+  "category": "uncategorized",
+  "title": "Mobile Nav",
+  "description": "Mobile Nav slice.",
+  "namespace": "@/slices/mobile-nav",
+  "kind": "full",
+  "frontend": {
+    "slicePath": "frontend/slices/mobile-nav"
+  },
+  "deps": {
+    "shared": [
+      "lib/router",
+      "lib/routes",
+      "lib/utils",
+      "ui/drawer"
+    ],
+    "slices": [
+      "admin-panel",
+      "ai-agent",
+      "inbox",
+      "templates"
+    ],
+    "convex": [],
+    "shadcn": [],
+    "npm": []
+  }
+}

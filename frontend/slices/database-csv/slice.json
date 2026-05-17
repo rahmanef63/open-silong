@@ -1,0 +1,30 @@
+{
+  "$schema": "https://resource.rahmanef.com/slice-schema.json",
+  "slug": "database-csv",
+  "version": "0.1.0",
+  "category": "uncategorized",
+  "title": "Database Csv",
+  "description": "Database Csv slice.",
+  "namespace": "@/slices/database-csv",
+  "kind": "full",
+  "frontend": {
+    "slicePath": "frontend/slices/database-csv"
+  },
+  "deps": {
+    "shared": [
+      "hooks/useAsyncError",
+      "lib/error",
+      "lib/store",
+      "types/domain",
+      "ui/button",
+      "ui/dialog",
+      "ui/dropdown-menu"
+    ],
+    "slices": [
+      "databases"
+    ],
+    "convex": [],
+    "shadcn": [],
+    "npm": []
+  }
+}

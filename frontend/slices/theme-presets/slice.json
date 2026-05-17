@@ -1,0 +1,24 @@
+{
+  "$schema": "https://resource.rahmanef.com/slice-schema.json",
+  "slug": "theme-presets",
+  "version": "0.1.0",
+  "category": "uncategorized",
+  "title": "Theme Presets",
+  "description": "Theme Presets slice.",
+  "namespace": "@/slices/theme-presets",
+  "kind": "full",
+  "frontend": {
+    "slicePath": "frontend/slices/theme-presets"
+  },
+  "deps": {
+    "shared": [
+      "lib/utils",
+      "ui/button",
+      "ui/popover"
+    ],
+    "slices": [],
+    "convex": [],
+    "shadcn": [],
+    "npm": []
+  }
+}

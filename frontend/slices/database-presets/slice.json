@@ -1,0 +1,25 @@
+{
+  "$schema": "https://resource.rahmanef.com/slice-schema.json",
+  "slug": "database-presets",
+  "version": "0.1.0",
+  "category": "uncategorized",
+  "title": "Database Presets",
+  "description": "Database Presets slice.",
+  "namespace": "@/slices/database-presets",
+  "kind": "full",
+  "frontend": {
+    "slicePath": "frontend/slices/database-presets"
+  },
+  "deps": {
+    "shared": [
+      "components/icon-picker",
+      "lib/store",
+      "types/domain",
+      "ui/dropdown-menu"
+    ],
+    "slices": [],
+    "convex": [],
+    "shadcn": [],
+    "npm": []
+  }
+}

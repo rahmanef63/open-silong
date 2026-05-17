@@ -1,0 +1,22 @@
+{
+  "$schema": "https://resource.rahmanef.com/slice-schema.json",
+  "slug": "code-block",
+  "version": "0.1.0",
+  "category": "uncategorized",
+  "title": "Code Block",
+  "description": "Code Block slice.",
+  "namespace": "@/slices/code-block",
+  "kind": "full",
+  "frontend": {
+    "slicePath": "frontend/slices/code-block"
+  },
+  "deps": {
+    "shared": [
+      "ui/dropdown-menu"
+    ],
+    "slices": [],
+    "convex": [],
+    "shadcn": [],
+    "npm": []
+  }
+}
