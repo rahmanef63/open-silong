@@ -16,7 +16,7 @@ import { internalMutation } from "../_generated/server";
 export const run = internalMutation({
   args: {},
   handler: async (ctx) => {
-    const all = await ctx.db.query("databases").collect();
+    const all = await ctx.db.query("databases").take(50000);
     let patched = 0;
     for (const db of all) {
       const computed = (db.views ?? []).some(
