@@ -145,6 +145,7 @@ export function PageActionsMenu({ page, onShowHistory }: Props) {
           <div className="py-1">
             {match("Data") && (
               <DataSubmenu
+                close={close}
                 actions={{
                   onExportPdf: actions.onExportPdf,
                   onExportMd: actions.onExportMd,
