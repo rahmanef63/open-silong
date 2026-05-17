@@ -6,6 +6,7 @@ import {
 } from "@/shared/ui/dropdown-menu";
 import { Switch } from "@/shared/ui/switch";
 import { Checkbox } from "@/shared/ui/checkbox";
+import { Button } from "@/shared/ui/button";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 
@@ -58,14 +59,15 @@ export function Segmented<T extends string | number>({ value, options, onChange 
   return (
     <div className="inline-flex rounded-md border border-border bg-card p-0.5 text-xs w-full">
       {options.map(o => (
-        <button
+        <Button
+          variant="ghost"
           key={String(o.value)}
           onClick={() => onChange(o.value)}
           className={cn(
-            "flex-1 rounded px-2 py-1 transition",
-            value === o.value ? "bg-brand text-white font-medium" : "text-muted-foreground hover:bg-accent"
+            "h-auto flex-1 rounded px-2 py-1 text-xs font-normal transition",
+            value === o.value ? "bg-brand text-white font-medium hover:bg-brand hover:text-white" : "text-muted-foreground hover:bg-accent"
           )}
-        >{o.label}</button>
+        >{o.label}</Button>
       ))}
     </div>
   );
@@ -82,10 +84,10 @@ export function PropPicker({ value, onPick, props, allowEmpty, emptyLabel }: {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="flex w-full items-center justify-between rounded-md border border-border bg-card px-2 py-1 text-xs hover:bg-accent">
+        <Button variant="outline" className="h-auto w-full justify-between rounded-md bg-card px-2 py-1 text-xs font-normal [&_svg]:size-3">
           <span className="truncate">{current?.name ?? emptyLabel ?? "—"}</span>
           <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0" />
-        </button>
+        </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-56 max-h-72 overflow-y-auto">
         {allowEmpty && (

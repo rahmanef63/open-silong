@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/shared/lib/utils";
+import { Button } from "@/shared/ui/button";
 import type { DensityConfig } from "../lib/density";
 import { handleSidebarTraversal } from "../lib/keyboard";
 
@@ -16,12 +17,13 @@ interface Props {
 
 export function SidebarAction({ icon: Icon, label, shortcut, badge, onClick, active, density }: Props) {
   return (
-    <button
+    <Button
+      variant="ghost"
       onClick={onClick}
       data-sidebar-nav-item
       onKeyDown={(e) => handleSidebarTraversal(e, "[data-sidebar-nav-item]")}
       className={cn(
-        "flex w-full items-center rounded-md text-sidebar-foreground hover:bg-sidebar-accent transition",
+        "h-auto w-full justify-start rounded-md text-sidebar-foreground transition hover:bg-sidebar-accent",
         density.action,
         active && "bg-sidebar-accent text-foreground",
       )}
@@ -34,6 +36,6 @@ export function SidebarAction({ icon: Icon, label, shortcut, badge, onClick, act
         </span>
       )}
       {density.showActionMeta && badge}
-    </button>
+    </Button>
   );
 }

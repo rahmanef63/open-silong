@@ -1,14 +1,15 @@
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { Switch } from "@/shared/ui/switch";
+import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
 
 export function RowButton({ icon: Icon, label }: { icon: LucideIcon; label: string }) {
   return (
-    <button className="flex w-full items-center gap-2 px-3 py-1.5 text-sm hover:bg-accent text-left">
+    <Button variant="ghost" className="h-auto w-full justify-start gap-2 rounded-none px-3 py-1.5 text-sm font-normal [&_svg]:size-3.5">
       <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
       <span className="flex-1 truncate">{label}</span>
-    </button>
+    </Button>
   );
 }
 
@@ -22,10 +23,11 @@ export function Row({
   destructive?: boolean;
 }) {
   return (
-    <button
+    <Button
+      variant="ghost"
       onClick={onClick}
       className={cn(
-        "flex w-full items-center gap-2 px-3 py-1.5 text-sm hover:bg-accent text-left",
+        "h-auto w-full justify-start gap-2 rounded-none px-3 py-1.5 text-sm font-normal [&_svg]:size-3.5",
         destructive && "text-destructive hover:text-destructive",
       )}
     >
@@ -36,7 +38,7 @@ export function Row({
           {shortcut}
         </span>
       )}
-    </button>
+    </Button>
   );
 }
 

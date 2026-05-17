@@ -32,7 +32,8 @@ function SubpagesImpl({ page, subpages }: { page: Page; subpages: Page[] }) {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {subpages.map((sp) => (
-            <button
+            <Button
+              variant="outline"
               key={sp.id}
               onClick={() => navigate(`/p/${sp.id}`)}
               draggable
@@ -41,12 +42,12 @@ function SubpagesImpl({ page, subpages }: { page: Page; subpages: Page[] }) {
                 e.dataTransfer.effectAllowed = "move";
               }}
               title="Drag to sidebar to re-parent"
-              className="flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-left hover:border-border-strong transition cursor-grab active:cursor-grabbing"
+              className="h-auto cursor-grab justify-start gap-2 rounded-md bg-card px-3 py-2 text-left font-normal transition hover:border-border-strong active:cursor-grabbing [&_svg]:size-3.5"
             >
               <DynamicIcon value={sp.icon} className="text-base" />
               <span className="flex-1 truncate text-sm">{sp.title || "Untitled"}</span>
               <FileText className="h-3.5 w-3.5 text-muted-foreground" />
-            </button>
+            </Button>
           ))}
         </div>
       )}

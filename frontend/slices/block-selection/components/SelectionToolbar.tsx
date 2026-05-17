@@ -6,6 +6,7 @@ import {
 } from "@/shared/ui/dropdown-menu";
 import { cn } from "@/shared/lib/utils";
 import { Separator } from "@/shared/ui/separator";
+import { Button } from "@/shared/ui/button";
 import type { BlockType } from "@/shared/types/domain";
 import { BLOCK_SPECS, BLOCK_COLORS, BLOCK_COLOR_KEYS, type BlockColorKey } from "@/slices/editor";
 import { useBlockSelection } from "./BlockSelectionProvider";
@@ -63,9 +64,9 @@ export function SelectionToolbar({ pageId }: Props) {
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button className="flex items-center gap-1 rounded px-2 py-1 text-xs hover:bg-accent">
+          <Button variant="ghost" className="h-auto gap-1 rounded px-2 py-1 text-xs font-normal [&_svg]:size-3.5">
             <Type className="h-3.5 w-3.5" /> Turn into
-          </button>
+          </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="center" side="top" className="w-52 max-h-72 overflow-y-auto">
           <DropdownMenuLabel className="text-xs text-muted-foreground">Turn selection into</DropdownMenuLabel>
@@ -81,9 +82,9 @@ export function SelectionToolbar({ pageId }: Props) {
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button className="flex items-center gap-1 rounded px-2 py-1 text-xs hover:bg-accent">
+          <Button variant="ghost" className="h-auto gap-1 rounded px-2 py-1 text-xs font-normal [&_svg]:size-3.5">
             <Palette className="h-3.5 w-3.5" /> Color
-          </button>
+          </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="center" side="top" className="w-52">
           <DropdownMenuLabel className="text-xs text-muted-foreground">Text color</DropdownMenuLabel>
@@ -108,14 +109,15 @@ export function SelectionToolbar({ pageId }: Props) {
         <Trash2 className="h-3.5 w-3.5" /> Delete
       </ToolButton>
 
-      <button
+      <Button
+        variant="ghost"
         onClick={clear}
         aria-label="Clear selection (Esc)"
         title="Clear (Esc)"
-        className="ml-1 flex h-7 w-7 items-center justify-center rounded text-muted-foreground hover:bg-accent"
+        className="ml-1 h-7 w-7 rounded p-0 text-muted-foreground [&_svg]:size-3.5"
       >
         <X className="h-3.5 w-3.5" />
-      </button>
+      </Button>
     </div>
   );
 }
@@ -129,18 +131,19 @@ function ToolButton({
   title?: string;
 }) {
   return (
-    <button
+    <Button
+      variant="ghost"
       onClick={onClick}
       title={title}
       className={cn(
-        "flex items-center gap-1 rounded px-2 py-1 text-xs transition",
+        "h-auto gap-1 rounded px-2 py-1 text-xs font-normal transition [&_svg]:size-3.5",
         variant === "destructive"
-          ? "text-destructive hover:bg-destructive/10"
+          ? "text-destructive hover:bg-destructive/10 hover:text-destructive"
           : "hover:bg-accent",
       )}
     >
       {children}
-    </button>
+    </Button>
   );
 }
 
@@ -153,18 +156,19 @@ function Swatch({
 }) {
   const meta = BLOCK_COLORS[colorKey];
   return (
-    <button
+    <Button
+      variant="ghost"
       onClick={onClick}
       title={meta.label}
       aria-label={`${mode === "text" ? "Text" : "Background"}: ${meta.label}`}
       className={cn(
-        "flex h-7 w-7 items-center justify-center rounded border border-border hover:ring-2 hover:ring-brand transition",
+        "h-7 w-7 rounded border border-border p-0 transition hover:ring-2 hover:ring-brand",
         mode === "text" ? meta.swatch : (meta.bg || "bg-transparent"),
       )}
     >
       {mode === "text" && colorKey !== "default" && (
         <span className="text-[10px] font-bold text-background">A</span>
       )}
-    </button>
+    </Button>
   );
 }

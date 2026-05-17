@@ -3,6 +3,7 @@ import { cn } from "@/shared/lib/utils";
 import { colorClass } from "@/shared/lib/format";
 import { useStore } from "@/shared/lib/store";
 import { DynamicIcon } from "@/shared/components/icon-picker";
+import { Button } from "@/shared/ui/button";
 import type { Database, DatabaseViewConfig, Page, Property } from "@/shared/types/domain";
 
 export function ModeToggle({ db, view }: { db: Database; view: DatabaseViewConfig }) {
@@ -11,14 +12,15 @@ export function ModeToggle({ db, view }: { db: Database; view: DatabaseViewConfi
   return (
     <div className="ml-1 inline-flex rounded-md border border-border bg-card p-0.5 text-[11px]">
       {(["month", "week"] as const).map((m) => (
-        <button
+        <Button
           key={m}
+          variant="ghost"
           onClick={() => updateView(db.id, view.id, { calendarMode: m })}
           className={cn(
-            "rounded px-2 py-0.5 transition",
-            mode === m ? "bg-brand text-white font-medium" : "text-muted-foreground hover:bg-accent",
+            "h-auto rounded px-2 py-0.5 text-[11px] font-normal",
+            mode === m ? "bg-brand text-white font-medium hover:bg-brand hover:text-white" : "text-muted-foreground hover:bg-accent",
           )}
-        >{m === "week" ? "Week" : "Month"}</button>
+        >{m === "week" ? "Week" : "Month"}</Button>
       ))}
     </div>
   );
@@ -45,16 +47,17 @@ export function OverflowPanel({
       <div className="divide-y divide-border max-h-40 overflow-y-auto">
         {rows.map((r) => (
           <div key={r.id} className="flex items-center gap-2 px-3 py-1.5 text-xs hover:bg-accent/40 group">
-            <button onClick={() => onOpenRow(r.id)} className="flex-1 text-left truncate">
+            <Button variant="ghost" onClick={() => onOpenRow(r.id)} className="h-auto flex-1 justify-start truncate p-0 text-xs font-normal hover:bg-transparent">
               <DynamicIcon value={r.icon} className="text-xs mr-1 inline-flex" />{r.title || "Untitled"}
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="ghost"
               onClick={() => onDeleteRow(r.id)}
-              className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive"
+              className="h-auto p-0 text-muted-foreground opacity-0 hover:bg-transparent hover:text-destructive group-hover:opacity-100 [&_svg]:size-3.5"
               aria-label="Delete"
             >
               <Trash2 className="h-3.5 w-3.5" />
-            </button>
+            </Button>
           </div>
         ))}
       </div>

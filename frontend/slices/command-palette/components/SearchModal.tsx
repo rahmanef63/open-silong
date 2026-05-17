@@ -6,6 +6,7 @@ import { useSearch } from "@/slices/search";
 import { Search, FileText, Clock, Database as DatabaseIcon, Loader2 } from "lucide-react";
 import { DynamicIcon } from "@/shared/components/icon-picker";
 import { ROUTES } from "@/shared/lib/routes";
+import { Button } from "@/shared/ui/button";
 import { DEFAULT_SEARCH_LABELS, type SearchModalLabels } from "../lib/types";
 
 interface Props {
@@ -104,13 +105,13 @@ function SectionHeader({ icon, children }: { icon: React.ReactNode; children: Re
 function Row({ icon, title, subtitle, onClick, kind = "page" }: { icon: string; title: string; subtitle?: string; onClick: () => void; kind?: "page" | "db" }) {
   const Icon = kind === "db" ? DatabaseIcon : FileText;
   return (
-    <button onClick={onClick} className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left hover:bg-accent transition">
+    <Button variant="ghost" onClick={onClick} className="h-auto w-full justify-start gap-3 rounded-md px-3 py-2 text-left font-normal transition [&_svg]:size-3.5">
       <DynamicIcon value={icon} className="text-lg" />
       <div className="min-w-0 flex-1">
         <div className="truncate text-sm font-medium">{title}</div>
         {subtitle && <div className="truncate text-xs text-muted-foreground">{subtitle}</div>}
       </div>
       <Icon className="h-3.5 w-3.5 text-muted-foreground" />
-    </button>
+    </Button>
   );
 }

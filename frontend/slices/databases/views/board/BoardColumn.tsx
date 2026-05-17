@@ -4,6 +4,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Plus } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { colorClass } from "@/shared/lib/format";
+import { Button } from "@/shared/ui/button";
 import type { Page } from "@/shared/types/domain";
 import { BoardCard } from "./BoardCard";
 
@@ -52,14 +53,15 @@ export function BoardColumn({ db, col, groupProp, onAdd, onOpen, cardPadding, ca
       <div className="flex items-center justify-between px-1 mb-2">
         <div className="flex items-center gap-2">
           {col.id !== null && (
-            <button
+            <Button
+              variant="ghost"
               {...sortable.attributes}
               {...sortable.listeners}
               aria-label="Reorder column"
-              className="rounded p-0.5 text-muted-foreground hover:bg-accent cursor-grab active:cursor-grabbing"
+              className="h-auto cursor-grab rounded p-0.5 text-muted-foreground active:cursor-grabbing [&_svg]:size-3"
             >
               <GripVertical className="h-3 w-3" />
-            </button>
+            </Button>
           )}
           {col.option ? (
             <span className={cn("inline-flex items-center rounded-full border px-2 py-0.5 text-xs", colorClass(col.option.color))}>{col.option.name}</span>
@@ -68,7 +70,7 @@ export function BoardColumn({ db, col, groupProp, onAdd, onOpen, cardPadding, ca
           )}
           <span className="text-xs text-muted-foreground">{col.rows.length}</span>
         </div>
-        <button onClick={onAdd} className="rounded p-1 hover:bg-accent text-muted-foreground"><Plus className="h-3 w-3" /></button>
+        <Button variant="ghost" onClick={onAdd} className="h-auto rounded p-1 text-muted-foreground [&_svg]:size-3"><Plus className="h-3 w-3" /></Button>
       </div>
       <div className={cardSpacing}>
         {col.rows.map((r: Page) => (

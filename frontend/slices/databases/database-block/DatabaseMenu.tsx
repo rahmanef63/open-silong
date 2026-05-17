@@ -5,6 +5,7 @@ import {
   DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger,
 } from "@/shared/ui/dropdown-menu";
 import { MoreHorizontal, Pencil, Trash2, Eye, EyeOff, Settings2, Plus, Copy, Lock, Unlock, Network } from "lucide-react";
+import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
 import { DynamicIcon, IconPickerPopover, DEFAULT_DATABASE_ICON } from "@/shared/components/icon-picker";
 import { useConfirm } from "@/shared/components/ConfirmProvider";
@@ -26,62 +27,69 @@ export function DatabaseMenu({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button
-          className="rounded p-1 hover:bg-accent text-muted-foreground"
+        <Button
+          variant="ghost"
+          className="h-auto rounded p-1 text-muted-foreground [&_svg]:size-3.5"
           title="Database menu"
           aria-label="Database menu"
         >
           <MoreHorizontal className="h-3.5 w-3.5" />
-        </button>
+        </Button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-64 p-1">
         <div className="px-2 py-1 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Database</div>
-        <button
+        <Button
+          variant="ghost"
           onClick={() => {
             const next = window.prompt("Database name", db.name);
             if (next != null && next.trim()) updateDatabase(db.id, { name: next.trim() });
           }}
-          className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs hover:bg-accent"
+          className="h-auto w-full justify-start gap-2 rounded px-2 py-1.5 text-xs font-normal [&_svg]:size-3.5"
         >
           <Pencil className="h-3.5 w-3.5" /> Rename
-        </button>
+        </Button>
         <IconPickerPopover
           value={db.icon}
           onChange={(next) => updateDatabase(db.id, { icon: next })}
           onClear={() => updateDatabase(db.id, { icon: DEFAULT_DATABASE_ICON })}
         >
-          <button
+          <Button
+            variant="ghost"
             type="button"
-            className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs hover:bg-accent"
+            className="h-auto w-full justify-start gap-2 rounded px-2 py-1.5 text-xs font-normal [&_svg]:size-3.5"
           >
             <DynamicIcon value={db.icon} className="text-base h-3.5 w-3.5" fallback={DEFAULT_DATABASE_ICON} />
             Change icon
-          </button>
+          </Button>
         </IconPickerPopover>
-        <button
+        <Button
+          variant="ghost"
           onClick={() => duplicateDatabase(db.id)}
-          className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs hover:bg-accent"
+          className="h-auto w-full justify-start gap-2 rounded px-2 py-1.5 text-xs font-normal [&_svg]:size-3.5"
           title="Clone structure (properties + views) — rows are NOT copied"
         >
           <Copy className="h-3.5 w-3.5" /> Duplicate (structure only)
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="ghost"
           onClick={() => duplicateDatabase(db.id, { includeRows: true })}
-          className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs hover:bg-accent"
+          className="h-auto w-full justify-start gap-2 rounded px-2 py-1.5 text-xs font-normal [&_svg]:size-3.5"
           title="Clone structure + deep-copy rows (capped at 5000)"
         >
           <Copy className="h-3.5 w-3.5" /> Duplicate with rows
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="ghost"
           onClick={() => updateDatabase(db.id, { locked: !db.locked })}
-          className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs hover:bg-accent"
+          className="h-auto w-full justify-start gap-2 rounded px-2 py-1.5 text-xs font-normal [&_svg]:size-3.5"
           title={db.locked ? "Unlock — allow property/view edits" : "Lock — prevent property/view edits"}
         >
           {db.locked ? <Unlock className="h-3.5 w-3.5" /> : <Lock className="h-3.5 w-3.5" />}
           {db.locked ? "Unlock database" : "Lock database"}
-        </button>
+        </Button>
         <SubItemsPicker db={db} />
-        <button
+        <Button
+          variant="ghost"
           onClick={async () => {
             const ok = await confirm({
               title: `Move "${db.name || "Untitled"}" to Trash?`,
@@ -91,10 +99,10 @@ export function DatabaseMenu({
             });
             if (ok) trashDatabase(db.id);
           }}
-          className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs hover:bg-destructive/10 text-destructive"
+          className="h-auto w-full justify-start gap-2 rounded px-2 py-1.5 text-xs font-normal text-destructive hover:bg-destructive/10 hover:text-destructive [&_svg]:size-3.5"
         >
           <Trash2 className="h-3.5 w-3.5" /> Delete database
-        </button>
+        </Button>
         <div className="my-1 border-t border-border" />
         <div className="px-2 py-1 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">This view</div>
         <div className="px-1 flex flex-col gap-0.5">
@@ -127,14 +135,15 @@ function SubItemsPicker({ db }: { db: Database }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button
+        <Button
+          variant="ghost"
           type="button"
-          className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs hover:bg-accent"
+          className="h-auto w-full justify-start gap-2 rounded px-2 py-1.5 text-xs font-normal [&_svg]:size-3.5"
           title="Designate a self-relation property to display rows as a tree (sub-items)"
         >
           <Network className="h-3.5 w-3.5" />
           Sub-items: <span className="text-muted-foreground truncate">{current?.name ?? "off"}</span>
-        </button>
+        </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-60">
         <DropdownMenuLabel className="text-xs">Use as parent → sub-items relation</DropdownMenuLabel>
@@ -182,22 +191,22 @@ function PropertiesMenu({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="flex items-center gap-1 rounded-md px-2 py-1 text-xs hover:bg-accent text-muted-foreground">
+        <Button variant="ghost" className="h-auto gap-1 rounded-md px-2 py-1 text-xs font-normal text-muted-foreground [&_svg]:size-3">
           <Settings2 className="h-3 w-3" /> Properties
           {hidden.size > 0 && (
             <span className="ml-0.5 rounded-full bg-muted-foreground/20 text-[10px] px-1">
               {db.properties.length - hidden.size}/{db.properties.length}
             </span>
           )}
-        </button>
+        </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-64 max-h-96 overflow-y-auto">
         <DropdownMenuLabel className="flex items-center justify-between text-xs">
           <span>Visible in this view</span>
           <div className="flex gap-1 text-[10px] font-normal">
-            <button onClick={showAll} className="hover:underline text-muted-foreground">Show all</button>
+            <Button variant="link" onClick={showAll} className="h-auto p-0 text-[10px] font-normal text-muted-foreground hover:underline">Show all</Button>
             <span className="text-muted-foreground/40">·</span>
-            <button onClick={hideAll} className="hover:underline text-muted-foreground">Hide all</button>
+            <Button variant="link" onClick={hideAll} className="h-auto p-0 text-[10px] font-normal text-muted-foreground hover:underline">Hide all</Button>
           </div>
         </DropdownMenuLabel>
         {db.properties.map((p: Property) => {
@@ -208,14 +217,14 @@ function PropertiesMenu({
               onSelect={(e) => e.preventDefault()}
               className="flex items-center justify-between"
             >
-              <button onClick={() => toggle(p.id)} className="flex items-center gap-2 flex-1 min-w-0 text-left">
+              <Button variant="ghost" onClick={() => toggle(p.id)} className="h-auto min-w-0 flex-1 justify-start gap-2 p-0 text-left text-xs font-normal hover:bg-transparent [&_svg]:size-3.5">
                 {isHidden ? <EyeOff className="h-3.5 w-3.5 text-muted-foreground/60 shrink-0" /> : <Eye className="h-3.5 w-3.5 shrink-0" />}
                 <span className={cn("truncate", isHidden && "text-muted-foreground line-through decoration-muted-foreground/40")}>{p.name}</span>
                 <span className="text-[10px] text-muted-foreground ml-auto shrink-0">{p.type}</span>
-              </button>
-              <button onClick={() => deleteProperty(db.id, p.id)} className="ml-1 text-muted-foreground hover:text-destructive" title="Delete property (all views)">
+              </Button>
+              <Button variant="ghost" onClick={() => deleteProperty(db.id, p.id)} className="ml-1 h-auto p-0 text-muted-foreground hover:bg-transparent hover:text-destructive [&_svg]:size-3.5" title="Delete property (all views)">
                 <Trash2 className="h-3.5 w-3.5" />
-              </button>
+              </Button>
             </DropdownMenuItem>
           );
         })}

@@ -5,6 +5,7 @@ import { Check, Copy, ChevronDown } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
+import { Button } from "@/shared/ui/button";
 import { CODE_LANGUAGES, normalizeLang } from "../lib/languages";
 import type { CodeBlockProps } from "../types";
 
@@ -43,10 +44,13 @@ export function CodeBlock({ text, lang, registerRef, onText, onLang, onKeyDown }
       <div className="flex items-center justify-between px-3 py-1.5 bg-black/30 border-b border-white/5">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-1 text-[11px] text-white/60 hover:text-white/90 rounded px-1.5 py-0.5 hover:bg-white/5 transition">
+            <Button
+              variant="ghost"
+              className="h-auto gap-1 rounded px-1.5 py-0.5 text-[11px] font-normal text-white/60 hover:bg-white/5 hover:text-white/90 [&_svg]:size-3"
+            >
               {langLabel}
               <ChevronDown className="h-3 w-3" />
-            </button>
+            </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="max-h-72 overflow-y-auto">
             {CODE_LANGUAGES.map((l) => (
@@ -56,13 +60,14 @@ export function CodeBlock({ text, lang, registerRef, onText, onLang, onKeyDown }
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
-        <button
+        <Button
+          variant="ghost"
           onClick={onCopy}
-          className="opacity-0 group-hover/code:opacity-100 flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] text-white/60 hover:text-white hover:bg-white/10 transition"
+          className="h-auto gap-1 rounded px-1.5 py-0.5 text-[11px] font-normal text-white/60 opacity-0 transition group-hover/code:opacity-100 hover:bg-white/10 hover:text-white [&_svg]:size-3"
         >
           {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
           {copied ? "Copied" : "Copy"}
-        </button>
+        </Button>
       </div>
       {focused ? (
         <pre

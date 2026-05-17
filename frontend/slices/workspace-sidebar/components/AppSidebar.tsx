@@ -21,6 +21,7 @@ import {
   useSidebar,
 } from "@/shared/ui/sidebar";
 import { useStore } from "@/shared/lib/store";
+import { Button } from "@/shared/ui/button";
 import { useAdminRole } from "@/slices/admin-panel";
 import { TemplateGalleryDialog } from "@/slices/templates";
 import { AIAgentConsole } from "@/slices/ai-agent";
@@ -127,16 +128,16 @@ export function AppSidebar({ onOpenSearch }: Props) {
       </SidebarContent>
 
       <SidebarFooter className="gap-2">
-        <button
+        <Button
           type="button"
           onClick={handleNewPage}
           aria-label="New page"
           title="New page"
-          className="flex w-full items-center gap-2 rounded-md bg-foreground px-2.5 py-1.5 text-sm font-medium text-background hover:opacity-90 group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:!p-0 group-data-[collapsible=icon]:justify-center"
+          className="h-auto w-full justify-start gap-2 rounded-md bg-foreground px-2.5 py-1.5 text-sm font-medium text-background hover:bg-foreground hover:opacity-90 group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:!p-0 [&_svg]:size-4"
         >
           <Plus className="h-4 w-4 shrink-0" />
           <span className="group-data-[collapsible=icon]:hidden">New page</span>
-        </button>
+        </Button>
         <NavUser />
       </SidebarFooter>
 

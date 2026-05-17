@@ -2,6 +2,7 @@ import { Sparkles } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
+import { Button } from "@/shared/ui/button";
 import { useStore } from "@/shared/lib/store";
 import { DATABASE_PRESETS } from "../lib/presets";
 import { DynamicIcon } from "@/shared/components/icon-picker";
@@ -35,9 +36,9 @@ export function DatabasePresetPicker({ onCreated, trigger }: Props) {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         {trigger ?? (
-          <button className="flex items-center gap-1 rounded border border-border px-2 py-1 text-xs hover:bg-accent">
+          <Button variant="outline" className="h-auto gap-1 rounded px-2 py-1 text-xs font-normal [&_svg]:size-3">
             <Sparkles className="h-3 w-3" /> From preset
-          </button>
+          </Button>
         )}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-72">
