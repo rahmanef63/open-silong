@@ -28,9 +28,32 @@ const isTextOnlyPatch = (patch: Partial<Block>) =>
 
 export function useBlockCrud({ pageMap, pushStructuralAction, mutUpdatePage }: Args) {
   const mutAddBlock = useMutation(api.pages.addBlock);
-  const mutUpdateBlock = useMutation(api.pages.updateBlock);
+  // Optimistic update: patch the local pages.getById query result so the
+  // UI reflects the change before the server round-trip completes.
+  // Critical for view-switch / color / activeViewId edits where the
+  // patch lands on a block already onscreen — server roundtrip adds
+  // perceived latency even when convex IS realtime.
+  const mutUpdateBlock = useMutation(api.pages.updateBlock).withOptimisticUpdate(
+    (localStore, args) => {
+      const cur = localStore.getQuery(api.pages.getById, { id: args.pageId });
+      if (!cur) return;
+      const blocks = (cur as { blocks: Array<{ id: string; [k: string]: unknown }> }).blocks
+        .map((b) => b.id === args.blockId ? { ...b, ...args.patch } : b);
+      localStore.setQuery(api.pages.getById, { id: args.pageId }, { ...cur, blocks });
+    },
+  );
   const mutDeleteBlock = useMutation(api.pages.deleteBlock);
-  const mutReorderBlocks = useMutation(api.pages.reorderBlocks);
+  const mutReorderBlocks = useMutation(api.pages.reorderBlocks).withOptimisticUpdate(
+    (localStore, args) => {
+      const cur = localStore.getQuery(api.pages.getById, { id: args.pageId });
+      if (!cur) return;
+      const blocksMap = new Map(
+        (cur as { blocks: Array<{ id: string }> }).blocks.map((b) => [b.id, b]),
+      );
+      const blocks = args.orderedIds.map((id) => blocksMap.get(id)).filter(Boolean);
+      localStore.setQuery(api.pages.getById, { id: args.pageId }, { ...cur, blocks });
+    },
+  );
 
   const addBlock = useCallback(
     async (pageId: string, afterIndex: number, type: BlockType = "paragraph", init: Partial<Block> = {}): Promise<string> => {

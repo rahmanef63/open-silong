@@ -18,7 +18,7 @@ interface Deps {
   setAskOpen: (o: boolean) => void;
   convertTo: (t: BlockType) => void;
   duplicateBlock: (pageId: string, blockId: string) => string | undefined;
-  addBlock: (pageId: string, after: number, type?: BlockType) => Promise<string | undefined>;
+  addBlock: (pageId: string, after: number, type?: BlockType, init?: Partial<Block>) => Promise<string | undefined>;
   deleteBlock: (pageId: string, blockId: string) => void;
   setBlockType: (pageId: string, blockId: string, type: BlockType) => void;
   updateBlock: (pageId: string, blockId: string, patch: Partial<Block>) => void;
@@ -84,7 +84,13 @@ export async function handleBlockKeyDown(e: KeyboardEvent<HTMLElement>, deps: De
       block.type === "todo" ? "todo" :
       block.type === "bullet" || block.type === "numbered" ? block.type :
       "paragraph";
-    const newId = await addBlock(pageId, index, next);
+    // Inherit layoutGroup/Col so Enter at end of a column block creates
+    // the new line INSIDE the same column instead of escaping below
+    // the layout group.
+    const init: Partial<Block> | undefined = block.layoutGroup != null
+      ? { layoutGroup: block.layoutGroup, layoutCol: block.layoutCol }
+      : undefined;
+    const newId = await addBlock(pageId, index, next, init);
     setTimeout(() => document.querySelector<HTMLElement>(`[data-block-id="${newId}"]`)?.focus(), 0);
     return;
   }

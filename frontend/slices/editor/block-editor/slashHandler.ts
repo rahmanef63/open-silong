@@ -35,27 +35,37 @@ export async function runSlashSelect(type: BlockType, deps: Deps) {
     const layoutId = uid();
     const newLayout: ColumnLayout = { id: layoutId, type: "columns", count: n };
 
-    // 1) Append the new layout to page.layouts.
+    // Single atomic updatePage write — eliminates the race window from
+    // chaining setBlockType + updateBlock + N×addBlock, and avoids
+    // stale-afterIndex ordering bugs when convex serializes splices.
     if (updatePage && getPage) {
       const page = getPage(pageId);
-      const layouts = [...(page?.layouts ?? []), newLayout];
-      updatePage(pageId, { layouts });
-    }
-
-    // 2) Convert the current block into the first paragraph of col 0.
-    setBlockType(pageId, block.id, "paragraph");
-    updateBlock(pageId, block.id, { text: "", layoutGroup: layoutId, layoutCol: 0 });
-
-    // 3) Insert N-1 sibling paragraphs, one per remaining column.
-    if (addBlock) {
-      const blocks = getPage?.(pageId)?.blocks ?? [];
-      let afterIndex = blocks.findIndex((b) => b.id === block.id);
-      if (afterIndex < 0) afterIndex = blocks.length - 1;
-      for (let c = 1; c < n; c++) {
-        afterIndex = blocks.length + (c - 1); // best-effort; convex inserts at end of group anyway
-        await addBlock(pageId, afterIndex, "paragraph", { layoutGroup: layoutId, layoutCol: c });
+      if (page) {
+        const idx = page.blocks.findIndex((b) => b.id === block.id);
+        const insertAt = idx >= 0 ? idx : page.blocks.length - 1;
+        const before = page.blocks.slice(0, insertAt);
+        const after = page.blocks.slice(insertAt + 1);
+        const newCol0: Block = {
+          ...block, text: "", type: "paragraph",
+          layoutGroup: layoutId, layoutCol: 0,
+        };
+        const siblings: Block[] = Array.from({ length: n - 1 }, (_, i) => ({
+          id: uid(),
+          type: "paragraph",
+          text: "",
+          layoutGroup: layoutId,
+          layoutCol: i + 1,
+        }));
+        const blocks = [...before, newCol0, ...siblings, ...after];
+        const layouts = [...(page.layouts ?? []), newLayout];
+        updatePage(pageId, { blocks, layouts });
+        return;
       }
     }
+    // Fallback path if updatePage/getPage missing — still functional
+    // but lossy in edge cases.
+    setBlockType(pageId, block.id, "paragraph");
+    updateBlock(pageId, block.id, { text: "", layoutGroup: layoutId, layoutCol: 0 });
     return;
   }
   if (type === "toggle") {

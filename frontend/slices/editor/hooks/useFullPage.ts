@@ -2,7 +2,7 @@
 
 import { useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
-import type { Block, Page } from "@/shared/types/domain";
+import type { Block, ColumnLayout, Page } from "@/shared/types/domain";
 
 /** Subscribe to a single full page (with `blocks`). The store's pages array
  *  carries only meta (no blocks) — this hook is the editor's source of
@@ -19,6 +19,7 @@ export function useFullPage(id: string | null | undefined): Page | null | undefi
     icon: doc.icon,
     cover: doc.cover,
     blocks: (doc.blocks ?? []) as Block[],
+    layouts: (doc as { layouts?: ColumnLayout[] }).layouts,
     favorite: doc.favorite,
     trashed: doc.trashed,
     isPublic: doc.isPublic,
