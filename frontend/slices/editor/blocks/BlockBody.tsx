@@ -18,11 +18,15 @@ interface Props {
   setRef: (el: HTMLElement | null) => void;
   handleInput: (e: React.FormEvent<HTMLElement>) => void;
   handleKeyDown: (e: KeyboardEvent<HTMLElement>) => void;
+  /** Markdown-aware paste interceptor. When the clipboard's text/plain
+   *  payload looks like markdown, parses into multiple blocks and
+   *  preventDefaults; otherwise falls through to native paste. */
+  handlePaste?: (e: React.ClipboardEvent<HTMLElement>) => void;
   onCheck: (v: boolean) => void;
   onLang: (l: string) => void;
 }
 
-export function BlockBody({ block, setRef, handleInput, handleKeyDown, onCheck, onLang }: Props) {
+export function BlockBody({ block, setRef, handleInput, handleKeyDown, handlePaste, onCheck, onLang }: Props) {
   const textCls = colorClass(block.color);
   const bgCls = bgColorClass(block.bgColor);
 
@@ -32,6 +36,7 @@ export function BlockBody({ block, setRef, handleInput, handleKeyDown, onCheck, 
     suppressContentEditableWarning: true,
     onInput: handleInput,
     onKeyDown: handleKeyDown,
+    onPaste: handlePaste,
     "data-placeholder": PLACEHOLDERS[block.type] ?? "",
     className: cn(
       "outline-none flex-1 min-w-0 whitespace-pre-wrap break-words empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground/60",
