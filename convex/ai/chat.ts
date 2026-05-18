@@ -212,10 +212,21 @@ export const complete = action({
       };
       lastModel = data.model ?? cfg.model;
       if (data.usage) {
+        const inDelta = data.usage.prompt_tokens ?? 0;
+        const outDelta = data.usage.completion_tokens ?? 0;
         lastUsage = {
-          input_tokens: (lastUsage?.input_tokens ?? 0) + (data.usage.prompt_tokens ?? 0),
-          output_tokens: (lastUsage?.output_tokens ?? 0) + (data.usage.completion_tokens ?? 0),
+          input_tokens: (lastUsage?.input_tokens ?? 0) + inDelta,
+          output_tokens: (lastUsage?.output_tokens ?? 0) + outDelta,
         };
+        // Record spend immediately so the next hop / call sees the
+        // updated ledger — important inside the multi-hop loop where a
+        // runaway tool-call chain could otherwise blow past the cap
+        // before the action returns.
+        const delta = inDelta + outDelta;
+        if (delta > 0) {
+          try { await ctx.runMutation(internal.ai.internal.recordAiUsage, { tokens: delta }); }
+          catch { /* advisory — never block on bookkeeping */ }
+        }
       }
       const message = data.choices?.[0]?.message;
       const content = typeof message?.content === "string" ? message.content : "";

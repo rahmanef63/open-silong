@@ -9,19 +9,30 @@
  *  cleanly per fn.
  */
 
+const DAY_MS = 24 * 60 * 60_000;
+
 // ─── Rate limits (max calls / window) ─────────────────────────────
+// Each hot mutation has a TWO-tier limit: per-minute burst (cheap, blocks
+// runaway scripts) + per-day total (defense vs slow brute that paces under
+// the burst). Both must pass — order doesn't matter since the bucket
+// state is per-scope. Daily caps sized at ~10× a heavy human user.
 export const RATE_LIMITS = {
   // Page surface
-  pagesCreate:       { scope: "pages.create",       max: 60,  windowMs: 60_000 },
-  pagesDuplicate:    { scope: "pages.duplicate",    max: 30,  windowMs: 60_000 },
-  pagesSetPublic:    { scope: "pages.setPublic",    max: 30,  windowMs: 60_000 },
+  pagesCreate:       { scope: "pages.create",        max: 60,  windowMs: 60_000 },
+  pagesCreateDay:    { scope: "pages.create.day",    max: 800, windowMs: DAY_MS },
+  pagesDuplicate:    { scope: "pages.duplicate",     max: 30,  windowMs: 60_000 },
+  pagesDuplicateDay: { scope: "pages.duplicate.day", max: 300, windowMs: DAY_MS },
+  pagesSetPublic:    { scope: "pages.setPublic",     max: 30,  windowMs: 60_000 },
 
   // Database surface
-  dbCreate:          { scope: "databases.create",   max: 30,  windowMs: 60_000 },
-  dbAddRow:          { scope: "databases.addRow",   max: 120, windowMs: 60_000 },
+  dbCreate:          { scope: "databases.create",    max: 30,   windowMs: 60_000 },
+  dbCreateDay:       { scope: "databases.create.day",max: 50,   windowMs: DAY_MS },
+  dbAddRow:          { scope: "databases.addRow",    max: 120,  windowMs: 60_000 },
+  dbAddRowDay:       { scope: "databases.addRow.day",max: 3_000,windowMs: DAY_MS },
 
   // Comments
-  commentsCreate:    { scope: "comments.create",    max: 30,  windowMs: 60_000 },
+  commentsCreate:    { scope: "comments.create",     max: 30,  windowMs: 60_000 },
+  commentsCreateDay: { scope: "comments.create.day", max: 500, windowMs: DAY_MS },
 
   // Inbox
   inboxCreate:       { scope: "inbox.create",       max: 100, windowMs: 60_000 },
@@ -29,8 +40,10 @@ export const RATE_LIMITS = {
   // Import
   importWorkspace:   { scope: "import.workspace",   max: 3,   windowMs: 60_000 },
 
-  // AI (per-hour)
-  aiComplete:        { scope: "ai.complete",        max: 20,  windowMs: 60 * 60_000 },
+  // AI — per-hour CALL burst + per-day CALL ceiling. Token-byte usage
+  // is enforced separately via aiQuota.ts (per-user daily token cap).
+  aiComplete:        { scope: "ai.complete",         max: 20,  windowMs: 60 * 60_000 },
+  aiCompleteDay:     { scope: "ai.complete.day",     max: 100, windowMs: DAY_MS },
 
   // Admin-only AI surface — generous but capped to prevent runaway
   // catalog fetches / connection tests in tight loops.
@@ -106,6 +119,20 @@ export const FILE_SIZES = {
   zipBinaryEntryBytes: 25 * 1024 * 1024,
   /** Image upload via UI. */
   imageBytes:          10 * 1024 * 1024,
+} as const;
+
+// ─── AI token quota (per-user, per-day) ──────────────────────────
+// Cost-attack defense — even when call-rate is under budget, an
+// attacker on a heavy model can burn the OpenRouter key. Cap total
+// tokens (prompt + completion, summed across all calls in the day).
+// Admin can raise the cap globally via env `AI_DAILY_TOKEN_CAP`.
+export const AI_QUOTA = {
+  /** Hard cap when env var is unset. Tuned so even free-tier abuse
+   *  caps at <Rp $0.50/day on cheap models. Power users can be raised
+   *  via env. */
+  defaultDailyTokens: 200_000,
+  /** Env override key — set via `npx convex env set AI_DAILY_TOKEN_CAP 500000`. */
+  envKey: "AI_DAILY_TOKEN_CAP",
 } as const;
 
 // ─── Slug regex (single source) ───────────────────────────────────

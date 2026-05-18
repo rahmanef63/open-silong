@@ -476,6 +476,20 @@ export default defineSchema({
     .index("by_run", ["runId"])
     .index("by_user_updated", ["userId", "updatedAt"]),
 
+  /** Per-user AI token usage ledger — bucketed by `dayKey` (floor of
+   *  unix ms / 86_400_000). Increments after every `ai.complete` call;
+   *  checked before each call to enforce the daily cap defined in
+   *  `_shared/limits.ts → AI_QUOTA`. Pruned by the daily maintenance
+   *  cron after 30 days. */
+  aiTokenUsage: defineTable({
+    userId: v.id("users"),
+    dayKey: v.number(),
+    tokens: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_user_day", ["userId", "dayKey"])
+    .index("by_day", ["dayKey"]),
+
   /** OAuth 2.1 + PKCE state for ChatGPT custom-app flow.
    *  Spec: RFC 7636 (PKCE) + RFC 8414 (AS metadata) + RFC 9728 (PR metadata).
    *  MCP auth: https://modelcontextprotocol.io/specification/2025-11-25/basic/authorization

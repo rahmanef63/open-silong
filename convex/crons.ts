@@ -19,4 +19,12 @@ crons.daily(
   internal.maintenance.purgeStaleTrash,
 );
 
+/** Drop aiTokenUsage rows older than 30 days. Ledger only needs to
+ *  span the current quota window (1 day); 30d kept for diagnostics. */
+crons.daily(
+  "prune-ai-token-usage",
+  { hourUTC: 4, minuteUTC: 0 },
+  internal.maintenance.pruneAiTokenUsage,
+);
+
 export default crons;
