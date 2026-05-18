@@ -100,6 +100,23 @@ export function PageEditor() {
 
   const chunks = groupBlocksIntoChunks(page.blocks, page.layouts);
 
+  // 1-based ordinals for consecutive numbered blocks at the same indent.
+  // Reset deeper counters on every non-numbered or shallower-indent block.
+  const ordinals = new Map<string, number>();
+  {
+    const counters: number[] = [];
+    for (const b of page.blocks) {
+      const depth = b.indent ?? 0;
+      if (b.type === "numbered") {
+        counters[depth] = (counters[depth] ?? 0) + 1;
+        counters.length = depth + 1;
+        ordinals.set(b.id, counters[depth]);
+      } else {
+        counters.length = depth;
+      }
+    }
+  }
+
   const renderOneBlock = (b: typeof page.blocks[number], i: number) => (
     <BlockEditor
       key={b.id}
@@ -109,6 +126,7 @@ export function PageEditor() {
       total={page.blocks.length}
       registerRef={registerRef}
       focusByOffset={focusByOffset}
+      ordinal={ordinals.get(b.id)}
     />
   );
 

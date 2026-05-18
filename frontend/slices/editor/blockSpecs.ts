@@ -1,6 +1,7 @@
 import { BlockType } from "@/shared/types/domain";
 import {
-  Type, Heading1, Heading2, Heading3, Heading4, ListTodo, List, ListOrdered,
+  Type, Heading1, Heading2, Heading3, Heading4, Heading5, Heading6,
+  ListTodo, List, ListOrdered,
   Quote, Code, Minus, Lightbulb, FileText, Database, Columns2, Columns3, Columns4,
   ChevronRight, Image, Sigma, Table, Tv2, MousePointer, RefreshCw,
   ListTree, Mic, Video,
@@ -20,6 +21,8 @@ export const BLOCK_SPECS: BlockSpec[] = [
   { type: "h2", label: "Heading 2", hint: "Medium section heading", icon: Heading2, keywords: ["h2", "heading"] },
   { type: "h3", label: "Heading 3", hint: "Small section heading", icon: Heading3, keywords: ["h3", "heading"] },
   { type: "h4", label: "Heading 4", hint: "Smaller section heading", icon: Heading4, keywords: ["h4", "heading"] },
+  { type: "h5", label: "Heading 5", hint: "Even smaller heading", icon: Heading5, keywords: ["h5", "heading"] },
+  { type: "h6", label: "Heading 6", hint: "Smallest heading", icon: Heading6, keywords: ["h6", "heading"] },
   { type: "todo", label: "To-do", hint: "Track tasks with a checkbox", icon: ListTodo, keywords: ["todo", "task", "check"] },
   { type: "bullet", label: "Bulleted list", hint: "Create a simple list", icon: List, keywords: ["bullet", "list", "ul"] },
   { type: "numbered", label: "Numbered list", hint: "Create an ordered list", icon: ListOrdered, keywords: ["numbered", "ol"] },

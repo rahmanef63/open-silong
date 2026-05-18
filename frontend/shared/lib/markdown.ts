@@ -4,17 +4,33 @@ import { lookupDb, type ExportContext } from "./exportContext";
 import { databaseToMarkdownTable } from "./databaseTable";
 
 export function blockToMarkdown(b: Block, depth = 0, ctx?: ExportContext): string {
-  const indent = "  ".repeat(depth);
+  const containerIndent = "  ".repeat(depth);
+  // Per-block indent (nested lists). Stacks on top of the container
+  // indent so a bullet at indent=1 inside a toggle still prints with
+  // both indents combined.
+  const listIndent = "  ".repeat(b.indent ?? 0);
+  const indent = containerIndent + listIndent;
   switch (b.type) {
     case "h1": return `${indent}# ${b.text}`;
     case "h2": return `${indent}## ${b.text}`;
     case "h3": return `${indent}### ${b.text}`;
     case "h4": return `${indent}#### ${b.text}`;
+    case "h5": return `${indent}##### ${b.text}`;
+    case "h6": return `${indent}###### ${b.text}`;
     case "todo": return `${indent}- [${b.checked ? "x" : " "}] ${b.text}`;
     case "bullet": return `${indent}- ${b.text}`;
     case "numbered": return `${indent}1. ${b.text}`;
     case "quote": return `${indent}> ${b.text}`;
-    case "callout": return `${indent}> 💡 ${b.text}`;
+    case "callout": {
+      const kind = b.calloutKind;
+      if (kind && kind !== "default") {
+        const lines = (b.text ?? "").split("\n");
+        const head = `${indent}> [!${kind.toUpperCase()}]`;
+        const body = lines.map((l) => `${indent}> ${l}`).join("\n");
+        return body ? `${head}\n${body}` : head;
+      }
+      return `${indent}> 💡 ${b.text}`;
+    }
     case "code": return "```" + (b.lang ?? "") + "\n" + b.text + "\n```";
     case "divider": return "---";
     case "image": return b.url ? `![${b.caption ?? ""}](${b.url})` : "";
@@ -27,16 +43,25 @@ export function blockToMarkdown(b: Block, depth = 0, ctx?: ExportContext): strin
     }
     case "equation": return `$$\n${b.text ?? ""}\n$$`;
     case "table": {
-      const rows = (b.text ?? "").split("\n").filter(Boolean);
+      // Prefer the structured tableRows; fall back to the legacy text
+      // serialization for blocks created before that field existed.
+      const rows: string[][] = b.tableRows && b.tableRows.length
+        ? b.tableRows
+        : (b.text ?? "").split("\n").filter(Boolean).map((r) => r.split("|").map((c) => c.trim()));
       if (rows.length === 0) return "";
-      const cells = rows.map((r) => r.split("|").map((c) => c.trim()));
-      const cols = Math.max(...cells.map((r) => r.length));
+      const cols = Math.max(...rows.map((r) => r.length));
       const pad = (r: string[]) => r.concat(Array(Math.max(0, cols - r.length)).fill(""));
-      const sep = Array(cols).fill("---");
+      const align = b.tableAlign ?? Array<"left" | "center" | "right">(cols).fill("left");
+      const sep = Array.from({ length: cols }, (_, i) => {
+        const a = align[i] ?? "left";
+        if (a === "center") return ":---:";
+        if (a === "right") return "---:";
+        return "---";
+      });
       return [
-        `| ${pad(cells[0]).join(" | ")} |`,
+        `| ${pad(rows[0]).join(" | ")} |`,
         `| ${sep.join(" | ")} |`,
-        ...cells.slice(1).map((r) => `| ${pad(r).join(" | ")} |`),
+        ...rows.slice(1).map((r) => `| ${pad(r).join(" | ")} |`),
       ].join("\n");
     }
     case "toggle": {
@@ -121,6 +146,9 @@ export function markdownToBlocks(md: string): Block[] {
     }
 
     const trimmed = raw.trim();
+    // Indent depth: count leading spaces/tabs in groups of 2 (or 1 tab).
+    // Capped at 3 levels — list rendering past that is unreadable.
+    const indent = Math.min(3, indentLevel(raw));
 
     if (trimmed.startsWith("```")) {
       inFence = true;
@@ -137,7 +165,7 @@ export function markdownToBlocks(md: string): Block[] {
     if (heading) {
       const level = heading[1].length;
       const text = heading[2];
-      const type = level === 1 ? "h1" : level === 2 ? "h2" : level === 3 ? "h3" : "h4";
+      const type = (`h${level}` as Block["type"]);
       push({ type, text });
       i++; continue;
     }
@@ -146,20 +174,36 @@ export function markdownToBlocks(md: string): Block[] {
     const task = /^[-*+]\s+\[( |x|X)\]\s+(.*)$/.exec(trimmed);
     if (task) {
       const checked = task[1].toLowerCase() === "x";
-      push({ type: "todo", text: task[2], checked });
+      push({ type: "todo", text: task[2], checked, ...(indent ? { indent } : {}) });
       i++; continue;
     }
 
     // Unordered list: -, *, + + space.
     if (/^[-*+]\s+/.test(trimmed)) {
-      push({ type: "bullet", text: trimmed.replace(/^[-*+]\s+/, "") });
+      push({ type: "bullet", text: trimmed.replace(/^[-*+]\s+/, ""), ...(indent ? { indent } : {}) });
       i++; continue;
     }
 
     // Ordered list: digits + . + space.
     if (/^\d+\.\s+/.test(trimmed)) {
-      push({ type: "numbered", text: trimmed.replace(/^\d+\.\s+/, "") });
+      push({ type: "numbered", text: trimmed.replace(/^\d+\.\s+/, ""), ...(indent ? { indent } : {}) });
       i++; continue;
+    }
+
+    // GFM admonition: `> [!NOTE]\n> body…` (also TIP/WARNING/IMPORTANT/CAUTION).
+    // Promote the entire run to a callout block; preserves the kind so the
+    // renderer can paint the right icon + tint.
+    const adm = /^>\s*\[!(NOTE|TIP|WARNING|IMPORTANT|CAUTION)\]\s*$/i.exec(trimmed);
+    if (adm) {
+      const kind = adm[1].toLowerCase() as NonNullable<Block["calloutKind"]>;
+      const body: string[] = [];
+      let j = i + 1;
+      while (j < rawLines.length && /^>\s?/.test(rawLines[j].trim())) {
+        body.push(rawLines[j].trim().replace(/^>\s?/, ""));
+        j++;
+      }
+      push({ type: "callout", text: body.join("\n"), calloutKind: kind });
+      i = j; continue;
     }
 
     if (trimmed.startsWith("> ")) {
@@ -179,19 +223,21 @@ export function markdownToBlocks(md: string): Block[] {
     if (looksLikeTableRow(trimmed) && i + 1 < rawLines.length
         && isTableSeparator(rawLines[i + 1].trim())) {
       const headerCells = splitTableCells(trimmed);
+      const tableAlign = parseTableAlignment(rawLines[i + 1].trim());
       const tableRows: string[][] = [headerCells];
       let j = i + 2;
       while (j < rawLines.length && looksLikeTableRow(rawLines[j].trim())) {
         tableRows.push(splitTableCells(rawLines[j].trim()));
         j++;
       }
-      // Pad rows to header width — markdown tables tolerate ragged
-      // bodies but our table block stores a clean grid.
       const cols = headerCells.length;
       const padded = tableRows.map((r) =>
         r.length === cols ? r : r.concat(Array(Math.max(0, cols - r.length)).fill("")).slice(0, cols),
       );
-      push({ type: "table", text: "", tableRows: padded, tableHeader: true });
+      const alignPadded = tableAlign.length === cols
+        ? tableAlign
+        : tableAlign.concat(Array(Math.max(0, cols - tableAlign.length)).fill("left" as const)).slice(0, cols);
+      push({ type: "table", text: "", tableRows: padded, tableHeader: true, tableAlign: alignPadded });
       i = j; continue;
     }
 
@@ -206,6 +252,31 @@ export function markdownToBlocks(md: string): Block[] {
   }
 
   return blocks.length ? blocks : [{ id: uid(), type: "paragraph", text: "" }];
+}
+
+/** Leading-whitespace → indent level. Counts every 2 spaces OR 1 tab
+ *  as one indent step. Returns 0 for no indent. */
+function indentLevel(line: string): number {
+  let spaces = 0;
+  for (const ch of line) {
+    if (ch === " ") spaces++;
+    else if (ch === "\t") spaces += 2;
+    else break;
+  }
+  return Math.floor(spaces / 2);
+}
+
+/** Parse a markdown table separator row into per-column alignment. */
+function parseTableAlignment(line: string): Array<"left" | "center" | "right"> {
+  const cells = splitTableCells(line);
+  return cells.map((c) => {
+    const t = c.trim();
+    const startsColon = t.startsWith(":");
+    const endsColon = t.endsWith(":");
+    if (startsColon && endsColon) return "center";
+    if (endsColon) return "right";
+    return "left";
+  });
 }
 
 function looksLikeTableRow(line: string): boolean {

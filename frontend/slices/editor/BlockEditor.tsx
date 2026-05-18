@@ -34,9 +34,13 @@ interface Props {
   total: number;
   focusByOffset: (blockId: string, delta: number) => void;
   registerRef: (id: string, el: HTMLElement | null) => void;
+  /** 1-based ordinal for numbered list rendering — computed at the
+   *  page level so consecutive numbered blocks at the same indent
+   *  get sequential labels. */
+  ordinal?: number;
 }
 
-function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerRef }: Props) {
+function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerRef, ordinal }: Props) {
   const {
     updateBlock, addBlock, deleteBlock, setBlockType, duplicateBlock,
     createPage, createDatabase, replaceBlock, updatePage, getPage,
@@ -163,6 +167,7 @@ function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerR
         handleInput={handleInput}
         handleKeyDown={handleKeyDown}
         handlePaste={handlePaste}
+        ordinal={ordinal}
         onCheck={(c) => updateBlock(pageId, block.id, { checked: c })}
         onLang={(lang) => updateBlock(pageId, block.id, { lang })}
       />

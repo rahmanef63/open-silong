@@ -45,7 +45,8 @@ export function handleBlockInput(e: FormEvent<HTMLElement>, deps: Deps) {
   }
 
   if (DECORATE_TYPES.has(block.type) && !composingRef.current && !isSlash) {
-    const isHeading = block.type === "h1" || block.type === "h2" || block.type === "h3" || block.type === "h4";
+    const isHeading = block.type === "h1" || block.type === "h2" || block.type === "h3"
+      || block.type === "h4" || block.type === "h5" || block.type === "h6";
     decorateInPlace(el, text, isHeading ? { hideMarkers: true } : undefined);
   }
 }
