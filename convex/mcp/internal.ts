@@ -371,6 +371,86 @@ export const setTitleAs = internalMutation({
   },
 });
 
+/** Append an INLINE DATABASE block to a page (embed an existing
+ *  database inside the page's block stream — the Notion "inline DB"
+ *  pattern). Block shape: { id, type:"database", text:"", databaseId }. */
+export const embedDatabaseAs = internalMutation({
+  args: { userId: v.id("users"), pageId: v.string(), dbId: v.string() },
+  handler: async (ctx, args) => {
+    const page = await ctx.db.get(args.pageId as Id<"pages">);
+    if (!page || page.userId !== args.userId) throw new Error("Page tidak ditemukan");
+    const db = await ctx.db.get(args.dbId as Id<"databases">);
+    if (!db || db.userId !== args.userId) throw new Error("Database tidak ditemukan");
+    const cur = page.blocks as Array<{ id: string; type?: string; text?: string }>;
+    // Drop the stub empty paragraph that new pages ship with so the
+    // embed renders flush with the page top.
+    const trimmed = cur.length === 1 && cur[0].type === "paragraph" && cur[0].text === ""
+      ? []
+      : cur;
+    const block = { id: uid(), type: "database", text: "", databaseId: args.dbId };
+    const blocks = [...trimmed, block];
+    if (blocks.length > COUNT_CAPS.blocksPerPage) {
+      throw new Error(`Page would exceed block cap (${COUNT_CAPS.blocksPerPage})`);
+    }
+    await ctx.db.patch(args.pageId as Id<"pages">, {
+      blocks,
+      searchText: buildSearchText(page.title, blocks),
+      updatedAt: Date.now(),
+    });
+    return { ok: true, blockId: block.id };
+  },
+});
+
+/** Append a COLUMNS section (side-by-side blocks). Each item in
+ *  `columns` is markdown for one column. Stamps a new layout entry +
+ *  blocks with `layoutGroup` + `layoutCol`. */
+export const appendColumnsAs = internalMutation({
+  args: {
+    userId: v.id("users"),
+    pageId: v.string(),
+    columns: v.array(v.string()),
+    widths: v.optional(v.array(v.number())),
+  },
+  handler: async (ctx, args) => {
+    if (args.columns.length < 2 || args.columns.length > 4) {
+      throw new Error("columns must be 2..4 entries");
+    }
+    const page = await ctx.db.get(args.pageId as Id<"pages">);
+    if (!page || page.userId !== args.userId) throw new Error("Page tidak ditemukan");
+    const layoutId = uid();
+    const newLayout = {
+      id: layoutId,
+      type: "columns" as const,
+      count: args.columns.length,
+      ...(args.widths && args.widths.length === args.columns.length ? { widths: args.widths } : {}),
+    };
+    const newBlocks: Array<Record<string, unknown>> = [];
+    for (let col = 0; col < args.columns.length; col++) {
+      const md = args.columns[col];
+      const parsed = markdownToBlocks(md.trim() || " ");
+      for (const b of parsed) {
+        newBlocks.push({ ...b, layoutGroup: layoutId, layoutCol: col });
+      }
+    }
+    const cur = page.blocks as Array<{ id: string; type?: string; text?: string }>;
+    const trimmed = cur.length === 1 && cur[0].type === "paragraph" && cur[0].text === ""
+      ? []
+      : cur;
+    const blocks = [...trimmed, ...newBlocks];
+    if (blocks.length > COUNT_CAPS.blocksPerPage) {
+      throw new Error(`Page would exceed block cap (${COUNT_CAPS.blocksPerPage})`);
+    }
+    const layouts = [...(page.layouts ?? []), newLayout];
+    await ctx.db.patch(args.pageId as Id<"pages">, {
+      blocks,
+      layouts,
+      searchText: buildSearchText(page.title, blocks),
+      updatedAt: Date.now(),
+    });
+    return { ok: true, layoutId, blocksInserted: newBlocks.length };
+  },
+});
+
 /** Set page icon (emoji). Idempotent. */
 export const setIconAs = internalMutation({
   args: { userId: v.id("users"), pageId: v.string(), icon: v.string() },

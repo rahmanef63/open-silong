@@ -118,7 +118,7 @@ const TOOLS: ToolDef[] = [
   },
   {
     name: "pages_append_markdown",
-    description: "Append markdown content to the END of a page. Headings, lists, tables, todos, callouts, fenced code all parse into proper blocks. Pass the pageId from pages_list or pages_search.",
+    description: "Append markdown content to the END of a page. Headings, lists, todos, callouts, fenced code all parse into proper blocks. NOTE: markdown tables (| col1 | col2 |) become STATIC table blocks — when the user wants a real database (filter / sort / view) call databases_create_inline instead. For side-by-side layout (Mon/Tue/Wed, pros/cons, etc.) use pages_append_columns, not stacked vertical lists.",
     inputSchema: obj({
       pageId: { type: "string" },
       markdown: { type: "string", description: "Markdown to append" },
@@ -175,6 +175,33 @@ const TOOLS: ToolDef[] = [
     inputSchema: obj({ pageId: { type: "string" } }, ["pageId"]),
     annotations: { destructiveHint: false, idempotentHint: false },
   },
+  {
+    name: "pages_embed_database",
+    description: "Embed an EXISTING database as an inline block at the end of a page. The database is rendered with its rows + view, just like a Notion 'inline database'. Pass the dbId from databases_list/create. Use this AFTER databases_create when the user wants the table to live inside a specific page. DO NOT use markdown table syntax — that creates a static table block, NOT a real database.",
+    inputSchema: obj({
+      pageId: { type: "string" },
+      dbId: { type: "string" },
+    }, ["pageId", "dbId"]),
+    annotations: { destructiveHint: false, idempotentHint: false },
+  },
+  {
+    name: "pages_append_columns",
+    description: "Append a SIDE-BY-SIDE COLUMNS section. Pass 2–4 columns, each a markdown string. Use this whenever the content is naturally parallel (e.g. pros vs cons, Mon/Tue/Wed schedule, before/after, summary + details). DEFAULT to columns for any list-of-N comparable items instead of stacking vertically. Each column markdown supports the full block grammar (headings, lists, callouts, todos, code, tables).",
+    inputSchema: obj({
+      pageId: { type: "string" },
+      columns: {
+        type: "array",
+        items: { type: "string" },
+        description: "2..4 markdown strings, one per column",
+      },
+      widths: {
+        type: "array",
+        items: { type: "number" },
+        description: "Optional flex weights, must match columns.length. Defaults to equal widths.",
+      },
+    }, ["pageId", "columns"]),
+    annotations: { destructiveHint: false, idempotentHint: false },
+  },
 
   // ── Database surface (Notion-style: schema + rows = pages) ──────────
   {
@@ -200,8 +227,23 @@ const TOOLS: ToolDef[] = [
     annotations: { readOnlyHint: true },
   },
   {
+    name: "databases_create_inline",
+    description: "ONE-SHOT: create a Notion-style database AND embed it as an inline block at the end of an existing page. Use this when the user says 'tambahkan database / table / tracker DI halaman ini' — NOT pages_append_markdown with a markdown table (which creates a static table block, NOT a real database). Same `properties` shape as databases_create. Returns dbId + the embed blockId.",
+    inputSchema: obj({
+      pageId: { type: "string" },
+      name: { type: "string" },
+      icon: { type: "string", description: "Optional emoji icon" },
+      properties: {
+        type: "object",
+        description: 'Schema by NAME. e.g. { "Name": {"type":"title"}, "Status": {"type":"status","options":["Todo","Done"]} }',
+        additionalProperties: true,
+      },
+    }, ["pageId", "name"]),
+    annotations: { destructiveHint: false, idempotentHint: false },
+  },
+  {
     name: "databases_create",
-    description: "Create a new Notion-style database with a property schema. `properties` is an object keyed by property NAME — each value declares `type` + optional `options` (for select/status/multi_select). Supported types: text, title (alias of text), number, select, multi_select, status, date, checkbox, url, email, phone. Returns the new dbId.",
+    description: "Create a new Notion-style database as a TOP-LEVEL entity (no parent page). Use databases_create_inline instead when the user wants the DB inside a specific page. `properties` is an object keyed by property NAME — each value declares `type` + optional `options` (for select/status/multi_select). Supported types: text, title (alias of text), number, select, multi_select, status, date, checkbox, url, email, phone. Returns the new dbId.",
     inputSchema: obj({
       name: { type: "string" },
       icon: { type: "string", description: "Optional emoji icon" },
@@ -451,6 +493,32 @@ async function dispatchTool(
         return errResult(e instanceof Error ? e.message : String(e));
       }
     }
+    case "pages_embed_database": {
+      const pageId = String(args.pageId ?? "");
+      const dbId = String(args.dbId ?? "");
+      if (!pageId || !dbId) return errResult("pageId + dbId required");
+      try {
+        const r = await ctx.runMutation(internal.mcp.internal.embedDatabaseAs, { userId, pageId, dbId });
+        return textResult({ ok: true, pageId, dbId, blockId: r.blockId });
+      } catch (e) {
+        return errResult(e instanceof Error ? e.message : String(e));
+      }
+    }
+    case "pages_append_columns": {
+      const pageId = String(args.pageId ?? "");
+      const cols = Array.isArray(args.columns) ? args.columns.map((c) => String(c ?? "")) : [];
+      const widths = Array.isArray(args.widths) ? args.widths.map((w) => Number(w)).filter((n) => Number.isFinite(n)) : undefined;
+      if (!pageId) return errResult("pageId is required");
+      if (cols.length < 2 || cols.length > 4) return errResult("columns must be 2..4 entries");
+      try {
+        const r = await ctx.runMutation(internal.mcp.internal.appendColumnsAs, {
+          userId, pageId, columns: cols, widths,
+        });
+        return textResult({ ok: true, pageId, layoutId: r.layoutId, blocksInserted: r.blocksInserted });
+      } catch (e) {
+        return errResult(e instanceof Error ? e.message : String(e));
+      }
+    }
 
     // ── Database tools ─────────────────────────────────────────────
     case "databases_list": {
@@ -528,6 +596,24 @@ async function dispatchTool(
           userId, name, icon, properties,
         });
         return textResult({ ok: true, dbId });
+      } catch (e) {
+        return errResult(e instanceof Error ? e.message : String(e));
+      }
+    }
+    case "databases_create_inline": {
+      const pageId = String(args.pageId ?? "");
+      const name = String(args.name ?? "Untitled database");
+      const icon = typeof args.icon === "string" && args.icon ? args.icon : undefined;
+      const properties = buildPropertiesArray(args.properties);
+      if (!pageId) return errResult("pageId is required");
+      try {
+        const dbId = await ctx.runMutation(internal.mcp.internal.createDatabase, {
+          userId, name, icon, properties,
+        });
+        const r = await ctx.runMutation(internal.mcp.internal.embedDatabaseAs, {
+          userId, pageId, dbId: String(dbId),
+        });
+        return textResult({ ok: true, pageId, dbId, blockId: r.blockId });
       } catch (e) {
         return errResult(e instanceof Error ? e.message : String(e));
       }
