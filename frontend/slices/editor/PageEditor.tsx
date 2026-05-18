@@ -23,7 +23,7 @@ import { useInlineAiShortcut } from "./hooks/useInlineAiShortcut";
 import { useBlockMoveShortcut } from "./hooks/useBlockMoveShortcut";
 import { useLegacyHostRedirect, legacyHostDbIdOf } from "./hooks/useLegacyHostRedirect";
 import { handlePageDragEnd } from "./lib/pageDragEnd";
-import { adaptPageLayouts, groupBlocksIntoChunks } from "./lib/layoutAdapter";
+import { adaptPageLayouts, groupBlocksIntoChunks, hasLegacyColumns } from "./lib/layoutAdapter";
 import { ColumnLayoutGroup } from "./components/ColumnLayoutGroup";
 import { PageEditorSkeleton } from "./page-editor/PageEditorSkeleton";
 import { PageNotFound } from "./page-editor/PageNotFound";
@@ -57,6 +57,23 @@ export function PageEditor() {
   );
 
   useEffect(() => { if (id && page) pushRecent(id); }, [id, page?.id]);
+
+  // Eager-migrate legacy `columns2..5` blocks on first read. The on-read
+  // adapter only virtualizes the shape for rendering — the convex
+  // updateBlock(blockId) mutation scans top-level `page.blocks`, so a
+  // nested DB block's id is unreachable until we flatten + persist.
+  // Without this, view-switch / color / patch writes silently no-op
+  // inside columns. One-shot guard prevents update loops.
+  const migratedRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (!fullPageRaw) return;
+    if (!hasLegacyColumns(fullPageRaw)) return;
+    if (migratedRef.current.has(fullPageRaw.id)) return;
+    migratedRef.current.add(fullPageRaw.id);
+    const adapted = adaptPageLayouts(fullPageRaw);
+    updatePage(fullPageRaw.id, { blocks: adapted.blocks, layouts: adapted.layouts });
+  }, [fullPageRaw?.id, updatePage]);
+
   usePageHashScroll(id);
   useReadReceipt(id);
   useInlineAiShortcut();

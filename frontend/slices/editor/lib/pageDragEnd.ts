@@ -5,7 +5,48 @@ import { placeTopLevelGroupAtBlock, appendTopLevelGroupToContainer, topLevelIdsI
 
 interface Deps {
   page: Page;
-  updatePage: (id: string, patch: { blocks: Block[] }) => void;
+  updatePage: (id: string, patch: Partial<Page>) => void;
+}
+
+/** Move `activeId` to land in the given layout column. Stamps
+ *  layoutGroup/Col + repositions to the END of that column's segment in
+ *  the flat blocks list. */
+function moveBlockToLayoutColumn(
+  blocks: Block[],
+  activeId: string,
+  layoutGroup: string,
+  layoutCol: number,
+): Block[] {
+  const idx = blocks.findIndex((b) => b.id === activeId);
+  if (idx < 0) return blocks;
+  const active = blocks[idx];
+  const without = [...blocks.slice(0, idx), ...blocks.slice(idx + 1)];
+  // Insert position = right after the LAST block already in this column.
+  let insertAfter = -1;
+  for (let i = 0; i < without.length; i++) {
+    if (without[i].layoutGroup === layoutGroup && without[i].layoutCol === layoutCol) {
+      insertAfter = i;
+    }
+  }
+  // If column is empty, insert at the END of the layout group.
+  if (insertAfter < 0) {
+    for (let i = 0; i < without.length; i++) {
+      if (without[i].layoutGroup === layoutGroup) insertAfter = i;
+    }
+  }
+  const stamped: Block = { ...active, layoutGroup, layoutCol };
+  return [...without.slice(0, insertAfter + 1), stamped, ...without.slice(insertAfter + 1)];
+}
+
+/** Strip layoutGroup/Col stamps from `activeId` when it lands outside
+ *  any layout (e.g. dropped between two non-column blocks). */
+function stripLayoutStamps(blocks: Block[], activeId: string): Block[] {
+  return blocks.map((b) => {
+    if (b.id !== activeId) return b;
+    const { layoutGroup: _g, layoutCol: _c, ...rest } = b;
+    void _g; void _c;
+    return rest;
+  });
 }
 
 /** Read the active selection straight from the DOM — avoids restructuring
@@ -54,6 +95,16 @@ export function handlePageDragEnd(e: DragEndEvent, { page, updatePage }: Deps) {
     // Unrecognized over — fall through to single-block path
   }
 
+  // ----- New layout primitive: drop onto a column pane -----
+  const layoutColMatch = overId.match(/^layoutcol:(.+):(\d+)$/);
+  if (layoutColMatch) {
+    const [, layoutGroup, colIndexStr] = layoutColMatch;
+    const colIndex = Number(colIndexStr);
+    const next = moveBlockToLayoutColumn(page.blocks, activeId, layoutGroup, colIndex);
+    if (next !== page.blocks) updatePage(page.id, { blocks: next });
+    return;
+  }
+
   const from = findLocation(page.blocks, activeId);
   if (!from) return;
 
@@ -81,5 +132,29 @@ export function handlePageDragEnd(e: DragEndEvent, { page, updatePage }: Deps) {
 
   const overLoc = findLocation(page.blocks, overId);
   if (!overLoc) return;
+
+  // Cross-column / column-escape: when dropping ON a flat block, inherit
+  // its layout stamps (or strip if the over block has none).
+  const activeBlock = page.blocks.find((b) => b.id === activeId);
+  const overBlock = page.blocks.find((b) => b.id === overId);
+  if (activeBlock && overBlock) {
+    const movedBlocks = moveBlock(page.blocks, from, overLoc);
+    if (activeBlock.layoutGroup !== overBlock.layoutGroup ||
+        activeBlock.layoutCol !== overBlock.layoutCol) {
+      const reStamped = movedBlocks.map((b) => {
+        if (b.id !== activeId) return b;
+        if (overBlock.layoutGroup != null) {
+          return { ...b, layoutGroup: overBlock.layoutGroup, layoutCol: overBlock.layoutCol };
+        }
+        const stripped = stripLayoutStamps([b], activeId)[0];
+        return stripped;
+      });
+      updatePage(page.id, { blocks: reStamped });
+      return;
+    }
+    updatePage(page.id, { blocks: movedBlocks });
+    return;
+  }
+
   updatePage(page.id, { blocks: moveBlock(page.blocks, from, overLoc) });
 }

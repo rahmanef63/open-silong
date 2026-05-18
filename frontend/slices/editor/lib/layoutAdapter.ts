@@ -7,6 +7,10 @@ export function isLegacyColumnsBlock(block: Block): boolean {
   return LEGACY_COLUMN_TYPES.has(block.type);
 }
 
+export function hasLegacyColumns(page: Page): boolean {
+  return page.blocks.some(isLegacyColumnsBlock);
+}
+
 function columnsCount(type: BlockType): number {
   if (type === "columns5") return 5;
   if (type === "columns4") return 4;

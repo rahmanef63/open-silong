@@ -22,7 +22,16 @@ interface Args {
 
 export function usePageCrud({ pages, pageMap, snapshotIfNeeded, pushStructuralAction }: Args) {
   const mutCreatePage = useMutation(api.pages.create);
-  const mutUpdatePage = useMutation(api.pages.update);
+  // Optimistic update: any patch on a page reflects in the local
+   // pages.getById cache immediately so width-drag / slash columns /
+   // layout edits don't wait for the server round-trip.
+  const mutUpdatePage = useMutation(api.pages.update).withOptimisticUpdate(
+    (localStore, args) => {
+      const cur = localStore.getQuery(api.pages.getById, { id: args.pageId });
+      if (!cur) return;
+      localStore.setQuery(api.pages.getById, { id: args.pageId }, { ...cur, ...args.patch });
+    },
+  );
   const mutSetPublic = useMutation(api.pages.setPublic);
   const mutTrashPage = useMutation(api.pages.trash);
   const mutRestorePage = useMutation(api.pages.restore);
