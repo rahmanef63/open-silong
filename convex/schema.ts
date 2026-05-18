@@ -78,6 +78,15 @@ export default defineSchema({
       }),
     ),
     blocks: v.array(v.any()),
+    /** Column-layout definitions. Each layout groups blocks by id
+     *  (block.layoutGroup === layout.id). Optional — pages without
+     *  columns omit this field entirely. */
+    layouts: v.optional(v.array(v.object({
+      id: v.string(),
+      type: v.literal("columns"),
+      count: v.number(),
+      widths: v.optional(v.array(v.number())),
+    }))),
     favorite: v.boolean(),
     trashed: v.boolean(),
     isPublic: v.optional(v.boolean()),

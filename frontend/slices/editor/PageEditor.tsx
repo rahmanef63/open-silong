@@ -23,6 +23,8 @@ import { useInlineAiShortcut } from "./hooks/useInlineAiShortcut";
 import { useBlockMoveShortcut } from "./hooks/useBlockMoveShortcut";
 import { useLegacyHostRedirect, legacyHostDbIdOf } from "./hooks/useLegacyHostRedirect";
 import { handlePageDragEnd } from "./lib/pageDragEnd";
+import { adaptPageLayouts, groupBlocksIntoChunks } from "./lib/layoutAdapter";
+import { ColumnLayoutGroup } from "./components/ColumnLayoutGroup";
 import { PageEditorSkeleton } from "./page-editor/PageEditorSkeleton";
 import { PageNotFound } from "./page-editor/PageNotFound";
 import { Button } from "@/shared/ui/button";
@@ -37,7 +39,11 @@ export function PageEditor() {
   const { id } = useParams<{ id: string }>();
   const { updatePage, pushRecent, addBlock, reorderBlocks, childrenOf, getDatabase } = useStore();
   void reorderBlocks; // tree-aware move below uses updatePage directly
-  const fullPage = useFullPage(id ?? null);
+  const fullPageRaw = useFullPage(id ?? null);
+  // Virtualize legacy `columns2..5` blocks into the new layout-primitive
+  // shape on every read. Writes through the store persist the flattened
+  // form, so each page migrates on first edit.
+  const fullPage = fullPageRaw ? adaptPageLayouts(fullPageRaw) : fullPageRaw;
   const page = fullPage ?? undefined;
   const [shareOpen, setShareOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -74,6 +80,36 @@ export function PageEditor() {
 
   if (fullPage === undefined) return <PageEditorSkeleton />;
   if (!page || page.trashed) return <PageNotFound />;
+
+  const chunks = groupBlocksIntoChunks(page.blocks, page.layouts);
+
+  const renderOneBlock = (b: typeof page.blocks[number], i: number) => (
+    <BlockEditor
+      key={b.id}
+      pageId={page.id}
+      block={b}
+      index={i}
+      total={page.blocks.length}
+      registerRef={registerRef}
+      focusByOffset={focusByOffset}
+    />
+  );
+
+  const addToColumn = async (layoutId: string, col: number) => {
+    const blocks = blocksRef.current ?? [];
+    let insertAfter = -1;
+    for (let i = 0; i < blocks.length; i++) {
+      if (blocks[i].layoutGroup === layoutId) insertAfter = i;
+    }
+    if (insertAfter === -1) insertAfter = blocks.length - 1;
+    const newId = await addBlock(page.id, insertAfter, "paragraph", { layoutGroup: layoutId, layoutCol: col });
+    setTimeout(() => document.querySelector<HTMLElement>(`[data-block-id="${newId}"]`)?.focus(), 0);
+  };
+
+  const commitLayoutWidths = (layoutId: string, next: number[]) => {
+    const layouts = (page.layouts ?? []).map((l) => l.id === layoutId ? { ...l, widths: next } : l);
+    updatePage(page.id, { layouts });
+  };
 
   const collisionDetection: CollisionDetection = (args) => {
     const prioritized = prioritizeCollisions(pointerWithin(args));
@@ -140,17 +176,21 @@ export function PageEditor() {
                 onDragEnd={(e) => handlePageDragEnd(e, { page, updatePage })}
               >
                 <SortableContext items={page.blocks.map((b) => b.id)} strategy={verticalListSortingStrategy}>
-                  {page.blocks.map((b, i) => (
-                    <BlockEditor
-                      key={b.id}
-                      pageId={page.id}
-                      block={b}
-                      index={i}
-                      total={page.blocks.length}
-                      registerRef={registerRef}
-                      focusByOffset={focusByOffset}
-                    />
-                  ))}
+                  {chunks.map((chunk) => {
+                    if (chunk.kind === "block") return renderOneBlock(chunk.block, chunk.index);
+                    return (
+                      <ColumnLayoutGroup
+                        key={`layout-${chunk.layout.id}`}
+                        layout={chunk.layout}
+                        columns={chunk.columns}
+                        pageId={page.id}
+                        page={page}
+                        renderBlock={renderOneBlock}
+                        onAddBlockInColumn={(c) => addToColumn(chunk.layout.id, c)}
+                        onCommitWidths={(next) => commitLayoutWidths(chunk.layout.id, next)}
+                      />
+                    );
+                  })}
                 </SortableContext>
               </DndContext>
 
