@@ -199,35 +199,54 @@ async function dispatchTool(
   // userId through.
   switch (name) {
     case "pages_list": {
-      const rows = await ctx.runQuery(internal.mcp.internal.listPages, { limit: 80, cursor: null });
+      // Internal returns { items, nextCursor, total } and requires
+      // userId. Old dispatcher used { results, cursor } shape that
+      // never existed — broke silently with "rows.results undefined"
+      // when ChatGPT first called it.
+      const rows = await ctx.runQuery(internal.mcp.internal.listPages, {
+        userId, pageSize: 80,
+      });
       return textResult({
-        pages: rows.results.map((p: { _id: string; title: string; icon: string; parentId: string | null; updatedAt: number; previewText?: string; blockCount?: number }) => ({
-          pageId: p._id, title: p.title, icon: p.icon, parentId: p.parentId,
-          blockCount: p.blockCount ?? 0, updatedAt: p.updatedAt,
-          previewText: p.previewText ?? "",
+        pages: rows.items.map((p) => ({
+          pageId: p._id,
+          title: p.title,
+          icon: p.icon,
+          parentId: p.parentId,
+          updatedAt: p.updatedAt,
+          blockCount: Array.isArray(p.blocks) ? p.blocks.length : 0,
         })),
-        cursor: rows.cursor ?? null,
+        nextCursor: rows.nextCursor,
+        total: rows.total,
       });
     }
     case "pages_search": {
       const q = String(args.query ?? "").slice(0, 200);
       if (!q) return errResult("query is required");
-      const rows = await ctx.runQuery(internal.mcp.internal.searchPages, { query: q, limit: 20 });
+      const rows = await ctx.runQuery(internal.mcp.internal.searchPages, {
+        userId, query: q, limit: 20,
+      });
       return textResult({
-        results: rows.map((p: { _id: string; title: string; previewText?: string }) => ({
-          pageId: p._id, title: p.title, snippet: p.previewText ?? "",
+        results: rows.map((p) => ({
+          pageId: p._id,
+          title: p.title,
+          snippet: (p.searchText ?? "").slice(0, 200),
         })),
       });
     }
     case "pages_get": {
       const pageId = String(args.pageId ?? "");
       if (!pageId) return errResult("pageId is required");
-      const doc = await ctx.runQuery(internal.mcp.internal.fetchPage, { pageId: pageId as Id<"pages"> });
+      const doc = await ctx.runQuery(internal.mcp.internal.fetchPage, {
+        userId, pageId,
+      });
       if (!doc) return errResult("Page not found or unauthorized");
       return textResult({
-        pageId: doc._id, title: doc.title, icon: doc.icon,
+        pageId: doc._id,
+        title: doc.title,
+        icon: doc.icon,
         blocks: (doc.blocks ?? []).slice(0, 300).map((b: { type: string; text?: string; checked?: boolean }) => ({
-          type: b.type, text: b.text ?? "",
+          type: b.type,
+          text: b.text ?? "",
           ...(b.checked !== undefined ? { checked: b.checked } : {}),
         })),
       });
