@@ -308,3 +308,60 @@ export const updateRow = internalMutation({
     return { ok: true };
   },
 });
+
+/** Append markdown to the end of a page. Server-side parses via
+ *  `_shared/markdown.markdownToBlocks` so the MCP client emits ONE
+ *  call instead of N add-block round-trips. Drops the trailing empty
+ *  paragraph that newly-created pages ship with so appended content
+ *  doesn't render with an empty gap above. */
+export const appendMarkdownAs = internalMutation({
+  args: { userId: v.id("users"), pageId: v.string(), markdown: v.string() },
+  handler: async (ctx, args) => {
+    const page = await ctx.db.get(args.pageId as Id<"pages">);
+    if (!page || page.userId !== args.userId) throw new Error("Tidak ditemukan");
+    const { markdownToBlocks } = await import("../_shared/markdown");
+    const parsed = markdownToBlocks(args.markdown);
+    const cur = page.blocks as Array<{ id: string; type?: string; text?: string }>;
+    const trimmed = cur.length === 1 && cur[0].type === "paragraph" && cur[0].text === ""
+      ? []
+      : cur;
+    const blocks = [...trimmed, ...parsed];
+    if (blocks.length > COUNT_CAPS.blocksPerPage) {
+      throw new Error(`Page would exceed block cap (${COUNT_CAPS.blocksPerPage})`);
+    }
+    await ctx.db.patch(args.pageId as Id<"pages">, {
+      blocks,
+      searchText: buildSearchText(page.title, blocks),
+      updatedAt: Date.now(),
+    });
+    return parsed.length;
+  },
+});
+
+/** Set page title only. Idempotent — same title → same final state. */
+export const setTitleAs = internalMutation({
+  args: { userId: v.id("users"), pageId: v.string(), title: v.string() },
+  handler: async (ctx, args) => {
+    const page = await ctx.db.get(args.pageId as Id<"pages">);
+    if (!page || page.userId !== args.userId) throw new Error("Tidak ditemukan");
+    if (args.title.length > CHAR_CAPS.pageTitle) throw new Error("Title too long");
+    await ctx.db.patch(args.pageId as Id<"pages">, {
+      title: args.title,
+      searchText: buildSearchText(args.title, page.blocks),
+      updatedAt: Date.now(),
+    });
+    return { ok: true };
+  },
+});
+
+/** Set page icon (emoji). Idempotent. */
+export const setIconAs = internalMutation({
+  args: { userId: v.id("users"), pageId: v.string(), icon: v.string() },
+  handler: async (ctx, args) => {
+    const page = await ctx.db.get(args.pageId as Id<"pages">);
+    if (!page || page.userId !== args.userId) throw new Error("Tidak ditemukan");
+    const icon = args.icon.trim().slice(0, 8) || "📄";
+    await ctx.db.patch(args.pageId as Id<"pages">, { icon, updatedAt: Date.now() });
+    return { ok: true };
+  },
+});

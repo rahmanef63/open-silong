@@ -132,6 +132,45 @@ const TOOLS: ToolDef[] = [
     }, ["title"]),
     annotations: { destructiveHint: false, idempotentHint: false },
   },
+  {
+    name: "pages_set_title",
+    description: "Rename a page (set title only). Idempotent — calling twice with the same title is safe.",
+    inputSchema: obj({
+      pageId: { type: "string" },
+      title: { type: "string", description: "New title, max 200 chars" },
+    }, ["pageId", "title"]),
+    annotations: { destructiveHint: false, idempotentHint: true },
+  },
+  {
+    name: "pages_set_icon",
+    description: "Set the page icon (single emoji). Idempotent.",
+    inputSchema: obj({
+      pageId: { type: "string" },
+      icon: { type: "string", description: "Emoji, e.g. 📝 or 📁" },
+    }, ["pageId", "icon"]),
+    annotations: { destructiveHint: false, idempotentHint: true },
+  },
+  {
+    name: "pages_replace_blocks",
+    description: "REPLACE the entire content of a page with new markdown. Existing blocks are dropped. Use this to OVERWRITE — for incremental append use pages_append_markdown.",
+    inputSchema: obj({
+      pageId: { type: "string" },
+      markdown: { type: "string", description: "Markdown body that replaces current page content" },
+    }, ["pageId", "markdown"]),
+    annotations: { destructiveHint: true, idempotentHint: false },
+  },
+  {
+    name: "pages_trash",
+    description: "Move a page to trash (soft-delete). Page stays recoverable for 30 days via /dashboard/trash, then auto-purged. NOT permanent delete.",
+    inputSchema: obj({ pageId: { type: "string" } }, ["pageId"]),
+    annotations: { destructiveHint: true, idempotentHint: true },
+  },
+  {
+    name: "pages_duplicate",
+    description: "Duplicate a page (copy of title + blocks). Returns the new pageId.",
+    inputSchema: obj({ pageId: { type: "string" } }, ["pageId"]),
+    annotations: { destructiveHint: false, idempotentHint: false },
+  },
 ];
 
 // ─────────────────────── tool dispatch ───────────────────────
@@ -154,10 +193,10 @@ async function dispatchTool(
   name: string,
   args: Record<string, unknown>,
 ): Promise<ToolResult> {
-  // Sigh — internal queries/mutations already enforce auth via
-  // userId arg, so we pass the bearer-resolved userId through.
-  void userId;
-
+  // Internal queries/mutations enforce ownership via the userId arg
+  // (Convex auth context is empty for MCP since auth is bearer-
+  // resolved upstream in this file). Pass the bearer-resolved
+  // userId through.
   switch (name) {
     case "pages_list": {
       const rows = await ctx.runQuery(internal.mcp.internal.listPages, { limit: 80, cursor: null });
@@ -199,13 +238,13 @@ async function dispatchTool(
       if (!pageId) return errResult("pageId is required");
       if (!markdown) return errResult("markdown is required");
       try {
-        const parsed = markdownToBlocks(markdown);
-        // Reuse pages.appendMarkdown via the public mutation API.
-        const inserted = await ctx.runMutation(
-          (await import("../_generated/api")).api.pages.appendMarkdown,
-          { pageId: pageId as Id<"pages">, markdown },
-        );
-        return textResult({ ok: true, blocksInserted: inserted, blocksParsed: parsed.length });
+        // Internal mutation — public api.pages.appendMarkdown calls
+        // requireAuth which throws "Belum login" since MCP has no
+        // Convex session (auth is bearer-resolved upstream).
+        const inserted = await ctx.runMutation(internal.mcp.internal.appendMarkdownAs, {
+          userId, pageId, markdown,
+        });
+        return textResult({ ok: true, blocksInserted: inserted });
       } catch (e) {
         return errResult(e instanceof Error ? e.message : String(e));
       }
@@ -215,13 +254,68 @@ async function dispatchTool(
       const parentIdStr = String(args.parentId ?? "");
       const icon = String(args.icon ?? "") || "📄";
       try {
-        const newId = await ctx.runMutation(
-          (await import("../_generated/api")).api.pages.create,
-          {
-            parentId: parentIdStr ? (parentIdStr as Id<"pages">) : null,
-            title, icon,
-          },
-        );
+        const newId = await ctx.runMutation(internal.mcp.internal.createPage, {
+          userId,
+          parentId: parentIdStr || null,
+          title, icon,
+        });
+        return textResult({ ok: true, pageId: newId });
+      } catch (e) {
+        return errResult(e instanceof Error ? e.message : String(e));
+      }
+    }
+    case "pages_set_title": {
+      const pageId = String(args.pageId ?? "");
+      const title = String(args.title ?? "");
+      if (!pageId) return errResult("pageId is required");
+      try {
+        await ctx.runMutation(internal.mcp.internal.setTitleAs, { userId, pageId, title });
+        return textResult({ ok: true });
+      } catch (e) {
+        return errResult(e instanceof Error ? e.message : String(e));
+      }
+    }
+    case "pages_set_icon": {
+      const pageId = String(args.pageId ?? "");
+      const icon = String(args.icon ?? "");
+      if (!pageId) return errResult("pageId is required");
+      if (!icon) return errResult("icon is required");
+      try {
+        await ctx.runMutation(internal.mcp.internal.setIconAs, { userId, pageId, icon });
+        return textResult({ ok: true });
+      } catch (e) {
+        return errResult(e instanceof Error ? e.message : String(e));
+      }
+    }
+    case "pages_replace_blocks": {
+      const pageId = String(args.pageId ?? "");
+      const markdown = String(args.markdown ?? "");
+      if (!pageId) return errResult("pageId is required");
+      try {
+        const blocks = markdownToBlocks(markdown);
+        await ctx.runMutation(internal.mcp.internal.updatePage, {
+          userId, pageId, patch: { blocks },
+        });
+        return textResult({ ok: true, blocksInserted: blocks.length });
+      } catch (e) {
+        return errResult(e instanceof Error ? e.message : String(e));
+      }
+    }
+    case "pages_trash": {
+      const pageId = String(args.pageId ?? "");
+      if (!pageId) return errResult("pageId is required");
+      try {
+        await ctx.runMutation(internal.mcp.internal.trashPage, { userId, pageId });
+        return textResult({ ok: true });
+      } catch (e) {
+        return errResult(e instanceof Error ? e.message : String(e));
+      }
+    }
+    case "pages_duplicate": {
+      const pageId = String(args.pageId ?? "");
+      if (!pageId) return errResult("pageId is required");
+      try {
+        const newId = await ctx.runMutation(internal.mcp.internal.duplicatePage, { userId, pageId });
         return textResult({ ok: true, pageId: newId });
       } catch (e) {
         return errResult(e instanceof Error ? e.message : String(e));
