@@ -23,6 +23,7 @@ import { uid } from "../_shared/uid";
 // Static import — dynamic `await import("../_shared/markdown")` throws
 // "dynamic module import unsupported" inside Convex internal mutations.
 import { markdownToBlocks } from "../_shared/markdown";
+import { getActiveWorkspaceMutation } from "../_shared/workspace";
 
 // ─── Read ──────────────────────────────────────────────────────────
 
@@ -129,11 +130,16 @@ export const createPage = internalMutation({
   },
   handler: async (ctx, args) => {
     const now = Date.now();
+    // Stamp the user's active workspace so the page is visible in
+    // sidebar + library (both filter by `by_workspace` index). Without
+    // this MCP-created pages exist on disk but vanish from the UI.
+    const ws = await getActiveWorkspaceMutation(ctx, args.userId);
     const seedBlocks: BlockLike[] = args.blocks?.length
       ? regenAllBlockIds(args.blocks as BlockLike[])
       : [{ id: uid(), type: "paragraph", text: "" }];
     return await ctx.db.insert("pages", {
       userId: args.userId,
+      workspaceId: ws._id,
       parentId: args.parentId as Id<"pages"> | null,
       title: args.title ?? "",
       icon: args.icon ?? "📄",
@@ -214,6 +220,8 @@ export const duplicatePage = internalMutation({
     const title = src.title ? `${src.title} (copy)` : "";
     return await ctx.db.insert("pages", {
       userId: args.userId,
+      // Inherit src workspace if stamped; otherwise resolve active.
+      workspaceId: src.workspaceId ?? (await getActiveWorkspaceMutation(ctx, args.userId))._id,
       parentId: src.parentId,
       title,
       icon: src.icon,
@@ -235,21 +243,26 @@ export const createDatabase = internalMutation({
   args: {
     userId: v.id("users"),
     name: v.optional(v.string()),
+    icon: v.optional(v.string()),
     properties: v.optional(v.array(v.any())),
+    views: v.optional(v.array(v.any())),
   },
   handler: async (ctx, args) => {
     const now = Date.now();
+    const ws = await getActiveWorkspaceMutation(ctx, args.userId);
     const titleProp = { id: uid(), name: "Name", type: "text" };
     const properties = args.properties?.length ? args.properties : [titleProp];
-    const view = { id: uid(), name: "Table", type: "table", sorts: [], filters: [], search: "" };
+    const defaultView = { id: uid(), name: "Table", type: "table", sorts: [], filters: [], search: "" };
+    const views = args.views?.length ? args.views : [defaultView];
     return await ctx.db.insert("databases", {
       userId: args.userId,
+      workspaceId: ws._id,
       name: args.name ?? "Untitled database",
-      icon: "🗂️",
+      icon: args.icon ?? "🗂️",
       properties,
       rowIds: [],
-      views: [view],
-      activeViewId: view.id,
+      views,
+      activeViewId: views[0].id,
       createdAt: now,
       updatedAt: now,
     });
@@ -277,9 +290,11 @@ export const createRow = internalMutation({
     const db = await ctx.db.get(args.dbId as Id<"databases">);
     if (!db || db.userId !== args.userId) throw new Error("Tidak ditemukan");
     const now = Date.now();
+    const ws = await getActiveWorkspaceMutation(ctx, args.userId);
     const blocks = [{ id: uid(), type: "paragraph", text: "" }];
     const rowId = await ctx.db.insert("pages", {
       userId: args.userId,
+      workspaceId: ws._id,
       parentId: null,
       title: args.title ?? "",
       icon: "📄",
