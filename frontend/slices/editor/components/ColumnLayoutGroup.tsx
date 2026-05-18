@@ -89,7 +89,11 @@ function ColumnPane({
       data-col-pane
       style={{ flex: `0 0 ${widthPct}%` }}
       className={cn(
-        "min-w-0 px-3 first:pl-0 last:pr-0 group/col rounded transition-colors",
+        // Inner panes get 16px gutters so blocks don't butt against
+        // the vertical divider line. Outer edges (first / last pane)
+        // stay flush so column-zero text aligns with the page content
+        // above and below the layout group.
+        "min-w-0 px-4 first:pl-0 last:pr-0 group/col rounded transition-colors",
         isOver && "bg-brand/15 ring-2 ring-brand ring-inset",
       )}
     >
