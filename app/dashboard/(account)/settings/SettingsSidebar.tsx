@@ -57,7 +57,11 @@ export function SettingsSidebar() {
   }
 
   return (
-    <nav className="w-full md:w-56 shrink-0 md:border-r md:border-border md:pr-3">
+    // Sticky at md+ so the nav stays put while the MCP / Webhooks
+    // sections scroll past. `top-6` matches the outer layout's py-6
+    // breathing room; `max-h-[calc(100vh-3rem)]` lets the nav itself
+    // scroll if it ever outgrows the viewport.
+    <nav className="w-full md:w-56 shrink-0 md:border-r md:border-border md:pr-3 md:sticky md:top-6 md:self-start md:max-h-[calc(100vh-3rem)] md:overflow-y-auto md:scrollbar-thin">
       <ul className="flex flex-row gap-1 overflow-x-auto md:flex-col md:overflow-visible">
         {NAV.map(({ key, label, icon: Icon, description }) => {
           const isActive = key === active;
