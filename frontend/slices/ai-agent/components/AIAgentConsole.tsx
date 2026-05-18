@@ -5,7 +5,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "
 import { Button } from "@/shared/ui/button";
 import { Textarea } from "@/shared/ui/textarea";
 import { Alert, AlertDescription } from "@/shared/ui/alert";
-import { Sparkles, Trash2, ArrowUp } from "lucide-react";
+import { Sparkles, Trash2, ArrowUp, ChevronDown, ChevronRight, Wrench, CheckCircle2, XCircle } from "lucide-react";
 import { useAIChat } from "../hooks/useAIChat";
 import { SLASH_COMMANDS } from "../lib/slashCommands";
 import { cn } from "@/shared/lib/utils";
@@ -49,7 +49,7 @@ export function AIAgentConsole({ open, onOpenChange, context }: Props) {
             <Sparkles className="h-4 w-4 text-brand" /> Nosion AI
           </SheetTitle>
           <SheetDescription className="text-xs">
-            Type <code>/</code> to see commands. Powered by Claude.
+            Type <code>/</code> to see commands. Can read pages + databases via tool calls.
           </SheetDescription>
         </SheetHeader>
 
@@ -74,16 +74,20 @@ export function AIAgentConsole({ open, onOpenChange, context }: Props) {
             </div>
           )}
           {messages.map((m) => (
-            <div
-              key={m.id}
-              className={cn(
-                "rounded-lg px-3 py-2 text-sm whitespace-pre-wrap",
-                m.role === "user"
-                  ? "bg-brand/10 ml-6"
-                  : "bg-muted/40 mr-6 border border-border",
+            <div key={m.id}>
+              <div
+                className={cn(
+                  "rounded-lg px-3 py-2 text-sm whitespace-pre-wrap",
+                  m.role === "user"
+                    ? "bg-brand/10 ml-6"
+                    : "bg-muted/40 mr-6 border border-border",
+                )}
+              >
+                {m.content}
+              </div>
+              {m.role === "assistant" && m.progress && m.progress.length > 1 && (
+                <ProgressStrip steps={m.progress} />
               )}
-            >
-              {m.content}
             </div>
           ))}
           {pending && (
@@ -142,5 +146,41 @@ export function AIAgentConsole({ open, onOpenChange, context }: Props) {
         </div>
       </SheetContent>
     </Sheet>
+  );
+}
+
+/** Collapsible "thought process" strip under each assistant bubble.
+ *  Lists the tool calls the agent made + their durations. Hidden by
+ *  default to keep the chat clean; click to expand. */
+function ProgressStrip({ steps }: { steps: NonNullable<ReturnType<typeof useAIChat>["messages"][number]["progress"]> }) {
+  const [open, setOpen] = useState(false);
+  const toolSteps = steps.filter((s) => s.kind === "tool");
+  if (toolSteps.length === 0) return null;
+  const totalMs = toolSteps.reduce((n, s) => n + (s.ms ?? 0), 0);
+  return (
+    <div className="mr-6 mt-1">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition"
+      >
+        {open ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+        <Wrench className="h-3 w-3" />
+        {toolSteps.length} tool call{toolSteps.length === 1 ? "" : "s"} · {totalMs}ms
+      </button>
+      {open && (
+        <ul className="mt-1 ml-4 space-y-0.5 border-l border-border pl-2">
+          {steps.map((s, i) => (
+            <li key={i} className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+              {s.kind === "tool"
+                ? (s.ok === false ? <XCircle className="h-3 w-3 text-rose-500" /> : <CheckCircle2 className="h-3 w-3 text-emerald-500" />)
+                : <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/40" />}
+              <span className="font-mono">{s.skillId ?? s.label}</span>
+              {s.ms != null && <span className="text-muted-foreground/60">· {s.ms}ms</span>}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }

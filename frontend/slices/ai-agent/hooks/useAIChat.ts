@@ -3,12 +3,17 @@ import { useAction } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { uid } from "@/shared/lib/uid";
 import { findSlash } from "../lib/slashCommands";
+import type { ProgressStep } from "../types/progress";
 
 export interface ChatMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
   createdAt: number;
+  /** Tool-call timeline returned by the agent for this assistant turn.
+   *  Empty/undefined when no tools fired. Surfaces in the UI as a
+   *  collapsible "thought process" strip under the bubble. */
+  progress?: ProgressStep[];
 }
 
 export function useAIChat() {
@@ -48,6 +53,7 @@ export function useAIChat() {
         role: "assistant",
         content: r.text,
         createdAt: Date.now(),
+        progress: (r as { progress?: ProgressStep[] }).progress,
       }]);
     } catch (e) {
       setError((e as Error).message);

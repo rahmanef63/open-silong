@@ -7,9 +7,13 @@ import { internal } from "../_generated/api";
 
 import { CHAR_CAPS, RATE_LIMITS } from "../_shared/limits";
 import { AI_PROVIDERS, resolveProviderBaseUrl } from "../_shared/aiProviders";
+import { SKILL_BY_TOOL_NAME, toolsForLLM, type Skill } from "./skillCatalog";
+import { SKILL_HANDLERS } from "./skillHandlers";
 
 const MAX_INPUT_CHARS = CHAR_CAPS.aiInput;
 const MAX_TOKENS_HARD_CAP = 4096;
+const MAX_HOPS = 4;
+const TOOL_RESULT_CHAR_CAP = 8000;
 /** Inline-test only allows known catalog providers. The "custom" provider
  *  has a fully attacker-controlled baseUrl when treated naively — gating
  *  it here prevents the action from being used as an outbound HTTP relay
@@ -113,52 +117,121 @@ export const complete = action({
     const cfg = await resolveAI(ctx, model);
     const cap = Math.min(maxTokens ?? 2048, MAX_TOKENS_HARD_CAP);
 
-    const apiMessages: { role: string; content: string }[] = [];
-    if (system) apiMessages.push({ role: "system", content: system });
-    else apiMessages.push({
+    const conversation: Array<Record<string, unknown>> = [];
+    conversation.push({
       role: "system",
-      content: "You are Nosion, a calm and concise assistant inside a Notion-like notes workspace. Reply in markdown. Be direct and helpful.",
+      content: system ?? "You are Nosion, a calm and concise assistant inside a Notion-like notes workspace. You can call tools to read the user's pages, search content, and inspect databases. Prefer pages_search over pages_list when the user names a topic. Reply in markdown. Be direct and helpful.",
     });
-    for (const m of messages) apiMessages.push({ role: m.role, content: m.content });
+    for (const m of messages) conversation.push({ role: m.role, content: m.content });
 
     const referer = process.env.OPENROUTER_REFERER ?? "https://nosion.rahmanef.com";
     const title = process.env.OPENROUTER_APP_NAME ?? "Nosion";
+    const tools = toolsForLLM();
 
-    const res = await fetch(`${cfg.baseUrl}/chat/completions`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${cfg.apiKey}`,
-        "HTTP-Referer": referer,
-        "X-Title": title,
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        model: cfg.model,
-        max_tokens: cap,
-        messages: apiMessages,
-      }),
-    });
+    const progress: Array<{ kind: string; label: string; skillId?: string; ms?: number; ok?: boolean }> = [];
+    progress.push({ kind: "resolve", label: `Resolved AI (${cfg.source}) → ${cfg.model}` });
 
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(`AI gateway ${res.status} (${cfg.source}): ${text.slice(0, 300)}`);
+    let reply = "";
+    let totalLlmMs = 0;
+    let lastUsage: { input_tokens: number; output_tokens: number } | null = null;
+    let lastModel = cfg.model;
+    let hop = 0;
+    let exhausted = true;
+
+    while (hop < MAX_HOPS) {
+      hop++;
+      const t0 = Date.now();
+      const res = await fetch(`${cfg.baseUrl}/chat/completions`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${cfg.apiKey}`,
+          "HTTP-Referer": referer,
+          "X-Title": title,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          model: cfg.model,
+          max_tokens: cap,
+          messages: conversation,
+          tools,
+          tool_choice: "auto",
+        }),
+      });
+      totalLlmMs += Date.now() - t0;
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`AI gateway ${res.status} (${cfg.source}): ${text.slice(0, 300)}`);
+      }
+      const data = await res.json() as {
+        choices?: { message?: { content?: string; tool_calls?: Array<{ id: string; type?: string; function?: { name?: string; arguments?: string } }> } }[];
+        usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number };
+        model?: string;
+      };
+      lastModel = data.model ?? cfg.model;
+      if (data.usage) {
+        lastUsage = {
+          input_tokens: (lastUsage?.input_tokens ?? 0) + (data.usage.prompt_tokens ?? 0),
+          output_tokens: (lastUsage?.output_tokens ?? 0) + (data.usage.completion_tokens ?? 0),
+        };
+      }
+      const message = data.choices?.[0]?.message;
+      const content = typeof message?.content === "string" ? message.content : "";
+      const toolCalls = Array.isArray(message?.tool_calls) ? message.tool_calls : [];
+
+      // No tool calls → final answer.
+      if (toolCalls.length === 0) {
+        reply = content;
+        exhausted = false;
+        break;
+      }
+
+      // Echo the assistant turn (with tool_calls) so the model sees its
+      // own ids when we feed results back.
+      conversation.push({ role: "assistant", content: content || null, tool_calls: toolCalls });
+
+      for (const tc of toolCalls) {
+        if (tc.type !== "function") continue;
+        const toolName = String(tc.function?.name ?? "");
+        const skill: Skill | undefined = SKILL_BY_TOOL_NAME[toolName];
+        const skillId = skill?.id ?? toolName.replace(/_/g, ".");
+        let parsedArgs: Record<string, unknown> = {};
+        const rawArgs = tc.function?.arguments;
+        if (typeof rawArgs === "string") {
+          try { parsedArgs = JSON.parse(rawArgs); } catch { /* invalid */ }
+        }
+        const handler = SKILL_HANDLERS[skillId];
+        const t1 = Date.now();
+        let result: unknown;
+        let ok = true;
+        if (!handler) {
+          result = { error: `No handler for skill ${skillId}` };
+          ok = false;
+        } else {
+          try { result = await handler(ctx, parsedArgs); }
+          catch (e) { result = { error: e instanceof Error ? e.message : String(e) }; ok = false; }
+        }
+        progress.push({ kind: "tool", skillId, label: `Called ${skillId}`, ms: Date.now() - t1, ok });
+        const serialised = JSON.stringify(result).slice(0, TOOL_RESULT_CHAR_CAP);
+        conversation.push({ role: "tool", tool_call_id: tc.id, content: serialised });
+      }
+      // Loop continues so the model can use tool results.
     }
-    const data = await res.json() as {
-      choices?: { message?: { content?: string } }[];
-      usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number };
-      model?: string;
-    };
-    const text = data.choices?.[0]?.message?.content ?? "";
+
+    if (exhausted && !reply) {
+      const lastAssistant = [...conversation].reverse().find((m) =>
+        m.role === "assistant" && typeof m.content === "string" && (m.content as string).trim().length > 0,
+      );
+      reply = (lastAssistant?.content as string) ?? "I ran out of steps for that request. Try narrowing the question.";
+    }
+
+    progress.push({ kind: "finalize", label: `Inference done · ${totalLlmMs}ms across ${hop} hop${hop === 1 ? "" : "s"}` });
+
     return {
-      text,
-      usage: data.usage
-        ? {
-            input_tokens: data.usage.prompt_tokens ?? 0,
-            output_tokens: data.usage.completion_tokens ?? 0,
-          }
-        : null,
-      model: data.model ?? cfg.model,
+      text: reply,
+      usage: lastUsage,
+      model: lastModel,
       source: cfg.source,
+      progress,
     };
   },
 });
