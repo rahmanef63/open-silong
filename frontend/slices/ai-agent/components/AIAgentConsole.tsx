@@ -5,8 +5,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "
 import { Button } from "@/shared/ui/button";
 import { Textarea } from "@/shared/ui/textarea";
 import { Alert, AlertDescription } from "@/shared/ui/alert";
-import { Sparkles, Trash2, ArrowUp, ChevronDown, ChevronRight, Wrench, CheckCircle2, XCircle } from "lucide-react";
-import { useAIChat } from "../hooks/useAIChat";
+import { Sparkles, Trash2, ArrowUp, ChevronDown, ChevronRight, Wrench, CheckCircle2, XCircle, Pencil, Search as SearchIcon } from "lucide-react";
+import { useAIChat, type ActiveContext } from "../hooks/useAIChat";
 import { SLASH_COMMANDS } from "../lib/slashCommands";
 import { cn } from "@/shared/lib/utils";
 
@@ -15,10 +15,13 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   /** Optional context string (current page text, selection) prepended to every send. */
   context?: string;
+  /** Active workspace + page context for the agent. Forwarded to the
+   *  backend so the model can resolve "this page" without asking. */
+  activeContext?: ActiveContext;
 }
 
-export function AIAgentConsole({ open, onOpenChange, context }: Props) {
-  const { messages, pending, error, send, clear } = useAIChat();
+export function AIAgentConsole({ open, onOpenChange, context, activeContext }: Props) {
+  const { messages, pending, error, send, clear } = useAIChat(activeContext);
   const [input, setInput] = useState("");
   const [showSlash, setShowSlash] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -170,15 +173,27 @@ function ProgressStrip({ steps }: { steps: NonNullable<ReturnType<typeof useAICh
       </button>
       {open && (
         <ul className="mt-1 ml-4 space-y-0.5 border-l border-border pl-2">
-          {steps.map((s, i) => (
-            <li key={i} className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-              {s.kind === "tool"
-                ? (s.ok === false ? <XCircle className="h-3 w-3 text-rose-500" /> : <CheckCircle2 className="h-3 w-3 text-emerald-500" />)
-                : <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/40" />}
-              <span className="font-mono">{s.skillId ?? s.label}</span>
-              {s.ms != null && <span className="text-muted-foreground/60">· {s.ms}ms</span>}
-            </li>
-          ))}
+          {steps.map((s, i) => {
+            // Write skills start with "pages.append" / "pages.create" /
+            // "pages.set_". Anything else is a read.
+            const isWrite = s.skillId?.startsWith("pages.append")
+              || s.skillId?.startsWith("pages.create")
+              || s.skillId?.startsWith("pages.set_");
+            return (
+              <li key={i} className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                {s.kind === "tool"
+                  ? (s.ok === false
+                      ? <XCircle className="h-3 w-3 text-rose-500" />
+                      : isWrite
+                        ? <Pencil className="h-3 w-3 text-amber-500" />
+                        : <SearchIcon className="h-3 w-3 text-emerald-500" />)
+                  : <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/40" />}
+                <span className="font-mono">{s.skillId ?? s.label}</span>
+                {s.ms != null && <span className="text-muted-foreground/60">· {s.ms}ms</span>}
+                {isWrite && s.ok !== false && <CheckCircle2 className="h-3 w-3 text-emerald-500 ml-auto" />}
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>

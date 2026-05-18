@@ -2,6 +2,10 @@ import type { ActionCtx } from "../_generated/server";
 import { api } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 
+/** Default icon stamped on AI-created pages when the model doesn't pick
+ *  one. Matches the `pages.create` default. */
+const DEFAULT_ICON = "📄";
+
 /** Server-side query skill handlers. Each runs inline inside the chat
  *  action when the LLM emits a tool_call for the matching skill.id.
  *
@@ -108,5 +112,68 @@ export const SKILL_HANDLERS: Record<string, SkillHandler> = {
         return { rowId: page._id, title: page.title, ...props };
       }),
     };
+  },
+
+  // ─── Write skills ────────────────────────────────────────────
+  "pages.append_markdown": async (ctx, args) => {
+    const pageId = asStr(args.pageId);
+    const markdown = asStr(args.markdown);
+    if (!pageId) return { error: "pageId is required" };
+    if (!markdown) return { error: "markdown is required" };
+    try {
+      const inserted = await ctx.runMutation(api.pages.appendMarkdown, {
+        pageId: pageId as Id<"pages">,
+        markdown,
+      });
+      return { ok: true, blocksInserted: inserted };
+    } catch (e) {
+      return { error: e instanceof Error ? e.message : String(e) };
+    }
+  },
+
+  "pages.create": async (ctx, args) => {
+    const title = asStr(args.title) || "Untitled";
+    const parentIdRaw = asStr(args.parentId);
+    const icon = asStr(args.icon) || DEFAULT_ICON;
+    try {
+      const newId = await ctx.runMutation(api.pages.create, {
+        parentId: parentIdRaw ? (parentIdRaw as Id<"pages">) : null,
+        title,
+        icon,
+      });
+      return { ok: true, pageId: newId };
+    } catch (e) {
+      return { error: e instanceof Error ? e.message : String(e) };
+    }
+  },
+
+  "pages.set_title": async (ctx, args) => {
+    const pageId = asStr(args.pageId);
+    const title = asStr(args.title);
+    if (!pageId || !title) return { error: "pageId and title are required" };
+    try {
+      await ctx.runMutation(api.pages.update, {
+        pageId: pageId as Id<"pages">,
+        patch: { title },
+      });
+      return { ok: true };
+    } catch (e) {
+      return { error: e instanceof Error ? e.message : String(e) };
+    }
+  },
+
+  "pages.set_icon": async (ctx, args) => {
+    const pageId = asStr(args.pageId);
+    const icon = asStr(args.icon);
+    if (!pageId || !icon) return { error: "pageId and icon are required" };
+    try {
+      await ctx.runMutation(api.pages.update, {
+        pageId: pageId as Id<"pages">,
+        patch: { icon },
+      });
+      return { ok: true };
+    } catch (e) {
+      return { error: e instanceof Error ? e.message : String(e) };
+    }
   },
 };

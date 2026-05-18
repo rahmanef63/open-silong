@@ -492,6 +492,36 @@ export const addBlock = mutation({
   },
 });
 
+/** Append markdown content to the end of a page. Parsed server-side
+ *  via `_shared/markdown.markdownToBlocks` so the AI agent can emit a
+ *  single mutation instead of N add-block round-trips. Honors the
+ *  per-page block cap. */
+export const appendMarkdown = mutation({
+  args: { pageId: v.id("pages"), markdown: v.string() },
+  handler: async (ctx, args) => {
+    const { doc: page } = await requireWorkspaceAccess(ctx, "pages", args.pageId as Id<"pages">, { write: true });
+    const { markdownToBlocks } = await import("./_shared/markdown");
+    const parsed = markdownToBlocks(args.markdown);
+    const cur = page.blocks as Array<{ id: string; type?: string; text?: string }>;
+    // Drop the trailing empty paragraph stub that newly-created pages
+    // ship with, so the appended content doesn't render with an empty
+    // gap above it.
+    const trimmed = cur.length === 1 && cur[0].type === "paragraph" && cur[0].text === ""
+      ? []
+      : cur;
+    const blocks = [...trimmed, ...parsed];
+    if (blocks.length > COUNT_CAPS.blocksPerPage) {
+      throw new Error(`Page would exceed block cap (${COUNT_CAPS.blocksPerPage})`);
+    }
+    await ctx.db.patch(args.pageId as Id<"pages">, {
+      blocks,
+      searchText: buildSearchText(page.title, blocks),
+      updatedAt: Date.now(),
+    });
+    return parsed.length;
+  },
+});
+
 /** Server-side replace a single block by id. Authoritative blocks
  *  array → no client cache reliance (the slim listMeta projection
  *  omits blocks, so a client-side splice would wipe the page). */

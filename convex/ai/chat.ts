@@ -100,8 +100,18 @@ export const complete = action({
     system: v.optional(v.string()),
     model: v.optional(v.string()),
     maxTokens: v.optional(v.number()),
+    /** Active context captured by the frontend (current page, user
+     *  identity). Injected as a `<USER_CONTEXT>` block in the system
+     *  prompt so the model can resolve "this page" / "ini" without
+     *  asking, and call write skills with the right pageId. */
+    context: v.optional(v.object({
+      activePageId: v.optional(v.string()),
+      activePageTitle: v.optional(v.string()),
+      userName: v.optional(v.string()),
+      workspaceName: v.optional(v.string()),
+    })),
   },
-  handler: async (ctx, { messages, system, model, maxTokens }) => {
+  handler: async (ctx, { messages, system, model, maxTokens, context }) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not signed in");
     await ctx.runMutation(internal.ai.internal.checkRateLimit, {});
@@ -117,11 +127,23 @@ export const complete = action({
     const cfg = await resolveAI(ctx, model);
     const cap = Math.min(maxTokens ?? 2048, MAX_TOKENS_HARD_CAP);
 
+    const baseSystem = system ?? "You are Nosion, a calm and concise assistant inside a Notion-like notes workspace. You can call tools to read AND write the user's pages: list/search, read content, append markdown, create pages, rename, set icon. Prefer pages_search over pages_list when the user names a topic. Reply in markdown. Be direct and helpful.";
+
+    let systemContent = baseSystem;
+    if (context && (context.activePageId || context.userName || context.workspaceName)) {
+      const lines: string[] = ["<USER_CONTEXT>"];
+      if (context.activePageId) lines.push(`activePageId: ${context.activePageId}`);
+      if (context.activePageTitle) lines.push(`activePageTitle: ${JSON.stringify(context.activePageTitle)}`);
+      if (context.userName) lines.push(`userName: ${JSON.stringify(context.userName)}`);
+      if (context.workspaceName) lines.push(`workspaceName: ${JSON.stringify(context.workspaceName)}`);
+      lines.push("</USER_CONTEXT>");
+      lines.push("");
+      lines.push("When the user says 'this page', 'current page', 'ini', 'halaman ini', 'di sini', use the activePageId from USER_CONTEXT directly — do NOT ask which page. For create-then-fill flows you can call pages_create then pass the returned pageId to pages_append_markdown in the SAME turn.");
+      systemContent = `${baseSystem}\n\n${lines.join("\n")}`;
+    }
+
     const conversation: Array<Record<string, unknown>> = [];
-    conversation.push({
-      role: "system",
-      content: system ?? "You are Nosion, a calm and concise assistant inside a Notion-like notes workspace. You can call tools to read the user's pages, search content, and inspect databases. Prefer pages_search over pages_list when the user names a topic. Reply in markdown. Be direct and helpful.",
-    });
+    conversation.push({ role: "system", content: systemContent });
     for (const m of messages) conversation.push({ role: m.role, content: m.content });
 
     const referer = process.env.OPENROUTER_REFERER ?? "https://nosion.rahmanef.com";

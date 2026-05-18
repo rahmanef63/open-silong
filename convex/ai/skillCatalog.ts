@@ -72,6 +72,48 @@ export const SKILL_CATALOG: Skill[] = [
       dbId: { type: "string", description: "Database id from databases_list" },
     }, ["dbId"]),
   },
+  // ─── Write skills ──────────────────────────────────────────
+  {
+    id: "pages.append_markdown",
+    kind: "mutation",
+    toolName: "pages_append_markdown",
+    description: "Append markdown content (headings, lists, tables, todos, callouts) to the END of a page. Use when the user says 'add to this page', 'write here', 'tambahkan ke halaman ini', etc. Pass the activePageId from USER_CONTEXT when the user refers to 'this page'. Markdown is parsed into proper blocks.",
+    parameters: obj({
+      pageId: { type: "string", description: "Target page id (use activePageId for 'this page')" },
+      markdown: { type: "string", description: "Markdown content to append. Multi-paragraph + headings supported." },
+    }, ["pageId", "markdown"]),
+  },
+  {
+    id: "pages.create",
+    kind: "mutation",
+    toolName: "pages_create",
+    description: "Create a new empty page under the active workspace. Optional parentId nests it. Returns the new pageId so the next call can fill it (typically pages_append_markdown).",
+    parameters: obj({
+      title: { type: "string", description: "Page title" },
+      parentId: { type: "string", description: "Optional parent pageId (use activePageId to nest under current)" },
+      icon: { type: "string", description: "Optional emoji icon (e.g. 🥗)" },
+    }, ["title"]),
+  },
+  {
+    id: "pages.set_title",
+    kind: "mutation",
+    toolName: "pages_set_title",
+    description: "Rename a page. Use for the active page when the user asks to rename.",
+    parameters: obj({
+      pageId: { type: "string" },
+      title: { type: "string" },
+    }, ["pageId", "title"]),
+  },
+  {
+    id: "pages.set_icon",
+    kind: "mutation",
+    toolName: "pages_set_icon",
+    description: "Set a page's emoji icon.",
+    parameters: obj({
+      pageId: { type: "string" },
+      icon: { type: "string", description: "A single emoji" },
+    }, ["pageId", "icon"]),
+  },
 ];
 
 export const SKILL_BY_ID: Record<string, Skill> = Object.fromEntries(
