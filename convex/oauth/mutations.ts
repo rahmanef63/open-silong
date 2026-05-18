@@ -7,7 +7,7 @@
 
 import { v } from "convex/values";
 import { mutation, internalMutation } from "../_generated/server";
-import { requireAdmin } from "../_shared/auth";
+import { requireAuth } from "../_shared/auth";
 import { randomHex, verifyPkce } from "../_shared/pkce";
 
 const CODE_TTL_MS = 5 * 60 * 1000;
@@ -60,7 +60,10 @@ export const createCode = mutation({
     resource: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const userId = await requireAdmin(ctx);
+    // Per-user mint — every authenticated user can grant ChatGPT
+    // access to THEIR OWN workspace. Token issued is scoped to
+    // userId; MCP route resolves the bearer back to this user only.
+    const userId = await requireAuth(ctx);
     if (args.codeChallengeMethod !== "S256") {
       throw new Error("Only S256 PKCE method is supported");
     }
@@ -168,20 +171,13 @@ export const exchangeCode = mutation({
 export const revokeToken = mutation({
   args: { id: v.id("oauthAccessTokens") },
   handler: async (ctx, { id }) => {
-    const actorId = await requireAdmin(ctx);
+    // Owner-only revoke. Throw "Tidak ditemukan" rather than a
+    // forbidden so we don't leak existence of other users' tokens.
+    const userId = await requireAuth(ctx);
     const row = await ctx.db.get(id);
+    if (!row || row.userId !== userId) throw new Error("Tidak ditemukan");
+    if (row.revokedAt) return { success: true };
     await ctx.db.patch(id, { revokedAt: Date.now() });
-    try {
-      await ctx.db.insert("auditLog", {
-        actorId,
-        kind: "oauth.revokeToken",
-        target: id,
-        meta: { clientId: row?.clientId, label: row?.label },
-        createdAt: Date.now(),
-      });
-    } catch {
-      // audit insert is best-effort
-    }
     return { success: true };
   },
 });

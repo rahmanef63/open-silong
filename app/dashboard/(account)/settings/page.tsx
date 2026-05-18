@@ -12,6 +12,7 @@ import { PagesSection } from "./sections/PagesSection";
 import { BackupSection } from "./sections/BackupSection";
 import { TicketsSection } from "./sections/TicketsSection";
 import { McpTokensSection } from "./McpTokensSection";
+import { ChatGptOAuthSection } from "./ChatGptOAuthSection";
 import { WebhooksSection } from "./WebhooksSection";
 
 function SectionForKey({ k }: { k: SettingsKey }) {
@@ -24,6 +25,12 @@ function SectionForKey({ k }: { k: SettingsKey }) {
       <div className="rounded-xl border border-border bg-card p-5 space-y-4">
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">MCP tokens</h2>
         <McpTokensSection />
+      </div>
+    );
+    case "chatgpt":    return (
+      <div className="rounded-xl border border-border bg-card p-5 space-y-4">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">ChatGPT App (OAuth)</h2>
+        <ChatGptOAuthSection />
       </div>
     );
     case "webhooks":   return (

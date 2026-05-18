@@ -1,18 +1,18 @@
 /** OAuth queries.
- *  - adminList: admin UI table (strips raw token from wire).
+ *  - listMine: per-user token table (strips raw token from wire).
  *  - findToken: internal — used by MCP route to validate Bearer. */
 
 import { v } from "convex/values";
 import { query, internalQuery } from "../_generated/server";
-import { requireAdminQuery } from "../_shared/auth";
+import { requireAuth } from "../_shared/auth";
 
-export const adminList = query({
+export const listMine = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, { limit }) => {
-    await requireAdminQuery(ctx);
+    const userId = await requireAuth(ctx);
     const rows = await ctx.db
       .query("oauthAccessTokens")
-      .withIndex("by_user_time")
+      .withIndex("by_user_time", (q) => q.eq("userId", userId))
       .order("desc")
       .take(limit ?? 200);
     return rows.map((r) => ({
