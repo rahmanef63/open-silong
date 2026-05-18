@@ -142,25 +142,35 @@ export function useAIChat(activeContext?: ActiveContext) {
     setLiveRunId(runId);
     try {
       const currentAgent: AgentPreset = AGENT_BY_ID[session.agentId] ?? AGENT_BY_ID[DEFAULT_AGENT_ID];
-      // Collect any APPLIED proposals from earlier turns so the model
-      // can chain on their structured results (pages.create returns
-      // {pageId} → next turn's append/rename can use it). Injected as
-      // a synthetic system note since the LLM doesn't see tool-result
+      // Collect APPLIED proposals from this session so the model can
+      // chain on their structured results (pages.create returns
+      // {pageId} → next turn's append/rename uses it). Injected as a
+      // synthetic system note since the LLM doesn't see tool-result
       // messages across complete() calls.
       const appliedNotes: string[] = [];
+      let lastCreatedPageId: string | undefined;
       for (const m of session.messages) {
         if (!m.proposals) continue;
         for (const p of m.proposals) {
           if (p.state === "applied" && p.result !== undefined) {
             appliedNotes.push(`- ${p.skillId} args=${JSON.stringify(p.args)} → ${JSON.stringify(p.result)}`);
+            if (p.skillId === "pages.create") {
+              const r = p.result as { pageId?: string; ok?: boolean };
+              if (r?.ok && typeof r.pageId === "string") lastCreatedPageId = r.pageId;
+            }
           }
         }
       }
+      // If we just created a page, treat IT as the active target for
+      // any follow-up write op. Without this swap, "isi kontentnya"
+      // sends pages.append_markdown(activePageId) and writes to the
+      // ORIGINAL page (URL hasn't navigated to the new one yet).
+      const effectiveContext = activeContext && lastCreatedPageId
+        ? { ...activeContext, activePageId: lastCreatedPageId, activePageTitle: undefined }
+        : activeContext;
       const recentActionsNote = appliedNotes.length
-        ? `<RECENT_ACTIONS>\n${appliedNotes.join("\n")}\n</RECENT_ACTIONS>\nWhen the user references an action you already took, reuse the ids/results from RECENT_ACTIONS instead of asking or re-creating.`
+        ? `<RECENT_ACTIONS>\n${appliedNotes.join("\n")}\n</RECENT_ACTIONS>\n\nWhen the user references "this page", "halaman ini", "isi", or "tambahkan":\n- If RECENT_ACTIONS contains a successful pages.create, use THAT pageId as the target — NOT activePageId. The URL hasn't navigated to the new page yet.\n- Otherwise fall back to activePageId from USER_CONTEXT.\nAlways reuse ids from RECENT_ACTIONS instead of re-creating.`
         : "";
-      // Combine agent system prompt + slash-command system + recent
-      // actions note. Slash command wins last (most specific intent).
       const systemParts = [currentAgent.systemPrompt, recentActionsNote, built.system].filter(Boolean);
       const apiMessages = [
         ...session.messages.map((m) => ({ role: m.role, content: m.content })),
@@ -169,8 +179,8 @@ export function useAIChat(activeContext?: ActiveContext) {
       const r = await complete({
         messages: apiMessages,
         system: systemParts.length ? systemParts.join("\n\n") : undefined,
-        context: activeContext && (activeContext.activePageId || activeContext.userName)
-          ? activeContext
+        context: effectiveContext && (effectiveContext.activePageId || effectiveContext.userName)
+          ? effectiveContext
           : undefined,
         runId,
       });
