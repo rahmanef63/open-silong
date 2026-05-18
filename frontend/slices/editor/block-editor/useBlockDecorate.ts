@@ -1,7 +1,10 @@
 import { useEffect, type MutableRefObject } from "react";
-import type { Block } from "@/shared/types/domain";
+import type { Block, BlockType } from "@/shared/types/domain";
 import { decorateInPlace } from "../lib/inlineDecorator";
 import { DECORATE_TYPES } from "./decorateTypes";
+
+const HEADING_TYPES = new Set<BlockType>(["h1", "h2", "h3", "h4"]);
+const decorateOpts = (t: BlockType) => HEADING_TYPES.has(t) ? { hideMarkers: true } : undefined;
 
 /** Bundles the three decorate-related effects so BlockEditor stays small:
  *  - sync DOM to block.text when text changes from outside (not while typing)
@@ -20,7 +23,7 @@ export function useBlockDecorate(
     if (document.activeElement === el) return;
     if (el.innerText !== block.text) {
       if (DECORATE_TYPES.has(block.type)) {
-        decorateInPlace(el, block.text);
+        decorateInPlace(el, block.text, decorateOpts(block.type));
       } else {
         el.innerText = block.text;
       }
@@ -31,7 +34,7 @@ export function useBlockDecorate(
     const el = ref.current;
     if (!el || !DECORATE_TYPES.has(block.type)) return;
     if (document.activeElement === el) return;
-    decorateInPlace(el, block.text);
+    decorateInPlace(el, block.text, decorateOpts(block.type));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -41,7 +44,7 @@ export function useBlockDecorate(
     const onStart = () => { composingRef.current = true; };
     const onEnd = () => {
       composingRef.current = false;
-      decorateInPlace(el, el.innerText);
+      decorateInPlace(el, el.innerText, decorateOpts(block.type));
     };
     el.addEventListener("compositionstart", onStart);
     el.addEventListener("compositionend", onEnd);
