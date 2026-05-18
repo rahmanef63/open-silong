@@ -77,6 +77,15 @@ export async function handleBlockKeyDown(e: KeyboardEvent<HTMLElement>, deps: De
     return;
   }
 
+  // ----- indent / outdent lists -----
+  if (e.key === "Tab" && (block.type === "bullet" || block.type === "numbered" || block.type === "todo")) {
+    e.preventDefault();
+    const cur = block.indent ?? 0;
+    const next = e.shiftKey ? Math.max(0, cur - 1) : Math.min(3, cur + 1);
+    if (next !== cur) deps.updateBlock(pageId, block.id, { indent: next });
+    return;
+  }
+
   // ----- editing flow -----
   if (e.key === "Enter" && !e.shiftKey) {
     e.preventDefault();
@@ -84,13 +93,17 @@ export async function handleBlockKeyDown(e: KeyboardEvent<HTMLElement>, deps: De
       block.type === "todo" ? "todo" :
       block.type === "bullet" || block.type === "numbered" ? block.type :
       "paragraph";
-    // Inherit layoutGroup/Col so Enter at end of a column block creates
-    // the new line INSIDE the same column instead of escaping below
-    // the layout group.
-    const init: Partial<Block> | undefined = block.layoutGroup != null
-      ? { layoutGroup: block.layoutGroup, layoutCol: block.layoutCol }
-      : undefined;
-    const newId = await addBlock(pageId, index, next, init);
+    // Inherit layoutGroup/Col + indent so Enter at end of an indented
+    // list item or column-bound block stays in its visual group.
+    const init: Partial<Block> = {};
+    if (block.layoutGroup != null) {
+      init.layoutGroup = block.layoutGroup;
+      init.layoutCol = block.layoutCol;
+    }
+    if (block.indent != null && (next === "bullet" || next === "numbered" || next === "todo")) {
+      init.indent = block.indent;
+    }
+    const newId = await addBlock(pageId, index, next, Object.keys(init).length ? init : undefined);
     setTimeout(() => document.querySelector<HTMLElement>(`[data-block-id="${newId}"]`)?.focus(), 0);
     return;
   }

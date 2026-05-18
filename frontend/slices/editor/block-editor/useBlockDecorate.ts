@@ -3,7 +3,7 @@ import type { Block, BlockType } from "@/shared/types/domain";
 import { decorateInPlace } from "../lib/inlineDecorator";
 import { DECORATE_TYPES } from "./decorateTypes";
 
-const HEADING_TYPES = new Set<BlockType>(["h1", "h2", "h3", "h4"]);
+const HEADING_TYPES = new Set<BlockType>(["h1", "h2", "h3", "h4", "h5", "h6"]);
 const decorateOpts = (t: BlockType) => HEADING_TYPES.has(t) ? { hideMarkers: true } : undefined;
 
 /** Bundles the three decorate-related effects so BlockEditor stays small:

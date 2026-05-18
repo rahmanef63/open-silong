@@ -58,6 +58,10 @@ export function NestedContent({ block, baseProps, setRef, handleKeyDown, onUpdat
     return wrap(<h3 ref={setRef as React.Ref<HTMLHeadingElement>} {...baseProps} className={baseProps.className + " text-lg font-semibold tracking-tight py-0.5"} />);
   case "h4":
     return wrap(<h4 ref={setRef as React.Ref<HTMLHeadingElement>} {...baseProps} className={baseProps.className + " text-base font-semibold tracking-tight py-0.5"} />);
+  case "h5":
+    return wrap(<h5 ref={setRef as React.Ref<HTMLHeadingElement>} {...baseProps} className={baseProps.className + " text-sm font-semibold tracking-tight uppercase py-0.5"} />);
+  case "h6":
+    return wrap(<h6 ref={setRef as React.Ref<HTMLHeadingElement>} {...baseProps} className={baseProps.className + " text-xs font-semibold tracking-wide uppercase text-muted-foreground py-0.5"} />);
   case "todo":
     return (
       <div className="flex items-start gap-2 py-1">

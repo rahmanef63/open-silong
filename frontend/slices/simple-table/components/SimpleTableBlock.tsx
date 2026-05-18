@@ -20,6 +20,11 @@ export function SimpleTableBlock({ block, onUpdate, onReplace }: SimpleTableBloc
   );
   const cols = rows[0]?.length ?? 0;
   const hasHeader = block.tableHeader !== false;
+  const align: ("left" | "center" | "right")[] = block.tableAlign && block.tableAlign.length === cols
+    ? block.tableAlign as ("left" | "center" | "right")[]
+    : Array(cols).fill("left");
+  const alignClass = (i: number) =>
+    align[i] === "center" ? "text-center" : align[i] === "right" ? "text-right" : "text-left";
 
   const [active, setActive] = useState<Cell | null>(null);
   const [fillSource, setFillSource] = useState<Cell | null>(null);
@@ -188,7 +193,7 @@ export function SimpleTableBlock({ block, onUpdate, onReplace }: SimpleTableBloc
                         onFocus={() => setActive({ r, c })}
                         onBlur={() => setActive((cur) => cur?.r === r && cur?.c === c ? null : cur)}
                         placeholder={hasHeader && r === 0 ? `Col ${c + 1}` : ""}
-                        className="w-full bg-transparent px-2 py-1 outline-none text-sm"
+                        className={cn("w-full bg-transparent px-2 py-1 outline-none text-sm", alignClass(c))}
                       />
                       {isActive && rows.length > 1 && (
                         <div

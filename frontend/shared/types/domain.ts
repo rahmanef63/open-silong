@@ -4,6 +4,8 @@ export type BlockType =
   | "h2"
   | "h3"
   | "h4"
+  | "h5"
+  | "h6"
   | "todo"
   | "bullet"
   | "numbered"
@@ -82,6 +84,15 @@ export interface Block {
   layoutGroup?: string;
   /** 0..n-1 column index within the layout group. */
   layoutCol?: number;
+  /** List nesting depth (0 = top, 1..3 = nested). Applied as a
+   *  left-padding multiplier in the renderer. Markdown export
+   *  uses `depth * 2` leading spaces before the marker. */
+  indent?: number;
+  /** GFM admonition kind for callout blocks: note/tip/warning/important/caution. */
+  calloutKind?: "note" | "tip" | "warning" | "important" | "caution" | "default";
+  /** Per-column alignment for table blocks. Parallel to header
+   *  columns. Values: "left" | "center" | "right". Default left. */
+  tableAlign?: ("left" | "center" | "right")[];
   /** Notion-style text color palette key (see slices/editor/lib/colors.ts) */
   color?: string;
   /** Notion-style background color palette key */
