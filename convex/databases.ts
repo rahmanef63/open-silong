@@ -82,6 +82,7 @@ export const create = mutation({
   handler: async (ctx, args) => {
     const userId = await requireAuth(ctx);
     await rateLimit(ctx, userId, RATE_LIMITS.dbCreate);
+    await rateLimit(ctx, userId, RATE_LIMITS.dbCreateDay);
     const active = await requireActiveWorkspaceWritable(ctx, userId);
     const now = Date.now();
     const titleProp = { id: uid(), name: "Name", type: "text" };
@@ -148,6 +149,7 @@ export const addRow = mutation({
   handler: async (ctx, args) => {
     const { userId, doc: db } = await requireWorkspaceAccess(ctx, "databases", args.dbId as Id<"databases">, { write: true });
     await rateLimit(ctx, userId, RATE_LIMITS.dbAddRow);
+    await rateLimit(ctx, userId, RATE_LIMITS.dbAddRowDay);
     const now = Date.now();
 
     const uniqueIdProps: { id: string; prefix?: string }[] = (db.properties ?? [])
@@ -219,6 +221,7 @@ export const duplicateWithRows = mutation({
     const { userId, doc: src } = await requireWorkspaceAccess(ctx, "databases", args.srcDbId as Id<"databases">, { write: false });
     const { doc: target } = await requireWorkspaceAccess(ctx, "databases", args.targetDbId as Id<"databases">, { write: true });
     await rateLimit(ctx, userId, RATE_LIMITS.dbCreate);
+    await rateLimit(ctx, userId, RATE_LIMITS.dbCreateDay);
     const MAX = 5000;
     const srcRowIds = (src.rowIds ?? []).slice(0, MAX) as string[];
     if (srcRowIds.length === 0) return { copied: 0 };

@@ -250,6 +250,7 @@ export const create = mutation({
   handler: async (ctx, args) => {
     const userId = await requireAuth(ctx);
     await rateLimit(ctx, userId, RATE_LIMITS.pagesCreate);
+    await rateLimit(ctx, userId, RATE_LIMITS.pagesCreateDay);
     const active = await requireActiveWorkspaceWritable(ctx, userId);
     const now = Date.now();
     const blocks = [emptyBlock()];
@@ -436,6 +437,7 @@ export const duplicate = mutation({
   handler: async (ctx, args) => {
     const { userId, doc: src } = await requireWorkspaceAccess(ctx, "pages", args.pageId as Id<"pages">, { write: true });
     await rateLimit(ctx, userId, RATE_LIMITS.pagesDuplicate);
+    await rateLimit(ctx, userId, RATE_LIMITS.pagesDuplicateDay);
     const now = Date.now();
     const cloned = JSON.parse(JSON.stringify(src.blocks)) as BlockLike[];
     const blocks = regenAllBlockIds(cloned);

@@ -22,6 +22,7 @@ export const create = mutation({
       args.pageId as Id<"pages">,
     );
     await rateLimit(ctx, userId, RATE_LIMITS.commentsCreate);
+    await rateLimit(ctx, userId, RATE_LIMITS.commentsCreateDay);
     const now = Date.now();
     return await ctx.db.insert("comments", {
       userId,

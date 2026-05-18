@@ -10,6 +10,7 @@
 
 import type * as _shared_aiCrypto from "../_shared/aiCrypto.js";
 import type * as _shared_aiProviders from "../_shared/aiProviders.js";
+import type * as _shared_aiQuota from "../_shared/aiQuota.js";
 import type * as _shared_auth from "../_shared/auth.js";
 import type * as _shared_blocks from "../_shared/blocks.js";
 import type * as _shared_hash from "../_shared/hash.js";
@@ -133,6 +134,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   "_shared/aiCrypto": typeof _shared_aiCrypto;
   "_shared/aiProviders": typeof _shared_aiProviders;
+  "_shared/aiQuota": typeof _shared_aiQuota;
   "_shared/auth": typeof _shared_auth;
   "_shared/blocks": typeof _shared_blocks;
   "_shared/hash": typeof _shared_hash;

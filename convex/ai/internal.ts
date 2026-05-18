@@ -1,8 +1,13 @@
-import { internalMutation } from "../_generated/server";
+import { internalMutation, internalQuery } from "../_generated/server";
 import { v } from "convex/values";
 import { rateLimit, type RateLimitConfig } from "../_shared/rateLimit";
 import { requireAuth, requireAdmin } from "../_shared/auth";
 import { RATE_LIMITS } from "../_shared/limits";
+import {
+  checkAiTokenQuota,
+  recordAiTokenUsage,
+  readAiTokenUsage,
+} from "../_shared/aiQuota";
 
 /** Internal — upsert the in-flight run's progress doc. Called from
  *  chat.complete after each hop / tool dispatch so the frontend can
@@ -33,13 +38,35 @@ export const clearProgress = internalMutation({
   },
 });
 
-/** Called from ai.complete action (which can't touch ctx.db directly). */
+/** Called from ai.complete action (which can't touch ctx.db directly).
+ *  Enforces THREE gates: per-hour call burst + per-day call ceiling +
+ *  per-day token quota. Any failure throws and the action aborts before
+ *  any upstream LLM byte is paid for. */
 export const checkRateLimit = internalMutation({
   args: {},
   handler: async (ctx) => {
     const userId = await requireAuth(ctx);
     await rateLimit(ctx, userId, RATE_LIMITS.aiComplete);
+    await rateLimit(ctx, userId, RATE_LIMITS.aiCompleteDay);
+    await checkAiTokenQuota(ctx, userId);
   },
+});
+
+/** Called from ai.complete AFTER each successful upstream call so the
+ *  token ledger reflects spend immediately — next call inside the same
+ *  action loop already sees the bump. */
+export const recordAiUsage = internalMutation({
+  args: { tokens: v.number() },
+  handler: async (ctx, { tokens }) => {
+    const userId = await requireAuth(ctx);
+    await recordAiTokenUsage(ctx, userId, tokens);
+  },
+});
+
+/** Read-only — for the AI console quota meter / admin overview. */
+export const getMyAiUsage = internalQuery({
+  args: { userId: v.id("users") },
+  handler: async (ctx, { userId }) => readAiTokenUsage(ctx, userId),
 });
 
 /** Admin-scoped rate limit used by AI admin actions (test connection,

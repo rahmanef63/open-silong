@@ -58,3 +58,19 @@ export const purgeStaleTrash = internalMutation({
     return { pages: staleTrashedPages.length, snaps, dbs: staleTrashedDbs.length };
   },
 });
+
+/** Drop aiTokenUsage rows older than 30 days. Bucket key = floor(ms /
+ *  86_400_000) so the cutoff is dayKey-based. */
+export const pruneAiTokenUsage = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const RETAIN_DAYS = 30;
+    const cutoffDay = Math.floor((Date.now() - RETAIN_DAYS * ONE_DAY_MS) / ONE_DAY_MS);
+    const old = await ctx.db
+      .query("aiTokenUsage")
+      .withIndex("by_day", (q) => q.lt("dayKey", cutoffDay))
+      .collect();
+    for (const row of old) await ctx.db.delete(row._id);
+    return { pruned: old.length };
+  },
+});
