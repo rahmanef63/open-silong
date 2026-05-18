@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useQuery } from "convex/react";
+import { api } from "@convex/_generated/api";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/shared/ui/sheet";
 import { Button } from "@/shared/ui/button";
 import { Textarea } from "@/shared/ui/textarea";
@@ -24,10 +26,19 @@ export function AIAgentConsole({ open, onOpenChange, context, activeContext }: P
   const chat = useAIChat(activeContext);
   const {
     messages, pending, error, send, clear,
+    liveRunId,
     approveProposal, discardProposal,
     sessions, activeSessionId, newSession, switchSession, renameSession, deleteSession,
     agent, agents, setAgent,
   } = chat;
+
+  // Subscribe to live progress while a run is in flight. Convex queries
+  // are reactive — re-renders as the backend pushes new steps.
+  const liveProgressDoc = useQuery(
+    api.ai.queries.getProgress,
+    liveRunId ? { runId: liveRunId } : "skip",
+  );
+  const liveSteps = liveProgressDoc?.steps as Array<{ kind: string; label: string; skillId?: string; ms?: number; ok?: boolean }> | undefined;
 
   const [input, setInput] = useState("");
   const [showSlash, setShowSlash] = useState(false);
@@ -58,14 +69,16 @@ export function AIAgentConsole({ open, onOpenChange, context, activeContext }: P
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full sm:max-w-md p-0 flex flex-col">
         <SheetHeader className="px-4 py-3 border-b border-border">
-          <div className="flex items-center justify-between">
-            <SheetTitle className="flex items-center gap-2 text-base">
-              <Sparkles className="h-4 w-4 text-brand" /> Nosion AI
-              <span className="text-[10px] rounded border border-border bg-muted/40 px-1.5 py-0 text-muted-foreground">
+          <div className="flex items-center justify-between gap-2">
+            <SheetTitle className="flex items-center gap-2 text-base min-w-0">
+              <Sparkles className="h-4 w-4 text-brand shrink-0" /> Nosion AI
+              <span className="text-[10px] rounded border border-border bg-muted/40 px-1.5 py-0 text-muted-foreground truncate">
                 {agent.glyph} {agent.label}
               </span>
             </SheetTitle>
-            <div className="flex items-center gap-1">
+            {/* mr-8 keeps our buttons clear of the sheet's built-in
+                X close icon at top-right (~24px wide). */}
+            <div className="flex items-center gap-1 mr-8 shrink-0">
               <Button
                 size="icon"
                 variant="ghost"
@@ -133,8 +146,34 @@ export function AIAgentConsole({ open, onOpenChange, context, activeContext }: P
             </div>
           ))}
           {pending && (
-            <div className="bg-muted/40 mr-6 border border-border rounded-lg px-3 py-2 text-sm text-muted-foreground">
-              Thinking…
+            <div className="bg-muted/40 mr-6 border border-border rounded-lg px-3 py-2 text-sm text-muted-foreground space-y-1.5">
+              <div className="flex items-center gap-2">
+                <div className="h-1.5 w-1.5 rounded-full bg-brand animate-pulse" />
+                <span>Thinking…</span>
+              </div>
+              {liveSteps && liveSteps.length > 0 && (
+                <ul className="ml-3 space-y-0.5 border-l border-border pl-2">
+                  {liveSteps.map((s, i) => {
+                    const isWrite = s.skillId?.startsWith("pages.append")
+                      || s.skillId?.startsWith("pages.create")
+                      || s.skillId?.startsWith("pages.set_");
+                    const isLast = i === liveSteps.length - 1;
+                    return (
+                      <li key={i} className="flex items-center gap-1.5 text-[11px]">
+                        {isLast
+                          ? <div className="h-2 w-2 rounded-full bg-brand animate-pulse shrink-0" />
+                          : s.ok === false
+                            ? <XCircle className="h-3 w-3 text-rose-500 shrink-0" />
+                            : isWrite
+                              ? <Pencil className="h-3 w-3 text-amber-500 shrink-0" />
+                              : <CheckCircle2 className="h-3 w-3 text-emerald-500 shrink-0" />}
+                        <span className="font-mono">{s.skillId ?? s.label}</span>
+                        {s.ms != null && <span className="text-muted-foreground/60">· {s.ms}ms</span>}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
             </div>
           )}
           {error && (
@@ -377,19 +416,27 @@ function SessionRail({
         <div
           key={s.id}
           className={cn(
-            "group flex items-center gap-2 px-3 py-1.5 text-xs cursor-pointer hover:bg-accent/30 transition",
+            "group flex items-center gap-1 px-1 text-xs hover:bg-accent/30 transition",
             s.id === activeId && "bg-accent/40",
           )}
-          onClick={() => onSwitch(s.id)}
         >
-          <MessageSquare className="h-3 w-3 text-muted-foreground shrink-0" />
-          <div className="flex-1 min-w-0 truncate">{s.title}</div>
-          <span className="text-[10px] text-muted-foreground/70 shrink-0">{s.messages.length}</span>
+          {/* Switch button = the full clickable row (button element so
+              keyboard nav + click events behave). Inner rename/delete
+              buttons sit OUTSIDE this button so there's no nested-
+              button HTML warning + their clicks aren't swallowed. */}
+          <button
+            type="button"
+            onClick={() => onSwitch(s.id)}
+            className="flex-1 min-w-0 flex items-center gap-2 py-1.5 px-2 text-left rounded transition-colors"
+          >
+            <MessageSquare className="h-3 w-3 text-muted-foreground shrink-0" />
+            <span className="flex-1 min-w-0 truncate">{s.title}</span>
+            <span className="text-[10px] text-muted-foreground/70 shrink-0">{s.messages.length}</span>
+          </button>
           <Button
             variant="ghost"
             size="icon"
-            onClick={(e) => {
-              e.stopPropagation();
+            onClick={() => {
               const next = window.prompt("Rename session", s.title);
               if (next && next.trim()) onRename(s.id, next.trim());
             }}
@@ -401,8 +448,7 @@ function SessionRail({
           <Button
             variant="ghost"
             size="icon"
-            onClick={(e) => {
-              e.stopPropagation();
+            onClick={() => {
               if (window.confirm(`Delete "${s.title}"?`)) onDelete(s.id);
             }}
             className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive [&_svg]:size-3"

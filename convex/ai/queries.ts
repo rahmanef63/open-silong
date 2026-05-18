@@ -18,6 +18,22 @@ export const listAIProviders = query({
   handler: async () => listProvidersPublic(),
 });
 
+/** Public — live progress doc for an in-flight chat.complete run.
+ *  Frontend subscribes via useQuery so the timeline updates as the
+ *  action writes hops. Returns null when no progress exists yet
+ *  (run hasn't started or already cleared). */
+export const getProgress = query({
+  args: { runId: v.string() },
+  handler: async (ctx, { runId }) => {
+    const doc = await ctx.db
+      .query("aiRunProgress")
+      .withIndex("by_run", (q) => q.eq("runId", runId))
+      .first();
+    if (!doc) return null;
+    return { steps: doc.steps, updatedAt: doc.updatedAt };
+  },
+});
+
 /** Admin — current global AI config (provider/model/baseUrl/enabled +
  *  masked key preview). Returns null when not yet set. Mask is computed
  *  from the DECRYPTED key so the preview is meaningful regardless of
