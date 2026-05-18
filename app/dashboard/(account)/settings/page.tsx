@@ -14,6 +14,7 @@ import { TicketsSection } from "./sections/TicketsSection";
 import { McpTokensSection } from "./McpTokensSection";
 import { MCPSection } from "./MCPSection";
 import { WebhooksSection } from "./WebhooksSection";
+import { SettingsAside } from "./SettingsAside";
 
 function SectionForKey({ k }: { k: SettingsKey }) {
   switch (k) {
@@ -46,7 +47,16 @@ function SectionForKey({ k }: { k: SettingsKey }) {
 function SettingsBody() {
   const sp = useSearchParams();
   const active = getActiveSettingsKey(sp);
-  return <SectionForKey k={active} />;
+  return (
+    <>
+      <div className="min-w-0 space-y-6">
+        <SectionForKey k={active} />
+      </div>
+      <div className="hidden lg:block min-w-0">
+        <SettingsAside k={active} />
+      </div>
+    </>
+  );
 }
 
 export default function SettingsPage() {
@@ -62,15 +72,16 @@ export default function SettingsPage() {
         </div>
       </header>
 
-      <div className="flex flex-col gap-6 md:flex-row md:items-start">
+      {/* Three-col layout: sidebar (240) · content (flex) · aside (320).
+       *  Collapses to single-column stack below lg. Sidebar wraps to top
+       *  of the content column at md so the user always sees nav. */}
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-[224px_minmax(0,1fr)] lg:grid-cols-[224px_minmax(0,1fr)_320px] md:items-start">
         <Suspense fallback={<div className="w-full md:w-56" />}>
           <SettingsSidebar />
         </Suspense>
-        <div className="min-w-0 flex-1 space-y-6">
-          <Suspense fallback={<div className="rounded-xl border border-border bg-card p-5">Loading…</div>}>
-            <SettingsBody />
-          </Suspense>
-        </div>
+        <Suspense fallback={<div className="rounded-xl border border-border bg-card p-5">Loading…</div>}>
+          <SettingsBody />
+        </Suspense>
       </div>
     </>
   );
