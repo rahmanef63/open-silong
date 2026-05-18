@@ -463,6 +463,19 @@ export default defineSchema({
     updatedAt: v.number(),
   }),
 
+  /** Live progress doc for an in-flight chat.complete run. The action
+   *  writes one step per loop hop / tool call; the frontend subscribes
+   *  via getProgress(runId) to render a real-time timeline. Doc is
+   *  deleted on completion (or aged out by the daily prune cron). */
+  aiRunProgress: defineTable({
+    userId: v.id("users"),
+    runId: v.string(),
+    steps: v.array(v.any()),
+    updatedAt: v.number(),
+  })
+    .index("by_run", ["runId"])
+    .index("by_user_updated", ["userId", "updatedAt"]),
+
   /** Admin-set per-user MODEL override. Inherits provider + apiKey from
    *  `globalAISettings` — useful when admin wants a premium user on a
    *  beefier model (e.g. claude-sonnet-4.5) and free-tier users on a

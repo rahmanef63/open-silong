@@ -22,6 +22,10 @@ export interface ProposalCall {
   /** Lifecycle: pending → approving → applied | discarded | error */
   state: "pending" | "approving" | "applied" | "discarded" | "error";
   error?: string;
+  /** Stored after successful execute so the next chat turn can chain
+   *  on it — e.g. pages.create returns {pageId}, then a follow-up
+   *  pages.append_markdown sees that pageId. */
+  result?: unknown;
 }
 
 export interface ChatMessage {
@@ -38,6 +42,7 @@ export interface ChatMessage {
 export function useAIChat(activeContext?: ActiveContext) {
   const complete = useAction(api.ai.chat.complete);
   const executeProposal = useAction(api.ai.chat.executeProposal);
+  const [liveRunId, setLiveRunId] = useState<string | null>(null);
 
   // Session bootstrap: load existing or create the first one.
   const [sessions, setSessions] = useState<ChatSession[]>(() => SessionStore.list());
@@ -133,11 +138,30 @@ export function useAIChat(activeContext?: ActiveContext) {
     }
 
     setPending(true);
+    const runId = `run-${uid()}`;
+    setLiveRunId(runId);
     try {
       const currentAgent: AgentPreset = AGENT_BY_ID[session.agentId] ?? AGENT_BY_ID[DEFAULT_AGENT_ID];
-      // Combine agent system prompt with slash-command system prompt.
-      // Slash command wins last (more specific intent).
-      const systemParts = [currentAgent.systemPrompt, built.system].filter(Boolean);
+      // Collect any APPLIED proposals from earlier turns so the model
+      // can chain on their structured results (pages.create returns
+      // {pageId} → next turn's append/rename can use it). Injected as
+      // a synthetic system note since the LLM doesn't see tool-result
+      // messages across complete() calls.
+      const appliedNotes: string[] = [];
+      for (const m of session.messages) {
+        if (!m.proposals) continue;
+        for (const p of m.proposals) {
+          if (p.state === "applied" && p.result !== undefined) {
+            appliedNotes.push(`- ${p.skillId} args=${JSON.stringify(p.args)} → ${JSON.stringify(p.result)}`);
+          }
+        }
+      }
+      const recentActionsNote = appliedNotes.length
+        ? `<RECENT_ACTIONS>\n${appliedNotes.join("\n")}\n</RECENT_ACTIONS>\nWhen the user references an action you already took, reuse the ids/results from RECENT_ACTIONS instead of asking or re-creating.`
+        : "";
+      // Combine agent system prompt + slash-command system + recent
+      // actions note. Slash command wins last (most specific intent).
+      const systemParts = [currentAgent.systemPrompt, recentActionsNote, built.system].filter(Boolean);
       const apiMessages = [
         ...session.messages.map((m) => ({ role: m.role, content: m.content })),
         { role: "user" as const, content: built.userPrompt },
@@ -148,6 +172,7 @@ export function useAIChat(activeContext?: ActiveContext) {
         context: activeContext && (activeContext.activePageId || activeContext.userName)
           ? activeContext
           : undefined,
+        runId,
       });
       const proposals = (r as { proposals?: Array<{ id: string; skillId: string; label: string; args: Record<string, unknown> }> }).proposals;
       const assistantMsg: ChatMessage = {
@@ -163,6 +188,7 @@ export function useAIChat(activeContext?: ActiveContext) {
       setError((e as Error).message);
     } finally {
       setPending(false);
+      setLiveRunId(null);
     }
   }, [activeContext, complete, pending, refreshSessions, writeMessages]);
 
@@ -172,13 +198,22 @@ export function useAIChat(activeContext?: ActiveContext) {
     const sid = sessionIdRef.current;
     const session = SessionStore.get(sid);
     if (!session) return;
-    const patchProposal = (state: ProposalCall["state"], errorMsg?: string) => {
-      const next = session.messages.map((m) => {
+    const patchProposal = (state: ProposalCall["state"], opts?: { error?: string; result?: unknown }) => {
+      const fresh = SessionStore.get(sid);
+      if (!fresh) return;
+      const next = fresh.messages.map((m) => {
         if (m.id !== messageId || !m.proposals) return m;
         return {
           ...m,
           proposals: m.proposals.map((p) =>
-            p.id === proposalId ? { ...p, state, ...(errorMsg ? { error: errorMsg } : {}) } : p,
+            p.id === proposalId
+              ? {
+                  ...p,
+                  state,
+                  ...(opts?.error ? { error: opts.error } : {}),
+                  ...(opts?.result !== undefined ? { result: opts.result } : {}),
+                }
+              : p,
           ),
         };
       });
@@ -190,10 +225,10 @@ export function useAIChat(activeContext?: ActiveContext) {
     patchProposal("approving");
     try {
       const res = await executeProposal({ skillId: proposal.skillId, args: proposal.args });
-      if (res.ok) patchProposal("applied");
-      else patchProposal("error", res.error ?? "unknown");
+      if (res.ok) patchProposal("applied", { result: res.result });
+      else patchProposal("error", { error: res.error ?? "unknown" });
     } catch (e) {
-      patchProposal("error", (e as Error).message);
+      patchProposal("error", { error: (e as Error).message });
     }
   }, [executeProposal, writeMessages]);
 
@@ -225,6 +260,8 @@ export function useAIChat(activeContext?: ActiveContext) {
   return {
     // Conversation
     messages, pending, error, send, clear,
+    // Live progress (subscribed in the Console component)
+    liveRunId,
     // Approvals
     approveProposal, discardProposal,
     // Sessions

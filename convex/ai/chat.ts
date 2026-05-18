@@ -115,8 +115,12 @@ export const complete = action({
      *  queued as proposals[] for the user to approve via the action
      *  card UI before they fire. */
     autoApply: v.optional(v.boolean()),
+    /** Client-generated id for the live-progress doc. When present,
+     *  the action upserts step-by-step progress to aiRunProgress so
+     *  the UI can subscribe and render a real-time timeline. */
+    runId: v.optional(v.string()),
   },
-  handler: async (ctx, { messages, system, model, maxTokens, context, autoApply }) => {
+  handler: async (ctx, { messages, system, model, maxTokens, context, autoApply, runId }) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not signed in");
     await ctx.runMutation(internal.ai.internal.checkRateLimit, {});
@@ -159,6 +163,16 @@ export const complete = action({
     progress.push({ kind: "resolve", label: `Resolved AI (${cfg.source}) → ${cfg.model}` });
     const proposals: Array<{ id: string; skillId: string; label: string; args: Record<string, unknown> }> = [];
     const apply = autoApply === true;
+
+    // Live progress writer — fire-and-forget upsert so client useQuery
+    // re-emits the timeline as it grows. Skips when runId not provided.
+    const flushProgress = async () => {
+      if (!runId) return;
+      try {
+        await ctx.runMutation(internal.ai.internal.writeProgress, { runId, userId, steps: progress });
+      } catch { /* progress is advisory — never block on a failure */ }
+    };
+    await flushProgress();
 
     let reply = "";
     let totalLlmMs = 0;
@@ -242,6 +256,7 @@ export const complete = action({
             args: parsedArgs,
           });
           progress.push({ kind: "tool", skillId, label: `Proposed ${skillId} (awaiting approval)`, ok: true });
+          await flushProgress();
           conversation.push({
             role: "tool",
             tool_call_id: tc.id,
@@ -264,6 +279,7 @@ export const complete = action({
           catch (e) { result = { error: e instanceof Error ? e.message : String(e) }; ok = false; }
         }
         progress.push({ kind: "tool", skillId, label: `Called ${skillId}`, ms: Date.now() - t1, ok });
+        await flushProgress();
         const serialised = JSON.stringify(result).slice(0, TOOL_RESULT_CHAR_CAP);
         conversation.push({ role: "tool", tool_call_id: tc.id, content: serialised });
       }
@@ -278,6 +294,11 @@ export const complete = action({
     }
 
     progress.push({ kind: "finalize", label: `Inference done · ${totalLlmMs}ms across ${hop} hop${hop === 1 ? "" : "s"}` });
+    await flushProgress();
+    // Best-effort cleanup so stale progress docs don't pile up.
+    if (runId) {
+      try { await ctx.runMutation(internal.ai.internal.clearProgress, { runId }); } catch { /* advisory */ }
+    }
 
     // If we queued any mutation proposals but the model didn't speak,
     // synthesize a brief confirmation so the user sees what's pending.
