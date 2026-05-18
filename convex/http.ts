@@ -3,6 +3,7 @@ import { httpAction } from "./_generated/server";
 import { auth } from "./auth";
 import { mcpHandler } from "./mcp/http";
 import { mcpRpcHandler } from "./mcp/jsonrpc";
+import { protectedResourceMetadata, authorizationServerMetadata } from "./mcp/wellKnown";
 import { inboundEmail } from "./email/inbound";
 
 const http = httpRouter();
@@ -27,6 +28,19 @@ http.route({
       "access-control-max-age": "86400",
     },
   })),
+});
+
+// OAuth discovery (RFC 9728 + RFC 8414) at the MCP origin so ChatGPT
+// custom-app + any MCP-aware client can find the AS. See wellKnown.ts.
+http.route({
+  path: "/.well-known/oauth-protected-resource",
+  method: "GET",
+  handler: protectedResourceMetadata,
+});
+http.route({
+  path: "/.well-known/oauth-authorization-server",
+  method: "GET",
+  handler: authorizationServerMetadata,
 });
 
 // Email → page ingest. Disabled unless EMAIL_INBOUND_TOKEN +

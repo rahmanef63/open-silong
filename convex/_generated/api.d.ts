@@ -67,6 +67,7 @@ import type * as mcp_http from "../mcp/http.js";
 import type * as mcp_internal from "../mcp/internal.js";
 import type * as mcp_jsonrpc from "../mcp/jsonrpc.js";
 import type * as mcp_tokens from "../mcp/tokens.js";
+import type * as mcp_wellKnown from "../mcp/wellKnown.js";
 import type * as oauth_mutations from "../oauth/mutations.js";
 import type * as oauth_queries from "../oauth/queries.js";
 import type * as pageViews from "../pageViews.js";
@@ -191,6 +192,7 @@ declare const fullApi: ApiFromModules<{
   "mcp/internal": typeof mcp_internal;
   "mcp/jsonrpc": typeof mcp_jsonrpc;
   "mcp/tokens": typeof mcp_tokens;
+  "mcp/wellKnown": typeof mcp_wellKnown;
   "oauth/mutations": typeof oauth_mutations;
   "oauth/queries": typeof oauth_queries;
   pageViews: typeof pageViews;
