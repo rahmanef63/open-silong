@@ -277,12 +277,43 @@ export default defineSchema({
     /** Last selected workspace — drives `getActiveWorkspaceId`.
      *  Falls back to user's personal workspace when null/missing. */
     activeWorkspaceId: v.optional(v.id("workspaces")),
+    /** Epoch ms — last time the user opened their inbox and
+     *  acknowledged the latest changelog entry. Pull-model: the
+     *  inbox query returns changelog entries published > this. */
+    lastReadChangelogAt: v.optional(v.number()),
   })
     .index("by_user", ["userId"])
     .index("by_lastSeen", ["lastSeenAt"])
     // Powers `admin.claimSuperAdmin` — first-deployer escape hatch checks
     // whether any superadmin already exists without scanning the table.
     .index("by_role", ["role"]),
+
+  /** Versioned release notes published by admins. Pull-model
+   *  surfacing in the inbox: each user sees entries with
+   *  publishedAt > userProfile.lastReadChangelogAt. */
+  changelogEntries: defineTable({
+    version: v.string(),
+    title: v.string(),
+    /** Checklist items shown in the inbox card / detail view. */
+    items: v.array(v.object({
+      text: v.string(),
+      kind: v.optional(v.union(
+        v.literal("feature"),
+        v.literal("fix"),
+        v.literal("improvement"),
+        v.literal("breaking"),
+      )),
+    })),
+    /** Long-form body shown when the user opens the entry. */
+    body: v.optional(v.string()),
+    /** Draft = not visible to users yet. Set publishedAt to surface. */
+    publishedAt: v.optional(v.number()),
+    publishedBy: v.optional(v.id("users")),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_published", ["publishedAt"])
+    .index("by_created", ["createdAt"]),
 
   /** Outbound webhook endpoints registered per user. Each endpoint
    *  subscribes to a list of event names (e.g. "page.created",

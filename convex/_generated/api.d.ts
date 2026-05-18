@@ -34,6 +34,8 @@ import type * as auth from "../auth.js";
 import type * as crons from "../crons.js";
 import type * as databases from "../databases.js";
 import type * as email_inbound from "../email/inbound.js";
+import type * as features_changelog_mutations from "../features/changelog/mutations.js";
+import type * as features_changelog_queries from "../features/changelog/queries.js";
 import type * as features_comments_mutations from "../features/comments/mutations.js";
 import type * as features_comments_queries from "../features/comments/queries.js";
 import type * as features_files_mutations from "../features/files/mutations.js";
@@ -148,6 +150,8 @@ declare const fullApi: ApiFromModules<{
   crons: typeof crons;
   databases: typeof databases;
   "email/inbound": typeof email_inbound;
+  "features/changelog/mutations": typeof features_changelog_mutations;
+  "features/changelog/queries": typeof features_changelog_queries;
   "features/comments/mutations": typeof features_comments_mutations;
   "features/comments/queries": typeof features_comments_queries;
   "features/files/mutations": typeof features_files_mutations;

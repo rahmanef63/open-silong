@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { Inbox as InboxIcon, CheckCheck, Filter } from "lucide-react";
 import { useInbox } from "../hooks/useInbox";
+import { useChangelog } from "../hooks/useChangelog";
 import { NotificationRow } from "../components/NotificationRow";
+import { ChangelogRow } from "../components/ChangelogRow";
 import { InboxEmpty } from "../components/InboxEmpty";
 import { cn } from "@/shared/lib/utils";
 import { Button } from "@/shared/ui/button";
@@ -11,10 +13,18 @@ import { Button } from "@/shared/ui/button";
 type FilterMode = "all" | "unread";
 
 export function InboxPage() {
-  const { items, unreadCount, markRead, markAllRead, remove, isLoading } = useInbox();
+  const { items, unreadCount: notifUnread, markRead, markAllRead, remove, isLoading } = useInbox();
+  const { unread: changelog, unreadCount: changelogUnread, markAllRead: markChangelogRead } = useChangelog();
   const [mode, setMode] = useState<FilterMode>("all");
 
   const visible = mode === "unread" ? items.filter((n) => !n.read) : items;
+  const totalUnread = notifUnread + changelogUnread;
+  const onMarkAllRead = async () => {
+    await Promise.all([
+      notifUnread > 0 ? markAllRead() : Promise.resolve(),
+      changelogUnread > 0 ? markChangelogRead() : Promise.resolve(),
+    ]);
+  };
 
   return (
     <div className="h-full overflow-y-auto scrollbar-thin">
@@ -27,16 +37,16 @@ export function InboxPage() {
             <div>
               <h1 className="text-2xl font-bold tracking-tight">Inbox</h1>
               <p className="text-xs text-muted-foreground">
-                {unreadCount > 0 ? `${unreadCount} unread` : "You're all caught up"}
+                {totalUnread > 0 ? `${totalUnread} unread` : "You're all caught up"}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <FilterTabs mode={mode} setMode={setMode} unreadCount={unreadCount} />
-            {unreadCount > 0 && (
+            <FilterTabs mode={mode} setMode={setMode} unreadCount={notifUnread} />
+            {totalUnread > 0 && (
               <Button
                 variant="outline"
-                onClick={() => markAllRead()}
+                onClick={onMarkAllRead}
                 className="h-auto gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-normal [&_svg]:size-3.5"
               >
                 <CheckCheck className="h-3.5 w-3.5" /> Mark all read
@@ -46,9 +56,12 @@ export function InboxPage() {
         </header>
 
         <div className="rounded-lg border border-border bg-card overflow-hidden">
+          {changelog.map((entry) => (
+            <ChangelogRow key={entry._id} entry={entry} />
+          ))}
           {isLoading ? (
             <div className="px-4 py-12 text-center text-sm text-muted-foreground">Loading…</div>
-          ) : visible.length === 0 ? (
+          ) : visible.length === 0 && changelog.length === 0 ? (
             <InboxEmpty />
           ) : (
             visible.map((n) => (
