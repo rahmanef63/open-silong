@@ -175,6 +175,100 @@ const TOOLS: ToolDef[] = [
     inputSchema: obj({ pageId: { type: "string" } }, ["pageId"]),
     annotations: { destructiveHint: false, idempotentHint: false },
   },
+
+  // ── Database surface (Notion-style: schema + rows = pages) ──────────
+  {
+    name: "databases_list",
+    description: "List user's databases. Returns dbId, name, icon, propertyCount, rowCount, updatedAt.",
+    inputSchema: obj({}),
+    annotations: { readOnlyHint: true },
+  },
+  {
+    name: "databases_get",
+    description: "Get one database with full schema (properties) + view ids + row count. Pass dbId from databases_list. Use BEFORE database_rows_create so you know the property names and types.",
+    inputSchema: obj({ dbId: { type: "string" } }, ["dbId"]),
+    annotations: { readOnlyHint: true },
+  },
+  {
+    name: "databases_rows",
+    description: "List rows in a database with pagination. Each row is a page — `rowProps` is keyed by property NAME. Returns up to 100/page.",
+    inputSchema: obj({
+      dbId: { type: "string" },
+      cursor: { type: "number", description: "0-based offset" },
+      limit: { type: "number", description: "1..100, default 50" },
+    }, ["dbId"]),
+    annotations: { readOnlyHint: true },
+  },
+  {
+    name: "databases_create",
+    description: "Create a new Notion-style database with a property schema. `properties` is an object keyed by property NAME — each value declares `type` + optional `options` (for select/status/multi_select). Supported types: text, title (alias of text), number, select, multi_select, status, date, checkbox, url, email, phone. Returns the new dbId.",
+    inputSchema: obj({
+      name: { type: "string" },
+      icon: { type: "string", description: "Optional emoji icon" },
+      properties: {
+        type: "object",
+        description: 'Schema by NAME. e.g. { "Name": {"type":"title"}, "Status": {"type":"status","options":["Todo","Done"]}, "Date": {"type":"date"} }',
+        additionalProperties: true,
+      },
+    }, ["name"]),
+    annotations: { destructiveHint: false, idempotentHint: false },
+  },
+  {
+    name: "databases_set_name",
+    description: "Rename a database. Idempotent.",
+    inputSchema: obj({
+      dbId: { type: "string" },
+      name: { type: "string" },
+    }, ["dbId", "name"]),
+    annotations: { destructiveHint: false, idempotentHint: true },
+  },
+  {
+    name: "databases_set_schema",
+    description: "Add new properties to a database (merge — does not remove existing). `properties` keyed by NAME, same shape as databases_create.",
+    inputSchema: obj({
+      dbId: { type: "string" },
+      properties: { type: "object", additionalProperties: true },
+    }, ["dbId", "properties"]),
+    annotations: { destructiveHint: false, idempotentHint: false },
+  },
+  {
+    name: "databases_trash",
+    description: "Soft-delete a database. Recoverable from /dashboard/trash for 30 days, then permanently purged.",
+    inputSchema: obj({ dbId: { type: "string" } }, ["dbId"]),
+    annotations: { destructiveHint: true, idempotentHint: true },
+  },
+  {
+    name: "database_rows_create",
+    description: "Insert a row into a database. `properties` is keyed by property NAME (case-sensitive, matches databases_get). Values are coerced to the property type. Returns the new pageId of the row.",
+    inputSchema: obj({
+      dbId: { type: "string" },
+      properties: {
+        type: "object",
+        description: 'By NAME. e.g. { "Name": "Buy milk", "Status": "Todo", "Date": "2026-05-20" }',
+        additionalProperties: true,
+      },
+    }, ["dbId", "properties"]),
+    annotations: { destructiveHint: false, idempotentHint: false },
+  },
+  {
+    name: "database_rows_update",
+    description: "Patch property values on an existing row. Pass only the properties you want to change. Other properties remain. Use pageId from databases_rows.",
+    inputSchema: obj({
+      pageId: { type: "string" },
+      properties: {
+        type: "object",
+        description: 'By NAME. Partial update.',
+        additionalProperties: true,
+      },
+    }, ["pageId", "properties"]),
+    annotations: { destructiveHint: false, idempotentHint: true },
+  },
+  {
+    name: "database_rows_trash",
+    description: "Soft-delete a database row (same as pages_trash, named for symmetry).",
+    inputSchema: obj({ pageId: { type: "string" } }, ["pageId"]),
+    annotations: { destructiveHint: true, idempotentHint: true },
+  },
 ];
 
 // ─────────────────────── tool dispatch ───────────────────────
@@ -357,9 +451,252 @@ async function dispatchTool(
         return errResult(e instanceof Error ? e.message : String(e));
       }
     }
+
+    // ── Database tools ─────────────────────────────────────────────
+    case "databases_list": {
+      const rows = await ctx.runQuery(internal.mcp.internal.listDatabases, { userId });
+      return textResult({
+        databases: rows.map((d) => ({
+          dbId: d._id,
+          name: d.name,
+          icon: d.icon,
+          propertyCount: (d.properties ?? []).length,
+          rowCount: (d.rowIds ?? []).length,
+          updatedAt: d.updatedAt,
+        })),
+      });
+    }
+    case "databases_get": {
+      const dbId = String(args.dbId ?? "");
+      if (!dbId) return errResult("dbId is required");
+      const doc = await ctx.runQuery(internal.mcp.internal.fetchDatabase, { userId, dbId });
+      if (!doc) return errResult("Database not found or unauthorized");
+      return textResult({
+        dbId: doc._id,
+        name: doc.name,
+        icon: doc.icon,
+        rowCount: (doc.rowIds ?? []).length,
+        properties: (doc.properties ?? []).map((p: { id: string; name: string; type: string; options?: unknown }) => ({
+          id: p.id, name: p.name, type: p.type,
+          ...(p.options ? { options: p.options } : {}),
+        })),
+        views: (doc.views ?? []).map((v: { id: string; name: string; type: string }) => ({
+          id: v.id, name: v.name, type: v.type,
+        })),
+      });
+    }
+    case "databases_rows": {
+      const dbId = String(args.dbId ?? "");
+      if (!dbId) return errResult("dbId is required");
+      const rawCursor = args.cursor;
+      const cursor = typeof rawCursor === "number" && rawCursor >= 0 ? rawCursor : 0;
+      const rawLimit = args.limit;
+      const limit = typeof rawLimit === "number" ? Math.min(Math.max(Math.floor(rawLimit), 1), 100) : 50;
+      const { items, nextCursor, total } = await ctx.runQuery(internal.mcp.internal.listRows, {
+        userId, dbId, cursor, pageSize: limit,
+      });
+      // Need property id→name map so we can return rowProps keyed by NAME
+      // (id is internal — the LLM has zero use for the uid).
+      const db = await ctx.runQuery(internal.mcp.internal.fetchDatabase, { userId, dbId });
+      const idToName = new Map<string, string>();
+      for (const p of (db?.properties ?? []) as Array<{ id: string; name: string }>) {
+        idToName.set(p.id, p.name);
+      }
+      const remap = (props: Record<string, unknown>): Record<string, unknown> => {
+        const out: Record<string, unknown> = {};
+        for (const [k, v] of Object.entries(props ?? {})) {
+          out[idToName.get(k) ?? k] = v;
+        }
+        return out;
+      };
+      return textResult({
+        rows: items.map((r) => ({
+          pageId: r._id,
+          title: r.title,
+          rowProps: remap((r.rowProps ?? {}) as Record<string, unknown>),
+          updatedAt: r.updatedAt,
+        })),
+        nextCursor, total,
+      });
+    }
+    case "databases_create": {
+      const name = String(args.name ?? "Untitled database");
+      const icon = typeof args.icon === "string" && args.icon ? args.icon : undefined;
+      const properties = buildPropertiesArray(args.properties);
+      try {
+        const dbId = await ctx.runMutation(internal.mcp.internal.createDatabase, {
+          userId, name, icon, properties,
+        });
+        return textResult({ ok: true, dbId });
+      } catch (e) {
+        return errResult(e instanceof Error ? e.message : String(e));
+      }
+    }
+    case "databases_set_name": {
+      const dbId = String(args.dbId ?? "");
+      const name = String(args.name ?? "");
+      if (!dbId || !name) return errResult("dbId + name required");
+      try {
+        await ctx.runMutation(internal.mcp.internal.updateDatabase, {
+          userId, dbId, patch: { name },
+        });
+        return textResult({ ok: true, dbId });
+      } catch (e) {
+        return errResult(e instanceof Error ? e.message : String(e));
+      }
+    }
+    case "databases_set_schema": {
+      const dbId = String(args.dbId ?? "");
+      if (!dbId) return errResult("dbId is required");
+      const newProps = buildPropertiesArray(args.properties);
+      if (!newProps.length) return errResult("properties required");
+      try {
+        const db = await ctx.runQuery(internal.mcp.internal.fetchDatabase, { userId, dbId });
+        if (!db) return errResult("Database not found or unauthorized");
+        const existingNames = new Set((db.properties ?? []).map((p: { name: string }) => p.name));
+        const merged = [...db.properties, ...newProps.filter((p) => !existingNames.has(p.name))];
+        await ctx.runMutation(internal.mcp.internal.updateDatabase, {
+          userId, dbId, patch: { properties: merged },
+        });
+        return textResult({ ok: true, dbId, propertyCount: merged.length });
+      } catch (e) {
+        return errResult(e instanceof Error ? e.message : String(e));
+      }
+    }
+    case "databases_trash": {
+      const dbId = String(args.dbId ?? "");
+      if (!dbId) return errResult("dbId is required");
+      try {
+        await ctx.runMutation(internal.mcp.internal.updateDatabase, {
+          userId, dbId, patch: { trashed: true },
+        });
+        return textResult({ ok: true, dbId });
+      } catch (e) {
+        return errResult(e instanceof Error ? e.message : String(e));
+      }
+    }
+    case "database_rows_create": {
+      const dbId = String(args.dbId ?? "");
+      if (!dbId) return errResult("dbId is required");
+      const propsInput = (args.properties ?? {}) as Record<string, unknown>;
+      try {
+        const db = await ctx.runQuery(internal.mcp.internal.fetchDatabase, { userId, dbId });
+        if (!db) return errResult("Database not found or unauthorized");
+        const { rowProps, title } = mapPropsByName(db.properties as Array<{ id: string; name: string; type: string }>, propsInput);
+        const rowId = await ctx.runMutation(internal.mcp.internal.createRow, {
+          userId, dbId, rowProps, title,
+        });
+        return textResult({ ok: true, pageId: rowId });
+      } catch (e) {
+        return errResult(e instanceof Error ? e.message : String(e));
+      }
+    }
+    case "database_rows_update": {
+      const pageId = String(args.pageId ?? "");
+      if (!pageId) return errResult("pageId is required");
+      const propsInput = (args.properties ?? {}) as Record<string, unknown>;
+      try {
+        // Need the parent db schema to map name→id. Fetch the row,
+        // then its database.
+        const row = await ctx.runQuery(internal.mcp.internal.fetchPage, { userId, pageId });
+        if (!row || !row.rowOfDatabaseId) return errResult("Page is not a database row");
+        const db = await ctx.runQuery(internal.mcp.internal.fetchDatabase, {
+          userId, dbId: row.rowOfDatabaseId,
+        });
+        if (!db) return errResult("Parent database not found");
+        const { rowProps, title } = mapPropsByName(db.properties as Array<{ id: string; name: string; type: string }>, propsInput);
+        await ctx.runMutation(internal.mcp.internal.updateRow, {
+          userId, rowPageId: pageId, rowProps,
+        });
+        // Title is a separate field on the page, not in rowProps.
+        if (title !== undefined) {
+          await ctx.runMutation(internal.mcp.internal.setTitleAs, {
+            userId, pageId, title,
+          });
+        }
+        return textResult({ ok: true, pageId });
+      } catch (e) {
+        return errResult(e instanceof Error ? e.message : String(e));
+      }
+    }
+    case "database_rows_trash": {
+      const pageId = String(args.pageId ?? "");
+      if (!pageId) return errResult("pageId is required");
+      try {
+        await ctx.runMutation(internal.mcp.internal.trashPage, { userId, pageId });
+        return textResult({ ok: true, pageId });
+      } catch (e) {
+        return errResult(e instanceof Error ? e.message : String(e));
+      }
+    }
+
     default:
       return errResult(`Unknown tool: ${name}`);
   }
+}
+
+// ────────────── Property schema helpers ──────────────
+
+/** Map user-facing type alias → Nosion internal type. Notion uses
+ *  `title`, Nosion stores it as `text` (the first text property doubles
+ *  as title). Other types pass through. */
+const TYPE_ALIASES: Record<string, string> = {
+  title: "text",
+  rich_text: "text",
+};
+
+const ALLOWED_PROP_TYPES = new Set([
+  "text", "number", "select", "multi_select", "status", "date",
+  "checkbox", "url", "email", "phone",
+]);
+
+function buildPropertiesArray(input: unknown): Array<{ id: string; name: string; type: string; options?: Array<{ id: string; value: string }> }> {
+  if (!input || typeof input !== "object") return [];
+  const out: Array<{ id: string; name: string; type: string; options?: Array<{ id: string; value: string }> }> = [];
+  for (const [name, spec] of Object.entries(input as Record<string, unknown>)) {
+    const s = spec as { type?: string; options?: unknown };
+    const rawType = String(s?.type ?? "text").toLowerCase();
+    const type = TYPE_ALIASES[rawType] ?? rawType;
+    if (!ALLOWED_PROP_TYPES.has(type)) continue; // silently skip unknown types
+    const prop: { id: string; name: string; type: string; options?: Array<{ id: string; value: string }> } = {
+      id: crypto.randomUUID().slice(0, 12),
+      name,
+      type,
+    };
+    if (Array.isArray(s.options) && (type === "select" || type === "multi_select" || type === "status")) {
+      prop.options = s.options.map((opt) => ({
+        id: crypto.randomUUID().slice(0, 8),
+        value: String(opt),
+      }));
+    }
+    out.push(prop);
+  }
+  return out;
+}
+
+/** Convert caller-supplied { propName: value } map into the internal
+ *  `rowProps` shape keyed by property id. Title goes to a separate
+ *  return field since it's stored on the page row, not in rowProps. */
+function mapPropsByName(
+  schema: Array<{ id: string; name: string; type: string }>,
+  inputByName: Record<string, unknown>,
+): { rowProps: Record<string, unknown>; title?: string } {
+  const nameToProp = new Map<string, { id: string; type: string }>();
+  for (const p of schema) nameToProp.set(p.name, { id: p.id, type: p.type });
+  // First text property is the title field by convention.
+  const titleProp = schema.find((p) => p.type === "text");
+  const rowProps: Record<string, unknown> = {};
+  let title: string | undefined;
+  for (const [name, value] of Object.entries(inputByName)) {
+    const prop = nameToProp.get(name);
+    if (!prop) continue; // silently drop unknown property
+    if (prop.id === titleProp?.id) {
+      title = String(value ?? "");
+    } else {
+      rowProps[prop.id] = value;
+    }
+  }
+  return { rowProps, title };
 }
 
 // ─────────────────────── JSON-RPC dispatcher ───────────────────────
