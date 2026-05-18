@@ -12,7 +12,7 @@ import { cn } from "@/shared/lib/utils";
 
 export type SettingsKey =
   | "workspace" | "appearance" | "pages" | "backup"
-  | "mcp" | "webhooks" | "tickets";
+  | "mcp" | "chatgpt" | "webhooks" | "tickets";
 
 interface NavItem {
   key: SettingsKey;
@@ -27,6 +27,7 @@ const NAV: NavItem[] = [
   { key: "pages",      label: "Pages",       icon: FileText,   description: "Sort + landing + editor" },
   { key: "backup",     label: "Backup",      icon: Save,       description: "Export + import workspace" },
   { key: "mcp",        label: "MCP tokens",  icon: KeyRound,   description: "Notion MCP HTTP tokens" },
+  { key: "chatgpt",    label: "ChatGPT App", icon: Plug,       description: "OAuth connect ChatGPT" },
   { key: "webhooks",   label: "Webhooks",    icon: Webhook,    description: "Outbound delivery + log" },
   { key: "tickets",    label: "Tickets",     icon: LifeBuoy,   description: "Report bugs + feature requests" },
 ];

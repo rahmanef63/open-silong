@@ -8,9 +8,9 @@ import { toast } from "sonner";
 import { Check, Copy, ExternalLink } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 
-/** Admin view of issued OAuth access tokens (ChatGPT MCP connector etc).
- *  Token material never leaves Convex — only previews are wired here.
- *  See `convex/oauth/queries.ts:adminList`. */
+/** Per-user OAuth-token panel — connect ChatGPT custom app to YOUR
+ *  Nosion workspace. Token scoped to current user; MCP route resolves
+ *  bearer → userId, so each user only sees + acts on their own pages. */
 
 type Row = {
   _id: Id<"oauthAccessTokens">;
@@ -32,8 +32,6 @@ const MCP = "https://api-notion-page-clone.rahmanef.com/mcp";
 type Field = { label: string; value: string; copyable: boolean; hint?: string };
 type Group = { title: string; fields: Field[] };
 
-/** ChatGPT's connector-form field labels — verbatim so the user can
- *  scan visually against their browser tab + paste. */
 const GROUPS: Group[] = [
   {
     title: "Connection",
@@ -89,8 +87,6 @@ const STATUS_CLS: Record<ReturnType<typeof status>, string> = {
   revoked: "bg-destructive/10 text-destructive border-destructive/30",
 };
 
-/** Click-to-copy field row. Tap anywhere — the whole row is a button.
- *  Briefly swaps the copy icon to a check so the user sees the action. */
 function CopyRow({ field }: { field: Field }) {
   const [copied, setCopied] = useState(false);
 
@@ -144,7 +140,7 @@ function GroupCard({ group }: { group: Group }) {
     if (!text) return;
     try {
       await navigator.clipboard.writeText(text);
-      toast.success(`${group.title} (${group.fields.filter((f) => f.copyable).length} fields) copied`);
+      toast.success(`${group.title} copied`);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Clipboard tidak tersedia");
     }
@@ -186,12 +182,12 @@ function CopyAllJson() {
   );
 }
 
-export function OAuthPanel() {
-  const rows = useQuery(api.oauth.queries.adminList, {}) as Row[] | undefined;
+export function ChatGptOAuthSection() {
+  const rows = useQuery(api.oauth.queries.listMine, {}) as Row[] | undefined;
   const revoke = useMutation(api.oauth.mutations.revokeToken);
 
   const onRevoke = async (id: Id<"oauthAccessTokens">, label: string) => {
-    if (!window.confirm(`Revoke token "${label}"? Aplikasi yang pakai akan kehilangan akses.`)) return;
+    if (!window.confirm(`Revoke "${label}"? Aplikasi yang pakai token ini langsung kehilangan akses.`)) return;
     try {
       await revoke({ id });
       toast.success("Token revoked");
@@ -202,30 +198,26 @@ export function OAuthPanel() {
 
   return (
     <div className="space-y-8">
-      {/* Header */}
       <div className="space-y-1">
-        <h2 className="text-lg font-semibold">MCP &amp; OAuth Tokens</h2>
         <p className="text-sm text-muted-foreground max-w-2xl">
-          Hubungkan Nosion ke ChatGPT custom app via OAuth 2.1 + PKCE. Form di
-          bawah sudah berisi field yang ChatGPT minta — tap baris untuk copy
-          per-field, atau "Copy group" untuk batch.
+          Hubungkan workspace kamu ke ChatGPT custom app via OAuth 2.1 + PKCE.
+          Token yang di-mint scoped ke akun kamu — ChatGPT cuma bisa lihat /
+          edit page kamu, bukan user lain.
         </p>
       </div>
 
-      {/* Step 1 */}
       <section className="rounded-lg border border-border bg-card p-4">
         <div className="flex items-start gap-3">
           <span className="shrink-0 inline-flex h-7 w-7 items-center justify-center rounded-full bg-foreground text-background text-xs font-semibold">1</span>
           <div className="space-y-1">
             <p className="text-sm font-semibold">Buka ChatGPT → Settings → Connectors → New App</p>
             <p className="text-xs text-muted-foreground">
-              Connector form akan minta beberapa field. Authentication = OAuth, Registration method = User-Defined OAuth Client.
+              Authentication = OAuth, Registration method = User-Defined OAuth Client.
             </p>
           </div>
         </div>
       </section>
 
-      {/* Step 2 — the form fields */}
       <section className="space-y-3">
         <div className="flex items-start gap-3">
           <span className="shrink-0 inline-flex h-7 w-7 items-center justify-center rounded-full bg-foreground text-background text-xs font-semibold">2</span>
@@ -244,29 +236,27 @@ export function OAuthPanel() {
         </div>
       </section>
 
-      {/* Step 3 */}
       <section className="rounded-lg border border-border bg-card p-4">
         <div className="flex items-start gap-3">
           <span className="shrink-0 inline-flex h-7 w-7 items-center justify-center rounded-full bg-foreground text-background text-xs font-semibold">3</span>
           <div className="space-y-2">
             <p className="text-sm font-semibold">Klik Create → Connect → Allow di consent page</p>
             <p className="text-xs text-muted-foreground">
-              ChatGPT akan redirect ke <code className="text-xs">/oauth/authorize</code>. Login Nosion (kalau belum), review
-              params, klik Allow. Token aktif 1 tahun setelahnya — muncul di table di bawah.
+              ChatGPT akan redirect ke <code className="text-xs">/oauth/authorize</code>.
+              Review params, klik Allow. Token aktif 1 tahun setelahnya — muncul di
+              table di bawah.
             </p>
-            <div className="flex flex-wrap gap-2 pt-1">
+            <div className="flex flex-wrap gap-3 pt-1">
               <a
                 href="/.well-known/oauth-authorization-server"
-                target="_blank"
-                rel="noopener"
+                target="_blank" rel="noopener"
                 className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground underline underline-offset-4"
               >
                 <ExternalLink className="size-3" /> /.well-known/oauth-authorization-server
               </a>
               <a
                 href="/.well-known/oauth-protected-resource"
-                target="_blank"
-                rel="noopener"
+                target="_blank" rel="noopener"
                 className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground underline underline-offset-4"
               >
                 <ExternalLink className="size-3" /> /.well-known/oauth-protected-resource
@@ -276,9 +266,8 @@ export function OAuthPanel() {
         </div>
       </section>
 
-      {/* Tokens table */}
       <section className="space-y-2">
-        <h3 className="text-sm font-semibold">Issued tokens</h3>
+        <h3 className="text-sm font-semibold">Token saya</h3>
         {rows === undefined ? (
           <div className="border border-border rounded-lg p-6 text-sm text-muted-foreground">Memuat…</div>
         ) : rows.length === 0 ? (
@@ -334,17 +323,6 @@ export function OAuthPanel() {
             </table>
           </div>
         )}
-      </section>
-
-      {/* Fallback note */}
-      <section className="border border-border rounded-lg p-4 bg-card text-xs space-y-2">
-        <h3 className="text-sm font-semibold">MCP_API_KEY (static fallback)</h3>
-        <p className="text-muted-foreground">
-          Static bearer untuk smoke test / scripts. Aktif kalau env{" "}
-          <code>MCP_API_KEY</code> + <code>MCP_USER_ID</code> diset di Convex
-          deployment. Tidak muncul di table di atas. Cabut:{" "}
-          <code>npx convex env unset MCP_API_KEY MCP_USER_ID</code>.
-        </p>
       </section>
     </div>
   );
