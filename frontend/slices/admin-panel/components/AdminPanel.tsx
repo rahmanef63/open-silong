@@ -9,6 +9,7 @@ import { AuditLogPanel } from "./AuditLogPanel";
 import { FeedbackPanel } from "./FeedbackPanel";
 import { AIConfigPanel } from "./ai/AIConfigPanel";
 import { ChangelogPanel } from "./ChangelogPanel";
+import { OAuthPanel } from "./OAuthPanel";
 
 const TABS = [
   { id: "overview", label: "Overview" },
@@ -18,6 +19,7 @@ const TABS = [
   { id: "audit", label: "Audit log" },
   { id: "feedback", label: "Feedback" },
   { id: "changelog", label: "Changelog" },
+  { id: "oauth", label: "MCP / OAuth" },
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
@@ -46,6 +48,7 @@ export function AdminPanel() {
           <TabsContent value="audit" className="mt-6"><AuditLogPanel /></TabsContent>
           <TabsContent value="feedback" className="mt-6"><FeedbackPanel /></TabsContent>
           <TabsContent value="changelog" className="mt-6"><ChangelogPanel /></TabsContent>
+          <TabsContent value="oauth" className="mt-6"><OAuthPanel /></TabsContent>
         </Tabs>
       </div>
     </div>

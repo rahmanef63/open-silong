@@ -476,6 +476,45 @@ export default defineSchema({
     .index("by_run", ["runId"])
     .index("by_user_updated", ["userId", "updatedAt"]),
 
+  /** OAuth 2.1 + PKCE state for ChatGPT custom-app flow.
+   *  Spec: RFC 7636 (PKCE) + RFC 8414 (AS metadata) + RFC 9728 (PR metadata).
+   *  MCP auth: https://modelcontextprotocol.io/specification/2025-11-25/basic/authorization
+   *  Single-tenant model: only admins can mint codes via `/oauth/authorize`.
+   *  The "client" is whoever pasted ChatGPT's connector form — we don't
+   *  enforce client_id since user-defined-client mode lets the admin pick. */
+  oauthCodes: defineTable({
+    code: v.string(),
+    codeChallenge: v.string(),
+    codeChallengeMethod: v.string(), // "S256" only
+    redirectUri: v.string(),
+    clientId: v.string(),
+    scope: v.optional(v.string()),
+    resource: v.optional(v.string()),
+    userId: v.id("users"),
+    expiresAt: v.number(), // unix ms, 5 min TTL
+    consumed: v.boolean(),
+    createdAt: v.number(),
+  })
+    .index("by_code", ["code"])
+    .index("by_user_time", ["userId", "createdAt"]),
+
+  /** Long-lived access tokens issued after a successful code exchange.
+   *  Validated on every MCP call. 1 year TTL — easy to rotate via revoke. */
+  oauthAccessTokens: defineTable({
+    token: v.string(),
+    userId: v.id("users"),
+    clientId: v.string(),
+    scope: v.optional(v.string()),
+    resource: v.optional(v.string()),
+    expiresAt: v.number(),
+    createdAt: v.number(),
+    lastUsedAt: v.optional(v.number()),
+    revokedAt: v.optional(v.number()),
+    label: v.optional(v.string()),
+  })
+    .index("by_token", ["token"])
+    .index("by_user_time", ["userId", "createdAt"]),
+
   /** Admin-set per-user MODEL override. Inherits provider + apiKey from
    *  `globalAISettings` — useful when admin wants a premium user on a
    *  beefier model (e.g. claude-sonnet-4.5) and free-tier users on a

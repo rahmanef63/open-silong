@@ -33,13 +33,16 @@ const PROTOCOL_VERSION = "2024-11-05";
 async function authenticate(
   ctx: ActionCtx,
   req: Request,
-): Promise<{ userId: Id<"users">; tokenId?: Id<"mcpTokens"> } | { error: number; message: string }> {
+): Promise<
+  | { userId: Id<"users">; tokenId?: Id<"mcpTokens">; oauthId?: Id<"oauthAccessTokens"> }
+  | { error: number; message: string }
+> {
   const auth = req.headers.get("authorization") ?? "";
   if (!auth.startsWith("Bearer ")) return { error: 401, message: "Missing Bearer token" };
   const token = auth.slice("Bearer ".length).trim();
   if (!token) return { error: 401, message: "Empty token" };
 
-  // Per-user issued tokens (prefix `nsn_`) — preferred path.
+  // 1. Per-user issued nsn_ tokens (preferred for scripts).
   if (token.startsWith("nsn_")) {
     const tokenHash = await sha256Hex(token);
     const found = await ctx.runQuery(internal.mcp.tokens.lookupByHash, { tokenHash });
@@ -47,12 +50,21 @@ async function authenticate(
     return { userId: found.userId, tokenId: found.id };
   }
 
-  // Env single-tenant fallback. Set MCP_API_KEY + MCP_USER_ID on
-  // the Convex deployment to enable this.
+  // 2. OAuth 2.1 access tokens minted via /oauth/authorize → /api/oauth/token.
+  //    ChatGPT custom-app sends these.
+  const oauthRow = await ctx.runQuery(internal.oauth.queries.findToken, { token });
+  if (oauthRow) {
+    // Best-effort touch — never block dispatch on the bookkeeping write.
+    void ctx.runMutation(internal.oauth.mutations.touchToken, { id: oauthRow.id }).catch(() => {});
+    return { userId: oauthRow.userId, oauthId: oauthRow.id };
+  }
+
+  // 3. Env single-tenant fallback. Set MCP_API_KEY + MCP_USER_ID on
+  //    the Convex deployment to enable this (smoke tests, internal scripts).
   const expected = process.env.MCP_API_KEY ?? process.env.MCP_API_TOKEN;
   const userIdEnv = process.env.MCP_USER_ID;
   if (!expected || !userIdEnv) {
-    return { error: 503, message: "MCP not configured — issue a per-user token or set MCP_API_KEY + MCP_USER_ID." };
+    return { error: 401, message: "Invalid token" };
   }
   // Constant-time-ish compare via length gate.
   if (token.length !== expected.length || token !== expected) {
@@ -319,7 +331,7 @@ export const mcpRpcHandler = httpAction(async (ctx, req) => {
       headers: {
         "content-type": "application/json",
         ...CORS_HEADERS,
-        "www-authenticate": 'Bearer realm="nosion-mcp"',
+        "www-authenticate": 'Bearer realm="nosion-mcp", resource_metadata="https://nosion.rahmanef.com/.well-known/oauth-protected-resource"',
       },
     });
   }
