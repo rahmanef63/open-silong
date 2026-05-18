@@ -76,6 +76,12 @@ export interface Block {
   align?: "left" | "center" | "right";
   /** for columns2/3: per-column width as % of container; sum should ≈ 100 */
   colWidths?: number[];
+  /** Layout grouping — when set, this block is rendered inside the
+   *  column layout with this id. Adjacent top-level blocks sharing
+   *  the same layoutGroup form one row of N columns. */
+  layoutGroup?: string;
+  /** 0..n-1 column index within the layout group. */
+  layoutCol?: number;
   /** Notion-style text color palette key (see slices/editor/lib/colors.ts) */
   color?: string;
   /** Notion-style background color palette key */
@@ -108,6 +114,13 @@ export interface CoverData {
 
 export type CoverField = string | null | CoverData;
 
+export interface ColumnLayout {
+  id: string;
+  type: "columns";
+  count: number;
+  widths?: number[];
+}
+
 export interface Page {
   id: string;
   parentId: string | null;
@@ -115,6 +128,8 @@ export interface Page {
   icon: string;
   cover?: CoverField;
   blocks: Block[];
+  /** Column-layout definitions referenced by blocks via layoutGroup. */
+  layouts?: ColumnLayout[];
   favorite: boolean;
   trashed: boolean;
   createdAt: number;

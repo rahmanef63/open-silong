@@ -6,7 +6,6 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useBlockHistory } from "@/shared/hooks/useBlockHistory";
 import { DatabaseBlock } from "@/slices/databases";
-import { ColumnBlockEditor } from "./ColumnBlockEditor";
 import { BlockShell } from "./blocks/BlockShell";
 import { BlockControls } from "./blocks/BlockControls";
 import { BlockBody } from "./blocks/BlockBody";
@@ -37,7 +36,7 @@ interface Props {
 function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerRef }: Props) {
   const {
     updateBlock, addBlock, deleteBlock, setBlockType, duplicateBlock,
-    createPage, createDatabase, replaceBlock,
+    createPage, createDatabase, replaceBlock, updatePage, getPage,
   } = useStore();
   const [slashOpen, setSlashOpen] = useState(false);
   const [slashQuery, setSlashQuery] = useState("");
@@ -77,7 +76,10 @@ function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerR
 
   const onSlashSelect = (type: BlockType) => {
     setSlashOpen(false);
-    return runSlashSelect(type, { pageId, block, createPage, createDatabase, setBlockType, updateBlock });
+    return runSlashSelect(type, {
+      pageId, block, createPage, createDatabase, setBlockType, updateBlock,
+      addBlock, updatePage, getPage,
+    });
   };
 
   const shellProps = {
@@ -104,13 +106,10 @@ function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerR
     );
   }
 
-  if (block.type === "columns2" || block.type === "columns3" || block.type === "columns4" || block.type === "columns5") {
-    return (
-      <BlockShell {...shellProps} controls={controls}>
-        <ColumnBlockEditor block={block} onUpdate={(p) => updateBlock(pageId, block.id, p)} depth={1} pageId={pageId} />
-      </BlockShell>
-    );
-  }
+  // Legacy `columns2..5` blocks are flattened into the new layout
+  // primitive by adaptPageLayouts() before they reach BlockEditor, so
+  // we never receive one here directly. Kept in BlockType for back-
+  // compat reads of pages that haven't been adapted yet.
 
   if (block.type === "toggle") {
     return (

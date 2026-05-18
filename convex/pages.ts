@@ -302,6 +302,12 @@ export const update = mutation({
         }),
       )),
       blocks: v.optional(v.array(v.any())),
+      layouts: v.optional(v.array(v.object({
+        id: v.string(),
+        type: v.literal("columns"),
+        count: v.number(),
+        widths: v.optional(v.array(v.number())),
+      }))),
       favorite: v.optional(v.boolean()),
       parentId: v.optional(v.union(v.id("pages"), v.null())),
       font: v.optional(v.string()),
