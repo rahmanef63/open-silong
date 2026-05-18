@@ -160,11 +160,19 @@ export default function OAuthAuthorizePage() {
                 </dd>
               </dl>
 
-              <div className="border border-border rounded-md bg-muted/30 p-3 text-xs text-muted-foreground">
-                Sekali allow, aplikasi bisa <strong>read / create / update</strong> pages
-                dan databases lewat MCP tools (pages_list, pages_search, pages_get,
-                pages_create, pages_append_markdown). Kamu bertanggung jawab atas
-                action yang aplikasi lakukan.
+              <div className="border border-border rounded-md bg-muted/30 p-3 text-xs text-muted-foreground space-y-2">
+                <p>
+                  <strong className="text-foreground">Tidak perlu paste token apapun.</strong>{" "}
+                  Klik <strong>Allow</strong> di bawah, Nosion auto-mint token + kirim
+                  balik ke ChatGPT. Script token (nsn_) buat client lain (Claude
+                  Desktop / Cursor / curl), bukan untuk flow ini.
+                </p>
+                <p>
+                  Sekali allow, aplikasi bisa <strong>read / create / update</strong>{" "}
+                  pages dan databases lewat MCP tools (pages_list, pages_search,
+                  pages_get, pages_create, pages_append_markdown). Token aktif 1
+                  tahun — revoke kapan saja di Settings → MCP.
+                </p>
               </div>
 
               <div className="flex items-center justify-end gap-2">

@@ -6,7 +6,7 @@ import { NextResponse } from "next/server";
 export const revalidate = 3600;
 
 const SITE = "https://nosion.rahmanef.com";
-const MCP = "https://api-notion-page-clone.rahmanef.com/mcp";
+const MCP = "https://site-notion-page-clone.rahmanef.com/mcp";
 
 export function GET() {
   const metadata = {

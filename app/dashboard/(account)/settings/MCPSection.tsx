@@ -30,7 +30,7 @@ type Row = {
 };
 
 const SITE = "https://nosion.rahmanef.com";
-const MCP = "https://api-notion-page-clone.rahmanef.com/mcp";
+const MCP = "https://site-notion-page-clone.rahmanef.com/mcp";
 
 type Field = { label: string; value: string; copyable: boolean; hint?: string };
 type Group = { title: string; fields: Field[] };
@@ -218,6 +218,14 @@ function Step({ n, title, children }: { n: number; title: string; children?: Rea
 function ChatGPTTab() {
   return (
     <div className="space-y-6">
+      <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-foreground/90">
+        <p>
+          <strong>OAuth — bukan paste token.</strong> Token auto-minted setelah kamu
+          klik <em>Allow</em> di consent page. <strong>JANGAN</strong> paste nsn_
+          script token di form ChatGPT. Script tokens cuma untuk Claude Desktop /
+          Cursor / curl (tab Script tokens di sidebar).
+        </p>
+      </div>
       <Step n={1} title="Buka ChatGPT → Settings → Connectors → New App">
         <p>Authentication = OAuth, Registration method = User-Defined OAuth Client.</p>
       </Step>
