@@ -1,6 +1,4 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
-import { GripVertical } from "lucide-react";
-import { Button } from "@/shared/ui/button";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { Block, BlockType } from "@/shared/types/domain";
@@ -11,6 +9,7 @@ import { nestedRegistry } from "./nestedRegistry";
 import { NESTED_PLACEHOLDERS as PLACEHOLDERS } from "./placeholders";
 import { NestedContent } from "./nested-block/NestedContent";
 import { handleNestedInput, runNestedSlashSelect, handleNestedKeyDown } from "./nested-block/handlers";
+import { NestedBlockControls } from "./NestedBlockControls";
 
 interface Props {
   block: Block;
@@ -92,16 +91,16 @@ export function NestedBlock({
         isOver && !isDragging && "before:absolute before:inset-x-0 before:-top-0.5 before:h-0.5 before:bg-brand before:rounded",
       )}
     >
-      <Button
-        {...listeners}
-        type="button"
-        variant="ghost"
-        size="icon"
-        aria-label="Drag block"
-        className="mt-1 h-5 w-4 shrink-0 cursor-grab rounded p-0 text-muted-foreground/50 opacity-0 active:cursor-grabbing group-hover/nested:opacity-100 [&_svg]:size-3.5"
-      >
-        <GripVertical className="h-3.5 w-3.5" />
-      </Button>
+      <div className="mt-0.5 shrink-0 opacity-0 group-hover/nested:opacity-100 focus-within:opacity-100 transition-opacity">
+        <NestedBlockControls
+          block={block}
+          pageId={pageId}
+          listeners={listeners}
+          onUpdate={onUpdate}
+          onAddAfter={onAddAfter}
+          onDelete={onDelete}
+        />
+      </div>
       <div className={cn("relative flex-1 min-w-0", bgCls && "-mx-1 px-1 rounded", bgCls)}>
         <NestedContent
           block={block}
