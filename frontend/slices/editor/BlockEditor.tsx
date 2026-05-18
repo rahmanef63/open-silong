@@ -22,6 +22,7 @@ import { useBlockDecorate } from "./block-editor/useBlockDecorate";
 import { runSlashSelect } from "./block-editor/slashHandler";
 import { handleBlockKeyDown } from "./block-editor/keyboardHandler";
 import { handleBlockInput } from "./block-editor/inputHandler";
+import { handleMarkdownPaste } from "./block-editor/pasteHandler";
 import { PageRefBlock } from "./block-editor/PageRefBlock";
 
 interface Props {
@@ -72,6 +73,11 @@ function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerR
     handleBlockKeyDown(e, {
       pageId, block, index, total, slashOpen, history, setAskOpen,
       convertTo, duplicateBlock, addBlock, deleteBlock, setBlockType, updateBlock, focusByOffset,
+    });
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLElement>) =>
+    handleMarkdownPaste(e, {
+      pageId, block, getPage, updatePage, setBlockType, updateBlock,
     });
 
   const onSlashSelect = (type: BlockType) => {
@@ -155,6 +161,7 @@ function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerR
         setRef={setRef}
         handleInput={handleInput}
         handleKeyDown={handleKeyDown}
+        handlePaste={handlePaste}
         onCheck={(c) => updateBlock(pageId, block.id, { checked: c })}
         onLang={(lang) => updateBlock(pageId, block.id, { lang })}
       />

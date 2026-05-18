@@ -86,9 +86,16 @@ export function pageToPlainText(page: Page): string {
   return lines.join("\n");
 }
 
-/** Minimal markdown → blocks parser. Each line becomes one block. */
+/** Markdown → blocks parser. Two-phase:
+ *   1. Line scan with code-fence + table lookahead.
+ *   2. Inline marks (`**bold**`, `_italic_`, `~~strike~~`, `` `code` ``,
+ *      `[text](url)`) are LEFT IN PLACE — the editor stores its rich
+ *      inline as markdown source (see CLAUDE.md "Slack model" note) and
+ *      decorates in place at render time, so a paragraph with mixed
+ *      formatting needs no further transformation.
+ */
 export function markdownToBlocks(md: string): Block[] {
-  const lines = md.replace(/\r\n/g, "\n").split("\n");
+  const rawLines = md.replace(/\r\n/g, "\n").split("\n");
   const blocks: Block[] = [];
   let inFence = false;
   let fenceLang = "";
@@ -97,46 +104,101 @@ export function markdownToBlocks(md: string): Block[] {
   const push = (b: Partial<Block> & { type: Block["type"]; text: string }) =>
     blocks.push({ id: uid(), ...b });
 
-  for (const raw of lines) {
+  // Two-pass index walker so the table branch can consume the
+  // separator + data rows in a single shot via lookahead.
+  let i = 0;
+  while (i < rawLines.length) {
+    const raw = rawLines[i];
+
     if (inFence) {
       if (raw.trim().startsWith("```")) {
         push({ type: "code", text: fenceBuf.join("\n"), lang: fenceLang });
-        inFence = false;
-        fenceLang = "";
-        fenceBuf = [];
+        inFence = false; fenceLang = ""; fenceBuf = [];
       } else {
         fenceBuf.push(raw);
       }
-      continue;
+      i++; continue;
     }
-    const line = raw;
-    const trimmed = line.trim();
+
+    const trimmed = raw.trim();
 
     if (trimmed.startsWith("```")) {
       inFence = true;
       fenceLang = trimmed.slice(3).trim();
-      continue;
+      i++; continue;
     }
-    if (trimmed === "---" || trimmed === "***") { push({ type: "divider", text: "" }); continue; }
-    if (trimmed.startsWith("# ")) { push({ type: "h1", text: trimmed.slice(2) }); continue; }
-    if (trimmed.startsWith("## ")) { push({ type: "h2", text: trimmed.slice(3) }); continue; }
-    if (trimmed.startsWith("### ")) { push({ type: "h3", text: trimmed.slice(4) }); continue; }
-    if (/^- \[( |x)\] /.test(trimmed)) {
-      const checked = trimmed[3] === "x";
-      push({ type: "todo", text: trimmed.slice(6), checked });
-      continue;
+    if (trimmed === "---" || trimmed === "***" || trimmed === "___") {
+      push({ type: "divider", text: "" });
+      i++; continue;
     }
-    if (trimmed.startsWith("- ") || trimmed.startsWith("* ")) {
-      push({ type: "bullet", text: trimmed.slice(2) });
-      continue;
+
+    // ATX headings 1..6.
+    const heading = /^(#{1,6})\s+(.*)$/.exec(trimmed);
+    if (heading) {
+      const level = heading[1].length;
+      const text = heading[2];
+      const type = level === 1 ? "h1" : level === 2 ? "h2" : level === 3 ? "h3" : "h4";
+      push({ type, text });
+      i++; continue;
     }
-    if (/^\d+\.\s/.test(trimmed)) {
+
+    // Task list: -, *, + + space + [ ]/[x] + space.
+    const task = /^[-*+]\s+\[( |x|X)\]\s+(.*)$/.exec(trimmed);
+    if (task) {
+      const checked = task[1].toLowerCase() === "x";
+      push({ type: "todo", text: task[2], checked });
+      i++; continue;
+    }
+
+    // Unordered list: -, *, + + space.
+    if (/^[-*+]\s+/.test(trimmed)) {
+      push({ type: "bullet", text: trimmed.replace(/^[-*+]\s+/, "") });
+      i++; continue;
+    }
+
+    // Ordered list: digits + . + space.
+    if (/^\d+\.\s+/.test(trimmed)) {
       push({ type: "numbered", text: trimmed.replace(/^\d+\.\s+/, "") });
-      continue;
+      i++; continue;
     }
-    if (trimmed.startsWith("> ")) { push({ type: "quote", text: trimmed.slice(2) }); continue; }
-    if (trimmed === "") continue;
+
+    if (trimmed.startsWith("> ")) {
+      push({ type: "quote", text: trimmed.slice(2) });
+      i++; continue;
+    }
+    if (trimmed === ">") {
+      push({ type: "quote", text: "" });
+      i++; continue;
+    }
+
+    // Table: header row + separator row + N data rows.
+    // Header is any line shaped `| ... |` (or just `cell | cell`) AND
+    // the NEXT line is `| ---|...:---: |` (separator with dashes +
+    // optional alignment colons). Falls through to paragraph if the
+    // separator doesn't validate.
+    if (looksLikeTableRow(trimmed) && i + 1 < rawLines.length
+        && isTableSeparator(rawLines[i + 1].trim())) {
+      const headerCells = splitTableCells(trimmed);
+      const tableRows: string[][] = [headerCells];
+      let j = i + 2;
+      while (j < rawLines.length && looksLikeTableRow(rawLines[j].trim())) {
+        tableRows.push(splitTableCells(rawLines[j].trim()));
+        j++;
+      }
+      // Pad rows to header width — markdown tables tolerate ragged
+      // bodies but our table block stores a clean grid.
+      const cols = headerCells.length;
+      const padded = tableRows.map((r) =>
+        r.length === cols ? r : r.concat(Array(Math.max(0, cols - r.length)).fill("")).slice(0, cols),
+      );
+      push({ type: "table", text: "", tableRows: padded, tableHeader: true });
+      i = j; continue;
+    }
+
+    if (trimmed === "") { i++; continue; }
+
     push({ type: "paragraph", text: trimmed });
+    i++;
   }
 
   if (inFence && fenceBuf.length) {
@@ -144,6 +206,29 @@ export function markdownToBlocks(md: string): Block[] {
   }
 
   return blocks.length ? blocks : [{ id: uid(), type: "paragraph", text: "" }];
+}
+
+function looksLikeTableRow(line: string): boolean {
+  // Must contain at least one pipe + non-pipe content. Reject lines
+  // that are JUST pipes/spaces (those are not tables).
+  if (!line.includes("|")) return false;
+  const stripped = line.replace(/\\\|/g, "");
+  return /\|/.test(stripped) && /[^|\s]/.test(stripped);
+}
+
+function isTableSeparator(line: string): boolean {
+  // `| --- | :---: | ---: |` — each cell is dashes with optional
+  // leading/trailing colons for alignment.
+  if (!line.includes("|")) return false;
+  const cells = splitTableCells(line);
+  if (cells.length === 0) return false;
+  return cells.every((c) => /^:?-{3,}:?$/.test(c.trim()));
+}
+
+function splitTableCells(line: string): string[] {
+  // Drop leading/trailing pipes if present (`| a | b |` → `a | b`).
+  const inner = line.replace(/^\s*\|/, "").replace(/\|\s*$/, "");
+  return inner.split("|").map((c) => c.trim());
 }
 
 export function downloadFile(filename: string, content: string, mime = "text/markdown") {
