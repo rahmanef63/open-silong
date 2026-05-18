@@ -492,6 +492,53 @@ export const addBlock = mutation({
   },
 });
 
+/** Splice an array of new blocks into `page.blocks` after the anchor.
+ *  Used by the markdown-paste handler so multi-block paste lands as a
+ *  single atomic write (vs N sequential addBlock round-trips that risk
+ *  reverse ordering). When `replaceAnchor` is true, the anchor block
+ *  is removed and the FIRST incoming block takes its slot — used when
+ *  the user pastes into an empty paragraph.
+ *
+ *  When the incoming blocks carry `layoutGroup` / `layoutCol`, they
+ *  propagate as-is; otherwise the layout stamps from the anchor block
+ *  are inherited so a paste inside a column stays in the column.
+ */
+export const insertBlocksAfter = mutation({
+  args: {
+    pageId: v.id("pages"),
+    anchorBlockId: v.string(),
+    blocks: v.array(v.any()),
+    replaceAnchor: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    const { doc: page } = await requireWorkspaceAccess(ctx, "pages", args.pageId as Id<"pages">, { write: true });
+    const cur = page.blocks as Array<{ id: string; layoutGroup?: string; layoutCol?: number }>;
+    const idx = cur.findIndex((b) => b.id === args.anchorBlockId);
+    if (idx < 0) throw new Error("Anchor block not found");
+    const anchor = cur[idx];
+    // Inherit layout stamps from the anchor when incoming blocks
+    // don't already carry their own.
+    const stamped = args.blocks.map((b) => {
+      const out = { ...b };
+      if (out.layoutGroup == null && anchor.layoutGroup != null) {
+        out.layoutGroup = anchor.layoutGroup;
+        out.layoutCol = anchor.layoutCol;
+      }
+      return out;
+    });
+    const blocks = args.replaceAnchor
+      ? [...cur.slice(0, idx), ...stamped, ...cur.slice(idx + 1)]
+      : [...cur.slice(0, idx + 1), ...stamped, ...cur.slice(idx + 1)];
+    if (blocks.length > COUNT_CAPS.blocksPerPage) throw new Error(`Page exceeds block cap (${COUNT_CAPS.blocksPerPage})`);
+    await ctx.db.patch(args.pageId as Id<"pages">, {
+      blocks,
+      searchText: buildSearchText(page.title, blocks),
+      updatedAt: Date.now(),
+    });
+    return blocks.length;
+  },
+});
+
 /** Patch a single block by id. `patch` merges over the existing block.
  *  `searchText` rebuilt only when patch touches `text`/`type`/`lang`/
  *  `caption` — style-only patches (color/bgColor/width/align/collapsed)
