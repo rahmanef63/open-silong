@@ -492,6 +492,52 @@ export const addBlock = mutation({
   },
 });
 
+/** Server-side replace a single block by id. Authoritative blocks
+ *  array → no client cache reliance (the slim listMeta projection
+ *  omits blocks, so a client-side splice would wipe the page). */
+export const replaceBlockById = mutation({
+  args: {
+    pageId: v.id("pages"),
+    blockId: v.string(),
+    nextBlock: v.any(),
+  },
+  handler: async (ctx, args) => {
+    const { doc: page } = await requireWorkspaceAccess(ctx, "pages", args.pageId as Id<"pages">, { write: true });
+    const cur = page.blocks as Array<{ id: string }>;
+    const idx = cur.findIndex((b) => b.id === args.blockId);
+    if (idx < 0) throw new Error("Block not found");
+    // Preserve the existing id on the replacement.
+    const blocks = [...cur.slice(0, idx), { ...args.nextBlock, id: args.blockId }, ...cur.slice(idx + 1)];
+    await ctx.db.patch(args.pageId as Id<"pages">, {
+      blocks,
+      searchText: buildSearchText(page.title, blocks),
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+/** Server-side duplicate. Inserts a clone of the block (new id)
+ *  immediately after. Returns the new block id. */
+export const duplicateBlockById = mutation({
+  args: { pageId: v.id("pages"), blockId: v.string() },
+  handler: async (ctx, args) => {
+    const { doc: page } = await requireWorkspaceAccess(ctx, "pages", args.pageId as Id<"pages">, { write: true });
+    const cur = page.blocks as Array<{ id: string }>;
+    const idx = cur.findIndex((b) => b.id === args.blockId);
+    if (idx < 0) throw new Error("Block not found");
+    const newId = uid();
+    const dup = { ...cur[idx], id: newId };
+    const blocks = [...cur.slice(0, idx + 1), dup, ...cur.slice(idx + 1)];
+    if (blocks.length > COUNT_CAPS.blocksPerPage) throw new Error(`Page exceeds block cap (${COUNT_CAPS.blocksPerPage})`);
+    await ctx.db.patch(args.pageId as Id<"pages">, {
+      blocks,
+      searchText: buildSearchText(page.title, blocks),
+      updatedAt: Date.now(),
+    });
+    return newId;
+  },
+});
+
 /** Splice an array of new blocks into `page.blocks` after the anchor.
  *  Used by the markdown-paste handler so multi-block paste lands as a
  *  single atomic write (vs N sequential addBlock round-trips that risk

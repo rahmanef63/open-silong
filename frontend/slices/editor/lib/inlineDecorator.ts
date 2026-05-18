@@ -18,14 +18,19 @@ export { getCaretOffset, setCaretAtOffset, decorateLineToFragment };
 
 /** Decorate the whole contentEditable. Splits by `\n`, decorates each
  *  line, joins with `<br>`. Caret is preserved at its prior text-offset.
- *  Safe to call from `onInput` — does not modify visible text. */
-export function decorateInPlace(host: HTMLElement, source: string): void {
+ *  Safe to call from `onInput` — does not modify visible text.
+ *
+ *  `hideMarkers` collapses the marker glyphs (``**`` ``_`` etc.) to
+ *  zero font-size so they keep round-tripping through innerText but
+ *  visually disappear — used by headings, where the block is already
+ *  bold/styled and the markers would be noise. */
+export function decorateInPlace(host: HTMLElement, source: string, opts?: { hideMarkers?: boolean }): void {
   const caret = getCaretOffset(host);
   while (host.firstChild) host.removeChild(host.firstChild);
 
   const lines = source.split("\n");
   for (let i = 0; i < lines.length; i++) {
-    host.appendChild(decorateLineToFragment(lines[i]));
+    host.appendChild(decorateLineToFragment(lines[i], opts));
     if (i < lines.length - 1) {
       host.appendChild(document.createElement("br"));
     }

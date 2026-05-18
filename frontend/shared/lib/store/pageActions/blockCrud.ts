@@ -4,7 +4,7 @@ import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 import type { Block, BlockType, Page } from "@/shared/types/domain";
 import { guardMut, guardMutVoid } from "../mutationGuard";
-import { uid, type StructuralAction } from "./constants";
+import type { StructuralAction } from "./constants";
 
 // Loosely typed mutUpdatePage — Convex ReactMutation has a precisely-branded
 // patch shape (Id<"pages"> for parentId etc.) but this hook only passes
@@ -27,7 +27,10 @@ const isTextOnlyPatch = (patch: Partial<Block>) =>
   Object.keys(patch).length > 0 && Object.keys(patch).every((k) => TEXT_ONLY_KEYS.has(k));
 
 export function useBlockCrud({ pageMap, pushStructuralAction, mutUpdatePage }: Args) {
+  void pageMap; void pushStructuralAction; // retained for legacy callers
   const mutAddBlock = useMutation(api.pages.addBlock);
+  const mutDuplicateBlock = useMutation(api.pages.duplicateBlockById);
+  const mutReplaceBlock = useMutation(api.pages.replaceBlockById);
   // Optimistic update: patch the local pages.getById query result so the
   // UI reflects the change before the server round-trip completes.
   // Critical for view-switch / color / activeViewId edits where the
@@ -116,17 +119,17 @@ export function useBlockCrud({ pageMap, pushStructuralAction, mutUpdatePage }: A
 
   const duplicateBlock = useCallback(
     (pageId: string, blockId: string) => {
-      const page = pageMap.get(pageId);
-      if (!page) return undefined;
-      const idx = page.blocks.findIndex((b) => b.id === blockId);
-      if (idx === -1) return undefined;
-      const dup = { ...page.blocks[idx], id: uid() };
-      const blocks = [...page.blocks];
-      blocks.splice(idx + 1, 0, dup);
-      mutUpdatePage({ pageId: asPageId(pageId), patch: { blocks } });
-      return dup.id;
+      // Fire-and-forget the server-side duplicate. Synchronous
+      // signature retained for legacy callers; the focused-on-id
+      // setTimeout in keyboardHandler uses a known querySelector
+      // lookup rather than the returned id, so losing the strict
+      // return value here is acceptable.
+      mutDuplicateBlock({ pageId: asPageId(pageId), blockId }).catch((err) => {
+        console.warn("[duplicateBlock] failed", err);
+      });
+      return undefined;
     },
-    [pageMap, mutUpdatePage],
+    [mutDuplicateBlock],
   );
 
   const moveBlock = useCallback(
@@ -174,12 +177,13 @@ export function useBlockCrud({ pageMap, pushStructuralAction, mutUpdatePage }: A
 
   const replaceBlock = useCallback(
     (pageId: string, blockId: string, next: Block) => {
-      const page = pageMap.get(pageId);
-      if (!page) return;
-      const blocks = page.blocks.map((b) => (b.id === blockId ? { ...next, id: blockId } : b));
-      mutUpdatePage({ pageId: asPageId(pageId), patch: { blocks } });
+      // Server-side replace — does NOT read page.blocks from the
+      // store's slim listMeta cache (no blocks field there), which
+      // would have wiped the page when we wrote `[mapped-over-empty]`
+      // back. Backed by api.pages.replaceBlockById.
+      mutReplaceBlock({ pageId: asPageId(pageId), blockId, nextBlock: next });
     },
-    [pageMap, mutUpdatePage],
+    [mutReplaceBlock],
   );
 
   return {
