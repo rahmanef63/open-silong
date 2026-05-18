@@ -12,7 +12,7 @@ import { PagesSection } from "./sections/PagesSection";
 import { BackupSection } from "./sections/BackupSection";
 import { TicketsSection } from "./sections/TicketsSection";
 import { McpTokensSection } from "./McpTokensSection";
-import { ChatGptOAuthSection } from "./ChatGptOAuthSection";
+import { MCPSection } from "./MCPSection";
 import { WebhooksSection } from "./WebhooksSection";
 
 function SectionForKey({ k }: { k: SettingsKey }) {
@@ -21,16 +21,16 @@ function SectionForKey({ k }: { k: SettingsKey }) {
     case "appearance": return <AppearanceSection />;
     case "pages":      return <PagesSection />;
     case "backup":     return <BackupSection />;
-    case "mcp":        return (
+    case "mcp-apps":   return (
       <div className="rounded-xl border border-border bg-card p-5 space-y-4">
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">MCP tokens</h2>
-        <McpTokensSection />
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">MCP</h2>
+        <MCPSection />
       </div>
     );
-    case "chatgpt":    return (
+    case "mcp":        return (
       <div className="rounded-xl border border-border bg-card p-5 space-y-4">
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">ChatGPT App (OAuth)</h2>
-        <ChatGptOAuthSection />
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Script tokens (nsn_)</h2>
+        <McpTokensSection />
       </div>
     );
     case "webhooks":   return (
