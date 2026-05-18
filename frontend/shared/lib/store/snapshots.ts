@@ -50,16 +50,26 @@ export function useSnapshots(authorName: string) {
       const now = Date.now();
       if (now - last < 90_000) return;
       lastSnapshotRef.current[pageId] = now;
-      mutCreateSnapshot({
-        pageId: pageId as Id<"pages">,
-        authorName,
-        takenAt: now,
-        title: page.title,
-        icon: page.icon,
-        cover: page.cover ?? null,
-        blocks: JSON.parse(JSON.stringify(page.blocks)),
-        rowProps: page.rowProps ? JSON.parse(JSON.stringify(page.rowProps)) : undefined,
-      });
+      // Fire-and-forget. Wrapped in try/catch + .catch so a schema
+      // mismatch or transient failure never blocks the page write
+      // that triggered the snapshot, and never bubbles to the user.
+      try {
+        mutCreateSnapshot({
+          pageId: pageId as Id<"pages">,
+          authorName,
+          takenAt: now,
+          title: page.title,
+          icon: page.icon,
+          cover: page.cover ?? null,
+          blocks: JSON.parse(JSON.stringify(page.blocks)),
+          rowProps: page.rowProps ? JSON.parse(JSON.stringify(page.rowProps)) : undefined,
+        }).catch((err) => {
+          // Surface to dev console only — snapshots are advisory.
+          console.warn("[snapshotIfNeeded] failed", err);
+        });
+      } catch (err) {
+        console.warn("[snapshotIfNeeded] sync throw", err);
+      }
     },
     [authorName, mutCreateSnapshot],
   );

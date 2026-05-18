@@ -1,4 +1,6 @@
 import { memo, useRef, useState, useCallback } from "react";
+import { useMutation } from "convex/react";
+import { api } from "@convex/_generated/api";
 import { Block, BlockType } from "@/shared/types/domain";
 import { useStore } from "@/shared/lib/store";
 import { SlashMenu } from "./SlashMenu";
@@ -39,6 +41,7 @@ function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerR
     updateBlock, addBlock, deleteBlock, setBlockType, duplicateBlock,
     createPage, createDatabase, replaceBlock, updatePage, getPage,
   } = useStore();
+  const insertBlocksAfter = useMutation(api.pages.insertBlocksAfter);
   const [slashOpen, setSlashOpen] = useState(false);
   const [slashQuery, setSlashQuery] = useState("");
   const [askOpen, setAskOpen] = useState(false);
@@ -76,9 +79,7 @@ function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerR
     });
 
   const handlePaste = (e: React.ClipboardEvent<HTMLElement>) =>
-    handleMarkdownPaste(e, {
-      pageId, block, getPage, updatePage, setBlockType, updateBlock,
-    });
+    handleMarkdownPaste(e, { pageId, block, insertBlocksAfter });
 
   const onSlashSelect = (type: BlockType) => {
     setSlashOpen(false);
