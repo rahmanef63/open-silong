@@ -23,7 +23,7 @@ export default function ProfilePage() {
   const [bio, setBio, flushBio] = useDebouncedCommit(user.bio, (v) => updateUser({ bio: v }));
 
   return (
-    <>
+    <div className="mx-auto max-w-2xl space-y-8">
       <header className="flex items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
           <User className="h-5 w-5" />
@@ -111,6 +111,6 @@ export default function ProfilePage() {
           Authentication is provided by Convex Auth. Sign out from the user menu in the sidebar.
         </p>
       </section>
-    </>
+    </div>
   );
 }

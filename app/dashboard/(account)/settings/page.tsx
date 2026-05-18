@@ -52,7 +52,7 @@ function SettingsBody() {
       <div className="min-w-0 space-y-6">
         <SectionForKey k={active} />
       </div>
-      <div className="hidden lg:block min-w-0">
+      <div className="hidden xl:block min-w-0">
         <SettingsAside k={active} />
       </div>
     </>
@@ -75,7 +75,7 @@ export default function SettingsPage() {
       {/* Three-col layout: sidebar (240) · content (flex) · aside (320).
        *  Collapses to single-column stack below lg. Sidebar wraps to top
        *  of the content column at md so the user always sees nav. */}
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-[224px_minmax(0,1fr)] lg:grid-cols-[224px_minmax(0,1fr)_320px] md:items-start">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-[224px_minmax(0,1fr)] xl:grid-cols-[224px_minmax(0,1fr)_320px] md:items-start">
         <Suspense fallback={<div className="w-full md:w-56" />}>
           <SettingsSidebar />
         </Suspense>
