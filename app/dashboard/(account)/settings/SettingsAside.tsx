@@ -99,7 +99,7 @@ export function SettingsAside({ k }: { k: SettingsKey }) {
   const content = ASIDE[k];
   if (!content) return null;
   return (
-    <aside className="space-y-4 xl:sticky xl:top-6">
+    <aside className="space-y-4 xl:sticky xl:top-6 xl:max-h-[calc(100vh-3rem)] xl:overflow-y-auto xl:scrollbar-thin xl:pr-1">
       <div className="rounded-xl border border-border bg-card p-4 space-y-3">
         <div className="flex items-start gap-2">
           <HelpCircle className="size-4 mt-0.5 text-muted-foreground shrink-0" />
