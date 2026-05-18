@@ -9,6 +9,7 @@ import { buildSearchText } from "./features/search/lib";
 import { collectDescendantsFromDocs } from "./_shared/pageTree";
 import { regenAllBlockIds, findDuplicateBlockId, type BlockLike } from "./_shared/blocks";
 import { CHAR_CAPS, COUNT_CAPS, RATE_LIMITS, SHARE_SLUG_RE } from "./_shared/limits";
+import { markdownToBlocks } from "./_shared/markdown";
 import {
   getActiveWorkspaceMutation,
   readActiveWorkspace,
@@ -502,7 +503,6 @@ export const appendMarkdown = mutation({
   args: { pageId: v.id("pages"), markdown: v.string() },
   handler: async (ctx, args) => {
     const { doc: page } = await requireWorkspaceAccess(ctx, "pages", args.pageId as Id<"pages">, { write: true });
-    const { markdownToBlocks } = await import("./_shared/markdown");
     const parsed = markdownToBlocks(args.markdown);
     const cur = page.blocks as Array<{ id: string; type?: string; text?: string }>;
     // Drop the trailing empty paragraph stub that newly-created pages

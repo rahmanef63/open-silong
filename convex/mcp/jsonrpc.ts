@@ -97,8 +97,11 @@ const obj = (properties: Record<string, unknown>, required: string[] = []) => ({
 const TOOLS: ToolDef[] = [
   {
     name: "pages_list",
-    description: "List pages in the user's workspace. Returns id, title, icon, parentId, blockCount, updatedAt. Use BEFORE pages_get when the user references a page by topic. Up to 80 results.",
-    inputSchema: obj({}),
+    description: "List pages in the user's workspace. Returns pageId, title, icon, parentId, blockCount, updatedAt + nextCursor for pagination. Use BEFORE pages_get when the user references a page by topic. Default 80/page, max 100.",
+    inputSchema: obj({
+      cursor: { type: "number", description: "Pagination cursor from a previous nextCursor (0-based offset)" },
+      limit: { type: "number", description: "Max items per page, 1..100, default 80" },
+    }),
     annotations: { readOnlyHint: true },
   },
   {
@@ -124,11 +127,12 @@ const TOOLS: ToolDef[] = [
   },
   {
     name: "pages_create",
-    description: "Create a new page in the workspace. Optional parentId nests it. Returns the new pageId.",
+    description: "Create a new page in the workspace. Optional parentId nests it. Optional markdown fills the body in the same call (skips a follow-up pages_append_markdown). Returns the new pageId + appendedBlockCount.",
     inputSchema: obj({
       title: { type: "string" },
       parentId: { type: "string", description: "Optional parent pageId" },
       icon: { type: "string", description: "Optional emoji icon" },
+      markdown: { type: "string", description: "Optional initial body — same parser as pages_append_markdown" },
     }, ["title"]),
     annotations: { destructiveHint: false, idempotentHint: false },
   },
@@ -200,11 +204,14 @@ async function dispatchTool(
   switch (name) {
     case "pages_list": {
       // Internal returns { items, nextCursor, total } and requires
-      // userId. Old dispatcher used { results, cursor } shape that
-      // never existed — broke silently with "rows.results undefined"
-      // when ChatGPT first called it.
+      // userId. cursor/limit pass through so the tool's tool-schema
+      // promise of pagination actually works.
+      const rawCursor = args.cursor;
+      const cursor = typeof rawCursor === "number" && rawCursor >= 0 ? rawCursor : 0;
+      const rawLimit = args.limit;
+      const limit = typeof rawLimit === "number" ? Math.min(Math.max(Math.floor(rawLimit), 1), 100) : 80;
       const rows = await ctx.runQuery(internal.mcp.internal.listPages, {
-        userId, pageSize: 80,
+        userId, pageSize: limit, cursor,
       });
       return textResult({
         pages: rows.items.map((p) => ({
@@ -260,10 +267,10 @@ async function dispatchTool(
         // Internal mutation — public api.pages.appendMarkdown calls
         // requireAuth which throws "Belum login" since MCP has no
         // Convex session (auth is bearer-resolved upstream).
-        const inserted = await ctx.runMutation(internal.mcp.internal.appendMarkdownAs, {
+        const appendedBlockCount = await ctx.runMutation(internal.mcp.internal.appendMarkdownAs, {
           userId, pageId, markdown,
         });
-        return textResult({ ok: true, blocksInserted: inserted });
+        return textResult({ ok: true, pageId, appendedBlockCount });
       } catch (e) {
         return errResult(e instanceof Error ? e.message : String(e));
       }
@@ -272,13 +279,23 @@ async function dispatchTool(
       const title = String(args.title ?? "Untitled");
       const parentIdStr = String(args.parentId ?? "");
       const icon = String(args.icon ?? "") || "📄";
+      const markdown = typeof args.markdown === "string" ? args.markdown : "";
       try {
         const newId = await ctx.runMutation(internal.mcp.internal.createPage, {
           userId,
           parentId: parentIdStr || null,
           title, icon,
         });
-        return textResult({ ok: true, pageId: newId });
+        // Same-call body fill — skips a follow-up round-trip + avoids the
+        // pages_create → pages_get → pages_append_markdown chain that
+        // tripped ChatGPT when intermediate calls failed.
+        let appendedBlockCount = 0;
+        if (markdown.trim()) {
+          appendedBlockCount = await ctx.runMutation(internal.mcp.internal.appendMarkdownAs, {
+            userId, pageId: String(newId), markdown,
+          });
+        }
+        return textResult({ ok: true, pageId: newId, appendedBlockCount });
       } catch (e) {
         return errResult(e instanceof Error ? e.message : String(e));
       }
@@ -315,7 +332,7 @@ async function dispatchTool(
         await ctx.runMutation(internal.mcp.internal.updatePage, {
           userId, pageId, patch: { blocks },
         });
-        return textResult({ ok: true, blocksInserted: blocks.length });
+        return textResult({ ok: true, pageId, replacedBlockCount: blocks.length });
       } catch (e) {
         return errResult(e instanceof Error ? e.message : String(e));
       }

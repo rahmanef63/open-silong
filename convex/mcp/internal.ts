@@ -20,6 +20,9 @@ import { buildSearchText } from "../features/search/lib";
 import { regenAllBlockIds, type BlockLike } from "../_shared/blocks";
 import { CHAR_CAPS, COUNT_CAPS } from "../_shared/limits";
 import { uid } from "../_shared/uid";
+// Static import — dynamic `await import("../_shared/markdown")` throws
+// "dynamic module import unsupported" inside Convex internal mutations.
+import { markdownToBlocks } from "../_shared/markdown";
 
 // ─── Read ──────────────────────────────────────────────────────────
 
@@ -319,7 +322,6 @@ export const appendMarkdownAs = internalMutation({
   handler: async (ctx, args) => {
     const page = await ctx.db.get(args.pageId as Id<"pages">);
     if (!page || page.userId !== args.userId) throw new Error("Tidak ditemukan");
-    const { markdownToBlocks } = await import("../_shared/markdown");
     const parsed = markdownToBlocks(args.markdown);
     const cur = page.blocks as Array<{ id: string; type?: string; text?: string }>;
     const trimmed = cur.length === 1 && cur[0].type === "paragraph" && cur[0].text === ""
