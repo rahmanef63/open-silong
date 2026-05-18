@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import {
   Inbox, Search, Settings, Sparkles, Trash2, User, ShieldAlert, FileBox, Bot, Plus, FileJson, Library,
@@ -22,6 +22,7 @@ import {
 } from "@/shared/ui/sidebar";
 import { Button } from "@/shared/ui/button";
 import { useStore } from "@/shared/lib/store";
+import type { ActiveContext } from "@/slices/ai-agent";
 import { useAdminRole } from "@/slices/admin-panel";
 import { TemplateGalleryDialog } from "@/slices/templates";
 import { AIAgentConsole } from "@/slices/ai-agent";
@@ -44,10 +45,26 @@ export function AppSidebar({ onOpenSearch }: Props) {
   const pathname = usePathname();
   const { setOpenMobile, isMobile } = useSidebar();
   const { isAdmin, claimableSuperAdmin } = useAdminRole();
-  const { createPage } = useStore();
+  const { createPage, pages, user, workspace } = useStore();
   const [templatesOpen, setTemplatesOpen] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
   const workspaceIO = useWorkspaceIO();
+
+  // Build the agent's active-context snapshot. activePageId comes from
+  // the URL (/dashboard/p/:id); page title is looked up in the slim
+  // pages cache. Re-memoizes only when URL / cache identity change.
+  const aiActiveContext = useMemo<ActiveContext | undefined>(() => {
+    const m = pathname?.match(/\/(?:dashboard\/)?p\/([^/?]+)/);
+    const pageId = m?.[1];
+    const page = pageId ? pages.find((p) => p.id === pageId) : undefined;
+    const ctx: ActiveContext = {
+      activePageId: pageId,
+      activePageTitle: page?.title,
+      userName: user?.name,
+      workspaceName: workspace?.name,
+    };
+    return ctx.activePageId || ctx.userName ? ctx : undefined;
+  }, [pathname, pages, user, workspace]);
 
   const closeMobile = () => { if (isMobile) setOpenMobile(false); };
 
@@ -148,7 +165,7 @@ export function AppSidebar({ onOpenSearch }: Props) {
         onOpenChange={setTemplatesOpen}
         onInstantiated={(rootPageId) => go(`/p/${rootPageId}`)}
       />
-      <AIAgentConsole open={aiOpen} onOpenChange={setAiOpen} />
+      <AIAgentConsole open={aiOpen} onOpenChange={setAiOpen} activeContext={aiActiveContext} />
     </Sidebar>
   );
 }

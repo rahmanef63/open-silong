@@ -16,7 +16,14 @@ export interface ChatMessage {
   progress?: ProgressStep[];
 }
 
-export function useAIChat() {
+export interface ActiveContext {
+  activePageId?: string;
+  activePageTitle?: string;
+  userName?: string;
+  workspaceName?: string;
+}
+
+export function useAIChat(activeContext?: ActiveContext) {
   const complete = useAction(api.ai.chat.complete);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [pending, setPending] = useState(false);
@@ -47,6 +54,9 @@ export function useAIChat() {
       const r = await complete({
         messages: apiMessages,
         system: built.system,
+        context: activeContext && (activeContext.activePageId || activeContext.userName)
+          ? activeContext
+          : undefined,
       });
       setMessages((prev) => [...prev, {
         id: uid(),
@@ -60,7 +70,7 @@ export function useAIChat() {
     } finally {
       setPending(false);
     }
-  }, [messages, pending, complete]);
+  }, [messages, pending, complete, activeContext]);
 
   const clear = useCallback(() => {
     setMessages([]);

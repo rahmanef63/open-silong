@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useLocation, useNavigate } from "@/shared/lib/router";
 import { useRouter } from "next/navigation";
 import {
@@ -8,10 +8,11 @@ import {
 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { Button } from "@/shared/ui/button";
+import { useStore } from "@/shared/lib/store";
 import { ROUTES } from "@/shared/lib/routes";
 import { useAdminRole } from "@/slices/admin-panel";
 import { TemplateGalleryDialog } from "@/slices/templates";
-import { AIAgentConsole } from "@/slices/ai-agent";
+import { AIAgentConsole, type ActiveContext } from "@/slices/ai-agent";
 import { MoreDrawer } from "./MoreDrawer";
 import { InboxBadge } from "@/slices/inbox";
 
@@ -34,9 +35,23 @@ export function MobileBottomNav({ onOpenSearch }: Props) {
   const navigate = useNavigate();
   const nextRouter = useRouter();
   const { isAdmin, claimableSuperAdmin } = useAdminRole();
+  const { pages, user, workspace } = useStore();
   const [aiOpen, setAiOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [templatesOpen, setTemplatesOpen] = useState(false);
+
+  const aiActiveContext = useMemo<ActiveContext | undefined>(() => {
+    const m = location.pathname?.match(/\/p\/([^/?]+)/);
+    const pageId = m?.[1];
+    const page = pageId ? pages.find((p) => p.id === pageId) : undefined;
+    const ctx: ActiveContext = {
+      activePageId: pageId,
+      activePageTitle: page?.title,
+      userName: user?.name,
+      workspaceName: workspace?.name,
+    };
+    return ctx.activePageId || ctx.userName ? ctx : undefined;
+  }, [location.pathname, pages, user, workspace]);
 
   const isHome = location.pathname === ROUTES.dashboard;
   const isInbox = location.pathname === ROUTES.inbox;
@@ -88,7 +103,7 @@ export function MobileBottomNav({ onOpenSearch }: Props) {
         </ul>
       </nav>
 
-      <AIAgentConsole open={aiOpen} onOpenChange={setAiOpen} />
+      <AIAgentConsole open={aiOpen} onOpenChange={setAiOpen} activeContext={aiActiveContext} />
       <TemplateGalleryDialog
         open={templatesOpen}
         onOpenChange={setTemplatesOpen}
