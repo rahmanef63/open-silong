@@ -12,7 +12,7 @@ import { useBlockSelectionOptional } from "@/slices/block-selection";
 import { AskAIPanel } from "./AskAIPopover";
 import { buildActionRows, filterActionRows } from "./block-controls/searchRows";
 import { MenuHierarchy } from "./block-controls/MenuHierarchy";
-import { QuickButtons, GripButton } from "./block-controls/QuickButtons";
+import { GripButton } from "./block-controls/QuickButtons";
 import { Button } from "@/shared/ui/button";
 
 interface Props {
@@ -52,10 +52,6 @@ export function BlockControls({ pageId, block, index, listeners, convertTo, askO
     <Popover open={askIsOpen} onOpenChange={setAskOpen}>
       <PopoverAnchor asChild>
         <div className="flex">
-          <QuickButtons
-            pageId={pageId} blockId={block.id} index={index}
-            openCount={openCount} listeners={listeners} addBlock={addBlock}
-          />
           <DropdownMenu open={open} onOpenChange={(o) => { setOpen(o); if (!o) setQ(""); }}>
             <DropdownMenuTrigger asChild>
               <Button
