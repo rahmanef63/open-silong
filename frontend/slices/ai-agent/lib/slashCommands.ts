@@ -75,6 +75,43 @@ Reply with ONLY a fenced \`\`\`json block — no preamble, no explanation.`,
       userPrompt: context ? `${context}\n\n---\nQuestion: ${input}` : input,
     }),
   },
+  // ─── Skill directives (force-route to a specific tool) ─────
+  {
+    id: "skill-append",
+    trigger: "/append",
+    label: "Append to this page",
+    hint: "Force a pages_append_markdown call on the active page",
+    buildPrompt: (input) => ({
+      userPrompt: `Use the pages_append_markdown tool to add the following to the active page (use activePageId from USER_CONTEXT):\n\n${input}`,
+    }),
+  },
+  {
+    id: "skill-create",
+    trigger: "/create",
+    label: "Create new page",
+    hint: "Force a pages_create call with the given title",
+    buildPrompt: (input) => ({
+      userPrompt: `Use the pages_create tool to create a new page titled: ${input}`,
+    }),
+  },
+  {
+    id: "skill-rename",
+    trigger: "/rename",
+    label: "Rename this page",
+    hint: "Force a pages_set_title call on the active page",
+    buildPrompt: (input) => ({
+      userPrompt: `Use the pages_set_title tool to rename the active page (use activePageId) to: ${input}`,
+    }),
+  },
+  {
+    id: "skill-icon",
+    trigger: "/icon",
+    label: "Set page icon",
+    hint: "Force a pages_set_icon call (emoji)",
+    buildPrompt: (input) => ({
+      userPrompt: `Use the pages_set_icon tool to set the active page icon (use activePageId) to: ${input}`,
+    }),
+  },
 ];
 
 export function findSlash(text: string): { cmd: SlashCommand; rest: string } | null {

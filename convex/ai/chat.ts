@@ -7,7 +7,7 @@ import { internal } from "../_generated/api";
 
 import { CHAR_CAPS, RATE_LIMITS } from "../_shared/limits";
 import { AI_PROVIDERS, resolveProviderBaseUrl } from "../_shared/aiProviders";
-import { SKILL_BY_TOOL_NAME, toolsForLLM, type Skill } from "./skillCatalog";
+import { SKILL_BY_TOOL_NAME, SKILL_BY_ID, toolsForLLM, type Skill } from "./skillCatalog";
 import { SKILL_HANDLERS } from "./skillHandlers";
 
 const MAX_INPUT_CHARS = CHAR_CAPS.aiInput;
@@ -110,8 +110,13 @@ export const complete = action({
       userName: v.optional(v.string()),
       workspaceName: v.optional(v.string()),
     })),
+    /** When true, mutation-kind skill calls run server-side inline
+     *  (legacy v1 behaviour). When false (default), mutations are
+     *  queued as proposals[] for the user to approve via the action
+     *  card UI before they fire. */
+    autoApply: v.optional(v.boolean()),
   },
-  handler: async (ctx, { messages, system, model, maxTokens, context }) => {
+  handler: async (ctx, { messages, system, model, maxTokens, context, autoApply }) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not signed in");
     await ctx.runMutation(internal.ai.internal.checkRateLimit, {});
@@ -152,6 +157,8 @@ export const complete = action({
 
     const progress: Array<{ kind: string; label: string; skillId?: string; ms?: number; ok?: boolean }> = [];
     progress.push({ kind: "resolve", label: `Resolved AI (${cfg.source}) → ${cfg.model}` });
+    const proposals: Array<{ id: string; skillId: string; label: string; args: Record<string, unknown> }> = [];
+    const apply = autoApply === true;
 
     let reply = "";
     let totalLlmMs = 0;
@@ -222,6 +229,30 @@ export const complete = action({
           try { parsedArgs = JSON.parse(rawArgs); } catch { /* invalid */ }
         }
         const handler = SKILL_HANDLERS[skillId];
+        const skillKind = skill?.kind ?? "query";
+        // Mutation skills go through the approval pipeline unless the
+        // caller explicitly opted into autoApply. Query skills always
+        // run inline so the model can chain.
+        if (skillKind === "mutation" && !apply) {
+          const proposalId = `${skillId}-${Date.now()}-${proposals.length}`;
+          proposals.push({
+            id: proposalId,
+            skillId,
+            label: skill?.description?.split(".")[0] ?? `Run ${skillId}`,
+            args: parsedArgs,
+          });
+          progress.push({ kind: "tool", skillId, label: `Proposed ${skillId} (awaiting approval)`, ok: true });
+          conversation.push({
+            role: "tool",
+            tool_call_id: tc.id,
+            content: JSON.stringify({
+              status: "queued_for_user_approval",
+              proposalId,
+              note: "User must approve via the action card UI before this runs.",
+            }),
+          });
+          continue;
+        }
         const t1 = Date.now();
         let result: unknown;
         let ok = true;
@@ -248,13 +279,45 @@ export const complete = action({
 
     progress.push({ kind: "finalize", label: `Inference done · ${totalLlmMs}ms across ${hop} hop${hop === 1 ? "" : "s"}` });
 
+    // If we queued any mutation proposals but the model didn't speak,
+    // synthesize a brief confirmation so the user sees what's pending.
+    if (proposals.length > 0 && !reply.trim()) {
+      reply = `Saya menyiapkan ${proposals.length} tindakan untuk persetujuan Anda — tinjau dan klik **Approve** di bawah.`;
+    }
+
     return {
       text: reply,
       usage: lastUsage,
       model: lastModel,
       source: cfg.source,
       progress,
+      proposals,
     };
+  },
+});
+
+/** Execute a single mutation proposal that the user approved via the
+ *  action card. Runs the matching skill handler with the supplied
+ *  args. Returns { ok, result } so the UI can render success / error. */
+export const executeProposal = action({
+  args: {
+    skillId: v.string(),
+    args: v.any(),
+  },
+  handler: async (ctx, { skillId, args }): Promise<{ ok: boolean; result?: unknown; error?: string }> => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not signed in");
+    const skill = SKILL_BY_ID[skillId];
+    if (!skill) return { ok: false, error: `Unknown skill: ${skillId}` };
+    if (skill.kind !== "mutation") return { ok: false, error: `Skill ${skillId} is not a mutation` };
+    const handler = SKILL_HANDLERS[skillId];
+    if (!handler) return { ok: false, error: `No handler for skill ${skillId}` };
+    try {
+      const result = await handler(ctx, args ?? {});
+      return { ok: true, result };
+    } catch (e) {
+      return { ok: false, error: e instanceof Error ? e.message : String(e) };
+    }
   },
 });
 
