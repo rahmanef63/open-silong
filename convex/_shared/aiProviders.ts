@@ -22,14 +22,20 @@ export const AI_PROVIDERS: Record<string, AIProviderSpec> = {
     id: "openrouter",
     label: "OpenRouter",
     baseUrl: "https://openrouter.ai/api/v1",
-    defaultModel: "anthropic/claude-haiku-4.5",
+    // Default is now gemini flash-lite — cheap + fast for the bulk of
+    // editor-side AI calls. Admin can override via /dashboard/admin →
+    // AI and the override persists in `globalAISettings`. Only the
+    // env-key fallback path (no DB row at all) uses this default.
+    defaultModel: "google/gemini-3.1-flash-lite",
     models: [
+      "google/gemini-3.1-flash-lite",
+      "google/gemini-2.5-flash-lite",
+      "google/gemini-2.5-flash",
+      "google/gemini-2.5-pro",
       "anthropic/claude-haiku-4.5",
       "anthropic/claude-sonnet-4.5",
       "openai/gpt-4o-mini",
       "openai/gpt-4o",
-      "google/gemini-2.5-pro",
-      "google/gemini-2.5-flash",
       "x-ai/grok-4",
       "meta-llama/llama-3.3-70b-instruct",
       "deepseek/deepseek-chat",
