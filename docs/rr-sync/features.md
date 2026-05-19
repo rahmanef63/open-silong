@@ -3,14 +3,16 @@
 > **Auto-generated.** Edit `rr-sync.json` (registry) or rerun sync — DO NOT hand-edit this file.
 > Regenerate: `node scripts/sync-to-rr.mjs --regen-doc`
 
-Tracked slices: **3**  ·  Source: notion-page-clone  ·  Dest: `~/projects/resources`
+Tracked slices: **5**  ·  Source: notion-page-clone  ·  Dest: `~/projects/resources`
 
 ## Summary
 
 | slice | version | files | shared (shared+) | last sync |
 |---|---|---|---|---|
 | code-block | 0.1.0 | 5 | 0 (0+) | 2026-05-19 |
+| database-cell-selection | 0.1.0 | 4 | 0 (0+) | 2026-05-19 |
 | equation | 0.1.0 | 6 | 1 (0+) | 2026-05-19 |
+| mentions | 0.1.0 | 28 | 23 (0+) | 2026-05-19 |
 | notifications | 0.1.0 | 5 | 0 (0+) | 2026-05-19 |
 
 - **shared+** = count of shared files this slice depends on that ALSO consumed by another tracked slice. High value = shared infra that must stay coherent.
@@ -31,6 +33,19 @@ Tracked slices: **3**  ·  Source: notion-page-clone  ·  Dest: `~/projects/reso
 - `frontend/slices/code-block/slice.manifest.json`
 - `frontend/slices/code-block/types/index.ts`
 
+### `database-cell-selection`
+
+- **version:** 0.1.0
+- **synced:** 2026-05-19T09:19:21.907Z (commit `250d8e7`)
+- **slicePath:** `frontend/slices/database-cell-selection`
+
+**slice files (4):**
+
+- `frontend/slices/database-cell-selection/components/SelectableCell.tsx`
+- `frontend/slices/database-cell-selection/hooks/useDragFill.ts`
+- `frontend/slices/database-cell-selection/index.ts`
+- `frontend/slices/database-cell-selection/slice.manifest.json`
+
 ### `equation`
 
 - **version:** 0.1.0
@@ -48,6 +63,46 @@ Tracked slices: **3**  ·  Source: notion-page-clone  ·  Dest: `~/projects/reso
 **shared deps (1):**
 
 - `frontend/shared/lib/error.ts`
+
+### `mentions`
+
+- **version:** 0.1.0
+- **synced:** 2026-05-19T09:22:08.404Z (commit `250d8e7`)
+- **slicePath:** `frontend/slices/mentions`
+
+**slice files (5):**
+
+- `frontend/slices/mentions/components/MentionsPopover.tsx`
+- `frontend/slices/mentions/hooks/useMentions.ts`
+- `frontend/slices/mentions/index.ts`
+- `frontend/slices/mentions/slice.manifest.json`
+- `frontend/slices/mentions/types/index.ts`
+
+**shared deps (23):**
+
+- `frontend/shared/lib/router/index.tsx`
+- `frontend/shared/lib/store/context.ts`
+- `frontend/shared/lib/store/databaseActions.ts`
+- `frontend/shared/lib/store/databaseActions/constants.ts`
+- `frontend/shared/lib/store/databaseActions/db.ts`
+- `frontend/shared/lib/store/databaseActions/properties.ts`
+- `frontend/shared/lib/store/databaseActions/relations.ts`
+- `frontend/shared/lib/store/databaseActions/rows.ts`
+- `frontend/shared/lib/store/databaseActions/views.ts`
+- `frontend/shared/lib/store/history.ts`
+- `frontend/shared/lib/store/hooks.ts`
+- `frontend/shared/lib/store/mappers.ts`
+- `frontend/shared/lib/store/mutationGuard.ts`
+- `frontend/shared/lib/store/pageActions.ts`
+- `frontend/shared/lib/store/pageActions/blockCrud.ts`
+- `frontend/shared/lib/store/pageActions/childrenIndex.ts`
+- `frontend/shared/lib/store/pageActions/constants.ts`
+- `frontend/shared/lib/store/pageActions/pageCrud.ts`
+- `frontend/shared/lib/store/pageActions/searchTrash.ts`
+- `frontend/shared/lib/store/snapshots.ts`
+- `frontend/shared/lib/store/useThemeEffect.ts`
+- `frontend/shared/lib/store/useWorkspaceMuts.ts`
+- `frontend/shared/types/domain.ts`
 
 ### `notifications`
 
