@@ -3,17 +3,33 @@
 > **Auto-generated.** Edit `rr-sync.json` (registry) or rerun sync — DO NOT hand-edit this file.
 > Regenerate: `node scripts/sync-to-rr.mjs --regen-doc`
 
-Tracked slices: **1**  ·  Source: notion-page-clone  ·  Dest: `~/projects/resources`
+Tracked slices: **3**  ·  Source: notion-page-clone  ·  Dest: `~/projects/resources`
 
 ## Summary
 
 | slice | version | files | shared (shared+) | last sync |
 |---|---|---|---|---|
+| code-block | 0.1.0 | 5 | 0 (0+) | 2026-05-19 |
 | equation | 0.1.0 | 6 | 1 (0+) | 2026-05-19 |
+| notifications | 0.1.0 | 5 | 0 (0+) | 2026-05-19 |
 
 - **shared+** = count of shared files this slice depends on that ALSO consumed by another tracked slice. High value = shared infra that must stay coherent.
 
 ## Per-slice file lists
+
+### `code-block`
+
+- **version:** 0.1.0
+- **synced:** 2026-05-19T07:42:08.310Z (commit `00fba33`)
+- **slicePath:** `frontend/slices/code-block`
+
+**slice files (5):**
+
+- `frontend/slices/code-block/components/CodeBlock.tsx`
+- `frontend/slices/code-block/index.ts`
+- `frontend/slices/code-block/lib/languages.ts`
+- `frontend/slices/code-block/slice.manifest.json`
+- `frontend/slices/code-block/types/index.ts`
 
 ### `equation`
 
@@ -32,6 +48,20 @@ Tracked slices: **1**  ·  Source: notion-page-clone  ·  Dest: `~/projects/reso
 **shared deps (1):**
 
 - `frontend/shared/lib/error.ts`
+
+### `notifications`
+
+- **version:** 0.1.0
+- **synced:** 2026-05-19T07:37:17.443Z (commit `00fba33`)
+- **slicePath:** `frontend/slices/notifications`
+
+**slice files (5):**
+
+- `frontend/slices/notifications/components/NotifyMePopover.tsx`
+- `frontend/slices/notifications/hooks/useSubscription.ts`
+- `frontend/slices/notifications/index.ts`
+- `frontend/slices/notifications/slice.manifest.json`
+- `frontend/slices/notifications/types/index.ts`
 
 ## Shared file → consumers map
 
