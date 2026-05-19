@@ -27,6 +27,8 @@ import {
   applyPathMap,
   rewriteImports,
   explainAliases,
+  scanNpmImports,
+  loadPackageDeps,
 } from "./_lib/rr-paths.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -143,6 +145,7 @@ async function main() {
   const unresolvedImports = new Map(); // file → string[]
   const filesTracked = []; // src-rel paths that ended up in registry (non-SKIP_NPM)
   const fileDestMap = {}; // src-rel → dest-rel for registry
+  const npmPkgsUsed = new Set(); // bare npm pkgs imported by copied files
 
   for (const srcRel of files) {
     const mapped = applyPathMap(srcRel, pathMap);
@@ -161,6 +164,8 @@ async function main() {
       const rw = rewriteImports(text, srcCfg, destCfg, pathMap);
       if (rw.unresolved.length) unresolvedImports.set(srcRel, rw.unresolved);
       if (rw.rewrites.length) srcContent = Buffer.from(rw.content, "utf8");
+      // track bare npm pkg deps for cross-check vs rr package.json
+      for (const p of scanNpmImports(text, srcCfg)) npmPkgsUsed.add(p);
     }
 
     const srcHash = sha(srcContent);
@@ -216,6 +221,37 @@ async function main() {
     }
     console.log(`  → may need pathMap or rr tsconfig update`);
   }
+
+  // npm-deps cross-check vs rr/package.json
+  const nosionDeps = await loadPackageDeps(REPO);
+  const rrDeps = await loadPackageDeps(rrRoot);
+  // include rahman-shared if any SKIP_NPM mapping was hit
+  for (const r of report.skipNpm) {
+    if (r.package?.startsWith("rahman-")) {
+      const root = r.package.split("/")[0];
+      npmPkgsUsed.add(root);
+    }
+  }
+  const missing = [];
+  const mismatch = [];
+  for (const pkg of [...npmPkgsUsed].sort()) {
+    if (!rrDeps[pkg]) {
+      const nosionVer = nosionDeps[pkg] ?? "(not in nosion either)";
+      missing.push({ pkg, suggestedVer: nosionVer });
+    } else if (nosionDeps[pkg] && rrDeps[pkg] !== nosionDeps[pkg]) {
+      mismatch.push({ pkg, rrVer: rrDeps[pkg], nosionVer: nosionDeps[pkg] });
+    }
+  }
+  if (missing.length) {
+    console.log(`\n  ⚠ rr is MISSING npm deps (${missing.length}):`);
+    for (const m of missing) console.log(`    ${m.pkg}  →  add ${m.suggestedVer}`);
+    console.log(`  → cd ${rrRoot} && pnpm add ${missing.map((m) => m.suggestedVer.startsWith("(") ? m.pkg : `${m.pkg}@${m.suggestedVer}`).join(" ")}`);
+  }
+  if (mismatch.length) {
+    console.log(`\n  ⓘ version drift (${mismatch.length}, not blocking):`);
+    for (const m of mismatch) console.log(`    ${m.pkg}  rr:${m.rrVer}  nosion:${m.nosionVer}`);
+  }
+
   console.log(`\n  skipped (already in sync): ${report.skipped.length}`);
 
   if (dryRun) {
