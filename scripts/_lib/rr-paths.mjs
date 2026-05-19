@@ -19,9 +19,11 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 
-// String-aware comment stripper for JSONC tsconfigs. Handles // and /* */
-// without consuming glob patterns like "app/**/*.ts" inside string literals.
-function stripJsonComments(src) {
+// String-aware comment stripper. Same algorithm works for JSONC and JS/TS:
+// skip // line + /* */ block comments unless inside a "..."/'...'/`...` string.
+// Used by tsconfig parser (JSONC) AND import scanners (JS/TS) — keeps
+// `from "X"` inside a JSDoc /** ... */ from being misread as a real import.
+export function stripJsonComments(src) {
   let out = "";
   let i = 0;
   const n = src.length;
@@ -253,10 +255,11 @@ export function rewriteImports(content, srcCfg, destCfg, pathMap) {
  */
 export function scanNpmImports(content, srcCfg) {
   const pkgs = new Set();
+  const stripped = stripJsonComments(content);
   const importRegex = /(\bfrom\s+|\bimport\s*\(\s*|\brequire\s*\(\s*)(['"`])([^'"`]+)\2/g;
   const aliases = Object.keys(srcCfg?.paths ?? {}).sort((a, b) => b.length - a.length);
   let m;
-  while ((m = importRegex.exec(content)) !== null) {
+  while ((m = importRegex.exec(stripped)) !== null) {
     const imp = m[3];
     if (imp.startsWith(".") || imp.startsWith("node:") || imp.startsWith("/")) continue;
     let isAlias = false;
