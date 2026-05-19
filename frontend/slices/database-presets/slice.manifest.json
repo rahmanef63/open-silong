@@ -5,7 +5,9 @@
     "shared": [
       "components/icon-picker",
       "lib/store",
+      "lib/uid",
       "types/domain",
+      "ui/button",
       "ui/dropdown-menu"
     ],
     "slices": [],

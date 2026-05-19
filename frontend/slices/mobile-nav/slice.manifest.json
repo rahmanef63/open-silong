@@ -5,7 +5,9 @@
     "shared": [
       "lib/router",
       "lib/routes",
+      "lib/store",
       "lib/utils",
+      "ui/button",
       "ui/drawer"
     ],
     "slices": [

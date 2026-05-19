@@ -3,6 +3,7 @@
   "description": "",
   "deps": {
     "shared": [
+      "components/ConfirmProvider",
       "hooks/useAsyncError",
       "lib/format",
       "types/domain",

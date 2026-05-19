@@ -5,6 +5,7 @@
     "shared": [
       "lib/store",
       "types/domain",
+      "ui/button",
       "ui/popover"
     ],
     "slices": [

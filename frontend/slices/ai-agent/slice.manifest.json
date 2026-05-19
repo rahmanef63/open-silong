@@ -3,7 +3,9 @@
   "description": "",
   "deps": {
     "shared": [
+      "lib/uid",
       "lib/utils",
+      "ui/alert",
       "ui/button",
       "ui/sheet",
       "ui/textarea"

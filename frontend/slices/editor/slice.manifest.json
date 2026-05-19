@@ -8,20 +8,25 @@
       "hooks/useAsyncError",
       "hooks/useBlockHistory",
       "lib/error",
+      "lib/exportContext",
       "lib/format",
+      "lib/html",
       "lib/inlineMd",
       "lib/markdown",
       "lib/router",
       "lib/routes",
       "lib/store",
+      "lib/uid",
       "lib/utils",
-      "providers",
       "types",
       "types/domain",
       "ui/button",
       "ui/checkbox",
       "ui/dropdown-menu",
+      "ui/input",
       "ui/popover",
+      "ui/separator",
+      "ui/skeleton",
       "ui/switch"
     ],
     "slices": [
@@ -29,12 +34,14 @@
       "backlinks",
       "block-selection",
       "comments",
+      "cover",
       "databases",
       "mentions",
       "notifications",
       "sharing",
       "snapshots",
-      "wiki"
+      "wiki",
+      "workspace-io"
     ],
     "convex": [
       "_generated"

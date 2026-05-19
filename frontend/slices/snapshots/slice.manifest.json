@@ -8,7 +8,8 @@
       "lib/store",
       "lib/utils",
       "types/domain",
-      "ui/alert-dialog"
+      "ui/alert-dialog",
+      "ui/button"
     ],
     "slices": [],
     "convex": []
