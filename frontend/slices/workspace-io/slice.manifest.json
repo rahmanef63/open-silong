@@ -3,13 +3,15 @@
   "description": "",
   "deps": {
     "shared": [
+      "components/ConfirmProvider",
       "components/icon-picker",
       "hooks/useAsyncError",
       "lib/markdown",
       "lib/store",
       "lib/utils",
-      "providers/WorkspaceIOProvider",
+      "lib/zipExport",
       "types/domain",
+      "ui/alert",
       "ui/button",
       "ui/dialog",
       "ui/input",

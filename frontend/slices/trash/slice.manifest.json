@@ -3,9 +3,11 @@
   "description": "",
   "deps": {
     "shared": [
+      "components/ConfirmProvider",
       "components/icon-picker",
       "lib/format",
-      "lib/store"
+      "lib/store",
+      "ui/button"
     ],
     "slices": [],
     "convex": []

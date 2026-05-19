@@ -14,6 +14,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 import { fileURLToPath } from "node:url";
+import { loadTsconfigPaths, rewriteImports } from "./_lib/rr-paths.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO = path.resolve(__dirname, "..");
@@ -26,6 +27,14 @@ const asJson = args.includes("--json");
 const reg = JSON.parse(await fs.readFile(REGISTRY, "utf8"));
 const rrRoot = expandHome(reg.rrRoot);
 const scrubs = reg.scrubs ?? [];
+const pathMap = reg.pathMap ?? [];
+
+// Load tsconfigs lazily — only if there are tracked slices (avoid I/O in empty case)
+const hasTracked = Object.keys(reg.tracked ?? {}).length > 0;
+const srcCfg = hasTracked && (await exists(path.join(rrRoot, "tsconfig.json")))
+  ? await loadTsconfigPaths(REPO) : null;
+const destCfg = hasTracked && (await exists(path.join(rrRoot, "tsconfig.json")))
+  ? await loadTsconfigPaths(rrRoot) : null;
 
 const result = [];
 for (const [slug, entry] of Object.entries(reg.tracked)) {
@@ -35,17 +44,17 @@ for (const [slug, entry] of Object.entries(reg.tracked)) {
 
   for (const rel of entry.files) {
     const srcAbs = path.join(REPO, rel);
-    const dstAbs = path.join(rrRoot, rel);
+    const destRel = entry.fileDestMap?.[rel] ?? rel;
+    const dstAbs = path.join(rrRoot, destRel);
     if (!(await exists(srcAbs))) {
       missing.push(rel);
       continue;
     }
-    const srcHash = sha(await readScrubbed(srcAbs, scrubs));
+    const srcHash = sha(await readProcessed(srcAbs, scrubs, srcCfg, destCfg, pathMap));
     const lastHash = reg.fileHashes[rel];
     const dstHash = (await exists(dstAbs)) ? sha(await fs.readFile(dstAbs)) : null;
 
     if (srcHash !== lastHash) {
-      // nosion side moved
       if (dstHash && dstHash !== lastHash) conflict.push(rel);
       else dirty.push(rel);
     }
@@ -92,11 +101,15 @@ const anyDirty = result.some((r) => r.dirty || r.conflict);
 if (anyDirty) console.log("→ resync: pnpm sync:rr <slice>");
 
 // ───── helpers ─────
-async function readScrubbed(p, scrubs) {
+async function readProcessed(p, scrubs, srcCfg, destCfg, pathMap) {
   const buf = await fs.readFile(p);
-  if (!scrubs.length || /\.(png|jpg|jpeg|gif|webp|ico|woff2?|ttf|eot|pdf|zip)$/i.test(p)) return buf;
+  if (/\.(png|jpg|jpeg|gif|webp|ico|woff2?|ttf|eot|pdf|zip)$/i.test(p)) return buf;
   let s = buf.toString("utf8");
   for (const [from, to] of scrubs) s = s.split(from).join(to);
+  if (srcCfg && destCfg && /\.(ts|tsx|js|jsx|mjs|cjs)$/i.test(p)) {
+    const rw = rewriteImports(s, srcCfg, destCfg, pathMap);
+    s = rw.content;
+  }
   return Buffer.from(s, "utf8");
 }
 function sha(b) {

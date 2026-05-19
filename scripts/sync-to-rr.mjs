@@ -22,6 +22,12 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 import { fileURLToPath } from "node:url";
+import {
+  loadTsconfigPaths,
+  applyPathMap,
+  rewriteImports,
+  explainAliases,
+} from "./_lib/rr-paths.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO = path.resolve(__dirname, "..");
@@ -33,9 +39,19 @@ const REGISTRY = path.join(REPO, "rr-sync.json");
 const args = process.argv.slice(2);
 const dryRun = args.includes("--dry-run");
 const force = args.includes("--force");
+const explain = args.includes("--explain-imports");
 
 if (args[0] === "--regen-doc") {
   await (await import("./regen-rr-features-doc.mjs")).main();
+  process.exit(0);
+}
+
+if (args[0] === "--explain-imports") {
+  const reg = await loadRegistry();
+  const rrRoot = expandHome(reg.rrRoot);
+  const srcCfg = await loadTsconfigPaths(REPO);
+  const destCfg = await loadTsconfigPaths(rrRoot);
+  explainAliases(srcCfg, destCfg, reg.pathMap ?? []);
   process.exit(0);
 }
 
@@ -116,54 +132,89 @@ async function main() {
     else files.push(path.relative(REPO, resolved));
   }
 
-  // 2. per-file: compute src hash, compare with registry + rr-side
+  // 2. load tsconfigs + pathMap for dest mapping + import rewriting
   const scrubs = registry.scrubs ?? [];
-  const report = { added: [], updated: [], skipped: [], conflicts: [] };
+  const pathMap = registry.pathMap ?? [];
+  const srcCfg = await loadTsconfigPaths(REPO);
+  const destCfg = await loadTsconfigPaths(rrRoot);
 
-  for (const rel of files) {
-    const srcAbs = path.join(REPO, rel);
-    const dstAbs = path.join(rrRoot, rel);
+  // 3. per-file: resolve dest path, apply scrubs + import rewrites, hash, copy
+  const report = { added: [], updated: [], skipped: [], conflicts: [], skipNpm: [] };
+  const unresolvedImports = new Map(); // file → string[]
+  const filesTracked = []; // src-rel paths that ended up in registry (non-SKIP_NPM)
+  const fileDestMap = {}; // src-rel → dest-rel for registry
 
-    const srcContent = await readScrubbed(srcAbs, scrubs);
+  for (const srcRel of files) {
+    const mapped = applyPathMap(srcRel, pathMap);
+    if (mapped.skip) {
+      report.skipNpm.push({ srcRel, package: mapped.importAs ?? `(use rr-side ${mapped.destRel})` });
+      continue;
+    }
+    const destRel = mapped.destRel;
+    const srcAbs = path.join(REPO, srcRel);
+    const dstAbs = path.join(rrRoot, destRel);
+
+    // read + scrub + import-rewrite (text files only)
+    let srcContent = await readScrubbed(srcAbs, scrubs);
+    if (isTextFile(srcRel)) {
+      const text = srcContent.toString("utf8");
+      const rw = rewriteImports(text, srcCfg, destCfg, pathMap);
+      if (rw.unresolved.length) unresolvedImports.set(srcRel, rw.unresolved);
+      if (rw.rewrites.length) srcContent = Buffer.from(rw.content, "utf8");
+    }
+
     const srcHash = sha(srcContent);
-    const lastHash = registry.fileHashes[rel];
+    const lastHash = registry.fileHashes[srcRel];
     const dstExists = await exists(dstAbs);
     const dstHash = dstExists ? sha(await fs.readFile(dstAbs)) : null;
 
     if (!dstExists) {
-      report.added.push(rel);
+      report.added.push({ srcRel, destRel });
       if (!dryRun) {
         await fs.mkdir(path.dirname(dstAbs), { recursive: true });
         await fs.writeFile(dstAbs, srcContent);
       }
     } else if (dstHash === srcHash) {
-      report.skipped.push(rel); // up to date
+      report.skipped.push({ srcRel, destRel });
     } else if (lastHash && dstHash === lastHash) {
-      // rr-side unchanged since last sync, src moved forward → safe update
-      report.updated.push(rel);
+      report.updated.push({ srcRel, destRel });
       if (!dryRun) await fs.writeFile(dstAbs, srcContent);
     } else {
-      // rr-side diverged AND/OR new content. Conflict unless --force
-      report.conflicts.push(rel);
+      report.conflicts.push({ srcRel, destRel });
       if (force && !dryRun) await fs.writeFile(dstAbs, srcContent);
     }
-    registry.fileHashes[rel] = srcHash;
+    registry.fileHashes[srcRel] = srcHash;
+    filesTracked.push(srcRel);
+    fileDestMap[srcRel] = destRel;
   }
 
-  // 3. emit report
+  // 4. emit report
   const fmt = (label, arr) =>
-    arr.length ? `\n  ${label} (${arr.length}):\n${arr.map((r) => `    ${r}`).join("\n")}` : "";
+    arr.length
+      ? `\n  ${label} (${arr.length}):\n${arr.map((r) => `    ${r.srcRel}  →  ${r.destRel}`).join("\n")}`
+      : "";
   console.log(fmt("added", report.added));
   console.log(fmt("updated", report.updated));
+  if (report.skipNpm.length) {
+    console.log(`\n  npm-skipped (use package on rr-side, ${report.skipNpm.length}):`);
+    for (const r of report.skipNpm) console.log(`    ${r.srcRel}  →  npm: ${r.package}`);
+  }
   if (report.conflicts.length) {
     console.log(`\n  ⚠ conflicts (${report.conflicts.length}) — rr-side diverged from last sync:`);
-    for (const c of report.conflicts) console.log(`    ${c}`);
+    for (const c of report.conflicts) console.log(`    ${c.srcRel}  →  ${c.destRel}`);
     if (!force) {
       console.log(`\n  → resolve manually OR rerun with --force to overwrite rr-side.`);
       console.log(`  → registry NOT updated (conflicts unresolved).`);
       if (dryRun) console.log(`  (dry-run: nothing changed)`);
       process.exit(2);
     }
+  }
+  if (unresolvedImports.size) {
+    console.log(`\n  ⚠ unresolved imports (${unresolvedImports.size} files) — left as-is:`);
+    for (const [f, ims] of unresolvedImports) {
+      console.log(`    ${f}: ${ims.join(", ")}`);
+    }
+    console.log(`  → may need pathMap or rr tsconfig update`);
   }
   console.log(`\n  skipped (already in sync): ${report.skipped.length}`);
 
@@ -172,13 +223,15 @@ async function main() {
     process.exit(0);
   }
 
-  // 4. update registry
+  // 5. update registry
   registry.tracked[slice] = {
     version: manifest.version ?? "0.1.0",
     syncedAt: new Date().toISOString(),
     syncedFromCommit: await gitSha(),
     slicePath: `frontend/slices/${slice}`,
-    files,
+    files: filesTracked,
+    fileDestMap,
+    skipNpm: report.skipNpm.map((r) => r.srcRel),
   };
   await fs.writeFile(REGISTRY, JSON.stringify(registry, null, 2) + "\n");
 
@@ -188,11 +241,22 @@ async function main() {
   // 6. suggest rr-side commit
   const totalChanged = report.added.length + report.updated.length + (force ? report.conflicts.length : 0);
   console.log(`\n✓ sync done. ${totalChanged} files changed in rr.`);
+
+  // collect top-level dest dirs touched, for git add suggestion
+  const destDirs = new Set();
+  for (const r of [...report.added, ...report.updated, ...(force ? report.conflicts : [])]) {
+    const top = r.destRel.split("/").slice(0, 2).join("/");
+    destDirs.add(top);
+  }
   console.log(`\nSuggested rr-side commit:`);
   console.log(`  cd ${rrRoot}`);
-  console.log(`  git add frontend/slices/${slice} frontend/shared/`);
+  console.log(`  git add ${[...destDirs].sort().join(" ")}`);
   console.log(`  git commit -m "feat(${slice}): sync from notion-page-clone@${(await gitSha()).slice(0, 7)}"`);
   console.log(`  git push origin main`);
+}
+
+function isTextFile(p) {
+  return /\.(ts|tsx|js|jsx|mjs|cjs|json|md|css|scss|html|txt|yml|yaml)$/i.test(p);
 }
 
 // ───── helpers ─────

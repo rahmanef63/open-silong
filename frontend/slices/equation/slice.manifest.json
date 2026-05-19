@@ -3,7 +3,8 @@
   "description": "",
   "deps": {
     "shared": [
-      "lib/error"
+      "lib/error",
+      "ui/button"
     ],
     "slices": [],
     "convex": []

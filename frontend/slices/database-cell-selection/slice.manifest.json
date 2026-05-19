@@ -3,7 +3,8 @@
   "description": "",
   "deps": {
     "shared": [
-      "lib/utils"
+      "lib/utils",
+      "ui/button"
     ],
     "slices": [],
     "convex": []

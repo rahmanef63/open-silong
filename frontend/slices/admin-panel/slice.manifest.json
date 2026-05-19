@@ -3,6 +3,7 @@
   "description": "",
   "deps": {
     "shared": [
+      "components/ConfirmProvider",
       "components/icon-picker",
       "lib/format",
       "lib/utils",
@@ -14,6 +15,7 @@
       "ui/label",
       "ui/responsive-alert-dialog",
       "ui/scroll-area",
+      "ui/select",
       "ui/skeleton",
       "ui/switch",
       "ui/table",

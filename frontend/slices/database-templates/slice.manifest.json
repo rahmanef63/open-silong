@@ -4,6 +4,7 @@
   "deps": {
     "shared": [
       "lib/store",
+      "lib/uid",
       "lib/utils",
       "types/domain",
       "ui/button",

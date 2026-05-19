@@ -6,7 +6,8 @@
       "components/icon-picker",
       "lib/error",
       "lib/store",
-      "lib/utils"
+      "lib/utils",
+      "ui/button"
     ],
     "slices": [],
     "convex": [

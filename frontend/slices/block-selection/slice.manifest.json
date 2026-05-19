@@ -5,9 +5,12 @@
     "shared": [
       "components/Marquee",
       "lib/store",
+      "lib/uid",
       "lib/utils",
       "types/domain",
-      "ui/dropdown-menu"
+      "ui/button",
+      "ui/dropdown-menu",
+      "ui/separator"
     ],
     "slices": [
       "editor"

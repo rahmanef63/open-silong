@@ -5,7 +5,8 @@
     "shared": [
       "lib/store",
       "lib/utils",
-      "types"
+      "types",
+      "ui/button"
     ],
     "slices": [],
     "convex": []

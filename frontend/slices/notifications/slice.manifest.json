@@ -4,6 +4,7 @@
   "deps": {
     "shared": [
       "lib/utils",
+      "ui/button",
       "ui/popover"
     ],
     "slices": [],

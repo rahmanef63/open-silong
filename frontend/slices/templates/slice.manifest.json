@@ -7,6 +7,7 @@
       "hooks/useAsyncError",
       "lib/inlineMd",
       "lib/utils",
+      "ui/accordion",
       "ui/button",
       "ui/dialog"
     ],

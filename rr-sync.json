@@ -4,6 +4,91 @@
     ["Nosion", "Host"],
     ["nosion", "host"]
   ],
+  "pathMap": [
+    {
+      "from": "frontend/shared/lib/utils",
+      "to": "SKIP_NPM",
+      "package": "rahman-shared/lib/utils"
+    },
+    {
+      "from": "frontend/shared/lib/store",
+      "to": "lib/shared/store"
+    },
+    {
+      "from": "frontend/shared/lib/error",
+      "to": "lib/shared/error"
+    },
+    {
+      "from": "frontend/shared/lib/routes",
+      "to": "lib/shared/routes"
+    },
+    {
+      "from": "frontend/shared/lib/router",
+      "to": "lib/shared/router"
+    },
+    {
+      "from": "frontend/shared/lib/keyboard",
+      "to": "lib/shared/keyboard"
+    },
+    {
+      "from": "frontend/shared/lib/format",
+      "to": "lib/shared/format"
+    },
+    {
+      "from": "frontend/shared/lib/markdown",
+      "to": "lib/shared/markdown"
+    },
+    {
+      "from": "frontend/shared/lib/inlineMd",
+      "to": "lib/shared/inlineMd"
+    },
+    {
+      "from": "frontend/shared/lib",
+      "to": "lib/shared/lib"
+    },
+    {
+      "from": "frontend/shared/components/icon-picker",
+      "to": "components/shared/icon-picker"
+    },
+    {
+      "from": "frontend/shared/components/ErrorBoundary",
+      "to": "components/shared/ErrorBoundary"
+    },
+    {
+      "from": "frontend/shared/components/RouteSkeleton",
+      "to": "components/shared/RouteSkeleton"
+    },
+    {
+      "from": "frontend/shared/components/Marquee",
+      "to": "components/shared/Marquee"
+    },
+    {
+      "from": "frontend/shared/components/PageHeaderSlot",
+      "to": "components/shared/PageHeaderSlot"
+    },
+    {
+      "from": "frontend/shared/components",
+      "to": "components/shared"
+    },
+    {
+      "from": "frontend/shared/types",
+      "to": "components/shared/types"
+    },
+    {
+      "from": "frontend/shared/providers",
+      "to": "components/shared/providers"
+    },
+    {
+      "from": "frontend/shared/hooks",
+      "to": "components/shared/hooks"
+    },
+    {
+      "from": "frontend/shared/ui",
+      "to": "components/ui",
+      "skip": true,
+      "_note": "rr already has its own shadcn primitives at components/ui/; reuse them, do not overwrite"
+    }
+  ],
   "tracked": {},
   "fileHashes": {}
 }

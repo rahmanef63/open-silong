@@ -1,18 +1,21 @@
 {
-  "name": "feedback",
+  "name": "cover",
   "description": "",
   "deps": {
     "shared": [
       "lib/utils",
+      "types/domain",
+      "ui/alert",
       "ui/button",
       "ui/dialog",
-      "ui/input",
-      "ui/label",
-      "ui/textarea"
+      "ui/input"
     ],
-    "slices": [],
+    "slices": [
+      "files"
+    ],
     "convex": [
-      "_generated"
+      "_generated",
+      "features"
     ]
   },
   "notes": ""

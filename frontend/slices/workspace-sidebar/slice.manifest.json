@@ -3,6 +3,7 @@
   "description": "",
   "deps": {
     "shared": [
+      "components/ConfirmProvider",
       "components/icon-picker",
       "hooks/useAsyncError",
       "lib/keyboard",
@@ -10,7 +11,6 @@
       "lib/routes",
       "lib/store",
       "lib/utils",
-      "providers",
       "types/domain",
       "ui/alert-dialog",
       "ui/avatar",
@@ -27,6 +27,7 @@
       "feedback",
       "inbox",
       "templates",
+      "workspace-io",
       "workspace-members"
     ],
     "convex": []

@@ -9,6 +9,7 @@
       "types/domain",
       "ui/button",
       "ui/dialog",
+      "ui/input",
       "ui/switch"
     ],
     "slices": [],

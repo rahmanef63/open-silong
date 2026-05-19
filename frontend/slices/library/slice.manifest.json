@@ -3,21 +3,26 @@
   "description": "",
   "deps": {
     "shared": [
+      "components/ConfirmProvider",
       "components/icon-picker",
       "hooks/useAsyncError",
       "lib/error",
       "lib/format",
+      "lib/routes",
       "lib/store",
       "lib/utils",
-      "providers",
       "types/domain",
       "ui/button",
       "ui/checkbox",
       "ui/dropdown-menu",
       "ui/input",
+      "ui/separator",
+      "ui/skeleton",
       "ui/tabs"
     ],
-    "slices": [],
+    "slices": [
+      "workspace-io"
+    ],
     "convex": []
   },
   "notes": ""

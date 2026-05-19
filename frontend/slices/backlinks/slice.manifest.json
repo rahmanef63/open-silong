@@ -6,7 +6,8 @@
       "lib/router",
       "lib/store",
       "lib/utils",
-      "types/domain"
+      "types/domain",
+      "ui/button"
     ],
     "slices": [],
     "convex": []

@@ -5,7 +5,8 @@
     "shared": [
       "lib/format",
       "lib/router",
-      "lib/utils"
+      "lib/utils",
+      "ui/button"
     ],
     "slices": [],
     "convex": [
