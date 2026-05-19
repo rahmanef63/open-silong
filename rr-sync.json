@@ -1,0 +1,9 @@
+{
+  "rrRoot": "~/projects/resources",
+  "scrubs": [
+    ["Nosion", "Host"],
+    ["nosion", "host"]
+  ],
+  "tracked": {},
+  "fileHashes": {}
+}
