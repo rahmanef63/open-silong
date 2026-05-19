@@ -241,6 +241,52 @@ export function rewriteImports(content, srcCfg, destCfg, pathMap) {
 /**
  * Helper for --explain-imports flag: dump the derived alias state.
  */
+/**
+ * Scan source content for bare npm package imports.
+ * Returns array of package names (deduped, normalized to root pkg name
+ * — e.g. "@radix-ui/react-dialog" + "@radix-ui/react-dialog/foo" both
+ * yield "@radix-ui/react-dialog"; "lodash/get" yields "lodash").
+ *
+ * Skips relative imports, src-tsconfig aliases, and node:* builtins.
+ */
+export function scanNpmImports(content, srcCfg) {
+  const pkgs = new Set();
+  const importRegex = /(\bfrom\s+|\bimport\s*\(\s*|\brequire\s*\(\s*)(['"`])([^'"`]+)\2/g;
+  const aliases = Object.keys(srcCfg?.paths ?? {}).sort((a, b) => b.length - a.length);
+  let m;
+  while ((m = importRegex.exec(content)) !== null) {
+    const imp = m[3];
+    if (imp.startsWith(".") || imp.startsWith("node:") || imp.startsWith("/")) continue;
+    let isAlias = false;
+    for (const a of aliases) {
+      if (imp === a || imp.startsWith(a + "/")) {
+        isAlias = true;
+        break;
+      }
+    }
+    if (isAlias) continue;
+    // bare npm package: strip subpath, keep scope+name
+    const parts = imp.split("/");
+    const pkg = imp.startsWith("@") ? parts.slice(0, 2).join("/") : parts[0];
+    pkgs.add(pkg);
+  }
+  return [...pkgs];
+}
+
+/**
+ * Load a package.json's full dep map (deps + devDeps + peerDeps).
+ */
+export async function loadPackageDeps(repoRoot) {
+  const p = path.join(repoRoot, "package.json");
+  const raw = await fs.readFile(p, "utf8");
+  const pkg = JSON.parse(raw);
+  return {
+    ...(pkg.dependencies ?? {}),
+    ...(pkg.devDependencies ?? {}),
+    ...(pkg.peerDependencies ?? {}),
+  };
+}
+
 export function explainAliases(srcCfg, destCfg, pathMap) {
   console.log("\n=== source tsconfig paths ===");
   for (const [k, dirs] of Object.entries(srcCfg.paths)) {

@@ -130,6 +130,41 @@ Binary files (png/jpg/woff/etc) are skipped automatically.
 
 - `convex/_generated/*` — per-project codegen, always regenerated at the dest
 - `node_modules/`, `.next/` — never copied
+- pathMap entries with `skip: true` (e.g. `frontend/shared/ui/` — rr has its own shadcn primitives at `components/ui/`)
+- pathMap entries with `to: "SKIP_NPM"` (e.g. `frontend/shared/lib/utils` → `rahman-shared/lib/utils` npm pkg)
+
+## Known gaps
+
+### Convex API lifting
+
+Frontend slices that call `api.foo.bar` (e.g. `api.features.wiki.mutations.enable`) DEPEND on convex modules that the manifest auto-generator misses (it only scans `@convex/_generated` literal imports, not the actual `api.<x>.<y>` call chain).
+
+For now, only lift slices that have **zero `api.*` calls in their frontend code** (16 candidates as of 2026-05-19: backlinks, code-block, comments, database-cell-selection, database-presets, database-templates, equation, files, mentions, notifications, search, simple-table, snapshots, theme-presets, trash, plus the `notion` mega-wrapper).
+
+Slices that need convex (editor, databases, wiki, library, admin-panel, dashboard, etc.) require either: (a) full convex feature dir lift (heavy, cross-cutting), (b) generator improvement to scan api.* paths, OR (c) interface-injection refactor in the slice.
+
+### npm dep cross-check
+
+After every sync, the engine scans bare npm imports in copied files and cross-checks against rr's `package.json`. Missing deps are reported with the install command:
+
+```
+⚠ rr is MISSING npm deps (1):
+    katex  →  add ^0.16.45
+  → cd ~/projects/resources && pnpm add katex@^0.16.45
+```
+
+Version drift between rr and nosion is also flagged (informational, non-blocking).
+
+The engine WILL NOT auto-install on rr — manual step, deliberate.
+
+### Manifest gaps
+
+`generate-slice-manifests.mjs` scans `@/shared/*` + `@convex/_generated/*` imports. It misses:
+- `api.<x>.<y>` call chains (convex feature deps)
+- Dynamic imports `import("...")` inside hooks
+- Re-exports through barrel files (sometimes — depends on depth)
+
+Re-run the generator after any new import to refresh manifests. If lift still misses files, hand-edit the manifest's `deps.convex` / `deps.shared` array.
 
 ---
 
