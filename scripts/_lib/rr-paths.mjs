@@ -121,16 +121,17 @@ export function applyPathMap(repoRelPath, pathMap) {
     const from = entry.from.replace(/\/$/, "");
     // Match: exact, dir-prefix, OR from+ext (file w/ extension)
     let suffix = null;
+    let matchExt = ""; // file ext if matched via +ext (preserve on dest)
     if (repoRelPath === from) suffix = "";
     else if (repoRelPath.startsWith(from + "/")) suffix = repoRelPath.slice(from.length + 1);
     else {
       for (const ext of [".ts", ".tsx", ".js", ".jsx", ".mjs"]) {
-        if (repoRelPath === from + ext) { suffix = ""; break; }
+        if (repoRelPath === from + ext) { suffix = ""; matchExt = ext; break; }
       }
     }
     if (suffix === null) continue;
 
-    // Legacy SKIP_NPM form
+    // Legacy SKIP_NPM form (importAs has no extension)
     if (entry.to === "SKIP_NPM") {
       const pkg = entry.package;
       if (!pkg) throw new Error(`pathMap entry ${entry.from} has to=SKIP_NPM but no 'package' field`);
@@ -143,11 +144,12 @@ export function applyPathMap(repoRelPath, pathMap) {
       }
       const to = entry.to.replace(/\/$/, "");
       const destRel = suffix ? path.join(to, suffix) : to;
-      return { skip: true, importAs: null, destRel }; // caller will reverseDestAlias on destRel
+      return { skip: true, importAs: null, destRel };
     }
-    // copy form
+    // copy form — preserve file ext if match was +ext
     const to = entry.to.replace(/\/$/, "");
-    const destRel = suffix ? path.join(to, suffix) : to;
+    let destRel = suffix ? path.join(to, suffix) : to;
+    if (matchExt) destRel += matchExt;
     return { skip: false, destRel };
   }
   return { skip: false, destRel: repoRelPath };

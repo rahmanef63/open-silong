@@ -57,7 +57,6 @@ export function sanitizeError(err: unknown): SanitizedError {
     ? String((err as { name?: unknown }).name ?? "")
     : "";
 
-  // Chunk / stale deploy
   if (
     name === "ChunkLoadError" ||
     lower.includes("loading chunk") ||
@@ -66,14 +65,8 @@ export function sanitizeError(err: unknown): SanitizedError {
     lower.includes("chunkloaderror") ||
     /\/_next\/static\/chunks\/[^\s]+\.js/i.test(raw)
   ) {
-    return {
-      category: "chunk",
-      message: "A new version was deployed. Reload to continue.",
-      retryable: true,
-    };
+    return { category: "chunk", message: "A new version was deployed. Reload to continue.", retryable: true };
   }
-
-  // Network / offline
   if (
     name === "AbortError" ||
     lower.includes("failed to fetch") ||
@@ -83,14 +76,8 @@ export function sanitizeError(err: unknown): SanitizedError {
     lower.includes("load failed") ||
     lower === "network error"
   ) {
-    return {
-      category: "network",
-      message: "Connection problem. Check your internet and try again.",
-      retryable: true,
-    };
+    return { category: "network", message: "Connection problem. Check your internet and try again.", retryable: true };
   }
-
-  // Auth — Convex auth + generic 401
   if (
     lower.includes("unauthenticated") ||
     lower.includes("not authenticated") ||
@@ -100,14 +87,8 @@ export function sanitizeError(err: unknown): SanitizedError {
     lower.includes("invalidsecret") ||
     /\b401\b/.test(raw)
   ) {
-    return {
-      category: "auth",
-      message: "You're signed out. Please sign in again.",
-      retryable: false,
-    };
+    return { category: "auth", message: "You're signed out. Please sign in again.", retryable: false };
   }
-
-  // Permission — Convex throws "permission_denied" / "forbidden"
   if (
     lower.includes("permission_denied") ||
     lower.includes("permission denied") ||
@@ -115,14 +96,8 @@ export function sanitizeError(err: unknown): SanitizedError {
     lower.includes("not allowed") ||
     /\b403\b/.test(raw)
   ) {
-    return {
-      category: "permission",
-      message: "You don't have access to do that.",
-      retryable: false,
-    };
+    return { category: "permission", message: "You don't have access to do that.", retryable: false };
   }
-
-  // Validation — Convex argument validators throw "ArgumentValidationError"
   if (
     lower.includes("argumentvalidationerror") ||
     lower.includes("validator error") ||
@@ -130,53 +105,29 @@ export function sanitizeError(err: unknown): SanitizedError {
     lower.includes("zoderror") ||
     name === "ZodError"
   ) {
-    return {
-      category: "validation",
-      message: "That input doesn't look right. Please review and try again.",
-      retryable: false,
-    };
+    return { category: "validation", message: "That input doesn't look right. Please review and try again.", retryable: false };
   }
-
-  // Not found
   if (
     lower.includes("not found") ||
     lower.includes("does not exist") ||
     /\b404\b/.test(raw)
   ) {
-    return {
-      category: "not-found",
-      message: "We couldn't find what you were looking for.",
-      retryable: false,
-    };
+    return { category: "not-found", message: "We couldn't find what you were looking for.", retryable: false };
   }
-
-  // Rate limit
   if (
     lower.includes("rate limit") ||
     lower.includes("too many requests") ||
     /\b429\b/.test(raw)
   ) {
-    return {
-      category: "rate-limit",
-      message: "You're going a little fast. Wait a moment and try again.",
-      retryable: true,
-    };
+    return { category: "rate-limit", message: "You're going a little fast. Wait a moment and try again.", retryable: true };
   }
-
-  // Convex framework error — surface "Save failed" not the M(...) detail
   if (
     raw.includes("[CONVEX") ||
     lower.includes("convexerror") ||
     name === "ConvexError"
   ) {
-    return {
-      category: "convex",
-      message: "Couldn't save changes. Please try again.",
-      retryable: true,
-    };
+    return { category: "convex", message: "Couldn't save changes. Please try again.", retryable: true };
   }
-
-  // 5xx server
   if (/\b5\d{2}\b/.test(raw) || lower.includes("internal server error")) {
     return {
       category: "server",

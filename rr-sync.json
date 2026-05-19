@@ -1,9 +1,20 @@
 {
   "rrRoot": "~/projects/resources",
   "scrubs": [
-    ["Nosion", "Host"],
-    ["nosion", "host"]
+    [
+      "Nosion",
+      "Host"
+    ],
+    [
+      "nosion",
+      "host"
+    ]
   ],
+  "skipFiles": [
+    "slice.json",
+    "slice.contract.ts"
+  ],
+  "_skipFilesNote": "slice.json + slice.contract.ts have rr-specific schemas (rr uses defineSliceContract DSL + 12-category enum). Operator hand-writes rr-conformant versions post-sync.",
   "pathMap": [
     {
       "from": "frontend/shared/lib/utils",
@@ -89,6 +100,40 @@
       "_note": "rr already has its own shadcn primitives at components/ui/; reuse them, do not overwrite"
     }
   ],
-  "tracked": {},
-  "fileHashes": {}
+  "tracked": {
+    "equation": {
+      "version": "0.1.0",
+      "syncedAt": "2026-05-19T06:39:18.377Z",
+      "syncedFromCommit": "0b5e4f3772b34c9a04462520f2e6e94be0e80995",
+      "slicePath": "frontend/slices/equation",
+      "files": [
+        "frontend/slices/equation/components/EquationBlock.tsx",
+        "frontend/slices/equation/index.ts",
+        "frontend/slices/equation/slice.contract.ts",
+        "frontend/slices/equation/slice.manifest.json",
+        "frontend/slices/equation/types/index.ts",
+        "frontend/shared/lib/error.ts"
+      ],
+      "fileDestMap": {
+        "frontend/slices/equation/components/EquationBlock.tsx": "frontend/slices/equation/components/EquationBlock.tsx",
+        "frontend/slices/equation/index.ts": "frontend/slices/equation/index.ts",
+        "frontend/slices/equation/slice.contract.ts": "frontend/slices/equation/slice.contract.ts",
+        "frontend/slices/equation/slice.manifest.json": "frontend/slices/equation/slice.manifest.json",
+        "frontend/slices/equation/types/index.ts": "frontend/slices/equation/types/index.ts",
+        "frontend/shared/lib/error.ts": "lib/shared/error.ts"
+      },
+      "skipNpm": [
+        "frontend/shared/ui/button.tsx"
+      ]
+    }
+  },
+  "fileHashes": {
+    "frontend/slices/equation/components/EquationBlock.tsx": "sha256-2dba8aea0f2435b26a5597b242af30ad9e347f85c3884ad9458600dfab992a87",
+    "frontend/slices/equation/index.ts": "sha256-dfa621c69007e7c0141f79cce18f6537ad193bbe1c94b5928f404d251f6c1b57",
+    "frontend/slices/equation/slice.contract.ts": "sha256-9f7741a6697df65a04a41f9fa45cc58756858b1d9a300654a94b8718164c6f59",
+    "frontend/slices/equation/slice.json": "sha256-db610bbf85d1aa8ecf7fcce750df7d911d99b8563525897f40092fc4039eca52",
+    "frontend/slices/equation/slice.manifest.json": "sha256-e7f5f1f87946e78c7c6d828408d6036606cc338391dd8197fd0bfd416f31a126",
+    "frontend/slices/equation/types/index.ts": "sha256-26d808da658e4607fae58eb2cf2503ca5bfd8ea49f1af51bc78969d8c0094389",
+    "frontend/shared/lib/error.ts": "sha256-a86a124db758d2a2f96a2825ca394340649fe848d18ed25b924a38bdd22b8f46"
+  }
 }
