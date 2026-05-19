@@ -11,8 +11,8 @@ Tracked slices: **5**  ·  Source: notion-page-clone  ·  Dest: `~/projects/reso
 |---|---|---|---|---|
 | code-block | 0.1.0 | 5 | 0 (0+) | 2026-05-19 |
 | database-cell-selection | 0.1.0 | 4 | 0 (0+) | 2026-05-19 |
-| equation | 0.1.0 | 6 | 1 (0+) | 2026-05-19 |
-| mentions | 0.1.0 | 28 | 23 (0+) | 2026-05-19 |
+| equation | 0.1.0 | 6 | 1 (1+) | 2026-05-19 |
+| mentions | 0.1.0 | 51 | 46 (1+) | 2026-05-19 |
 | notifications | 0.1.0 | 5 | 0 (0+) | 2026-05-19 |
 
 - **shared+** = count of shared files this slice depends on that ALSO consumed by another tracked slice. High value = shared infra that must stay coherent.
@@ -62,12 +62,12 @@ Tracked slices: **5**  ·  Source: notion-page-clone  ·  Dest: `~/projects/reso
 
 **shared deps (1):**
 
-- `frontend/shared/lib/error.ts`
+- `frontend/shared/lib/error.ts`  _(also: mentions)_
 
 ### `mentions`
 
 - **version:** 0.1.0
-- **synced:** 2026-05-19T09:22:08.404Z (commit `250d8e7`)
+- **synced:** 2026-05-19T11:26:00.665Z (commit `2f24680`)
 - **slicePath:** `frontend/slices/mentions`
 
 **slice files (5):**
@@ -78,8 +78,30 @@ Tracked slices: **5**  ·  Source: notion-page-clone  ·  Dest: `~/projects/reso
 - `frontend/slices/mentions/slice.manifest.json`
 - `frontend/slices/mentions/types/index.ts`
 
-**shared deps (23):**
+**shared deps (46):**
 
+- `frontend/shared/components/icon-picker/components/DynamicIcon.tsx`
+- `frontend/shared/components/icon-picker/components/IconPicker.tsx`
+- `frontend/shared/components/icon-picker/components/IconPickerInline.tsx`
+- `frontend/shared/components/icon-picker/components/PickerSkeleton.tsx`
+- `frontend/shared/components/icon-picker/components/picker-parts/ColorRow.tsx`
+- `frontend/shared/components/icon-picker/components/picker-parts/Toolbar.tsx`
+- `frontend/shared/components/icon-picker/components/picker-parts/cells.tsx`
+- `frontend/shared/components/icon-picker/index.ts`
+- `frontend/shared/components/icon-picker/lib/colors.ts`
+- `frontend/shared/components/icon-picker/lib/defaults.ts`
+- `frontend/shared/components/icon-picker/lib/emoji-catalog.ts`
+- `frontend/shared/components/icon-picker/lib/emoji-keywords.ts`
+- `frontend/shared/components/icon-picker/lib/lucide-catalog.ts`
+- `frontend/shared/components/icon-picker/lib/lucide-icons.ts`
+- `frontend/shared/components/icon-picker/lib/parse.ts`
+- `frontend/shared/components/icon-picker/lib/recents.ts`
+- `frontend/shared/components/icon-picker/lib/style-pref.ts`
+- `frontend/shared/components/icon-picker/lib/twemoji.ts`
+- `frontend/shared/lib/databases/propertyTypeMeta.ts`
+- `frontend/shared/lib/databases/relationMirror.ts`
+- `frontend/shared/lib/error.ts`  _(also: equation)_
+- `frontend/shared/lib/keyboard.ts`
 - `frontend/shared/lib/router/index.tsx`
 - `frontend/shared/lib/store/context.ts`
 - `frontend/shared/lib/store/databaseActions.ts`
@@ -102,6 +124,7 @@ Tracked slices: **5**  ·  Source: notion-page-clone  ·  Dest: `~/projects/reso
 - `frontend/shared/lib/store/snapshots.ts`
 - `frontend/shared/lib/store/useThemeEffect.ts`
 - `frontend/shared/lib/store/useWorkspaceMuts.ts`
+- `frontend/shared/lib/uid.ts`
 - `frontend/shared/types/domain.ts`
 
 ### `notifications`
@@ -122,5 +145,7 @@ Tracked slices: **5**  ·  Source: notion-page-clone  ·  Dest: `~/projects/reso
 
 _Files used by 2+ tracked slices. Keep these in sync — corruption here breaks every consumer._
 
-_(none yet — first multi-consumer shared file will surface here)_
+| shared file | consumers |
+|---|---|
+| `frontend/shared/lib/error.ts` | equation, mentions |
 

@@ -29,6 +29,8 @@ import {
   explainAliases,
   scanNpmImports,
   loadPackageDeps,
+  resolveSrcImport,
+  stripJsonComments,
 } from "./_lib/rr-paths.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -117,9 +119,11 @@ async function main() {
       console.warn(`  ⚠ shared dep missing: shared/${sh}`);
       continue;
     }
-    const stat = await fs.stat(resolved);
-    if (stat.isDirectory()) files.push(...(await walkDir(resolved, REPO)));
-    else files.push(path.relative(REPO, resolved));
+    for (const r of resolved) {
+      const stat = await fs.stat(r);
+      if (stat.isDirectory()) files.push(...(await walkDir(r, REPO)));
+      else files.push(path.relative(REPO, r));
+    }
   }
 
   for (const cx of manifest.deps?.convex ?? []) {
@@ -129,9 +133,11 @@ async function main() {
       console.warn(`  ⚠ convex dep missing: convex/${cx}`);
       continue;
     }
-    const stat = await fs.stat(resolved);
-    if (stat.isDirectory()) files.push(...(await walkDir(resolved, REPO)));
-    else files.push(path.relative(REPO, resolved));
+    for (const r of resolved) {
+      const stat = await fs.stat(r);
+      if (stat.isDirectory()) files.push(...(await walkDir(r, REPO)));
+      else files.push(path.relative(REPO, r));
+    }
   }
 
   // 2. load tsconfigs + pathMap for dest mapping + import rewriting
@@ -141,9 +147,35 @@ async function main() {
   const srcCfg = await loadTsconfigPaths(REPO);
   const destCfg = await loadTsconfigPaths(rrRoot);
 
-  // filter out skipFiles (basename match)
-  const filteredFiles = files.filter((rel) => !skipFiles.includes(path.basename(rel)));
-  const skippedByName = files.filter((rel) => skipFiles.includes(path.basename(rel)));
+  // 2a. TRANSITIVE FOLLOWER — walk imports of every file we plan to copy.
+  // If an import resolves to a nosion file that's NOT in our copy list AND
+  // pathMap doesn't say skip, add it. Recurse until convergence.
+  // Closes the "lib/store imports icon-picker but mentions manifest doesn't
+  // declare icon-picker" class of break.
+  const transitive = await followTransitiveImports(files, srcCfg, pathMap);
+  if (transitive.added.length) {
+    console.log(`\n  transitive deps auto-included (${transitive.added.length}):`);
+    for (const f of transitive.added) console.log(`    + ${f}`);
+    files.push(...transitive.added);
+  }
+  if (transitive.unresolvable.length) {
+    console.log(`\n  ⚠ transitive imports we couldn't resolve to a file (${transitive.unresolvable.length}):`);
+    for (const u of transitive.unresolvable.slice(0, 10)) console.log(`    ${u.from}: ${u.import}`);
+    if (transitive.unresolvable.length > 10) console.log(`    ... +${transitive.unresolvable.length - 10} more`);
+    console.log(`  → likely need pathMap entry OR target file moved/renamed`);
+  }
+
+  // filter out skipFiles (basename match OR *.suffix wildcard)
+  const skipMatch = (rel) => {
+    const base = path.basename(rel);
+    for (const p of skipFiles) {
+      if (p === base) return true;
+      if (p.startsWith("*.") && base.endsWith(p.slice(1))) return true;
+    }
+    return false;
+  };
+  const filteredFiles = files.filter((rel) => !skipMatch(rel));
+  const skippedByName = files.filter((rel) => skipMatch(rel));
 
   // 3. per-file: resolve dest path, apply scrubs + import rewrites, hash, copy
   const report = { added: [], updated: [], skipped: [], conflicts: [], skipNpm: [] };
@@ -304,6 +336,97 @@ function isTextFile(p) {
   return /\.(ts|tsx|js|jsx|mjs|cjs|json|md|css|scss|html|txt|yml|yaml)$/i.test(p);
 }
 
+/**
+ * Transitive-import follower.
+ *
+ * Walk every text file in `seed`, scan its import literals, resolve each
+ * via srcCfg, apply pathMap. If the resolved file is NOT already in our
+ * copy set AND pathMap doesn't say skip → add it and recurse.
+ *
+ * Returns { added: [], unresolvable: [{from, import}] }.
+ */
+async function followTransitiveImports(seed, srcCfg, pathMap) {
+  const inSet = new Set(seed);
+  const added = [];
+  const unresolvable = [];
+  const queue = [...seed];
+  const visited = new Set();
+  const importRegex = /(\bfrom\s+|\bimport\s*\(\s*|\brequire\s*\(\s*)(['"`])([^'"`]+)\2/g;
+
+  while (queue.length) {
+    const rel = queue.shift();
+    if (visited.has(rel)) continue;
+    visited.add(rel);
+    const abs = path.join(REPO, rel);
+    if (!isTextFile(rel) || !(await exists(abs))) continue;
+
+    const stripped = stripJsonComments(await fs.readFile(abs, "utf8"));
+    let m;
+    while ((m = importRegex.exec(stripped)) !== null) {
+      const imp = m[3];
+      // relative imports → resolve to neighbor file in same dir tree
+      if (imp.startsWith(".")) {
+        const neighbour = await resolveRelativeImport(abs, imp);
+        if (!neighbour) continue;
+        const nrel = path.relative(REPO, neighbour);
+        if (!inSet.has(nrel) && nrel.startsWith("frontend/")) {
+          inSet.add(nrel);
+          added.push(nrel);
+          queue.push(nrel);
+        }
+        continue;
+      }
+      if (!imp.startsWith("@")) continue; // bare npm pkg
+      const resolved = resolveSrcImport(imp, srcCfg);
+      if (!resolved) continue;
+      // Skip convex codegen — regenerated per-project on dest
+      if (resolved.repoRelPath.startsWith("convex/_generated")) continue;
+      // Apply pathMap to know if it's skip-able (npm pkg or alias-skip)
+      const mapped = applyPathMap(resolved.repoRelPath, pathMap);
+      if (mapped.skip) continue;
+      // Find actual file(s) at nosion (may be [file, dir] for barrel pattern)
+      const targets = await resolveDepPath(path.join(REPO, resolved.repoRelPath));
+      if (!targets) {
+        unresolvable.push({ from: rel, import: imp });
+        continue;
+      }
+      for (const target of targets) {
+        const stat = await fs.stat(target);
+        const newFiles = stat.isDirectory()
+          ? (await walkDir(target, REPO)).filter((f) => !f.includes("/_generated/"))
+          : [path.relative(REPO, target)];
+        for (const nrel of newFiles) {
+          if (nrel.includes("/_generated/")) continue;
+          if (!inSet.has(nrel)) {
+            inSet.add(nrel);
+            added.push(nrel);
+            queue.push(nrel);
+          }
+        }
+      }
+    }
+  }
+  return { added, unresolvable };
+}
+
+async function resolveRelativeImport(fromAbs, importStr) {
+  const baseDir = path.dirname(fromAbs);
+  const target = path.resolve(baseDir, importStr);
+  if (await exists(target)) {
+    const s = await fs.stat(target);
+    if (s.isFile()) return target;
+    // dir → look for index.ts/tsx/js
+    for (const idx of ["index.ts", "index.tsx", "index.js"]) {
+      const cand = path.join(target, idx);
+      if (await exists(cand)) return cand;
+    }
+  }
+  for (const ext of [".ts", ".tsx", ".js", ".jsx", ".mjs"]) {
+    if (await exists(target + ext)) return target + ext;
+  }
+  return null;
+}
+
 // ───── helpers ─────
 
 async function loadRegistry() {
@@ -317,18 +440,40 @@ async function readManifest(name) {
   return JSON.parse(await fs.readFile(p, "utf8"));
 }
 
-// Resolve a manifest dep entry to an actual file/dir.
-// Tries: exact path, .ts, .tsx, .js, .mjs, /index.ts, /index.tsx
+// Resolve a manifest dep entry to actual file(s) at nosion.
+// Mirrors TS bundler resolution: file beats dir of same name.
+// Returns array — may be 1 (file) or 2 (file + sibling dir barrel pattern).
+//
+// e.g. `frontend/shared/lib/store` matches BOTH:
+//   - file: frontend/shared/lib/store.tsx (barrel re-export)
+//   - dir:  frontend/shared/lib/store/ (impl files barrel re-exports from)
+// Both need copying.
 async function resolveDepPath(p) {
-  if (await exists(p)) return p;
+  const out = [];
+  // Try extension fallbacks first (file form)
   for (const ext of [".ts", ".tsx", ".js", ".mjs", ".jsx"]) {
-    if (await exists(p + ext)) return p + ext;
+    if (await exists(p + ext)) {
+      out.push(p + ext);
+      break;
+    }
   }
-  for (const idx of ["index.ts", "index.tsx", "index.js"]) {
-    const cand = path.join(p, idx);
-    if (await exists(cand)) return path.dirname(cand); // copy the whole dir
+  // Also try the dir form (may coexist with barrel file)
+  if (await exists(p)) {
+    const s = await fs.stat(p);
+    if (s.isDirectory()) out.push(p);
+    else if (!out.length) out.push(p);
   }
-  return null;
+  // index.ts inside dir if dir but no barrel sibling
+  if (!out.length) {
+    for (const idx of ["index.ts", "index.tsx", "index.js"]) {
+      const cand = path.join(p, idx);
+      if (await exists(cand)) {
+        out.push(path.dirname(cand));
+        break;
+      }
+    }
+  }
+  return out.length === 0 ? null : out;
 }
 
 async function walkDir(dir, repoRoot) {

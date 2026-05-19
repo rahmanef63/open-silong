@@ -12,14 +12,24 @@
   ],
   "skipFiles": [
     "slice.json",
-    "slice.contract.ts"
+    "slice.contract.ts",
+    "*.test.ts",
+    "*.test.tsx"
   ],
-  "_skipFilesNote": "slice.json + slice.contract.ts have rr-specific schemas (rr uses defineSliceContract DSL + 12-category enum). Operator hand-writes rr-conformant versions post-sync.",
+  "_skipFilesNote": "Basename match OR *.suffix wildcard. slice.json + slice.contract.ts have rr-specific schemas; *.test.* skips co-located unit tests (rr runs its own test discipline).",
   "pathMap": [
     {
       "from": "frontend/shared/lib/utils",
       "to": "SKIP_NPM",
       "package": "rahman-shared/lib/utils"
+    },
+    {
+      "from": "frontend/shared/lib/uid",
+      "to": "lib/shared/uid"
+    },
+    {
+      "from": "frontend/shared/lib/databases",
+      "to": "lib/shared/databases"
     },
     {
       "from": "frontend/shared/lib/store",
@@ -199,8 +209,8 @@
     },
     "mentions": {
       "version": "0.1.0",
-      "syncedAt": "2026-05-19T09:22:08.404Z",
-      "syncedFromCommit": "250d8e767ec9d0bb5d468f926aac6ff6c546e26b",
+      "syncedAt": "2026-05-19T11:26:00.665Z",
+      "syncedFromCommit": "2f24680dea7ec06706b787f372487488efef2d24",
       "slicePath": "frontend/slices/mentions",
       "files": [
         "frontend/slices/mentions/components/MentionsPopover.tsx",
@@ -230,7 +240,30 @@
         "frontend/shared/lib/store/snapshots.ts",
         "frontend/shared/lib/store/useThemeEffect.ts",
         "frontend/shared/lib/store/useWorkspaceMuts.ts",
-        "frontend/shared/types/domain.ts"
+        "frontend/shared/types/domain.ts",
+        "frontend/shared/lib/uid.ts",
+        "frontend/shared/components/icon-picker/components/DynamicIcon.tsx",
+        "frontend/shared/components/icon-picker/components/IconPicker.tsx",
+        "frontend/shared/components/icon-picker/components/IconPickerInline.tsx",
+        "frontend/shared/components/icon-picker/components/PickerSkeleton.tsx",
+        "frontend/shared/components/icon-picker/components/picker-parts/ColorRow.tsx",
+        "frontend/shared/components/icon-picker/components/picker-parts/Toolbar.tsx",
+        "frontend/shared/components/icon-picker/components/picker-parts/cells.tsx",
+        "frontend/shared/components/icon-picker/index.ts",
+        "frontend/shared/components/icon-picker/lib/colors.ts",
+        "frontend/shared/components/icon-picker/lib/defaults.ts",
+        "frontend/shared/components/icon-picker/lib/emoji-catalog.ts",
+        "frontend/shared/components/icon-picker/lib/emoji-keywords.ts",
+        "frontend/shared/components/icon-picker/lib/lucide-catalog.ts",
+        "frontend/shared/components/icon-picker/lib/lucide-icons.ts",
+        "frontend/shared/components/icon-picker/lib/parse.ts",
+        "frontend/shared/components/icon-picker/lib/recents.ts",
+        "frontend/shared/components/icon-picker/lib/style-pref.ts",
+        "frontend/shared/components/icon-picker/lib/twemoji.ts",
+        "frontend/shared/lib/databases/propertyTypeMeta.ts",
+        "frontend/shared/lib/databases/relationMirror.ts",
+        "frontend/shared/lib/keyboard.ts",
+        "frontend/shared/lib/error.ts"
       ],
       "fileDestMap": {
         "frontend/slices/mentions/components/MentionsPopover.tsx": "frontend/slices/mentions/components/MentionsPopover.tsx",
@@ -260,7 +293,30 @@
         "frontend/shared/lib/store/snapshots.ts": "lib/shared/store/snapshots.ts",
         "frontend/shared/lib/store/useThemeEffect.ts": "lib/shared/store/useThemeEffect.ts",
         "frontend/shared/lib/store/useWorkspaceMuts.ts": "lib/shared/store/useWorkspaceMuts.ts",
-        "frontend/shared/types/domain.ts": "components/shared/types/domain.ts"
+        "frontend/shared/types/domain.ts": "components/shared/types/domain.ts",
+        "frontend/shared/lib/uid.ts": "lib/shared/uid.ts",
+        "frontend/shared/components/icon-picker/components/DynamicIcon.tsx": "components/shared/icon-picker/components/DynamicIcon.tsx",
+        "frontend/shared/components/icon-picker/components/IconPicker.tsx": "components/shared/icon-picker/components/IconPicker.tsx",
+        "frontend/shared/components/icon-picker/components/IconPickerInline.tsx": "components/shared/icon-picker/components/IconPickerInline.tsx",
+        "frontend/shared/components/icon-picker/components/PickerSkeleton.tsx": "components/shared/icon-picker/components/PickerSkeleton.tsx",
+        "frontend/shared/components/icon-picker/components/picker-parts/ColorRow.tsx": "components/shared/icon-picker/components/picker-parts/ColorRow.tsx",
+        "frontend/shared/components/icon-picker/components/picker-parts/Toolbar.tsx": "components/shared/icon-picker/components/picker-parts/Toolbar.tsx",
+        "frontend/shared/components/icon-picker/components/picker-parts/cells.tsx": "components/shared/icon-picker/components/picker-parts/cells.tsx",
+        "frontend/shared/components/icon-picker/index.ts": "components/shared/icon-picker/index.ts",
+        "frontend/shared/components/icon-picker/lib/colors.ts": "components/shared/icon-picker/lib/colors.ts",
+        "frontend/shared/components/icon-picker/lib/defaults.ts": "components/shared/icon-picker/lib/defaults.ts",
+        "frontend/shared/components/icon-picker/lib/emoji-catalog.ts": "components/shared/icon-picker/lib/emoji-catalog.ts",
+        "frontend/shared/components/icon-picker/lib/emoji-keywords.ts": "components/shared/icon-picker/lib/emoji-keywords.ts",
+        "frontend/shared/components/icon-picker/lib/lucide-catalog.ts": "components/shared/icon-picker/lib/lucide-catalog.ts",
+        "frontend/shared/components/icon-picker/lib/lucide-icons.ts": "components/shared/icon-picker/lib/lucide-icons.ts",
+        "frontend/shared/components/icon-picker/lib/parse.ts": "components/shared/icon-picker/lib/parse.ts",
+        "frontend/shared/components/icon-picker/lib/recents.ts": "components/shared/icon-picker/lib/recents.ts",
+        "frontend/shared/components/icon-picker/lib/style-pref.ts": "components/shared/icon-picker/lib/style-pref.ts",
+        "frontend/shared/components/icon-picker/lib/twemoji.ts": "components/shared/icon-picker/lib/twemoji.ts",
+        "frontend/shared/lib/databases/propertyTypeMeta.ts": "lib/shared/databases/propertyTypeMeta.ts",
+        "frontend/shared/lib/databases/relationMirror.ts": "lib/shared/databases/relationMirror.ts",
+        "frontend/shared/lib/keyboard.ts": "lib/shared/keyboard.ts",
+        "frontend/shared/lib/error.ts": "lib/shared/error.ts"
       },
       "skipNpm": [
         "frontend/shared/ui/button.tsx",
@@ -299,9 +355,9 @@
     "frontend/shared/lib/store/context.ts": "sha256-20d11bb114c13bf086f5f3aeed112753834d04d957ee1df478993a1b7b2b130b",
     "frontend/shared/lib/store/databaseActions/constants.ts": "sha256-37c2e2d1e99c002b89918802610d1c1a5e201c74d58ec2a2b0a5baefaa422c96",
     "frontend/shared/lib/store/databaseActions/db.ts": "sha256-4ef90e4513f108f59eb3151412c0caa308fa52ff84603dd127bf23c42af46f9d",
-    "frontend/shared/lib/store/databaseActions/properties.ts": "sha256-4788b77bc95c3ace4253d92f95fcad8c60ddb04b960b69da18526487154a6331",
+    "frontend/shared/lib/store/databaseActions/properties.ts": "sha256-baaa2236359a5c6b7b6e437e3c1770a1b8f2e7fb9d548128dcf0c836351a96ee",
     "frontend/shared/lib/store/databaseActions/relations.ts": "sha256-ccc8ee9dc022c1e83133d7514b0a0df398a3d0d4f10443c073f6336a47898450",
-    "frontend/shared/lib/store/databaseActions/rows.ts": "sha256-64d020e88ddf777f6cd4f74757829eb598c6d7544417d7fe63b929105064bec3",
+    "frontend/shared/lib/store/databaseActions/rows.ts": "sha256-c942d55db53fadb23f1022aef5eea1aaed54af61f1f20af47e92b6fd936b9c71",
     "frontend/shared/lib/store/databaseActions/views.ts": "sha256-d49ea3c37cc181ed30d13c6c5105bd35426bd901cca1dcb80ffc110940cc9cad",
     "frontend/shared/lib/store/databaseActions.ts": "sha256-b371219be63d9de753369d0bce6038f3145ed25ea565368992ed49596021d730",
     "frontend/shared/lib/store/history.ts": "sha256-3833a71d875a4ea0f4c5c7135dcdab781fb20a8f7c2736de28cf9d07374f0290",
@@ -317,6 +373,28 @@
     "frontend/shared/lib/store/snapshots.ts": "sha256-53c15ff913c345b91f5567556097676d6eca3acef739c233e932c2144ff5790f",
     "frontend/shared/lib/store/useThemeEffect.ts": "sha256-fb58bc8b74a9c849d5b6343d44523183f2973867dc04983642021d9770882c20",
     "frontend/shared/lib/store/useWorkspaceMuts.ts": "sha256-05108147444cfdbca0e776d5426ad4cb0bb9f34982fc4a726adcecdbb034124f",
-    "frontend/shared/types/domain.ts": "sha256-5073ba3d50651afaa61f9994c8b6e2d0e0a63157a337de569421c5ff2dd58043"
+    "frontend/shared/types/domain.ts": "sha256-5073ba3d50651afaa61f9994c8b6e2d0e0a63157a337de569421c5ff2dd58043",
+    "frontend/shared/lib/uid.ts": "sha256-ce69a1c1046e024737c23b21c2bd7a16d23fe12b8f6e342dd1bac72a02731a5a",
+    "frontend/shared/components/icon-picker/components/DynamicIcon.tsx": "sha256-2816d99c0b0300de86e6249b17f0402d23adb10ef3311c01afd4048561a86b77",
+    "frontend/shared/components/icon-picker/components/IconPicker.tsx": "sha256-a1b59747de112db7745f657709fc494b4993ab6f5d7c68c488db7c96d00e0f27",
+    "frontend/shared/components/icon-picker/components/IconPickerInline.tsx": "sha256-00af75d1a693d6c610349558a925eee8b1fa705fd7750e5b80e5021bfbd67eef",
+    "frontend/shared/components/icon-picker/components/PickerSkeleton.tsx": "sha256-6356d1dca8618fb7dbef911275251d3a6bd3701038cc097b9f969a9c58ad256e",
+    "frontend/shared/components/icon-picker/components/picker-parts/ColorRow.tsx": "sha256-adee691e6e89e8cdcadff042fd6a029715fc62d975978bb45a6de13961c0ff6e",
+    "frontend/shared/components/icon-picker/components/picker-parts/Toolbar.tsx": "sha256-59146ced4a97f7e853fea9f7f6fa9c1cc6912d9b76b9d64576d3218549e5c4c1",
+    "frontend/shared/components/icon-picker/components/picker-parts/cells.tsx": "sha256-7382ed18997ec336a75fc25adbea2a2f73258b50160a10534757697c3801e0ed",
+    "frontend/shared/components/icon-picker/index.ts": "sha256-517add2294eaa893e8e2cf1454cb2a043f74e2249d25b958b5d86377f338c6b0",
+    "frontend/shared/components/icon-picker/lib/colors.ts": "sha256-ebce12f59ec41e529572ac6754e0b9964e3edfcddc533286dd6d75391af27246",
+    "frontend/shared/components/icon-picker/lib/defaults.ts": "sha256-dc01606d8146a584785dd015b4e666fac62ce6d87060c9cb2b0165a5e86de8da",
+    "frontend/shared/components/icon-picker/lib/emoji-catalog.ts": "sha256-b485eeac65881f96df8056144752b26207437e25aea1d979df7ee0df2eb23e63",
+    "frontend/shared/components/icon-picker/lib/emoji-keywords.ts": "sha256-251b5ea6f7ffa0b7bcfb330203fbe539a0bce0b290ce375f0e07c1f08348c0c2",
+    "frontend/shared/components/icon-picker/lib/lucide-catalog.ts": "sha256-0df6ec95ebdba68469405f2967a951edff1d07ad7bffdbfab99ea3acb83419f8",
+    "frontend/shared/components/icon-picker/lib/lucide-icons.ts": "sha256-577e22dfdce21a849a6d0fbe8c6e8e859c43d51719dff67bfe9c18b68c070145",
+    "frontend/shared/components/icon-picker/lib/parse.ts": "sha256-f2d4333214d7337b6dbb847470e6c5605432ef155300d1f07021b4169f515fb3",
+    "frontend/shared/components/icon-picker/lib/recents.ts": "sha256-de7a73d34fe3fb4b67a15a236f290cc5e038a7628f352dfd4b855d9865ea283c",
+    "frontend/shared/components/icon-picker/lib/style-pref.ts": "sha256-9c42bac1302191bd3b419302686e036f7ef9cb7bb20ce94b1e977b2450a18575",
+    "frontend/shared/components/icon-picker/lib/twemoji.ts": "sha256-c8c351cb52b423859778a18984b4dbdcdc1796ca218336d3c7d9aef0f78a96f9",
+    "frontend/shared/lib/databases/propertyTypeMeta.ts": "sha256-bdcea7f276c1a3c0fd163b317da1e23b903ef7780472c75c6fba9fce064b0c7e",
+    "frontend/shared/lib/databases/relationMirror.ts": "sha256-a4248cfb7383ddaf72a84e2adc437a9bc2c80ea33f77aa9905ba0ba38e71e940",
+    "frontend/shared/lib/keyboard.ts": "sha256-69938ffd10bd55b8aaaa8a4feb5cb2bc08467cee3c37ba5b1670809b9e207224"
   }
 }
