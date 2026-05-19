@@ -137,8 +137,13 @@ async function main() {
   // 2. load tsconfigs + pathMap for dest mapping + import rewriting
   const scrubs = registry.scrubs ?? [];
   const pathMap = registry.pathMap ?? [];
+  const skipFiles = registry.skipFiles ?? [];
   const srcCfg = await loadTsconfigPaths(REPO);
   const destCfg = await loadTsconfigPaths(rrRoot);
+
+  // filter out skipFiles (basename match)
+  const filteredFiles = files.filter((rel) => !skipFiles.includes(path.basename(rel)));
+  const skippedByName = files.filter((rel) => skipFiles.includes(path.basename(rel)));
 
   // 3. per-file: resolve dest path, apply scrubs + import rewrites, hash, copy
   const report = { added: [], updated: [], skipped: [], conflicts: [], skipNpm: [] };
@@ -147,7 +152,7 @@ async function main() {
   const fileDestMap = {}; // src-rel → dest-rel for registry
   const npmPkgsUsed = new Set(); // bare npm pkgs imported by copied files
 
-  for (const srcRel of files) {
+  for (const srcRel of filteredFiles) {
     const mapped = applyPathMap(srcRel, pathMap);
     if (mapped.skip) {
       report.skipNpm.push({ srcRel, package: mapped.importAs ?? `(use rr-side ${mapped.destRel})` });
@@ -200,6 +205,10 @@ async function main() {
       : "";
   console.log(fmt("added", report.added));
   console.log(fmt("updated", report.updated));
+  if (skippedByName.length) {
+    console.log(`\n  skipped by name (${skippedByName.length}, see rr-sync.json.skipFiles):`);
+    for (const f of skippedByName) console.log(`    ${f}`);
+  }
   if (report.skipNpm.length) {
     console.log(`\n  npm-skipped (use package on rr-side, ${report.skipNpm.length}):`);
     for (const r of report.skipNpm) console.log(`    ${r.srcRel}  →  npm: ${r.package}`);
