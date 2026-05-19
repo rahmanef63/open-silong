@@ -125,6 +125,55 @@
       "skipNpm": [
         "frontend/shared/ui/button.tsx"
       ]
+    },
+    "notifications": {
+      "version": "0.1.0",
+      "syncedAt": "2026-05-19T07:37:17.443Z",
+      "syncedFromCommit": "00fba33cd6f3f3b38361287258bcdc228e94a02c",
+      "slicePath": "frontend/slices/notifications",
+      "files": [
+        "frontend/slices/notifications/components/NotifyMePopover.tsx",
+        "frontend/slices/notifications/hooks/useSubscription.ts",
+        "frontend/slices/notifications/index.ts",
+        "frontend/slices/notifications/slice.manifest.json",
+        "frontend/slices/notifications/types/index.ts"
+      ],
+      "fileDestMap": {
+        "frontend/slices/notifications/components/NotifyMePopover.tsx": "frontend/slices/notifications/components/NotifyMePopover.tsx",
+        "frontend/slices/notifications/hooks/useSubscription.ts": "frontend/slices/notifications/hooks/useSubscription.ts",
+        "frontend/slices/notifications/index.ts": "frontend/slices/notifications/index.ts",
+        "frontend/slices/notifications/slice.manifest.json": "frontend/slices/notifications/slice.manifest.json",
+        "frontend/slices/notifications/types/index.ts": "frontend/slices/notifications/types/index.ts"
+      },
+      "skipNpm": [
+        "frontend/shared/lib/utils.ts",
+        "frontend/shared/ui/button.tsx",
+        "frontend/shared/ui/popover.tsx"
+      ]
+    },
+    "code-block": {
+      "version": "0.1.0",
+      "syncedAt": "2026-05-19T07:42:08.310Z",
+      "syncedFromCommit": "00fba33cd6f3f3b38361287258bcdc228e94a02c",
+      "slicePath": "frontend/slices/code-block",
+      "files": [
+        "frontend/slices/code-block/components/CodeBlock.tsx",
+        "frontend/slices/code-block/index.ts",
+        "frontend/slices/code-block/lib/languages.ts",
+        "frontend/slices/code-block/slice.manifest.json",
+        "frontend/slices/code-block/types/index.ts"
+      ],
+      "fileDestMap": {
+        "frontend/slices/code-block/components/CodeBlock.tsx": "frontend/slices/code-block/components/CodeBlock.tsx",
+        "frontend/slices/code-block/index.ts": "frontend/slices/code-block/index.ts",
+        "frontend/slices/code-block/lib/languages.ts": "frontend/slices/code-block/lib/languages.ts",
+        "frontend/slices/code-block/slice.manifest.json": "frontend/slices/code-block/slice.manifest.json",
+        "frontend/slices/code-block/types/index.ts": "frontend/slices/code-block/types/index.ts"
+      },
+      "skipNpm": [
+        "frontend/shared/ui/button.tsx",
+        "frontend/shared/ui/dropdown-menu.tsx"
+      ]
     }
   },
   "fileHashes": {
@@ -134,6 +183,16 @@
     "frontend/slices/equation/slice.json": "sha256-db610bbf85d1aa8ecf7fcce750df7d911d99b8563525897f40092fc4039eca52",
     "frontend/slices/equation/slice.manifest.json": "sha256-e7f5f1f87946e78c7c6d828408d6036606cc338391dd8197fd0bfd416f31a126",
     "frontend/slices/equation/types/index.ts": "sha256-26d808da658e4607fae58eb2cf2503ca5bfd8ea49f1af51bc78969d8c0094389",
-    "frontend/shared/lib/error.ts": "sha256-a86a124db758d2a2f96a2825ca394340649fe848d18ed25b924a38bdd22b8f46"
+    "frontend/shared/lib/error.ts": "sha256-a86a124db758d2a2f96a2825ca394340649fe848d18ed25b924a38bdd22b8f46",
+    "frontend/slices/notifications/components/NotifyMePopover.tsx": "sha256-a09da340fbd6104b4b6b7c60c746386d1441174e9123ab90b7995cd5e83e3a2f",
+    "frontend/slices/notifications/hooks/useSubscription.ts": "sha256-b4e4ecf4425b652a1c3ba6d6a308b86335b6ef8eeb3d35b285b501a46d151f20",
+    "frontend/slices/notifications/index.ts": "sha256-e079890de62d93dd71a619173abeda0d47c92ae9857cecefe381755f2feafd20",
+    "frontend/slices/notifications/slice.manifest.json": "sha256-4f757ba35afa5a91b08e5b1951999e593bba828c5ef0f963ccea4795e82b5a14",
+    "frontend/slices/notifications/types/index.ts": "sha256-0c88047886f8bf868e10873a5c4d0d04eeb8d5cad64bfdca676598f4717250de",
+    "frontend/slices/code-block/components/CodeBlock.tsx": "sha256-778c2f38a09b769815026b73b23e636e9d3dccbd0b8bceeabbbd8f33a0de8e5b",
+    "frontend/slices/code-block/index.ts": "sha256-c4f52bbf2b6ac248399495d5965e7130371efb5b3cd0557cb5a0d3e1f2230598",
+    "frontend/slices/code-block/lib/languages.ts": "sha256-c0ccc2c3254f24b6a2d01e9266498ed2e24a6ee625ca6e1e3725ffc2918b7eb7",
+    "frontend/slices/code-block/slice.manifest.json": "sha256-c97c592f9108d2b435cf38dbb8f030da99e0914ab080356e57de773f0dd277dc",
+    "frontend/slices/code-block/types/index.ts": "sha256-783e00387dead139c69e22e74109dd13faf105aa1de22ebcf39907b21b78ad2f"
   }
 }
