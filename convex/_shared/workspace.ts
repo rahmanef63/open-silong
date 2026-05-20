@@ -1,6 +1,7 @@
 import type { MutationCtx, QueryCtx } from "../_generated/server";
 import type { Doc, Id } from "../_generated/dataModel";
 import { requireAuth } from "./auth";
+import { seedWelcomeContent } from "./seedWelcomeContent";
 
 const FORBIDDEN = "Tidak berwenang";
 const NOT_FOUND = "Tidak ditemukan";
@@ -48,6 +49,7 @@ export async function ensurePersonalWorkspace(
 
   let personal = owned.find((w) => w.isPersonal === true) ?? owned[0];
 
+  let justCreated = false;
   if (!personal) {
     const user = await ctx.db.get(userId);
     const name = (user?.name as string | undefined)?.trim() || "My Workspace";
@@ -62,6 +64,7 @@ export async function ensurePersonalWorkspace(
       createdAt: Date.now(),
     });
     personal = (await ctx.db.get(id))!;
+    justCreated = true;
   } else {
     const patch: Record<string, unknown> = {};
     if (!personal.ownerId) patch.ownerId = userId;
@@ -88,6 +91,12 @@ export async function ensurePersonalWorkspace(
       role: "owner",
       joinedAt: Date.now(),
     });
+  }
+
+  // First-run demo seed — only when the workspace was JUST created.
+  // Idempotent re-calls (existing user) skip the seed entirely.
+  if (justCreated) {
+    await seedWelcomeContent(ctx, userId, personal._id);
   }
 
   return personal;
