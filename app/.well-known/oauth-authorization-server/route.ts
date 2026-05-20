@@ -8,7 +8,7 @@ import { NextResponse } from "next/server";
 
 export const revalidate = 3600;
 
-const SITE = "https://nosion.rahmanef.com";
+const SITE = "https://silong.rahmanef.com";
 
 export function GET() {
   const metadata = {

@@ -5,7 +5,7 @@ import { AuthClient } from "./AuthClient";
 
 export const metadata: Metadata = {
   title: "Sign in",
-  description: "Sign in or create a Nosion workspace",
+  description: "Sign in or create a Silong workspace",
   robots: { index: false, follow: false },
 };
 

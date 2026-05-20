@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 
 export const revalidate = 3600;
 
-const SITE = "https://nosion.rahmanef.com";
+const SITE = "https://silong.rahmanef.com";
 const MCP = "https://site-notion-page-clone.rahmanef.com/mcp";
 
 export function GET() {

@@ -42,7 +42,7 @@ export function SharedPageView({ page }: { page: SharedPage }) {
       <ShareThemeBoot />
       <header className="border-b border-border bg-background/80 backdrop-blur px-6 h-12 flex items-center justify-between print:hidden">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <span className="text-xs uppercase tracking-wider font-semibold">Shared via Nosion</span>
+          <span className="text-xs uppercase tracking-wider font-semibold">Shared via Silong</span>
         </div>
         <Link href="/dashboard" className="text-xs text-muted-foreground hover:text-foreground">
           Open in workspace →

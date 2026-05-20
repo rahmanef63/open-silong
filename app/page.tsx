@@ -15,12 +15,12 @@ import {
 } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Nosion — built while the dev doomscrolled",
+  title: "Silong — Open-source collaborative workspace",
   description:
-    "A Notion clone shipped entirely by AI agents. The human just opened TikTok and watched. Block editor, slash commands, databases, formulas, public sharing.",
+    "An open-source Notion-inspired workspace for teams and personal use. Block editor, slash commands, databases, formulas, public sharing. Self-hostable. MIT.",
   openGraph: {
-    title: "Nosion — built while the dev doomscrolled",
-    description: "Notion-style workspace. 100% AI-built. Honest about it.",
+    title: "Silong — Open-source collaborative workspace",
+    description: "Open-source Notion-inspired workspace. Self-hostable. Block editor + databases + sharing. MIT.",
     type: "website",
   },
 };

@@ -31,14 +31,14 @@ const fraunces = Fraunces({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://nosion.rahmanef.com"),
+  metadataBase: new URL("https://silong.rahmanef.com"),
   title: {
-    default: "Nosion — A calm workspace for notes & pages",
-    template: "%s · Nosion",
+    default: "Silong — Open-source collaborative workspace",
+    template: "%s · Silong",
   },
   description:
-    "A clean, block-based workspace to write, organise and search notes. Sidebar, slash commands, drag-and-drop blocks, autosave, formulas and relations.",
-  authors: [{ name: "Nosion" }],
+    "An open-source Notion-inspired workspace for teams and personal use. Self-hostable, block-based, with multi-workspace, sharing, comments, snapshots, and a polished editor.",
+  authors: [{ name: "open-silong" }],
   manifest: "/manifest.webmanifest",
   icons: {
     icon: [
@@ -50,21 +50,21 @@ export const metadata: Metadata = {
   },
   appleWebApp: {
     capable: true,
-    title: "Nosion",
+    title: "Silong",
     statusBarStyle: "default",
   },
   openGraph: {
-    title: "Nosion — A calm workspace for notes & pages",
-    description: "A clean, block-based workspace to write, organise and search notes.",
+    title: "Silong — Open-source collaborative workspace",
+    description: "An open-source Notion-inspired workspace, built for everyone. Self-hostable, block-based, real-time.",
     type: "website",
-    url: "https://nosion.rahmanef.com",
-    siteName: "Nosion",
+    url: "https://silong.rahmanef.com",
+    siteName: "Silong",
     images: [{ url: "/banner-light.png", width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Nosion — A calm workspace for notes & pages",
-    description: "Block-based notes with slash commands, drag-and-drop, autosave, formulas, relations.",
+    title: "Silong — Open-source collaborative workspace",
+    description: "Open-source Notion-inspired workspace. Block editor, databases, sharing, MIT licensed.",
     images: ["/banner-light.png"],
   },
   verification: {

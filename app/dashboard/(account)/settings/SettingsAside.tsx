@@ -21,7 +21,7 @@ type AsideContent = {
   links?: { label: string; href: string; external?: boolean }[];
 };
 
-const SITE_DOCS = "https://nosion.rahmanef.com";
+const SITE_DOCS = "https://silong.rahmanef.com";
 
 const ASIDE: Record<SettingsKey, AsideContent> = {
   workspace: {
