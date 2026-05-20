@@ -1,7 +1,30 @@
 {
-  "name": "nosion",
+  "name": "open-silong",
   "private": true,
   "version": "0.1.0",
+  "description": "An open-source Notion-inspired workspace for teams and personal use.",
+  "license": "MIT",
+  "author": "Rahman Effendi",
+  "homepage": "https://silong.rahmanef.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rahmanef63/open-silong.git"
+  },
+  "bugs": {
+    "url": "https://github.com/rahmanef63/open-silong/issues"
+  },
+  "keywords": [
+    "notion",
+    "notion-clone",
+    "notion-alternative",
+    "workspace",
+    "block-editor",
+    "convex",
+    "nextjs",
+    "react",
+    "self-hosted",
+    "open-source"
+  ],
   "type": "module",
   "packageManager": "pnpm@10.32.1",
   "engines": {
