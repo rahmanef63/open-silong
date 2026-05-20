@@ -21,6 +21,7 @@ import type * as _shared_notionShape from "../_shared/notionShape.js";
 import type * as _shared_pageTree from "../_shared/pageTree.js";
 import type * as _shared_pkce from "../_shared/pkce.js";
 import type * as _shared_rateLimit from "../_shared/rateLimit.js";
+import type * as _shared_seedWelcomeContent from "../_shared/seedWelcomeContent.js";
 import type * as _shared_uid from "../_shared/uid.js";
 import type * as _shared_workspace from "../_shared/workspace.js";
 import type * as admin_backfillHasPublicForm from "../admin/backfillHasPublicForm.js";
@@ -146,6 +147,7 @@ declare const fullApi: ApiFromModules<{
   "_shared/pageTree": typeof _shared_pageTree;
   "_shared/pkce": typeof _shared_pkce;
   "_shared/rateLimit": typeof _shared_rateLimit;
+  "_shared/seedWelcomeContent": typeof _shared_seedWelcomeContent;
   "_shared/uid": typeof _shared_uid;
   "_shared/workspace": typeof _shared_workspace;
   "admin/backfillHasPublicForm": typeof admin_backfillHasPublicForm;
