@@ -1,7 +1,17 @@
-# Nosion — Claude / Agent Conventions
+# open-silong — Claude / Agent Conventions
 
-Block-based notes app. Next 16 (App Router) + React 19 + Convex 1.36 self-hosted.
-Live: https://nosion.rahmanef.com · Convex: https://api-notion-page-clone.rahmanef.com
+Open-source collaborative workspace (Notion-inspired). Next 16 (App Router) +
+React 19 + Convex 1.36 self-hosted. License MIT.
+
+Live: https://silong.rahmanef.com · Convex: https://api-silong.rahmanef.com ·
+Repo: https://github.com/rahmanef63/open-silong
+
+**Rebrand 2026-05-20**: project formerly known as `notion-page-clone` / `nosion`.
+- Github repo renaming to `open-silong` (rahmanef63 account).
+- Domain shifting `nosion.rahmanef.com` → `silong.rahmanef.com` (with redirect during transition).
+- Convex backend domain shifting `api-notion-page-clone.rahmanef.com` → `api-silong.rahmanef.com` (separate Dokploy ops).
+- Internal code references to "Nosion" / "nosion" remain in many files; Phase 2 polish sweep will rebrand surface-by-surface. Backend `INSTANCE_NAME` stays `notion-page-clone` until a coordinated re-key (no urgency — internal id only).
+- See `docs/rr-sync/2026-05-20-pivot-nosion-source-of-truth.md` for strategic rationale.
 
 ## Stack baseline
 

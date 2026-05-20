@@ -1,8 +1,8 @@
 /** @type {import('next').NextConfig} */
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://nosion.rahmanef.com";
-const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL ?? "https://api-notion-page-clone.rahmanef.com";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://silong.rahmanef.com";
+const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL ?? "https://api-silong.rahmanef.com";
 const convexHost = (() => {
-  try { return new URL(convexUrl).hostname; } catch { return "api-notion-page-clone.rahmanef.com"; }
+  try { return new URL(convexUrl).hostname; } catch { return "api-silong.rahmanef.com"; }
 })();
 
 // Stable per-deploy build id. CI sets GITHUB_SHA / DOKPLOY_COMMIT_SHA;
