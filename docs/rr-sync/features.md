@@ -3,7 +3,7 @@
 > **Auto-generated.** Edit `rr-sync.json` (registry) or rerun sync — DO NOT hand-edit this file.
 > Regenerate: `node scripts/sync-to-rr.mjs --regen-doc`
 
-Tracked slices: **5**  ·  Source: notion-page-clone  ·  Dest: `~/projects/resources`
+Tracked slices: **6**  ·  Source: notion-page-clone  ·  Dest: `~/projects/resources`
 
 ## Summary
 
@@ -14,6 +14,7 @@ Tracked slices: **5**  ·  Source: notion-page-clone  ·  Dest: `~/projects/reso
 | equation | 0.1.0 | 6 | 1 (1+) | 2026-05-19 |
 | mentions | 0.1.0 | 51 | 46 (1+) | 2026-05-19 |
 | notifications | 0.1.0 | 5 | 0 (0+) | 2026-05-19 |
+| theme-presets | 0.1.0 | 20 | 0 (0+) | 2026-05-20 |
 
 - **shared+** = count of shared files this slice depends on that ALSO consumed by another tracked slice. High value = shared infra that must stay coherent.
 
@@ -140,6 +141,35 @@ Tracked slices: **5**  ·  Source: notion-page-clone  ·  Dest: `~/projects/reso
 - `frontend/slices/notifications/index.ts`
 - `frontend/slices/notifications/slice.manifest.json`
 - `frontend/slices/notifications/types/index.ts`
+
+### `theme-presets`
+
+- **version:** 0.1.0
+- **synced:** 2026-05-20T15:24:20.427Z (commit `1f012ad`)
+- **slicePath:** `frontend/slices/theme-presets`
+
+**slice files (20):**
+
+- `frontend/slices/theme-presets/components/ThemeColorSync.tsx`
+- `frontend/slices/theme-presets/components/ThemePicker.tsx`
+- `frontend/slices/theme-presets/components/TweakcnSwitcher.tsx`
+- `frontend/slices/theme-presets/components/tweakcn/ModeRow.tsx`
+- `frontend/slices/theme-presets/components/tweakcn/PresetList.tsx`
+- `frontend/slices/theme-presets/index.ts`
+- `frontend/slices/theme-presets/lib/tweakcn.ts`
+- `frontend/slices/theme-presets/lib/tweakcn/apply.ts`
+- `frontend/slices/theme-presets/lib/tweakcn/cssBuilder.ts`
+- `frontend/slices/theme-presets/lib/tweakcn/groups.ts`
+- `frontend/slices/theme-presets/lib/tweakcn/registry.ts`
+- `frontend/slices/theme-presets/lib/tweakcn/tokens.ts`
+- `frontend/slices/theme-presets/lib/tweakcn/types.ts`
+- `frontend/slices/theme-presets/presets.ts`
+- `frontend/slices/theme-presets/presets/apply.ts`
+- `frontend/slices/theme-presets/presets/factories.ts`
+- `frontend/slices/theme-presets/presets/list.ts`
+- `frontend/slices/theme-presets/presets/types.ts`
+- `frontend/slices/theme-presets/slice.manifest.json`
+- `frontend/slices/theme-presets/useThemePreset.ts`
 
 ## Shared file → consumers map
 
