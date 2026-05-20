@@ -322,6 +322,61 @@
         "frontend/shared/ui/button.tsx",
         "frontend/shared/ui/popover.tsx"
       ]
+    },
+    "theme-presets": {
+      "version": "0.1.0",
+      "syncedAt": "2026-05-20T15:24:20.427Z",
+      "syncedFromCommit": "1f012ad0c34220a674612b6c060e5b8be2ef22ab",
+      "slicePath": "frontend/slices/theme-presets",
+      "files": [
+        "frontend/slices/theme-presets/components/ThemeColorSync.tsx",
+        "frontend/slices/theme-presets/components/ThemePicker.tsx",
+        "frontend/slices/theme-presets/components/TweakcnSwitcher.tsx",
+        "frontend/slices/theme-presets/components/tweakcn/ModeRow.tsx",
+        "frontend/slices/theme-presets/components/tweakcn/PresetList.tsx",
+        "frontend/slices/theme-presets/index.ts",
+        "frontend/slices/theme-presets/lib/tweakcn/apply.ts",
+        "frontend/slices/theme-presets/lib/tweakcn/cssBuilder.ts",
+        "frontend/slices/theme-presets/lib/tweakcn/groups.ts",
+        "frontend/slices/theme-presets/lib/tweakcn/registry.ts",
+        "frontend/slices/theme-presets/lib/tweakcn/tokens.ts",
+        "frontend/slices/theme-presets/lib/tweakcn/types.ts",
+        "frontend/slices/theme-presets/lib/tweakcn.ts",
+        "frontend/slices/theme-presets/presets/apply.ts",
+        "frontend/slices/theme-presets/presets/factories.ts",
+        "frontend/slices/theme-presets/presets/list.ts",
+        "frontend/slices/theme-presets/presets/types.ts",
+        "frontend/slices/theme-presets/presets.ts",
+        "frontend/slices/theme-presets/slice.manifest.json",
+        "frontend/slices/theme-presets/useThemePreset.ts"
+      ],
+      "fileDestMap": {
+        "frontend/slices/theme-presets/components/ThemeColorSync.tsx": "frontend/slices/theme-presets/components/ThemeColorSync.tsx",
+        "frontend/slices/theme-presets/components/ThemePicker.tsx": "frontend/slices/theme-presets/components/ThemePicker.tsx",
+        "frontend/slices/theme-presets/components/TweakcnSwitcher.tsx": "frontend/slices/theme-presets/components/TweakcnSwitcher.tsx",
+        "frontend/slices/theme-presets/components/tweakcn/ModeRow.tsx": "frontend/slices/theme-presets/components/tweakcn/ModeRow.tsx",
+        "frontend/slices/theme-presets/components/tweakcn/PresetList.tsx": "frontend/slices/theme-presets/components/tweakcn/PresetList.tsx",
+        "frontend/slices/theme-presets/index.ts": "frontend/slices/theme-presets/index.ts",
+        "frontend/slices/theme-presets/lib/tweakcn/apply.ts": "frontend/slices/theme-presets/lib/tweakcn/apply.ts",
+        "frontend/slices/theme-presets/lib/tweakcn/cssBuilder.ts": "frontend/slices/theme-presets/lib/tweakcn/cssBuilder.ts",
+        "frontend/slices/theme-presets/lib/tweakcn/groups.ts": "frontend/slices/theme-presets/lib/tweakcn/groups.ts",
+        "frontend/slices/theme-presets/lib/tweakcn/registry.ts": "frontend/slices/theme-presets/lib/tweakcn/registry.ts",
+        "frontend/slices/theme-presets/lib/tweakcn/tokens.ts": "frontend/slices/theme-presets/lib/tweakcn/tokens.ts",
+        "frontend/slices/theme-presets/lib/tweakcn/types.ts": "frontend/slices/theme-presets/lib/tweakcn/types.ts",
+        "frontend/slices/theme-presets/lib/tweakcn.ts": "frontend/slices/theme-presets/lib/tweakcn.ts",
+        "frontend/slices/theme-presets/presets/apply.ts": "frontend/slices/theme-presets/presets/apply.ts",
+        "frontend/slices/theme-presets/presets/factories.ts": "frontend/slices/theme-presets/presets/factories.ts",
+        "frontend/slices/theme-presets/presets/list.ts": "frontend/slices/theme-presets/presets/list.ts",
+        "frontend/slices/theme-presets/presets/types.ts": "frontend/slices/theme-presets/presets/types.ts",
+        "frontend/slices/theme-presets/presets.ts": "frontend/slices/theme-presets/presets.ts",
+        "frontend/slices/theme-presets/slice.manifest.json": "frontend/slices/theme-presets/slice.manifest.json",
+        "frontend/slices/theme-presets/useThemePreset.ts": "frontend/slices/theme-presets/useThemePreset.ts"
+      },
+      "skipNpm": [
+        "frontend/shared/lib/utils.ts",
+        "frontend/shared/ui/button.tsx",
+        "frontend/shared/ui/popover.tsx"
+      ]
     }
   },
   "fileHashes": {
@@ -395,6 +450,26 @@
     "frontend/shared/components/icon-picker/lib/twemoji.ts": "sha256-c8c351cb52b423859778a18984b4dbdcdc1796ca218336d3c7d9aef0f78a96f9",
     "frontend/shared/lib/databases/propertyTypeMeta.ts": "sha256-bdcea7f276c1a3c0fd163b317da1e23b903ef7780472c75c6fba9fce064b0c7e",
     "frontend/shared/lib/databases/relationMirror.ts": "sha256-a4248cfb7383ddaf72a84e2adc437a9bc2c80ea33f77aa9905ba0ba38e71e940",
-    "frontend/shared/lib/keyboard.ts": "sha256-69938ffd10bd55b8aaaa8a4feb5cb2bc08467cee3c37ba5b1670809b9e207224"
+    "frontend/shared/lib/keyboard.ts": "sha256-69938ffd10bd55b8aaaa8a4feb5cb2bc08467cee3c37ba5b1670809b9e207224",
+    "frontend/slices/theme-presets/components/ThemeColorSync.tsx": "sha256-5a7af03ce396391626d838fab9cca1bc1b38bce5674dac33d08c7130be5f4ab0",
+    "frontend/slices/theme-presets/components/ThemePicker.tsx": "sha256-8a5e42fcd572a7293d74b669a3954bfa04177791884078c6758f5f55fdbbfb2e",
+    "frontend/slices/theme-presets/components/TweakcnSwitcher.tsx": "sha256-42f552a4ac8d947336cf587fd03e495421b918f5c6200fc566b22f59ebbfd102",
+    "frontend/slices/theme-presets/components/tweakcn/ModeRow.tsx": "sha256-ed8b73b3bb7d20df3a11f53dfc1321ef1bb7aa652bbf1fbb1acb3d06ae2759dd",
+    "frontend/slices/theme-presets/components/tweakcn/PresetList.tsx": "sha256-d00ae79a09f8344c1e2c55f20a278847bc57bfd2d11a0b0d4810746e12e4facc",
+    "frontend/slices/theme-presets/index.ts": "sha256-c846a3548eab5b02ed953293dd762846f1e3c852b6fe8795b993d544c273d531",
+    "frontend/slices/theme-presets/lib/tweakcn/apply.ts": "sha256-962a8d45196791ddeb9c6d763435c24b9a183041a6da140799db982c98fea99c",
+    "frontend/slices/theme-presets/lib/tweakcn/cssBuilder.ts": "sha256-9935c1c70850f9f2d4a018433815d56509a2dd3b19c895ae9d6d8fda21e0817b",
+    "frontend/slices/theme-presets/lib/tweakcn/groups.ts": "sha256-d23b10b404d473d33e3416d9a20f0c2047cebf87b7cd1d3955ec68ed42bbfcc2",
+    "frontend/slices/theme-presets/lib/tweakcn/registry.ts": "sha256-8ced8429b343ff723dc632ce344a8a30ee33c263725c4686008931de159bc945",
+    "frontend/slices/theme-presets/lib/tweakcn/tokens.ts": "sha256-40214acc2c99964c8eb28aa762c2cbf320ffe8a770e29269610cc9b6850c0628",
+    "frontend/slices/theme-presets/lib/tweakcn/types.ts": "sha256-6545d1e0ab879f3d309bbf4b5fccb0550d01667a94cd21e47160c5d1aac504e7",
+    "frontend/slices/theme-presets/lib/tweakcn.ts": "sha256-ed3656e0b0f1bcb636a78abe755e0bf7d19914fe9853a872693a41c7fa05dc83",
+    "frontend/slices/theme-presets/presets/apply.ts": "sha256-8ea6e232a6e394bf7fe820c0f08d7732649c3408d910387d92f1a43a9d17c1c9",
+    "frontend/slices/theme-presets/presets/factories.ts": "sha256-cefd913c9a84d4bddb7f6e22fa26cb60841121a3dfadc2dfd7d8c5280cf8ac57",
+    "frontend/slices/theme-presets/presets/list.ts": "sha256-208962f66f5f8daa73f155bee769c8cd2c5bfc8ee93eb646b2e8ff3ebeb89fc3",
+    "frontend/slices/theme-presets/presets/types.ts": "sha256-baff65ba73907f01d229a305cd98239f7857c4d7118e0c69f695bf4113c23949",
+    "frontend/slices/theme-presets/presets.ts": "sha256-59d15ad991a3e751ab170206157701fda4b751b634b48cb94d9b75a9da4f6902",
+    "frontend/slices/theme-presets/slice.manifest.json": "sha256-43a9486f17fe0e8876c25c87694e5318e319ef2262e42792b5e7ba2a0aa8dd2f",
+    "frontend/slices/theme-presets/useThemePreset.ts": "sha256-59f9b248920541f0176d2ab5d42cd5c9925bcc5233abc6d610d0f09fd05ed1c6"
   }
 }
