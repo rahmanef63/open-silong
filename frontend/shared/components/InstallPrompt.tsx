@@ -91,12 +91,12 @@ export function InstallPrompt() {
     return (
       <div
         role="region"
-        aria-label="Install Nosion"
+        aria-label="Install Silong"
         className="fixed bottom-4 right-4 z-50 flex max-w-sm items-start gap-3 rounded-lg border border-border bg-popover/95 p-3 shadow-soft backdrop-blur"
       >
         <Download className="mt-0.5 h-4 w-4 shrink-0 text-brand" />
         <div className="flex-1 text-xs">
-          <p className="font-medium">Install Nosion</p>
+          <p className="font-medium">Install Silong</p>
           <p className="text-muted-foreground">Get a faster app-like experience with offline shell and a dock icon.</p>
           <div className="mt-2 flex items-center gap-2">
             <button
@@ -129,8 +129,8 @@ export function InstallPrompt() {
       <button
         type="button"
         onClick={install}
-        title="Install Nosion"
-        aria-label="Install Nosion"
+        title="Install Silong"
+        aria-label="Install Silong"
         className="fixed bottom-4 right-4 z-50 flex h-9 w-9 items-center justify-center rounded-full border border-border bg-popover/95 text-muted-foreground shadow-soft backdrop-blur transition-colors hover:text-foreground hover:border-brand/40"
       >
         <Download className="h-4 w-4" />

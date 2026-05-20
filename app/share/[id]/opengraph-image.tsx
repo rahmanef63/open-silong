@@ -3,7 +3,7 @@ import { fetchQuery } from "convex/nextjs";
 import { api } from "@convex/_generated/api";
 
 export const runtime = "edge";
-export const alt = "Shared via Nosion";
+export const alt = "Shared via Silong";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -12,7 +12,7 @@ interface Props {
 }
 
 export default async function OG({ params }: Props) {
-  let title = "Shared on Nosion";
+  let title = "Shared on Silong";
   let icon = "📄";
   let cover: string | null = null;
   try {
@@ -51,7 +51,7 @@ export default async function OG({ params }: Props) {
       >
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
           <div style={{ fontSize: 28, opacity: 0.7, letterSpacing: 4, textTransform: "uppercase" }}>
-            Nosion
+            Silong
           </div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
@@ -73,7 +73,7 @@ export default async function OG({ params }: Props) {
           </div>
         </div>
         <div style={{ fontSize: 24, opacity: 0.6 }}>
-          nosion.rahmanef.com
+          silong.rahmanef.com
         </div>
       </div>
     ),

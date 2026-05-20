@@ -125,7 +125,7 @@ export default function OAuthAuthorizePage() {
           <h1 className="mt-2 text-xl font-semibold">Beri akses ke aplikasi eksternal?</h1>
           <p className="mt-2 text-sm text-muted-foreground">
             Aplikasi <strong>{params.clientId || "(tidak diketahui)"}</strong> minta akses
-            ke workspace Nosion kamu. Akses berlaku 1 tahun sampai kamu revoke manual
+            ke workspace Silong kamu. Akses berlaku 1 tahun sampai kamu revoke manual
             dari Admin → MCP Tokens.
           </p>
         </div>
@@ -163,7 +163,7 @@ export default function OAuthAuthorizePage() {
               <div className="border border-border rounded-md bg-muted/30 p-3 text-xs text-muted-foreground space-y-2">
                 <p>
                   <strong className="text-foreground">Tidak perlu paste token apapun.</strong>{" "}
-                  Klik <strong>Allow</strong> di bawah, Nosion auto-mint token + kirim
+                  Klik <strong>Allow</strong> di bawah, Silong auto-mint token + kirim
                   balik ke ChatGPT. Script token (nsn_) buat client lain (Claude
                   Desktop / Cursor / curl), bukan untuk flow ini.
                 </p>

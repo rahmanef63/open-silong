@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 import { fetchQuery } from "convex/nextjs";
 import { api } from "@convex/_generated/api";
 
-const BASE = "https://nosion.rahmanef.com";
+const BASE = "https://silong.rahmanef.com";
 
 export const revalidate = 3600;
 

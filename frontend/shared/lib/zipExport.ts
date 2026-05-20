@@ -108,7 +108,7 @@ export async function buildWorkspaceZip(bundle: Bundle): Promise<Blob> {
 }
 
 /** Trigger a browser download of the ZIP. Use from page action menus. */
-export async function downloadWorkspaceZip(bundle: Bundle, filename = "nosion-export.zip"): Promise<void> {
+export async function downloadWorkspaceZip(bundle: Bundle, filename = "silong-export.zip"): Promise<void> {
   const blob = await buildWorkspaceZip(bundle);
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");

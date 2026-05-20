@@ -92,7 +92,7 @@ export function WebhooksSection() {
           <input
             value={url}
             onChange={(e) => setUrl(e.target.value)}
-            placeholder="https://example.com/webhooks/nosion"
+            placeholder="https://example.com/webhooks/silong"
             className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-ring"
           />
           <div className="flex flex-wrap gap-2 rounded-md border border-border bg-muted/30 p-2">

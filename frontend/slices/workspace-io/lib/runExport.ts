@@ -22,7 +22,7 @@ export interface RunExportResult {
 export async function runExport(opts: RunExportOptions): Promise<RunExportResult> {
   const { format, stamp = new Date().toISOString().slice(0, 10), ...buildInput } = opts;
   const r = buildSelectionExport(buildInput);
-  const name = `nosion-export-${stamp}`;
+  const name = `silong-export-${stamp}`;
 
   if (format === "json") {
     downloadFile(`${name}.json`, r.json, "application/json");

@@ -60,7 +60,7 @@ export function BackupSection() {
     };
     const stamp = new Date().toISOString().slice(0, 10);
     downloadFile(
-      `nosion-backup-${stamp}.json`,
+      `silong-backup-${stamp}.json`,
       JSON.stringify(payload, null, 2),
       "application/json",
     );

@@ -29,7 +29,9 @@ type Row = {
   label: string | null;
 };
 
-const SITE = "https://nosion.rahmanef.com";
+const SITE = "https://silong.rahmanef.com";
+// NOTE: Convex backend domain rename (api-notion-page-clone → api-silong) is
+// deferred — backend INSTANCE_NAME stays as-is for now. See CLAUDE.md.
 const MCP = "https://site-notion-page-clone.rahmanef.com/mcp";
 
 type Field = { label: string; value: string; copyable: boolean; hint?: string };
@@ -47,7 +49,7 @@ const CHATGPT_GROUPS: Group[] = [
   {
     title: "OAuth Client",
     fields: [
-      { label: "OAuth Client ID", value: "chatgpt-nosion", copyable: true, hint: "bebas — string apa pun" },
+      { label: "OAuth Client ID", value: "chatgpt-silong", copyable: true, hint: "bebas — string apa pun" },
       { label: "OAuth Client Secret", value: "(leave empty)", copyable: false, hint: "public client — kosongkan" },
       { label: "Token endpoint auth method", value: "none", copyable: false },
     ],
@@ -74,7 +76,7 @@ const CLAUDE_WEB_GROUPS: Group[] = [
   {
     title: "Custom Connector (claude.ai → Settings → Connectors)",
     fields: [
-      { label: "Name", value: "Nosion", copyable: true },
+      { label: "Name", value: "Silong", copyable: true },
       { label: "Remote MCP server URL", value: MCP, copyable: true },
     ],
   },
@@ -248,7 +250,7 @@ function ChatGPTTab() {
 function ClaudeTab() {
   const desktopJson = `{
   "mcpServers": {
-    "nosion": {
+    "silong": {
       "command": "npx",
       "args": [
         "-y",
@@ -277,7 +279,7 @@ function ClaudeTab() {
         <Step n={2} title="Klik Connect → Allow">
           <p>
             Claude auto-discover <code>/.well-known/oauth-authorization-server</code>, bounce ke
-            consent page Nosion. Setelah Allow, token aktif 1 tahun.
+            consent page Silong. Setelah Allow, token aktif 1 tahun.
           </p>
         </Step>
       </section>
@@ -304,7 +306,7 @@ function ClaudeTab() {
 function OthersTab() {
   const cursorJson = `{
   "mcpServers": {
-    "nosion": {
+    "silong": {
       "url": "${MCP}",
       "headers": {
         "Authorization": "Bearer YOUR_TOKEN_HERE"

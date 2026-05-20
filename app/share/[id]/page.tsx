@@ -22,10 +22,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const title = page.title || "Untitled";
   return {
     title,
-    description: `${page.icon ?? "📄"} ${title} — shared on Nosion`,
+    description: `${page.icon ?? "📄"} ${title} — shared on Silong`,
     openGraph: {
       title,
-      description: `Shared on Nosion`,
+      description: `Shared on Silong`,
       type: "article",
     },
     twitter: { card: "summary_large_image", title },
