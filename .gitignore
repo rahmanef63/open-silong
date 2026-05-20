@@ -12,6 +12,12 @@ dist
 dist-ssr
 *.local
 
+# Environment — never commit any env file except .env.example (tracked)
+.env
+.env.*
+!.env.example
+!.env.example.*
+
 # Next.js
 .next/
 next-env.d.ts
