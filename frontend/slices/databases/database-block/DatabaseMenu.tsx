@@ -1,4 +1,4 @@
-import { useStore } from "@/shared/lib/store";
+import { useDbAdapter } from "../lib/useDbAdapter";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
@@ -22,7 +22,7 @@ export function DatabaseMenu({
   rows: Page[];
   writeView: (viewId: string, patch: Partial<DatabaseViewConfig>) => void;
 }) {
-  const { updateDatabase, trashDatabase, duplicateDatabase } = useStore();
+  const { updateDatabase, trashDatabase, duplicateDatabase } = useDbAdapter();
   const confirm = useConfirm();
   return (
     <Popover>
@@ -120,7 +120,7 @@ export function DatabaseMenu({
 }
 
 function SubItemsPicker({ db }: { db: Database }) {
-  const { updateDatabase } = useStore();
+  const { updateDatabase } = useDbAdapter();
   // A property is eligible as the sub-items parent if it's a self-relation
   // (or a generic relation that the user has set to point at this db).
   // The "all rows" legacy variant (no relationDatabaseId) is treated as
@@ -176,7 +176,7 @@ function PropertiesMenu({
   view: DatabaseViewConfig;
   writeView: (viewId: string, patch: Partial<DatabaseViewConfig>) => void;
 }) {
-  const { deleteProperty, addProperty } = useStore();
+  const { deleteProperty, addProperty } = useDbAdapter();
   const hidden = new Set(view.hiddenPropIds ?? []);
   const viewLocked = !!view.locked;
   const toggle = (pid: string) => {

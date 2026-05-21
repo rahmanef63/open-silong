@@ -9,7 +9,7 @@ import {
 import { cn } from "@/shared/lib/utils";
 import { focusSiblingBySelector } from "@/shared/lib/keyboard";
 import { QuickCreateDialog } from "../components/QuickCreateDialog";
-import { useStore } from "@/shared/lib/store";
+import { useDbAdapter } from "../lib/useDbAdapter";
 import { DynamicIcon } from "@/shared/components/icon-picker";
 import { DAY_MS, makeBarStyle, msToYMD, toMs } from "./timeline/utils";
 import { TimelineBar } from "./timeline/TimelineBar";
@@ -26,7 +26,7 @@ interface Props {
 }
 
 export function TimelineView({ db, view, rows, onOpenRow, writeView }: Props) {
-  const { setRowValue } = useStore();
+  const { setRowValue } = useDbAdapter();
   const [quickOpen, setQuickOpen] = useState(false);
   const dateProp =
     db.properties.find((p) => p.id === view.timelineStartProp && p.type === "date")

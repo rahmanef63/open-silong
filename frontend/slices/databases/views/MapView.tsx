@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Database, DatabaseViewConfig, Page } from "@/shared/types/domain";
-import { useStore } from "@/shared/lib/store";
+import { useDbAdapter } from "../lib/useDbAdapter";
 import { Plus } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { QuickCreateDialog } from "../components/QuickCreateDialog";
@@ -11,7 +11,7 @@ import { PinList, PropPicker } from "./map/parts";
 interface Props { db: Database; view: DatabaseViewConfig; rows: Page[]; onOpenRow: (id: string) => void }
 
 export function MapView({ db, view, rows, onOpenRow }: Props) {
-  const { updateView, deleteRow } = useStore();
+  const { updateView, deleteRow } = useDbAdapter();
   const [quickOpen, setQuickOpen] = useState(false);
   const numProps = useMemo(() => db.properties.filter((p) => p.type === "number"), [db.properties]);
 

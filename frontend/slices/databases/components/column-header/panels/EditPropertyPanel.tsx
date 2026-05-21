@@ -15,7 +15,7 @@
 
 import { useState } from "react";
 import { Trash2 } from "lucide-react";
-import { useStore } from "@/shared/lib/store";
+import { useDbAdapter } from "../../../lib/useDbAdapter";
 import type { Database, Property } from "@/shared/types/domain";
 import { Input } from "@/shared/ui/input";
 import { Button } from "@/shared/ui/button";
@@ -30,7 +30,7 @@ interface Props {
 }
 
 export function EditPropertyPanel({ db, prop, onClose, immutableType }: Props) {
-  const { updateProperty, deleteProperty } = useStore();
+  const { updateProperty, deleteProperty } = useDbAdapter();
   const [draftName, setDraftName] = useState(prop.name);
 
   const commitName = () => {

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Check, Pencil, Plus, X } from "lucide-react";
 import type { Database, SelectOption } from "@/shared/types/domain";
-import { useStore } from "@/shared/lib/store";
+import { useDbAdapter } from "../lib/useDbAdapter";
 import { cn } from "@/shared/lib/utils";
 import { colorClass } from "@/shared/lib/format";
 import { Button } from "@/shared/ui/button";
@@ -10,7 +10,7 @@ import { OPTION_COLORS } from "./types";
 export function OptionRow({ db, propId, option, selected, onSelect }: {
   db: Database; propId: string; option: SelectOption; selected: boolean; onSelect: () => void;
 }) {
-  const { updateSelectOption, deleteSelectOption } = useStore();
+  const { updateSelectOption, deleteSelectOption } = useDbAdapter();
   const [editing, setEditing] = useState(false);
   const [showColors, setShowColors] = useState(false);
   const [draft, setDraft] = useState(option.name);
@@ -87,7 +87,7 @@ export function OptionRow({ db, propId, option, selected, onSelect }: {
 }
 
 export function AddOption({ db, propId }: { db: Database; propId: string }) {
-  const { addSelectOption } = useStore();
+  const { addSelectOption } = useDbAdapter();
   const [name, setName] = useState("");
   return (
     <div className="border-t border-border mt-1 pt-1 px-1">

@@ -1,13 +1,13 @@
 import { AlertCircle, Trash2 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { colorClass } from "@/shared/lib/format";
-import { useStore } from "@/shared/lib/store";
+import { useDbAdapter } from "../../lib/useDbAdapter";
 import { DynamicIcon } from "@/shared/components/icon-picker";
 import { Button } from "@/shared/ui/button";
 import type { Database, DatabaseViewConfig, Page, Property } from "@/shared/types/domain";
 
 export function ModeToggle({ db, view }: { db: Database; view: DatabaseViewConfig }) {
-  const { updateView } = useStore();
+  const { updateView } = useDbAdapter();
   const mode = view.calendarMode ?? "month";
   return (
     <div className="ml-1 inline-flex rounded-md border border-border bg-card p-0.5 text-[11px]">

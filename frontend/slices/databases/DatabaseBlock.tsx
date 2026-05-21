@@ -2,7 +2,7 @@ import { Suspense, useState } from "react";
 import { Link, useNavigate } from "@/shared/lib/router";
 import { ROUTES } from "@/shared/lib/routes";
 import { Block } from "@/shared/types/domain";
-import { useStore } from "@/shared/lib/store";
+import { useDbAdapter } from "./lib/useDbAdapter";
 import { RowPeek } from "./row";
 import { DatabaseSkeleton } from "@/shared/components/RouteSkeleton";
 import { ErrorBoundary } from "@/shared/components/ErrorBoundary";
@@ -31,8 +31,8 @@ export function DatabaseBlock({
    *  home of the DB (no host page concept). Used by `/dashboard/db/[id]`. */
   fullPage?: boolean;
 }) {
-  const { getDatabase, pages, updateBlock, updateDatabase } = useStore();
-  const { updateView } = useStore();
+  const { getDatabase, pages, updateBlock, updateDatabase } = useDbAdapter();
+  const { updateView } = useDbAdapter();
   const navigate = useNavigate();
   const [openRowId, setOpenRowId] = useState<string | null>(null);
 

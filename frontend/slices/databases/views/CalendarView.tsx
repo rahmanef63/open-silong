@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Database, DatabaseViewConfig, Page } from "@/shared/types/domain";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
-import { useStore } from "@/shared/lib/store";
+import { useDbAdapter } from "../lib/useDbAdapter";
 import { Button } from "@/shared/ui/button";
 import { QuickCreateDialog } from "../components/QuickCreateDialog";
 import type { PropertyValue } from "@/shared/types/domain";
@@ -21,7 +21,7 @@ import { ModeToggle, OverflowPanel, Legend } from "./calendar/sidePanels";
 interface Props { db: Database; view: DatabaseViewConfig; rows: Page[]; onOpenRow: (id: string) => void }
 
 export function CalendarView({ db, view, rows, onOpenRow }: Props) {
-  const { deleteRow, setRowValue } = useStore();
+  const { deleteRow, setRowValue } = useDbAdapter();
   const [quickOpen, setQuickOpen] = useState(false);
   const [quickPrefill, setQuickPrefill] = useState<Record<string, PropertyValue>>({});
 

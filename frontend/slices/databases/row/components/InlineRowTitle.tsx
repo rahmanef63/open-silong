@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Maximize2 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
-import { useStore } from "@/shared/lib/store";
+import { useDbAdapter } from "../../lib/useDbAdapter";
 import type { Page } from "@/shared/types/domain";
 import { DynamicIcon } from "@/shared/components/icon-picker";
 import { Button } from "@/shared/ui/button";
@@ -14,7 +14,7 @@ interface Props {
 }
 
 export function InlineRowTitle({ row, onOpen, autoEdit, onAutoEditConsumed }: Props) {
-  const { updatePage } = useStore();
+  const { updatePage } = useDbAdapter();
   const [editing, setEditing] = useState(!!autoEdit);
   const [draft, setDraft] = useState(row.title);
   const inputRef = useRef<HTMLInputElement | null>(null);

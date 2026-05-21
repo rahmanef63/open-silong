@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Database, DatabaseViewConfig, Page, Property } from "@/shared/types/domain";
 import { PropertyCell } from "../PropertyCell";
-import { useStore } from "@/shared/lib/store";
+import { useDbAdapter } from "../lib/useDbAdapter";
 import { Clock, Plus, MoreHorizontal, Trash2 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { formatDateWeekday } from "@/shared/lib/format";
@@ -37,7 +37,7 @@ function timeLabel(ts: number): string {
 }
 
 export function FeedView({ db, view, rows, onOpenRow }: Props) {
-  const { updateView, deleteRow } = useStore();
+  const { updateView, deleteRow } = useDbAdapter();
   const [quickOpen, setQuickOpen] = useState(false);
   const source = view.feedTimestamp ?? "updatedAt";
 

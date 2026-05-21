@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { Database, DatabaseViewConfig, Property } from "@/shared/types/domain";
-import { useStore } from "@/shared/lib/store";
+import { useDbAdapter } from "../lib/useDbAdapter";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
@@ -16,7 +16,7 @@ export interface ViewOptionsProps {
 }
 
 export function useUpdate(db: Database, view: DatabaseViewConfig) {
-  const { updateView } = useStore();
+  const { updateView } = useDbAdapter();
   return (patch: Partial<DatabaseViewConfig>) => updateView(db.id, view.id, patch);
 }
 

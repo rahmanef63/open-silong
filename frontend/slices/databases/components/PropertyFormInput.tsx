@@ -9,7 +9,7 @@ import { cn } from "@/shared/lib/utils";
 import { colorClass } from "@/shared/lib/format";
 import { X, Link2, AlertTriangle } from "lucide-react";
 import { DatePicker } from "../property-cell/date-cell/DatePicker";
-import { useStore } from "@/shared/lib/store";
+import { useDbAdapter } from "../lib/useDbAdapter";
 import { filterRelationCandidates } from "../lib/relationCandidates";
 import { DynamicIcon } from "@/shared/components/icon-picker";
 
@@ -203,7 +203,7 @@ export function PropertyFormInput({
 function FormRelationInput({
   prop, value, onChange,
 }: { prop: Property; value: PropertyValue; onChange: (v: PropertyValue) => void }) {
-  const { pages, databases } = useStore();
+  const { pages, databases } = useDbAdapter();
   const [query, setQuery] = useState("");
   const linkedIds = Array.isArray(value) ? (value as string[]) : [];
 

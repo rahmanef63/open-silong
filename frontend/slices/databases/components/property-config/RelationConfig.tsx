@@ -13,8 +13,8 @@ export function RelationConfig({ db, prop, databases, setRelationTwoWay, updateP
   db: Database;
   prop: Property;
   databases: Database[];
-  setRelationTwoWay: (dbId: string, propId: string, on: boolean, name?: string) => string | undefined;
-  updateProperty: (dbId: string, propId: string, patch: Partial<Property>) => void;
+  setRelationTwoWay: (dbId: string, propId: string, on: boolean, name?: string) => Promise<string | undefined>;
+  updateProperty: (dbId: string, propId: string, patch: Partial<Property>) => Promise<void> | void;
 }) {
   const targetDb = databases.find((d) => d.id === prop.relationDatabaseId);
   const targetMissing = !!prop.relationDatabaseId && !targetDb;

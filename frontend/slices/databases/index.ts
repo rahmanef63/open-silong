@@ -2,6 +2,15 @@ export { DatabaseBlock, PROPERTY_TYPE_LABELS } from "./DatabaseBlock";
 export { DatabasePage } from "./DatabasePage";
 export { PropertyCell } from "./PropertyCell";
 
+// Render-prop seam for peer-slice overrides (today: BlockEditor +
+// RowPropertiesPanel from @/slices/editor). Symmetric to editor's
+// EditorComponentsProvider. Consumers wanting to swap impls mount this
+// provider above DatabasePage / RowDetailSheet / RowDetailDialog.
+export {
+  DatabasesComponentsProvider, useDatabasesComponents,
+  type DatabasesComponentsRegistry, type DatabasesComponentsProviderProps,
+} from "./lib/componentsRegistry";
+
 // Lib surface — re-exported so peer slices (editor/row-properties/*,
 // database-csv) don't deep-import into `databases/lib/*`.
 export {

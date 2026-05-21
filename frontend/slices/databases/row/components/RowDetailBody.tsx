@@ -9,8 +9,13 @@ import {
   SortableContext, verticalListSortingStrategy, sortableKeyboardCoordinates,
 } from "@dnd-kit/sortable";
 import { Plus, X } from "lucide-react";
-import { useStore } from "@/shared/lib/store";
-import { BlockEditor, RowPropertiesPanel, useFullPage } from "@/slices/editor";
+import { useDbAdapter } from "../../lib/useDbAdapter";
+import {
+  BlockEditor as DefaultBlockEditor,
+  RowPropertiesPanel as DefaultRowPropertiesPanel,
+} from "@/slices/editor";
+import { useNotionAdapter } from "@/slices/notion";
+import { useDatabasesComponents } from "../../lib/componentsRegistry";
 import { PageCommentsProvider } from "@/slices/comments";
 import { DynamicIcon, IconPickerPopover, DEFAULT_ROW_ICON } from "@/shared/components/icon-picker";
 import { Button } from "@/shared/ui/button";
@@ -32,8 +37,20 @@ interface Props {
  * Renders nothing while the page query is loading.
  */
 export function RowDetailBody({ pageId, headerExtras, onClose }: Props) {
-  const { updatePage, addBlock, reorderBlocks } = useStore();
-  const fullPage = useFullPage(pageId);
+  const { updatePage, addBlock, reorderBlocks } = useDbAdapter();
+  // Render-prop seam: consumers can swap BlockEditor / RowPropertiesPanel
+  // via <DatabasesComponentsProvider>. Falls back to the bundled
+  // @/slices/editor impls when no override is mounted. Phase 4 cleanup
+  // removes the default imports once NotionAppProvider mounts the
+  // registry universally.
+  const {
+    BlockEditor = DefaultBlockEditor,
+    RowPropertiesPanel = DefaultRowPropertiesPanel,
+  } = useDatabasesComponents();
+  // useFullPage hook from editor was a thin wrapper over
+  // adapter.pages.useOne — call directly so this file does not need
+  // to import from @/slices/editor for the read path.
+  const fullPage = useNotionAdapter().pages.useOne(pageId);
   const page = fullPage ?? undefined;
   const refs = useRef<Map<string, HTMLElement | null>>(new Map());
   const blocksRef = useRef<Block[] | undefined>(page?.blocks);

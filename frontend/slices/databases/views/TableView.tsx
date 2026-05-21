@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { Database, DatabaseViewConfig, Page } from "@/shared/types/domain";
-import { useStore } from "@/shared/lib/store";
+import { useDbAdapter } from "../lib/useDbAdapter";
 import {
   DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors, DragEndEvent,
 } from "@dnd-kit/core";
@@ -26,7 +26,7 @@ interface ViewProps {
 }
 
 export function TableView({ db, view, rows, onOpenRow, writeView }: ViewProps) {
-  const { reorderProperties, reorderRows, addRow, deleteRow, setRowValue } = useStore();
+  const { reorderProperties, reorderRows, addRow, deleteRow, setRowValue } = useDbAdapter();
   const wrap = !!view.tableWrapCells;
   const rowHeight = view.tableRowHeight ?? "medium";
   const rowHeightClass =

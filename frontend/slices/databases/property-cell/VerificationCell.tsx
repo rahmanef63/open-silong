@@ -1,7 +1,7 @@
 import { ShieldCheck, ShieldAlert } from "lucide-react";
 import type { PropertyValue } from "@/shared/types/domain";
 import { cn } from "@/shared/lib/utils";
-import { useStore } from "@/shared/lib/store";
+import { useDbAdapter } from "../lib/useDbAdapter";
 import { formatRelTime } from "@/shared/lib/format";
 import { Button } from "@/shared/ui/button";
 
@@ -19,7 +19,7 @@ function isVerification(v: PropertyValue): v is { verified: boolean; by?: string
  *  Click toggles verified flag; on flip-to-true, stamps current user +
  *  timestamp. Audit shown on hover via title attribute. */
 export function VerificationCell({ value, onSet, cellClass }: Props) {
-  const { user } = useStore();
+  const { user } = useDbAdapter();
   const v = isVerification(value) ? value : null;
   const verified = !!v?.verified;
   const flip = () => {

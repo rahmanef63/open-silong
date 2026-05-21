@@ -1,5 +1,5 @@
 import type { Database, Property } from "@/shared/types/domain";
-import { useStore } from "@/shared/lib/store";
+import { useDbAdapter } from "../lib/useDbAdapter";
 import type { DateValue } from "../lib/dateFormat";
 import { DatePicker } from "./date-cell/DatePicker";
 
@@ -12,7 +12,7 @@ interface Props {
 }
 
 export function DateCell({ db, prop, rowId, value, cellClass }: Props) {
-  const { setRowValue, updateProperty } = useStore();
+  const { setRowValue, updateProperty } = useDbAdapter();
   return (
     <DatePicker
       value={value}

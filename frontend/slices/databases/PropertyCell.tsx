@@ -1,5 +1,5 @@
 import { Database, Page, Property, PropertyValue } from "@/shared/types/domain";
-import { useStore } from "@/shared/lib/store";
+import { useDbAdapter } from "./lib/useDbAdapter";
 import { cn } from "@/shared/lib/utils";
 import { formatRelTime } from "@/shared/lib/format";
 import { Checkbox } from "@/shared/ui/checkbox";
@@ -23,7 +23,7 @@ interface Props {
 }
 
 export function PropertyCell({ db, prop, row, compact = false }: Props) {
-  const { setRowValue, user } = useStore();
+  const { setRowValue, user } = useDbAdapter();
   const value = row.rowProps?.[prop.id];
 
   const set = (v: PropertyValue) => setRowValue(db.id, row.id, prop.id, v);
