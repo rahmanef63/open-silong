@@ -559,10 +559,12 @@ export default defineSchema({
     icon: v.string(),              // lucide-react component name
     route: v.string(),             // absolute path
     order: v.number(),             // sort order ascending
+    parentSlug: v.optional(v.string()),  // when set, this row is a child of (portal, parentSlug) — sidebar nests them
     requirePermission: v.optional(v.string()),
     active: v.boolean(),
     updatedAt: v.number(),
   })
     .index("by_portal_order", ["portal", "order"])
-    .index("by_portal_slug", ["portal", "slug"]),
+    .index("by_portal_slug", ["portal", "slug"])
+    .index("by_portal_parent", ["portal", "parentSlug"]),
 });

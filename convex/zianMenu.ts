@@ -35,8 +35,8 @@ export const getMenu = query({
     return items
       .filter((i) => i.active)
       .sort((a, b) => a.order - b.order)
-      .map(({ slug, label, icon, route, order, requirePermission }) => ({
-        slug, label, icon, route, order, requirePermission,
+      .map(({ slug, label, icon, route, order, requirePermission, parentSlug }) => ({
+        slug, label, icon, route, order, requirePermission, parentSlug,
       }));
   },
 });
@@ -58,13 +58,14 @@ export const getAllMenus = query({
   args: {},
   handler: async (ctx) => {
     const items = await ctx.db.query("zianMenuItems").collect();
-    const out: Record<string, Array<{ slug: string; label: string; icon: string; route: string; order: number; requirePermission?: string }>> = {};
+    const out: Record<string, Array<{ slug: string; label: string; icon: string; route: string; order: number; requirePermission?: string; parentSlug?: string }>> = {};
     for (const i of items) {
       if (!i.active) continue;
       if (!out[i.portal]) out[i.portal] = [];
       out[i.portal].push({
         slug: i.slug, label: i.label, icon: i.icon,
         route: i.route, order: i.order, requirePermission: i.requirePermission,
+        parentSlug: i.parentSlug,
       });
     }
     for (const k of Object.keys(out)) out[k].sort((a, b) => a.order - b.order);
@@ -86,6 +87,7 @@ export const listAllForCms = query({
       route: i.route,
       order: i.order,
       requirePermission: i.requirePermission,
+      parentSlug: i.parentSlug,
       active: i.active,
     }));
   },
@@ -100,6 +102,7 @@ export const upsert = mutation({
     icon: v.string(),
     route: v.string(),
     order: v.number(),
+    parentSlug: v.optional(v.string()),
     requirePermission: v.optional(v.string()),
     active: v.optional(v.boolean()),
   },
@@ -178,7 +181,7 @@ export const removeBySlug = mutation({
  *  Idempotent: re-running normalises rows. Run via:
  *    pnpm exec convex run zianMenu:seedDefaults
  */
-type Seed = { slug: string; label: string; icon: string; route: string; order: number };
+type Seed = { slug: string; label: string; icon: string; route: string; order: number; parentSlug?: string };
 const DEFAULTS: Record<string, ReadonlyArray<Seed>> = {
   owner: [
     { slug: "dashboard", label: "Dashboard", icon: "LayoutDashboard", route: "/admin/owner/dashboard", order: 0 },
@@ -227,6 +230,53 @@ const DEFAULTS: Record<string, ReadonlyArray<Seed>> = {
   ],
 };
 
+// 28 child menu entries under owner/database. Sidebar nests them under
+// the "database" parent slug. Order is alphabetical within each group
+// to stay predictable as we add more tables.
+const DATABASE_CHILDREN: ReadonlyArray<Seed> = [
+  // Config (existing menus page is the parent's own page already)
+  { slug: "db-menus",         label: "Menu CMS",       icon: "List",         route: "/admin/owner/menus",                       order: 0,  parentSlug: "database" },
+
+  // Operations
+  { slug: "db-alerts",        label: "Alerts",          icon: "AlertCircle", route: "/admin/owner/database/alerts",             order: 10, parentSlug: "database" },
+  { slug: "db-tasks",         label: "Housekeeping",    icon: "Sparkles",    route: "/admin/owner/database/tasks",              order: 11, parentSlug: "database" },
+  { slug: "db-damage",        label: "Damage Reports",  icon: "Wrench",      route: "/admin/owner/database/damage",             order: 12, parentSlug: "database" },
+  { slug: "db-laundry",       label: "Laundry",         icon: "Shirt",       route: "/admin/owner/database/laundry",            order: 13, parentSlug: "database" },
+  { slug: "db-announcements", label: "Announcements",   icon: "Megaphone",   route: "/admin/owner/database/announcements",      order: 14, parentSlug: "database" },
+  { slug: "db-events",        label: "Events",          icon: "Calendar",    route: "/admin/owner/database/events",             order: 15, parentSlug: "database" },
+  { slug: "db-security-log",  label: "Security Log",    icon: "ShieldCheck", route: "/admin/owner/database/security-log",       order: 16, parentSlug: "database" },
+
+  // Stays
+  { slug: "db-bookings",      label: "Bookings",        icon: "Calendar",    route: "/admin/owner/database/bookings",           order: 20, parentSlug: "database" },
+  { slug: "db-leases",        label: "Leases",          icon: "Home",        route: "/admin/owner/database/leases",             order: 21, parentSlug: "database" },
+  { slug: "db-keys",          label: "Digital Keys",    icon: "DoorOpen",    route: "/admin/owner/database/keys",               order: 22, parentSlug: "database" },
+  { slug: "db-verifications", label: "Verifications",   icon: "ShieldCheck", route: "/admin/owner/database/verifications",      order: 23, parentSlug: "database" },
+
+  // Inventory & Catalog
+  { slug: "db-listings",      label: "Listings",        icon: "Tag",         route: "/admin/owner/database/listings",           order: 30, parentSlug: "database" },
+  { slug: "db-promotions",    label: "Promotions",      icon: "Tag",         route: "/admin/owner/database/promotions",         order: 31, parentSlug: "database" },
+  { slug: "db-reviews",       label: "Reviews",         icon: "Star",        route: "/admin/owner/database/reviews",            order: 32, parentSlug: "database" },
+  { slug: "db-assets",        label: "Assets",          icon: "Box",         route: "/admin/owner/database/assets",             order: 33, parentSlug: "database" },
+  { slug: "db-inventory",     label: "Facilities Inv",  icon: "Boxes",       route: "/admin/owner/database/inventory",          order: 34, parentSlug: "database" },
+
+  // Finance
+  { slug: "db-payments",      label: "Payments",        icon: "CreditCard",  route: "/admin/owner/database/payments",           order: 40, parentSlug: "database" },
+  { slug: "db-petty-cash",    label: "Petty Cash",      icon: "Wallet",      route: "/admin/owner/database/petty-cash",         order: 41, parentSlug: "database" },
+  { slug: "db-budgets",       label: "Budgets",         icon: "Coins",       route: "/admin/owner/database/budgets",            order: 42, parentSlug: "database" },
+  { slug: "db-capex",         label: "CapEx",           icon: "Building2",   route: "/admin/owner/database/capex",              order: 43, parentSlug: "database" },
+  { slug: "db-purchase-orders", label: "Purchase Orders", icon: "ShoppingBag", route: "/admin/owner/database/purchase-orders",  order: 44, parentSlug: "database" },
+  { slug: "db-utility",       label: "Utility",         icon: "Zap",         route: "/admin/owner/database/utility",            order: 45, parentSlug: "database" },
+  { slug: "db-investor-reports", label: "Investor Reports", icon: "FileText", route: "/admin/owner/database/investor-reports", order: 46, parentSlug: "database" },
+
+  // HR
+  { slug: "db-employees",     label: "Employees",       icon: "Users",       route: "/admin/owner/database/employees",          order: 50, parentSlug: "database" },
+
+  // Audit & Analytics (read-only)
+  { slug: "db-analytics",     label: "Analytics",       icon: "BarChart3",   route: "/admin/owner/database/analytics",          order: 60, parentSlug: "database" },
+  { slug: "db-satisfaction",  label: "Satisfaction",    icon: "Heart",       route: "/admin/owner/database/satisfaction",       order: 61, parentSlug: "database" },
+  { slug: "db-auditlog",      label: "Audit Log",       icon: "FileText",    route: "/admin/owner/database/auditlog",           order: 62, parentSlug: "database" },
+];
+
 export const seedDefaults = internalMutation({
   args: {},
   handler: async (ctx) => {
@@ -250,6 +300,22 @@ export const seedDefaults = internalMutation({
         }
       }
     }
-    return { inserted, updated, portals: Object.keys(DEFAULTS).length };
+    // owner-only: 28 database children nested under slug="database"
+    for (const item of DATABASE_CHILDREN) {
+      const existing = await ctx.db
+        .query("zianMenuItems")
+        .withIndex("by_portal_slug", (q) =>
+          q.eq("portal", "owner").eq("slug", item.slug),
+        )
+        .unique();
+      if (existing) {
+        await ctx.db.patch(existing._id, { ...item, updatedAt: now, active: true });
+        updated++;
+      } else {
+        await ctx.db.insert("zianMenuItems", { portal: "owner", ...item, active: true, updatedAt: now });
+        inserted++;
+      }
+    }
+    return { inserted, updated, portals: Object.keys(DEFAULTS).length, dbChildren: DATABASE_CHILDREN.length };
   },
 });
