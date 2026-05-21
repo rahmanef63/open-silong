@@ -79,6 +79,24 @@ pnpm dev                          # http://localhost:3000
 Full Dokploy + Traefik + Postgres + S3 setup in
 [`DEPLOY.md`](./DEPLOY.md#lane-2--self-hosted-docker-compose).
 
+### Google OAuth sign-in (any lane)
+
+`convex/auth.ts` already wires Google — just provide credentials:
+
+```bash
+# 1. Google Cloud Console → APIs & Services → Credentials → Create OAuth 2.0
+#    client (Web app). Authorized redirect URI:
+#    https://<your-CONVEX_SITE_ORIGIN>/api/auth/callback/google
+# 2. Set on Convex backend
+pnpm exec convex env set AUTH_GOOGLE_ID <client-id>.apps.googleusercontent.com
+pnpm exec convex env set AUTH_GOOGLE_SECRET <client-secret>
+```
+
+The "Sign in with Google" button in `/auth` activates automatically
+once those two env vars are set. Step-by-step including consent screen
+setup + adding GitHub/Apple/Discord providers:
+[`DEPLOY.md#google-oauth-sign-in-optional`](./DEPLOY.md#google-oauth-sign-in-optional).
+
 ### Lane 3 — Try without installing
 
 [silong.rahmanef.com](https://silong.rahmanef.com) — public demo.

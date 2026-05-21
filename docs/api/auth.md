@@ -135,6 +135,63 @@ manages further promotions/demotions.
 
 ---
 
+## Google OAuth provider
+
+`convex/auth.ts` registers the `Google` provider from
+`@auth/core/providers/google`. The "Sign in with Google" button on
+`/auth` (wired in `app/auth/AuthForm.tsx`) activates the moment the
+two env vars below are set on the Convex backend — no code change
+required:
+
+```bash
+pnpm exec convex env set AUTH_GOOGLE_ID <client-id>.apps.googleusercontent.com
+pnpm exec convex env set AUTH_GOOGLE_SECRET <client-secret>
+```
+
+GCP Console setup:
+
+1. <https://console.cloud.google.com/> → APIs & Services → OAuth
+   consent screen → External → fill app name, support email, dev
+   contact. Scopes: `openid`, `email`, `profile`. Publish (or keep
+   in Testing and add test users).
+2. APIs & Services → Credentials → Create credentials → **OAuth
+   client ID** → Application type: Web application.
+3. Authorized JavaScript origins:
+   - `http://localhost:3000` (dev)
+   - `https://your-frontend.example.com` (prod)
+4. Authorized redirect URIs — must point at the **Convex site
+   origin** (NOT the frontend), path `/api/auth/callback/google`:
+   - Convex Cloud: `https://<project>.convex.site/api/auth/callback/google`
+   - Self-hosted: `https://<CONVEX_SITE_ORIGIN>/api/auth/callback/google`
+     (split-host pattern: `site-` is separate from `api-`)
+5. Save → copy the client ID + client secret → push to Convex env
+   (commands above).
+
+Verify:
+
+```bash
+pnpm exec convex env list | grep AUTH_GOOGLE
+```
+
+If sign-in returns `redirect_uri_mismatch`, the exact URL Google
+reports on its error page must be added verbatim to the OAuth
+client's authorized redirect URIs (typos in host or a trailing slash
+break the match).
+
+On successful sign-in `@convex-dev/auth` creates a `users` row keyed
+by the Google account's `email`. The admin bootstrap above
+(`SUPER_ADMIN_EMAIL` / `ADMIN_BOOTSTRAP_EMAILS`) auto-promotes that
+user on first read via `useAdminRole` — so the very first Google
+sign-in can become super-admin without a separate claim flow.
+
+Adding other OAuth providers (GitHub, Apple, Microsoft, Discord, …)
+follows the same shape: import the provider in `convex/auth.ts`, set
+matching `AUTH_<PROVIDER>_ID` + `AUTH_<PROVIDER>_SECRET` env on the
+backend, add a sign-in button in `app/auth/AuthForm.tsx`. Catalog:
+<https://labs.convex.dev/auth>.
+
+---
+
 ## `actorEmail(ctx, userId) → string | undefined`
 
 Reads `users.email` for telemetry / display. Convex Auth mints the
