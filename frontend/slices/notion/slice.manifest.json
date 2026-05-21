@@ -4,13 +4,14 @@
   "deps": {
     "shared": [
       "components/notion",
-      "lib/store",
       "types/domain"
     ],
     "slices": [
+      "editor",
+      "databases",
       "files"
     ],
     "convex": []
   },
-  "notes": "Adapter contract at adapter/types.ts. Reference impls: adapter/convexAdapter/ (production, skip-listed via rr-sync.json convexAdapter/ pattern), adapter/localStorageAdapter/ (rr demo default). Phase 1 ship 2026-05-21 — see docs/rr-sync/2026-05-21-notion-mega-lift-plan.md. The store + types/domain shared deps are consumed by the Convex adapter only; downstream consumers using the localStorage adapter need neither at runtime (Phase 4 cleanup will remove from manifest)."
+  "notes": "Adapter contract at adapter/types.ts. Reference impls: adapter/convexAdapter/ (production, skip-listed via rr-sync.json convexAdapter/ pattern), adapter/localStorageAdapter/ (rr demo default). Phase 4 ship 2026-05-21 — see docs/rr-sync/2026-05-21-notion-mega-lift-plan.md. The slice-level dep on editor + databases is intentional — NotionAppProvider is the ONLY file in the codebase that imports both, breaking the historical editor↔databases bidirectional cycle by hoisting the coupling to this umbrella. lib/store dep was removed in Phase 4 (zero direct store consumption from sub-slices; the convex adapter is the sole store consumer + is skip-listed at rr lift time)."
 }

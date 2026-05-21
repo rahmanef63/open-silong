@@ -6,7 +6,6 @@ import { SlashMenu } from "./SlashMenu";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useBlockHistory } from "@/shared/hooks/useBlockHistory";
-import { DatabaseBlock as DefaultDatabaseBlock } from "@/slices/databases";
 import { useEditorComponents } from "./lib/componentsRegistry";
 import { BlockShell } from "./blocks/BlockShell";
 import { BlockControls } from "./blocks/BlockControls";
@@ -46,12 +45,12 @@ function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerR
     createPage, createDatabase, replaceBlock, updatePage, getPage,
   } = useStore();
   const insertBlocksAfter = useNotionAdapter().pages.insertBlocksAfter;
-  // Render-prop seam: consumers can swap the DatabaseBlock implementation
-  // via <EditorComponentsProvider value={{ DatabaseBlock }}>. Falls back
-  // to the bundled @/slices/databases impl when no override is mounted.
-  // Phase 4 cleanup removes the default import once NotionAppProvider
-  // mounts the registry universally.
-  const { DatabaseBlock = DefaultDatabaseBlock } = useEditorComponents();
+  // Render-prop seam: the mounted <NotionAppProvider> supplies the
+  // bundled DatabaseBlock from @/slices/databases. Consumers can
+  // override via <NotionAppProvider components={{ DatabaseBlock }}>.
+  // Phase 4 strip: the editor slice itself no longer imports the
+  // databases slice — the registry IS the dep boundary.
+  const { DatabaseBlock } = useEditorComponents();
   const [slashOpen, setSlashOpen] = useState(false);
   const [slashQuery, setSlashQuery] = useState("");
   const [askOpen, setAskOpen] = useState(false);
@@ -118,7 +117,17 @@ function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerR
   if (block.type === "database") {
     return (
       <BlockShell {...shellProps} controls={controls}>
-        <DatabaseBlock pageId={pageId} block={block} />
+        {DatabaseBlock ? (
+          <DatabaseBlock pageId={pageId} block={block} />
+        ) : (
+          <div className="rounded border border-dashed border-border bg-muted/30 p-3 text-xs text-muted-foreground">
+            DatabaseBlock not registered — wrap your app in{" "}
+            <code>&lt;NotionAppProvider&gt;</code> from{" "}
+            <code>@/slices/notion</code> to mount the bundled database
+            renderer (or pass a custom one via the{" "}
+            <code>components</code> prop).
+          </div>
+        )}
       </BlockShell>
     );
   }

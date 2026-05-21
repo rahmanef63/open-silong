@@ -13,7 +13,7 @@ import { getBlockRenderer } from "../registry";
 import { ColumnBlockEditor } from "../../ColumnBlockEditor";
 import { ToggleContent } from "../ToggleBlock";
 import { SyncedBlockContent } from "../SyncedBlock";
-import { DatabaseBlock } from "@/slices/databases";
+import { useEditorComponents } from "../../lib/componentsRegistry";
 import { MAX_NEST, NestingCap } from "./NestingCap";
 
 const CodeBlock = dynamic(
@@ -39,6 +39,7 @@ const wrap = (inner: React.ReactNode) => <div className="flex-1 min-w-0">{inner}
 export function NestedContent({ block, baseProps, setRef, handleKeyDown, onUpdate, depth, pageId, ordinal }: Props) {
   const navigate = useNavigate();
   const { getPage } = useStore();
+  const { DatabaseBlock } = useEditorComponents();
 
   // Leaf blocks (image, embed, button, equation, table, divider) from registry
   const Renderer = getBlockRenderer(block.type);
@@ -138,6 +139,7 @@ export function NestedContent({ block, baseProps, setRef, handleKeyDown, onUpdat
     return wrap(<ColumnBlockEditor block={block} onUpdate={onUpdate} depth={depth + 1} pageId={pageId} />);
   case "database":
     if (!pageId) return wrap(<NestingCap type="Database (no page)" />);
+    if (!DatabaseBlock) return wrap(<NestingCap type="Database (renderer not registered)" />);
     return wrap(<DatabaseBlock pageId={pageId} block={block} />);
   default:
     return (

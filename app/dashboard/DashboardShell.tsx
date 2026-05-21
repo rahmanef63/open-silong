@@ -10,7 +10,7 @@ import { TooltipProvider } from "@/shared/ui/tooltip";
 import { Toaster } from "@/shared/ui/toaster";
 import { Toaster as Sonner } from "@/shared/ui/sonner";
 import { StoreProvider } from "@/shared/lib/store";
-import { NotionAdapterProvider } from "@/slices/notion";
+import { NotionAppProvider } from "@/slices/notion";
 import { useConvexNotionAdapter } from "@/slices/notion/adapter/convexAdapter";
 import { RouterProvider } from "@/shared/lib/router";
 import { WorkspaceIOProvider } from "@/slices/workspace-io";
@@ -37,14 +37,17 @@ const ShortcutsDialog = lazy(() =>
   import("@/slices/command-palette").then((m) => ({ default: m.ShortcutsDialog })),
 );
 
-/** Mount the production NotionAdapter — must live inside StoreProvider
- *  because the Convex adapter wraps useStore() for pages + databases.
- *  Phase 1 mount: additive, no consumer yet. Editor refactor in Phase 2
- *  flips slice files from useStore() → useNotionAdapter() inside this
- *  provider's subtree. */
+/** Mount the production NotionApp umbrella — composes NotionAdapter +
+ *  EditorComponentsRegistry + DatabasesComponentsRegistry + Config in
+ *  one wrap. Must live inside StoreProvider because the Convex adapter
+ *  wraps useStore() for pages + databases.
+ *
+ *  Phase 4 mount: editor + databases slices no longer import each other
+ *  directly — this umbrella is the only place both are imported,
+ *  resolving the historical bidirectional cycle. */
 function NotionAdapterMount({ children }: { children: ReactNode }) {
   const adapter = useConvexNotionAdapter();
-  return <NotionAdapterProvider adapter={adapter}>{children}</NotionAdapterProvider>;
+  return <NotionAppProvider adapter={adapter}>{children}</NotionAppProvider>;
 }
 
 function AuthGuard({ children }: { children: ReactNode }) {
