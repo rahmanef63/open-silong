@@ -13,4 +13,4 @@ Allow: /
 User-agent: *
 Allow: /
 
-Host: https://nosion.rahmanef.com
+Host: https://silong.rahmanef.com

@@ -21,7 +21,7 @@ Rationale:
 
 | Surface | Audience | Stack | Entry point |
 |---|---|---|---|
-| **nosion** (this repo) | Self-hosters, OSS contributors | Next 16 + React 19 + Convex (cloud or self-hosted) + auth | `git clone github.com/rahmanef63/notion-page-clone` + Convex setup |
+| **nosion** (this repo) | Self-hosters, OSS contributors | Next 16 + React 19 + Convex (cloud or self-hosted) + auth | `git clone github.com/rahmanef63/open-silong` + Convex setup |
 | **rr template `notion-page-clone-os`** | Template-browser users, devs evaluating | Next 16 + React 19 + localStorage (`createTemplateStore`) | `npx rr add notion-page-clone-os` (demo) — surfaced card links to nosion repo for production |
 | **`notion-shell` rr slice** | Devs embedding Notion-style UI into other projects | Next 16 + React 19 + props-driven | `npx rr add notion-shell` (lifts wrappers + helpers) |
 
@@ -55,7 +55,7 @@ When a user runs `npx rr notion-clone`, instead of installing the
 localStorage template, the CLI should:
 
 1. Detect the intent (full Notion clone, not template demo).
-2. Suggest `git clone https://github.com/rahmanef63/notion-page-clone`
+2. Suggest `git clone https://github.com/rahmanef63/open-silong`
    + Convex setup instructions.
 3. Optionally `degit` clone directly.
 

@@ -75,7 +75,7 @@ const ASIDE: Record<SettingsKey, AsideContent> = {
       { icon: ShieldCheck, label: "Hash SHA-256 disimpan; revoke any time" },
     ],
     links: [
-      { label: "MCP server URL", href: "https://site-notion-page-clone.rahmanef.com/mcp", external: true },
+      { label: "MCP server URL", href: process.env.NEXT_PUBLIC_MCP_URL ?? "https://site-silong.rahmanef.com/mcp", external: true },
     ],
   },
   webhooks: {

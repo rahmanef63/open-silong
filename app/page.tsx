@@ -123,7 +123,7 @@ function Hero() {
             <span className="h-3 w-3 rounded-full bg-warning/60" />
             <span className="h-3 w-3 rounded-full bg-success/60" />
             <span className="ml-3 text-xs text-muted-foreground">
-              nosion.rahmanef.com / p / vacation-itinerary
+              silong.rahmanef.com / p / vacation-itinerary
             </span>
           </div>
           <div className="space-y-3 p-8 text-left md:p-12">
@@ -479,7 +479,7 @@ function Footer() {
             Sign in
           </Link>
           <a
-            href="https://github.com/rahmanef63/notion-page-clone"
+            href="https://github.com/rahmanef63/open-silong"
             target="_blank"
             rel="noopener noreferrer"
             className="hover:text-foreground"

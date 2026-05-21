@@ -884,7 +884,7 @@ export const mcpRpcHandler = httpAction(async (ctx, req) => {
       headers: {
         "content-type": "application/json",
         ...CORS_HEADERS,
-        "www-authenticate": 'Bearer realm="nosion-mcp", resource_metadata="https://nosion.rahmanef.com/.well-known/oauth-protected-resource"',
+        "www-authenticate": `Bearer realm="silong-mcp", resource_metadata="${process.env.SITE_URL ?? "https://silong.rahmanef.com"}/.well-known/oauth-protected-resource"`,
       },
     });
   }

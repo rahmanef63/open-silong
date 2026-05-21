@@ -155,8 +155,8 @@ export const complete = action({
     conversation.push({ role: "system", content: systemContent });
     for (const m of messages) conversation.push({ role: m.role, content: m.content });
 
-    const referer = process.env.OPENROUTER_REFERER ?? "https://nosion.rahmanef.com";
-    const title = process.env.OPENROUTER_APP_NAME ?? "Nosion";
+    const referer = process.env.OPENROUTER_REFERER ?? "https://silong.rahmanef.com";
+    const title = process.env.OPENROUTER_APP_NAME ?? "open-silong";
     const tools = toolsForLLM();
 
     const progress: Array<{ kind: string; label: string; skillId?: string; ms?: number; ok?: boolean }> = [];

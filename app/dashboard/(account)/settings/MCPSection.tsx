@@ -29,10 +29,11 @@ type Row = {
   label: string | null;
 };
 
-const SITE = "https://silong.rahmanef.com";
-// NOTE: Convex backend domain rename (api-notion-page-clone → api-silong) is
-// deferred — backend INSTANCE_NAME stays as-is for now. See CLAUDE.md.
-const MCP = "https://site-notion-page-clone.rahmanef.com/mcp";
+const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://silong.rahmanef.com";
+// Convex self-hosted exposes httpActions on the `site-*` origin (separate
+// from the `api-*` origin used by queries / mutations). Override via env
+// when running your own deploy.
+const MCP = process.env.NEXT_PUBLIC_MCP_URL ?? "https://site-silong.rahmanef.com/mcp";
 
 type Field = { label: string; value: string; copyable: boolean; hint?: string };
 type Group = { title: string; fields: Field[] };
