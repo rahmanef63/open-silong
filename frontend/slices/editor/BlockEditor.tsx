@@ -172,7 +172,7 @@ function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerR
         onLang={(lang) => updateBlock(pageId, block.id, { lang })}
       />
       {slashOpen && (
-        <div className="relative pl-7">
+        <div className="absolute z-50 mt-1 left-7">
           <SlashMenu
             query={slashQuery}
             onSelect={onSlashSelect}
