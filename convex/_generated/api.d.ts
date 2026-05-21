@@ -126,6 +126,7 @@ import type * as webhooks_deliveries from "../webhooks/deliveries.js";
 import type * as webhooks_mutations from "../webhooks/mutations.js";
 import type * as webhooks_queries from "../webhooks/queries.js";
 import type * as workspaces from "../workspaces.js";
+import type * as zianMenu from "../zianMenu.js";
 
 import type {
   ApiFromModules,
@@ -252,6 +253,7 @@ declare const fullApi: ApiFromModules<{
   "webhooks/mutations": typeof webhooks_mutations;
   "webhooks/queries": typeof webhooks_queries;
   workspaces: typeof workspaces;
+  zianMenu: typeof zianMenu;
 }>;
 
 /**

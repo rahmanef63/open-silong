@@ -12,10 +12,8 @@ import { cn } from "@/shared/lib/utils";
  *                oversized title + soft decorative glows.
  * - `split`    → greeting variant + companion slot on the right.
  *
- * NOTE: CareerPack source rendered a `ParangPattern` SVG decoration in
- * the greeting variant — not ported here (Nosion has no such asset).
- * The greeting still has the gradient + glow orbs; drop in a custom
- * decorative element later if desired.
+ * NOTE: the greeting variant has gradient + glow orbs only — drop in a
+ * custom decorative SVG / asset later if a richer treatment is needed.
  */
 export type PageHeaderVariant = "compact" | "greeting" | "split";
 

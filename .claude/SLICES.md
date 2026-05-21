@@ -1,7 +1,7 @@
 # Slice creation playbook
 
-Steps to add a new feature slice. Mirror of Superspace's
-`docs/guides/01-FEATURE-CREATION.md`, slimmed for our stack.
+Steps to add a new feature slice, slimmed for this stack
+(Next + Convex + React).
 
 ## 1. Create folders
 

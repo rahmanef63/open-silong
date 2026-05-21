@@ -36,4 +36,21 @@ out/
 *.sw?
 .claude/scheduled_tasks.lock
 .claude/worktrees/
+.claude/sessions/
+.claude/local/
 tsconfig.tsbuildinfo
+
+# Generated artifacts
+*.tsbuildinfo
+coverage/
+.vitest-cache/
+.turbo/
+
+# Local agent / IDE state
+.fleet/
+.cursor/sessions/
+
+# Backup files — never commit
+*.bak
+*.backup
+*.orig

@@ -43,7 +43,7 @@ Status legend: `[ ]` todo · `[x]` done · `[~]` partial.
 - [ ] First-run UX polish pass (smoke test will surface gaps)
 - [ ] Public demo deploy at `silong.rahmanef.com` (Dokploy domain
   added — domain id `tRFJgMqVT0AtOblef_sVF` — pending user-side DNS A
-  record at Hostinger: `silong` → `76.13.23.37`)
+  record at Hostinger: `silong` → `<YOUR_VPS_IP>`)
 
 ### Code-side polish
 - [x] Sweep all `TODO` / `FIXME` / `XXX` — closed: snapshot retention
@@ -108,7 +108,7 @@ Status legend: `[ ]` todo · `[x]` done · `[~]` partial.
   folder
 - [ ] Coordinated re-key wave:
   - `INSTANCE_NAME=notion-page-clone` → `open-silong`
-  - Convex backend domain `api-notion-page-clone.rahmanef.com` →
+  - Convex backend domain `api-silong.rahmanef.com` →
     `api-silong.rahmanef.com`
   - MCP server name + tool prefixes (`@nosion/mcp-server` →
     `@open-silong/mcp-server`, `nosion-*` tools → `silong-*`)

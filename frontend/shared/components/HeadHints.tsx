@@ -8,7 +8,7 @@
 
 const CONVEX_URL =
   process.env.NEXT_PUBLIC_CONVEX_URL
-  ?? "https://api-notion-page-clone.rahmanef.com";
+  ?? "https://api-silong.rahmanef.com";
 
 const convexHost = (() => {
   try { return new URL(CONVEX_URL).origin; } catch { return CONVEX_URL; }

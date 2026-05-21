@@ -50,7 +50,7 @@ A per-user token table is a follow-up.
       "command": "node",
       "args": ["/abs/path/to/notion-page-clone/mcp/dist/server.js"],
       "env": {
-        "NOSION_BASE_URL": "https://api-notion-page-clone.rahmanef.com",
+        "NOSION_BASE_URL": "https://api-silong.rahmanef.com",
         "NOSION_MCP_TOKEN": "<same value as MCP_API_TOKEN on the Convex deployment>"
       }
     }
@@ -62,7 +62,7 @@ A per-user token table is a follow-up.
 
 ```bash
 claude mcp add nosion node /abs/path/to/notion-page-clone/mcp/dist/server.js \
-  -e NOSION_BASE_URL=https://api-notion-page-clone.rahmanef.com \
+  -e NOSION_BASE_URL=https://api-silong.rahmanef.com \
   -e NOSION_MCP_TOKEN=<token>
 ```
 
@@ -95,7 +95,7 @@ The MCP server is optional — you can also POST to `/mcp/v1` directly
 from any HTTP client (curl, an LLM agent loop, a CI script):
 
 ```bash
-curl https://api-notion-page-clone.rahmanef.com/mcp/v1 \
+curl https://api-silong.rahmanef.com/mcp/v1 \
   -H "authorization: Bearer $NOSION_MCP_TOKEN" \
   -H "content-type: application/json" \
   -d '{"tool":"nosion-search","params":{"query":"meeting notes"}}'

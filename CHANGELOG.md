@@ -87,7 +87,7 @@ monorepo:
 - Local git remote updated to SSH `git@github.com:rahmanef63/open-silong.git`
 - Dokploy domain `silong.rahmanef.com` added (id
   `tRFJgMqVT0AtOblef_sVF`, port 3000, https=true, letsencrypt)
-- DNS A record for `silong.rahmanef.com` → `76.13.23.37`: pending
+- DNS A record for `silong.rahmanef.com` → `<YOUR_VPS_IP>`: pending
   user-side at Hostinger
 - Legacy `nosion.rahmanef.com` kept as transition redirect
 

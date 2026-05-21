@@ -2,7 +2,7 @@
 
 Promotes items from `BACKLOG.md` into release phases. Mark `[x]` once a phase target is materially shipped (best-effort, not 100% line-for-line).
 
-> Live deployments: frontend `https://nosion.rahmanef.com`, Convex `https://api-notion-page-clone.rahmanef.com`.
+> Live deployments: frontend `https://nosion.rahmanef.com`, Convex `https://api-silong.rahmanef.com`.
 
 ---
 

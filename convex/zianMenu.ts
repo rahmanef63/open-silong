@@ -1,9 +1,10 @@
 import { query, mutation, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 
-// Cross-app menu API for homestay-zian (zianinn.com). Reads from the
-// `zianMenuItems` table — edit via Convex Dashboard table view at
-// dash-notion-page-clone.rahmanef.com OR via `upsert` mutation below.
+// Generic cross-app portal menu API. Reads from the `zianMenuItems`
+// table (legacy table name kept for schema compatibility). Useful for
+// any downstream app that wants per-portal (owner/staff/guest/…)
+// dashboard menu items served from this Convex backend.
 //
 // All reads are public (no auth gate) because menu structure is non-
 // sensitive UI config. Writes require auth (admin only by convention —
@@ -51,8 +52,8 @@ export const listPortals = query({
   },
 });
 
-/** Public — full snapshot for the homestay-zian /admin/owner/menus POC
- *  page. Returns { portal: [{...items}] }. */
+/** Public — full snapshot grouped by portal for an admin overview
+ *  surface. Returns { portal: [{...items}] }. */
 export const getAllMenus = query({
   args: {},
   handler: async (ctx) => {

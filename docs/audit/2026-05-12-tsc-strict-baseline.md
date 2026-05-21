@@ -41,7 +41,7 @@ Enabled `strict: true` (and removed `noImplicitAny:false`, `strictNullChecks:fal
 Most errors stem from dynamic Convex API indexing — `api["features/search/queries"]` style strings. Convex codegen produces a typed object; string-indexing it loses type safety. Fixes:
 
 1. Use static dotted access: `api.search.queries.search` (preferred — TS retains type)
-2. Cast through `any-api` helper if dynamic path needed (SuperSpace pattern)
+2. Cast through an `any-api` helper if dynamic path needed
 3. Add typed wrapper functions
 
 ## Plan
@@ -60,4 +60,5 @@ Do NOT flip `strict: true` in this PR. Captured baseline only. Follow-up PRs (on
 ## Reference
 
 - TS strict docs: <https://www.typescriptlang.org/tsconfig/#strict>
-- Convex any-api escape hatch: `~/projects/superspace/convex/_shared/anyApi.ts`
+- Convex any-api escape hatch — write a small wrapper that exports
+  `anyApi: typeof api` cast through `unknown` for dynamic path access.

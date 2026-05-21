@@ -3,9 +3,9 @@
 import * as React from "react";
 import { X } from "lucide-react";
 
-// NOTE: Nosion's existing useIsMobile uses a 768px (md) breakpoint vs the
-// CareerPack wrappers which were designed against 1024px (lg). We reuse the
-// existing hook per project guidance — switch threshold is therefore `md` here.
+// NOTE: switch threshold is `md` (768px) per the project's existing
+// useIsMobile hook. Replace with your own breakpoint hook if you need
+// a different desktop cutover (e.g. lg / xl).
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { cn } from "@/shared/lib/utils";
 import {

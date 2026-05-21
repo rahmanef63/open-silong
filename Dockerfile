@@ -13,7 +13,7 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-ARG NEXT_PUBLIC_CONVEX_URL=https://api-notion-page-clone.rahmanef.com
+ARG NEXT_PUBLIC_CONVEX_URL=https://api-silong.rahmanef.com
 ARG NEXT_PUBLIC_DEPLOYMENT_ID
 # Build id powers the version-watcher reload prompt + chunk-error recovery.
 # Dokploy passes the commit SHA via DOKPLOY_COMMIT_SHA; fall back to a

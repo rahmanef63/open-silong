@@ -9,7 +9,7 @@ Repo: https://github.com/rahmanef63/open-silong
 **Rebrand 2026-05-20**: project formerly known as `notion-page-clone` / `nosion`.
 - Github repo renaming to `open-silong` (rahmanef63 account).
 - Domain shifting `nosion.rahmanef.com` → `silong.rahmanef.com` (with redirect during transition).
-- Convex backend domain shifting `api-notion-page-clone.rahmanef.com` → `api-silong.rahmanef.com` (separate Dokploy ops).
+- Convex backend domain shifting `api-silong.rahmanef.com` → `api-silong.rahmanef.com` (separate Dokploy ops).
 - Internal code references to "Nosion" / "nosion" remain in many files; Phase 2 polish sweep will rebrand surface-by-surface. Backend `INSTANCE_NAME` stays `notion-page-clone` until a coordinated re-key (no urgency — internal id only).
 - See `docs/rr-sync/2026-05-20-pivot-nosion-source-of-truth.md` for strategic rationale.
 
@@ -117,8 +117,8 @@ convex dependency list. Regenerate via
 - `proxy.ts` — Next 16 request boundary (Convex auth optimistic gate, NOT
   the security boundary).
 
-`audit-bp/scripts/audit-features.sh` does NOT apply here — it enforces the
-Manef/SuperSpace canonical feature shell which Nosion does not adopt.
+`audit-bp/scripts/audit-features.sh` does NOT apply here — it enforces
+a canonical feature-shell convention which open-silong does not adopt.
 Ignore its grades. `audit-bp.sh` itself is fine.
 
 ## Navigation

@@ -1,7 +1,6 @@
 # Architecture — slice flow
 
-Borrowed from Superspace (`~/projects/superspace/docs/guides/01-FEATURE-CREATION.md`)
-and adapted for this Vite + Convex + React project.
+Vertical-slice layout adapted for this Next + Convex + React project.
 
 ## Directory layout
 

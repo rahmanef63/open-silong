@@ -1,10 +1,11 @@
-# Nosion documentation
+# open-silong documentation
 
-Live: https://nosion.rahmanef.com  ·  Convex: https://api-notion-page-clone.rahmanef.com
+Live: https://silong.rahmanef.com  ·  Convex: https://api-silong.rahmanef.com
 
 | Area | Doc | Audience |
 |---|---|---|
 | **API contract** | `api/README.md` (start here) | feature authors |
+| | `api/slices.md` | **catalog of every frontend slice** — start here for UI |
 | | `api/conventions.md` | anyone adding a Convex fn |
 | | `api/pages.md` | page CRUD + content |
 | | `api/databases.md` | database schema, properties, views, rows |

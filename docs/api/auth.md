@@ -107,7 +107,7 @@ the first one — pick whichever fits the install:
 Set on the Convex deployment:
 
 ```bash
-npx convex env set SUPER_ADMIN_EMAIL casadezian@gmail.com
+npx convex env set SUPER_ADMIN_EMAIL admin@example.com
 # OR for non-super admins (comma-separated):
 npx convex env set ADMIN_BOOTSTRAP_EMAILS one@x.io,two@y.io
 ```

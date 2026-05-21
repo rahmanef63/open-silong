@@ -6,7 +6,7 @@ import { useStore } from "@/shared/lib/store";
 import { ROUTES_ABS } from "@/shared/lib/routes";
 
 /**
- * Database CRUD orchestrator — adapted from SuperSpace's useWorkspaceCRUD.
+ * Database CRUD orchestrator
  * A "new database" creates a host page with a single database block, mirroring
  * the existing inline flow but with a name+icon dialog up front.
  */

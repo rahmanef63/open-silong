@@ -36,8 +36,8 @@ file to reconstruct where work paused.
 - ✅ GitHub Discussions enabled (via `gh api -X PATCH repos/.../open-silong -f has_discussions=true`)
 - ✅ Local git remote updated to SSH `git@github.com:rahmanef63/open-silong.git`
 - ✅ Dokploy domain `silong.rahmanef.com` added — id `tRFJgMqVT0AtOblef_sVF`, app `7xt1vXUDyMpKDbcFG16lV`, port 3000, https=true, letsencrypt
-- ✅ Convex backend deployed at `https://api-notion-page-clone.rahmanef.com` (env via Dokploy compose `cKaJHRENddezDJu8z6REz`, admin key var `CONVEX_ADMIN_KEY`)
-- ⏸ DNS A record `silong.rahmanef.com → 76.13.23.37` PENDING user-side at Hostinger
+- ✅ Convex backend deployed at `https://api-silong.rahmanef.com` (env via Dokploy compose `<dokploy-compose-id>`, admin key var `CONVEX_ADMIN_KEY`)
+- ⏸ DNS A record `silong.rahmanef.com → <YOUR_VPS_IP>` PENDING user-side at Hostinger
 - ⏸ Repo visibility flip to PUBLIC PENDING (currently PRIVATE)
 
 ## Strategic pivot record
@@ -83,7 +83,7 @@ migration plan:
 - MCP server tool names: `nosion-search`, `nosion-list-pages`, … (LLM-facing API contract)
 - MCP package: `@nosion/mcp-server` + bin `nosion-mcp`
 - Convex `INSTANCE_NAME=notion-page-clone` (internal, no urgency)
-- Convex backend domain: `api-notion-page-clone.rahmanef.com` +
+- Convex backend domain: `api-silong.rahmanef.com` +
   `site-notion-page-clone.rahmanef.com` (admin key regen needed)
 - Webhook header: `X-Nosion-Signature` (server + client both)
 - Code identifiers: `NosionCommandPalette`, `useNosionCommandGroups`,
@@ -128,8 +128,8 @@ Next plausible actions (user pick):
 - Live URL (new, DNS-pending): https://silong.rahmanef.com
 - Repo: https://github.com/rahmanef63/open-silong (PRIVATE, flip to PUBLIC when P0 closes)
 - rr sibling: https://github.com/rahmanef63/resources (rr-side catalog)
-- Convex API: https://api-notion-page-clone.rahmanef.com (admin key in Dokploy compose env)
+- Convex API: https://api-silong.rahmanef.com (admin key in Dokploy compose env)
 - Dokploy project: `cr6xjiRS92vPXyK1Oj8JP`
 - Dokploy frontend app: `7xt1vXUDyMpKDbcFG16lV`
 - Dokploy frontend domains: `tRFJgMqVT0AtOblef_sVF` (silong) + `PRBO37TeXNPj9kSvlC9Al` (nosion legacy)
-- Dokploy convex backend compose: `cKaJHRENddezDJu8z6REz`
+- Dokploy convex backend compose: `<dokploy-compose-id>`
