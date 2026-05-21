@@ -546,4 +546,21 @@ export default defineSchema({
   })
     .index("by_user", ["userId"])
     .index("by_updated", ["updatedAt"]),
+
+  /** Cross-app dashboard menu items consumed by homestay-zian (zianinn.com)
+   *  and any other downstream app. Edit via the Convex dashboard table view
+   *  or via mutations in `convex/zianMenu.ts`. Public read, no auth gate. */
+  zianMenuItems: defineTable({
+    portal: v.string(),            // owner | manager | staff | guest | resident | security | admin
+    slug: v.string(),              // stable id within portal
+    label: v.string(),             // display text
+    icon: v.string(),              // lucide-react component name
+    route: v.string(),             // absolute path
+    order: v.number(),             // sort order ascending
+    requirePermission: v.optional(v.string()),
+    active: v.boolean(),
+    updatedAt: v.number(),
+  })
+    .index("by_portal_order", ["portal", "order"])
+    .index("by_portal_slug", ["portal", "slug"]),
 });
