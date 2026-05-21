@@ -5,6 +5,12 @@ Updated after each sync round. Pair with `rr-sync.json.tracked`
 (file-hash drift detection) and rr's catalog `tags: "notion-like"`
 (consumer-facing filter).
 
+**Forward plan for the editor + databases pair**:
+[`2026-05-21-notion-mega-lift-plan.md`](./2026-05-21-notion-mega-lift-plan.md)
+— lifts both as one adapter-driven mega-bundle (resolves the
+bidirectional dep between editor ↔ databases). Read that doc before
+attempting any work on the 🟡 "in mega-bundle only" rows below.
+
 ## Summary
 
 | Status | Count | Where |
