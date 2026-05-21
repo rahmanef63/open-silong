@@ -4,6 +4,7 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { requireOwned } from "./_shared/auth";
 import { Id } from "./_generated/dataModel";
 import { readActiveWorkspace, rowInActiveWorkspace } from "./_shared/workspace";
+import { COUNT_CAPS } from "./_shared/limits";
 
 export const listForPage = query({
   args: { pageId: v.id("pages") },
@@ -61,7 +62,7 @@ export const create = mutation({
   },
   handler: async (ctx, args) => {
     const { userId, doc: page } = await requireOwned(ctx, "pages", args.pageId as Id<"pages">);
-    return await ctx.db.insert("snapshots", {
+    const id = await ctx.db.insert("snapshots", {
       userId,
       // Inherit the parent page's workspaceId so the snapshot scopes
       // alongside its source — listAll already filters via
@@ -77,6 +78,21 @@ export const create = mutation({
       blocks: args.blocks,
       rowProps: args.rowProps,
     });
+
+    // Retention: keep newest COUNT_CAPS.snapshotsPerPage, drop the
+    // rest. Bounded fetch (+10) caps the prune burst per insert.
+    const recent = await ctx.db
+      .query("snapshots")
+      .withIndex("by_user_page", (q) => q.eq("userId", userId).eq("pageId", args.pageId))
+      .order("desc")
+      .take(COUNT_CAPS.snapshotsPerPage + 10);
+    if (recent.length > COUNT_CAPS.snapshotsPerPage) {
+      for (const stale of recent.slice(COUNT_CAPS.snapshotsPerPage)) {
+        await ctx.db.delete(stale._id);
+      }
+    }
+
+    return id;
   },
 });
 

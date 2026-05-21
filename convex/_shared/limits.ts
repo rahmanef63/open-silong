@@ -81,7 +81,9 @@ export const COUNT_CAPS = {
   importBlocksPerPage:  2_000,
   /** Comment list page-size. */
   commentsPerPage:      500,
-  /** Snapshot retention per page (oldest dropped — TODO when implemented). */
+  /** Snapshot retention per page. Oldest dropped on insert (see
+   *  `snapshots.create`). Import path skips the cap on purpose so a
+   *  round-tripped backup never loses history mid-restore. */
   snapshotsPerPage:     50,
   /** Sitemap cap. */
   sitemapMaxRows:       1_000,
