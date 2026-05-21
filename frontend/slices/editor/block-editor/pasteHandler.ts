@@ -1,16 +1,21 @@
 import type { ClipboardEvent } from "react";
 import { toast } from "sonner";
-import type { ReactMutation } from "convex/react";
-import type { FunctionReference } from "convex/server";
-import type { Id } from "@convex/_generated/dataModel";
 import type { Block } from "@/shared/types/domain";
 import { markdownToBlocks } from "@/shared/lib/markdown";
 
 interface Deps {
   pageId: string;
   block: Block;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  insertBlocksAfter: ReactMutation<FunctionReference<"mutation", "public", any, any>>;
+  /** Server-side bulk-insert. Promise so the paste can fire-and-forget
+   *  + focus the last inserted block on success. Caller wires either
+   *  `adapter.pages.insertBlocksAfter` (production) or any other
+   *  adapter impl. */
+  insertBlocksAfter: (args: {
+    pageId: string;
+    anchorBlockId: string;
+    blocks: Block[];
+    replaceAnchor?: boolean;
+  }) => Promise<unknown>;
 }
 
 const MAX_PASTE_CHARS = 100_000;
@@ -86,7 +91,7 @@ export function handleMarkdownPaste(e: ClipboardEvent<HTMLElement>, deps: Deps):
   e.stopPropagation();
 
   insertBlocksAfter({
-    pageId: pageId as Id<"pages">,
+    pageId,
     anchorBlockId: block.id,
     blocks: incoming,
     replaceAnchor: anchorEmpty,

@@ -1,6 +1,9 @@
-import { useCallback, useRef, useState, useEffect } from "react";
+import { useCallback, useMemo, useRef, useState, useEffect, type ComponentType } from "react";
 import { useParams } from "@/shared/lib/router";
 import { useStore } from "@/shared/lib/store";
+import type { Block } from "@/shared/types/domain";
+import { DatabaseBlock as DefaultDatabaseBlock } from "@/slices/databases";
+import { EditorComponentsProvider } from "./lib/componentsRegistry";
 import { BlockEditor } from "./BlockEditor";
 import { RowPropertiesPanel } from "./RowPropertiesPanel";
 import { PageCommentsPanel, PageCommentsProvider } from "@/slices/comments";
@@ -35,7 +38,25 @@ import { PageTitle } from "./page-editor/PageTitle";
 import { CoverBanner } from "@/slices/cover";
 import type { CoverData } from "@/shared/types/domain";
 
-export function PageEditor() {
+/** Optional render-prop slots — consumers can override bundled
+ *  peer-slice components. Today: DatabaseBlock from `@/slices/databases`
+ *  is the default; provide a different one to e.g. render a stub when
+ *  the databases slice is excluded from your bundle. Phase 4 of the
+ *  lift plan moves the default to NotionAppProvider mount-time so the
+ *  editor slice no longer imports databases directly. */
+export interface PageEditorComponents {
+  DatabaseBlock?: ComponentType<{ pageId: string; block: Block }>;
+}
+
+export interface PageEditorProps {
+  components?: PageEditorComponents;
+}
+
+export function PageEditor({ components }: PageEditorProps = {}) {
+  const componentsValue = useMemo(
+    () => ({ DatabaseBlock: components?.DatabaseBlock ?? DefaultDatabaseBlock }),
+    [components],
+  );
   const { id } = useParams<{ id: string }>();
   const { updatePage, pushRecent, addBlock, reorderBlocks, childrenOf, getDatabase } = useStore();
   void reorderBlocks; // tree-aware move below uses updatePage directly
@@ -156,6 +177,7 @@ export function PageEditor() {
   if (fullPageDb && !fullPageDb.trashed) return null;
 
   return (
+    <EditorComponentsProvider value={componentsValue}>
     <PageCommentsProvider pageId={page.id}>
     <BlockSelectionProvider blockOrder={page.blocks.map((b) => b.id)}>
     <div className="flex h-full flex-col overflow-hidden">
@@ -266,5 +288,6 @@ export function PageEditor() {
     </div>
     </BlockSelectionProvider>
     </PageCommentsProvider>
+    </EditorComponentsProvider>
   );
 }

@@ -108,8 +108,17 @@ export interface PagesAdapter {
     type: BlockType;
     init?: Partial<Block>;
   }): Promise<string>;
-  /** Bulk insert N blocks after `afterIndex`. Used by paste, AI-generate, slash-template. */
-  insertBlocksAfter(args: { pageId: string; afterIndex: number; blocks: Block[] }): Promise<string[]>;
+  /** Bulk insert N blocks after the block with id `anchorBlockId`.
+   *  Used by paste, AI-generate, slash-template. When `replaceAnchor`
+   *  is true, the anchor itself is removed (paste-into-empty-line UX).
+   *  Server-side splice so column layouts + nested children stay
+   *  internally consistent. Returns the ids of the inserted blocks. */
+  insertBlocksAfter(args: {
+    pageId: string;
+    anchorBlockId: string;
+    blocks: Block[];
+    replaceAnchor?: boolean;
+  }): Promise<string[]>;
   updateBlock(args: { pageId: string; blockId: string; patch: Partial<Block> }): Promise<void>;
   deleteBlock(args: { pageId: string; blockId: string }): Promise<void>;
   duplicateBlock(args: { pageId: string; blockId: string }): Promise<string>;
@@ -197,11 +206,16 @@ export interface DatabasesAdapter {
 /** AI completion — rewrite, generate, agentic ops. Omit to disable
  *  every AI-driven button in the editor + databases. */
 export interface AiAdapter {
-  /** Generic streaming completion. Used by inline-AI shortcut,
-   *  Ask-AI popover, selection-toolbar rewrite. */
+  /** Generic completion. Used by inline-AI shortcut, Ask-AI popover,
+   *  selection-toolbar rewrite. Returns the assistant's response as a
+   *  single string (already extracted from any richer envelope). */
   complete(args: {
     messages: Array<{ role: "system" | "user" | "assistant"; content: string }>;
+    /** Extra system prompt prepended to the messages array on the
+     *  backend. Equivalent to prepending a `{role:"system"}` message. */
+    system?: string;
     model?: string;
+    maxTokens?: number;
     temperature?: number;
   }): Promise<string>;
   /** Streaming variant — returns an async iterable of token chunks.
@@ -209,7 +223,9 @@ export interface AiAdapter {
    *  fall back to a single yield of the full string. */
   completeStream?(args: {
     messages: Array<{ role: "system" | "user" | "assistant"; content: string }>;
+    system?: string;
     model?: string;
+    maxTokens?: number;
     temperature?: number;
   }): AsyncIterable<string>;
 }

@@ -6,7 +6,7 @@
  * skip-listed in scripts/sync-to-rr.mjs (rr-sync.json.skipFiles) so the
  * rr-side lift never inherits a Convex import.
  */
-import { useMutation, useQuery } from "convex/react";
+import { useConvex, useMutation, useQuery } from "convex/react";
 import { useCallback, useMemo } from "react";
 import { api } from "@convex/_generated/api";
 import type { FilesAdapter } from "./types";
@@ -15,6 +15,7 @@ export function useConvexFilesAdapter(): FilesAdapter {
   const generateUploadUrl = useMutation(api["features/files/mutations"].generateUploadUrl);
   const confirmUpload = useMutation(api["features/files/mutations"].confirmUpload);
   const removeStorage = useMutation(api["features/files/mutations"].remove);
+  const convex = useConvex();
 
   const upload = useCallback(
     async (file: File): Promise<string> => {
@@ -47,5 +48,19 @@ export function useConvexFilesAdapter(): FilesAdapter {
     return url ?? null;
   };
 
-  return useMemo<FilesAdapter>(() => ({ upload, remove, useUrl }), [upload, remove]);
+  const resolveUrl = useCallback(
+    async (storageId: string): Promise<string | null> => {
+      const url = await convex.query(
+        api["features/files/queries"].getUrl,
+        { storageId },
+      );
+      return url ?? null;
+    },
+    [convex],
+  );
+
+  return useMemo<FilesAdapter>(
+    () => ({ upload, remove, useUrl, resolveUrl }),
+    [upload, remove, resolveUrl],
+  );
 }

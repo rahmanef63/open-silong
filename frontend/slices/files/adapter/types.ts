@@ -26,4 +26,12 @@ export interface FilesAdapter {
   /** Resolve a storage id to a fetchable URL. `null` for "not ready yet"
    *  (still resolving) or "missing" (deleted). Hooks rule: always call. */
   useUrl(storageId: string | null | undefined): string | null;
+
+  /** Promise variant of `useUrl` — for async paths (typically right
+   *  after an upload) where calling a hook isn't possible. Returns
+   *  `null` for missing / unresolvable ids. Adapters should resolve
+   *  the same way `useUrl` would — Convex calls the `getUrl` query,
+   *  localStorage returns the data-URL bucket value, S3 returns the
+   *  presigned URL, etc. */
+  resolveUrl(storageId: string): Promise<string | null>;
 }

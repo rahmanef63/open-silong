@@ -2,14 +2,13 @@
 
 import * as React from "react";
 import { Bold, Italic, Code, Strikethrough, Link2, Sparkles, Loader2, Eraser } from "lucide-react";
-import { useAction } from "convex/react";
 import { toast } from "sonner";
-import { api } from "@convex/_generated/api";
 import { cn } from "@/shared/lib/utils";
 import { Separator } from "@/shared/ui/separator";
 import { Button } from "@/shared/ui/button";
 import { reportError } from "@/shared/lib/error";
 import { stripMd } from "@/shared/lib/inlineMd";
+import { useNotionAdapter } from "@/slices/notion";
 import { AI_PROMPTS, WRAP, type AIPreset, type Mark } from "./selection-toolbar/types";
 import { closestContentEditable, replaceRange } from "./selection-toolbar/range";
 import { Btn } from "./selection-toolbar/Btn";
@@ -25,7 +24,8 @@ export function SelectionToolbar() {
   const [aiPending, setAiPending] = React.useState(false);
   const rangeRef = React.useRef<Range | null>(null);
   const applyRef = React.useRef<(m: Mark) => void>(() => {});
-  const complete = useAction(api.ai.chat.complete);
+  const adapter = useNotionAdapter();
+  const aiComplete = adapter.ai?.complete;
 
   React.useEffect(() => {
     function update() {
@@ -110,6 +110,10 @@ export function SelectionToolbar() {
   const applyAI = React.useCallback(async (preset: AIPreset) => {
     const range = rangeRef.current;
     if (!range || aiPending) return;
+    if (!aiComplete) {
+      toast.error("AI is not configured on this deployment.");
+      return;
+    }
     const ce = closestContentEditable(range.startContainer);
     if (!ce) return;
     const selected = range.toString().trim();
@@ -118,12 +122,11 @@ export function SelectionToolbar() {
     setAiOpen(false);
     try {
       const cfg = AI_PROMPTS[preset];
-      const res = await complete({
+      const next = (await aiComplete({
         messages: [{ role: "user", content: cfg.build(selected) }],
         system: cfg.system,
         maxTokens: 1024,
-      });
-      const next = (res.text ?? "").trim();
+      })).trim();
       if (!next) {
         toast.error("AI returned an empty response.");
         return;
@@ -136,7 +139,7 @@ export function SelectionToolbar() {
     } finally {
       setAiPending(false);
     }
-  }, [complete, aiPending]);
+  }, [aiComplete, aiPending]);
 
   if (!pos) return null;
 

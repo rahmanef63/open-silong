@@ -1,9 +1,8 @@
 import { useState } from "react";
-import { useAction } from "convex/react";
-import { api } from "@convex/_generated/api";
 import { Sparkles, Wand2, FileText, ListChecks, ArrowRight, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useStore } from "@/shared/lib/store";
+import { useNotionAdapter } from "@/slices/notion";
 import type { Block } from "@/shared/types/domain";
 import { useAsyncError } from "@/shared/hooks/useAsyncError";
 import { Button } from "@/shared/ui/button";
@@ -78,12 +77,17 @@ export function collectPageText(blocks: Block[]): string {
 
 export function AskAIPanel({ pageId, block, index, onClose }: Props) {
   const { getPage, addBlock } = useStore();
-  const complete = useAction(api.ai.chat.complete);
+  const adapter = useNotionAdapter();
+  const aiComplete = adapter.ai?.complete;
   const ask = useAsyncError("AskAIPopover.run");
   const [draft, setDraft] = useState("");
 
   const run = async (preset?: Preset) => {
     if (ask.pending) return;
+    if (!aiComplete) {
+      toast.error("AI is not configured on this deployment.");
+      return;
+    }
     const page = getPage(pageId);
     const ctx: AskCtx = {
       pageText: collectPageText(page?.blocks ?? []),
@@ -103,11 +107,10 @@ export function AskAIPanel({ pageId, block, index, onClose }: Props) {
       };
     }
     const text = await ask.execute(async () => {
-      const r = await complete({
+      return await aiComplete({
         messages: [{ role: "user", content: built.prompt }],
         system: built.system,
       });
-      return r.text;
     });
     if (typeof text !== "string") return;
     const trimmed = text.trim();

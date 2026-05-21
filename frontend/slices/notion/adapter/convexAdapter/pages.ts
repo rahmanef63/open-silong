@@ -13,14 +13,16 @@
  */
 
 import { useMemo } from "react";
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
+import type { Id } from "@convex/_generated/dataModel";
 import { useStore } from "@/shared/lib/store";
 import type { Page } from "@/shared/types/domain";
 import type { PagesAdapter } from "../types";
 
 export function useConvexPagesAdapter(): PagesAdapter {
   const store = useStore();
+  const insertBlocksAfterMutation = useMutation(api.pages.insertBlocksAfter);
 
   return useMemo<PagesAdapter>(
     () => ({
@@ -34,11 +36,39 @@ export function useConvexPagesAdapter(): PagesAdapter {
       useOne: (pageId) => {
         // Use Convex query directly so the hook stays reactive even
         // when the store's slim list cache doesn't carry full blocks.
+        // Normalise from the Convex doc shape (`_id`) into the
+        // adapter contract's `Page` shape (`id`) so consumers don't
+        // need to know they're talking to Convex.
         const doc = useQuery(
           api.pages.getById,
           pageId ? { id: pageId } : "skip",
         );
-        return doc as Page | null | undefined;
+        if (doc === undefined) return undefined;
+        if (doc === null) return null;
+        return {
+          id: String(doc._id),
+          parentId: doc.parentId,
+          title: doc.title,
+          icon: doc.icon,
+          cover: doc.cover,
+          blocks: doc.blocks ?? [],
+          layouts: (doc as { layouts?: Page["layouts"] }).layouts,
+          favorite: doc.favorite,
+          trashed: doc.trashed,
+          isPublic: doc.isPublic,
+          rowOfDatabaseId: doc.rowOfDatabaseId,
+          rowProps: doc.rowProps,
+          font: doc.font as Page["font"],
+          smallText: doc.smallText,
+          fullWidth: doc.fullWidth,
+          locked: doc.locked,
+          createdAt: doc.createdAt,
+          updatedAt: doc.updatedAt,
+          databaseHostFor: doc.databaseHostFor,
+          shareSlug: doc.shareSlug,
+          shareIndexable: doc.shareIndexable,
+          wiki: doc.wiki,
+        };
       },
 
       useChildren: (parentPageId) => store.childrenOf(parentPageId),
@@ -92,19 +122,16 @@ export function useConvexPagesAdapter(): PagesAdapter {
         return await store.addBlock(pageId, afterIndex, type, init);
       },
 
-      insertBlocksAfter: async ({ pageId, afterIndex, blocks }) => {
-        // Bulk insert — current store doesn't expose this directly;
-        // fall back to per-block addBlock + replaceBlock so the
-        // mega-slice has a working impl. Phase 2 will wire the bulk
-        // Convex mutation (`api.pages.insertBlocksAfter`) when
-        // editor's BlockEditor.tsx is refactored.
-        const ids: string[] = [];
-        for (let i = 0; i < blocks.length; i++) {
-          const b = blocks[i];
-          const newId = await store.addBlock(pageId, afterIndex + i, b.type, b);
-          ids.push(newId);
-        }
-        return ids;
+      insertBlocksAfter: async ({ pageId, anchorBlockId, blocks, replaceAnchor }) => {
+        // Direct Convex mutation — server-side splice keeps column
+        // layouts + nested children consistent.
+        await insertBlocksAfterMutation({
+          pageId: pageId as Id<"pages">,
+          anchorBlockId,
+          blocks,
+          ...(replaceAnchor !== undefined ? { replaceAnchor } : {}),
+        });
+        return blocks.map((b) => b.id);
       },
 
       updateBlock: async ({ pageId, blockId, patch }) => {
