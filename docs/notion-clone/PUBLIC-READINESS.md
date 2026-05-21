@@ -51,7 +51,10 @@ Status legend: `[ ]` todo · `[x]` done · `[~]` partial.
   (commit `60a2433`); remaining matches are markdown parser regex +
   seed data labels, not action items
 - [ ] Run `docs/notion-clone/SMOKE-TEST.md` end-to-end (golden flow)
-- [ ] Mobile responsiveness pass (iPhone SE / Pixel 5 / iPad)
+- [~] Mobile responsiveness pass (iPhone SE / Pixel 5 / iPad) —
+  mechanical audit complete at `docs/notion-clone/MOBILE-AUDIT.md`
+  (9 ⚠️ surfaces to verify in browser, 1 fix landed: ai-agent tap
+  targets bumped to h-8). Final ✅ awaits browser smoke pass.
 - [x] Error boundary review — `app/error.tsx` (route),
   `app/dashboard/error.tsx` + per-segment `error.tsx` (auth, share,
   admin), `app/global-error.tsx` (root layout fallback, NEW commit
