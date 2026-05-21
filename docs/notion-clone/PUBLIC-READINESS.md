@@ -46,11 +46,17 @@ Status legend: `[ ]` todo · `[x]` done · `[~]` partial.
   record at Hostinger: `silong` → `76.13.23.37`)
 
 ### Code-side polish
-- [ ] Sweep all `TODO` / `FIXME` / `XXX` — close or backlog
+- [x] Sweep all `TODO` / `FIXME` / `XXX` — closed: snapshot retention
+  TODO in `convex/_shared/limits.ts:84` implemented in `snapshots.ts`
+  (commit `60a2433`); remaining matches are markdown parser regex +
+  seed data labels, not action items
 - [ ] Run `docs/notion-clone/SMOKE-TEST.md` end-to-end (golden flow)
 - [ ] Mobile responsiveness pass (iPhone SE / Pixel 5 / iPad)
-- [ ] Error boundary review — verify `frontend/shared/lib/error.ts`
-  reaches every async surface
+- [x] Error boundary review — `app/error.tsx` (route),
+  `app/dashboard/error.tsx` + per-segment `error.tsx` (auth, share,
+  admin), `app/global-error.tsx` (root layout fallback, NEW commit
+  `60a2433`), `ErrorBoundary` + `ChunkErrorBoundary` wrap shell/db
+  block. Coverage complete.
 - [ ] Lighthouse pass — fix critical performance regressions
 
 ### Security hygiene
@@ -110,13 +116,12 @@ Status legend: `[ ]` todo · `[x]` done · `[~]` partial.
   - Code identifiers `NosionCommandPalette` → `SilongCommandPalette`
     + `nosion://sync/` URL scheme
 
-## Status snapshot (2026-05-20)
+## Status snapshot (2026-05-21)
 
-P0 progress: **17/24** items done = **71%**. Remaining:
+P0 progress: **19/24** items done = **79%**. Remaining:
 - 1 docs (screenshots — needs browser session)
 - 1 onboarding (public demo DNS, user-side)
-- 5 code-side polish (smoke test + mobile + Lighthouse + error
-  boundary + TODO sweep — partly mechanical, partly manual)
+- 3 code-side polish (smoke test + mobile + Lighthouse — manual UI work)
 
 After P0 closes, flip repo visibility:
 ```bash
