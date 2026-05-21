@@ -15,6 +15,7 @@ import { Button } from "@/shared/ui/button";
 import type { Block, BlockType } from "@/shared/types/domain";
 import { BLOCK_SPECS } from "../blockSpecs";
 import { TURN_INTO_SPECS } from "./block-controls/searchRows";
+import { buildSmartTurnIntoPatch } from "../lib/turnInto";
 import { BlockColorMenu } from "./BlockColorMenu";
 import { GripButton } from "./block-controls/QuickButtons";
 import { useStore } from "@/shared/lib/store";
@@ -87,7 +88,16 @@ export function NestedBlockControls({ block, pageId, listeners, onUpdate, onAddA
               {TURN_INTO_SPECS.map((s) => (
                 <DropdownMenuItem
                   key={s.type}
-                  onSelect={(e) => { e.preventDefault(); onUpdate({ type: s.type }); closeMenu(); }}
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    const patch = buildSmartTurnIntoPatch(block.type, s.type);
+                    if (typeof window !== "undefined" && window.location.search.includes("debug=blocks")) {
+                      // eslint-disable-next-line no-console
+                      console.log("[turnInto:nested]", { blockId: block.id, from: block.type, to: s.type, patch });
+                    }
+                    onUpdate(patch);
+                    closeMenu();
+                  }}
                   className={cn(s.type === block.type && "bg-accent/60")}
                 >
                   <s.icon className="mr-2 h-3.5 w-3.5" /> {s.label}

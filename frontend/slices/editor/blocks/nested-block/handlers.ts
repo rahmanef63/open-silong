@@ -3,6 +3,10 @@ import type { Block, BlockType } from "@/shared/types/domain";
 import { uid } from "@/shared/lib/uid";
 import { MARKDOWN_TRIGGERS } from "../../lib/markdownTriggers";
 import { DECORATE_TYPES } from "../../block-editor/decorateTypes";
+import { buildTurnIntoPatch } from "../../lib/turnInto";
+
+const DEBUG = () =>
+  typeof window !== "undefined" && window.location.search.includes("debug=blocks");
 
 interface InputDeps {
   block: Block;
@@ -38,9 +42,11 @@ export function runNestedSlashSelect(
   block: Block,
   onUpdate: (patch: Partial<Block>) => void,
 ) {
-  const patch: Partial<Block> = { type, text: "" };
-  if (type === "toggle") { patch.children = []; patch.collapsed = false; }
-  if (type === "synced") { patch.children = []; patch.syncId = uid(); }
+  // Use the shared turn-into builder for normal types; columns get
+  // their inline-children initialiser tacked on (nested columns still
+  // store the legacy block.columns shape; top-level uses the layout
+  // primitive instead).
+  const patch = buildTurnIntoPatch(type);
   if (type === "columns2") {
     patch.columns = [
       [{ id: uid(), type: "paragraph", text: "" }],
@@ -54,9 +60,17 @@ export function runNestedSlashSelect(
       [{ id: uid(), type: "paragraph", text: "" }],
     ];
   }
+  if (DEBUG()) {
+    // eslint-disable-next-line no-console
+    console.log("[turnInto:slash]", { blockId: block.id, from: block.type, to: type, patch });
+  }
   onUpdate(patch);
   setTimeout(() => {
     const el = document.querySelector<HTMLElement>(`[data-block-id="${block.id}"]`);
+    if (DEBUG()) {
+      // eslint-disable-next-line no-console
+      console.log("[turnInto:focus]", { blockId: block.id, foundEl: !!el, activeBefore: document.activeElement?.tagName });
+    }
     el?.focus();
     if (el) el.innerText = "";
   }, 0);
