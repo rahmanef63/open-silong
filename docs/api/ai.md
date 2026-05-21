@@ -62,7 +62,7 @@ the direct Anthropic call with OpenRouter + auth gate + rate limit.
 | name | required | default | purpose |
 |---|---|---|---|
 | `OPENROUTER_API_KEY` | **yes** | — | server credential |
-| `OPENROUTER_REFERER` | no | `https://nosion.rahmanef.com` | analytics tag for OpenRouter |
+| `OPENROUTER_REFERER` | no | `https://silong.rahmanef.com` | analytics tag for OpenRouter |
 | `OPENROUTER_APP_NAME` | no | `Nosion` | analytics tag |
 
 `ANTHROPIC_API_KEY` is no longer read (cycle-2). Don't set it.

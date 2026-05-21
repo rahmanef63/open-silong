@@ -42,8 +42,8 @@ Status legend: `[ ]` todo · `[x]` done · `[~]` partial.
 - [x] Opt-out env var `SILONG_DISABLE_SEED=1` documented
 - [ ] First-run UX polish pass (smoke test will surface gaps)
 - [ ] Public demo deploy at `silong.rahmanef.com` (Dokploy domain
-  added — domain id `tRFJgMqVT0AtOblef_sVF` — pending user-side DNS A
-  record at Hostinger: `silong` → `<YOUR_VPS_IP>`)
+  configured — pending user-side DNS A record at the DNS provider:
+  `silong` → `<YOUR_VPS_IP>`)
 
 ### Code-side polish
 - [x] Sweep all `TODO` / `FIXME` / `XXX` — closed: snapshot retention
@@ -106,14 +106,12 @@ Status legend: `[ ]` todo · `[x]` done · `[~]` partial.
 - [ ] Email digest cron (already partially in `convex/maintenance.ts`)
 - [ ] Migration tools from Notion export / Obsidian vault / Markdown
   folder
-- [ ] Coordinated re-key wave:
-  - `INSTANCE_NAME=notion-page-clone` → `open-silong`
-  - Convex backend domain `api-silong.rahmanef.com` →
-    `api-silong.rahmanef.com`
-  - MCP server name + tool prefixes (`@nosion/mcp-server` →
-    `@open-silong/mcp-server`, `nosion-*` tools → `silong-*`)
-  - localStorage keys (`nosion:iconRecents` →
-    `silong:iconRecents`, …) with migration shim
+- [ ] Coordinated re-key wave (requires data migration; deferred until
+  after public launch to avoid breaking live deployments):
+  - Backend `INSTANCE_NAME` → `open-silong`
+  - MCP server name + tool prefixes (`nosion-*` tools → `silong-*`)
+  - localStorage keys (`nosion:iconRecents` → `silong:iconRecents`,
+    …) with migration shim
   - Webhook header `X-Nosion-Signature` → `X-Silong-Signature` (with
     alias for old)
   - Code identifiers `NosionCommandPalette` → `SilongCommandPalette`

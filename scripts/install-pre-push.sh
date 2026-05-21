@@ -34,13 +34,24 @@ REPO_ROOT="$(git rev-parse --show-toplevel)"
 # Guard 1 — rr-sync drift nag (non-blocking)
 node "$REPO_ROOT/scripts/rr-sync-status.mjs" --nag 2>&1 || true
 
-# Guard 2 — sc-git ci (blocking)
-node "/home/rahman/projects/opensource/si-coder-agent/skills/sc-git/scripts/ci.js" || {
-  echo ""
-  echo "❌ sc-git ci failed. push blocked."
-  echo "   override (NOT recommended): git push --no-verify"
-  exit 1
-}
+# Guard 2 — local CI (blocking).
+#   If you use the optional sc-git toolkit, set SC_GIT_CI to the path of
+#   its `ci.js`; otherwise this falls back to `pnpm typecheck && pnpm test`.
+if [ -n "${SC_GIT_CI:-}" ] && [ -f "$SC_GIT_CI" ]; then
+  node "$SC_GIT_CI" || {
+    echo ""
+    echo "❌ sc-git ci failed. push blocked."
+    echo "   override (NOT recommended): git push --no-verify"
+    exit 1
+  }
+else
+  pnpm typecheck && pnpm test --reporter=dot || {
+    echo ""
+    echo "❌ local CI failed (typecheck or test). push blocked."
+    echo "   override (NOT recommended): git push --no-verify"
+    exit 1
+  }
+fi
 
 # Guard 3 — self-hosted Convex auto-deploy (silent no-op if not configured)
 if [ -d convex ] && [ -f .env.local ] \

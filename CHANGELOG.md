@@ -85,10 +85,10 @@ monorepo:
   redirects)
 - Repo description + 10 topics set
 - Local git remote updated to SSH `git@github.com:rahmanef63/open-silong.git`
-- Dokploy domain `silong.rahmanef.com` added (id
-  `tRFJgMqVT0AtOblef_sVF`, port 3000, https=true, letsencrypt)
+- Dokploy domain `silong.rahmanef.com` configured (port 3000,
+  https=true, letsencrypt)
 - DNS A record for `silong.rahmanef.com` → `<YOUR_VPS_IP>`: pending
-  user-side at Hostinger
+  user-side at DNS provider
 - Legacy `nosion.rahmanef.com` kept as transition redirect
 
 ## Pre-OSS history (before 2026-05-20)

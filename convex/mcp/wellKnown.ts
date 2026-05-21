@@ -3,7 +3,7 @@
  *  Per MCP authorization spec (2025-11-25 §protected-resource), the
  *  resource server MUST publish RFC 9728 protected-resource metadata at
  *  its OWN origin. The frontend (Next.js) also serves a copy at
- *  https://nosion.rahmanef.com/.well-known/* for clients that follow
+ *  `${SITE}/.well-known/*` for clients that follow
  *  the WWW-Authenticate resource_metadata hint, but ChatGPT's first
  *  probe is at the MCP URL host — so this Convex-side copy is what
  *  prevents the "MCP server does not implement OAuth" error.
@@ -14,11 +14,14 @@
 
 import { httpAction } from "../_generated/server";
 
-const SITE = "https://nosion.rahmanef.com";
+// Site + MCP origins. Defaults match the open-silong reference deploy;
+// self-hosters override via Convex env vars
+// (`pnpm exec convex env set SITE_URL https://your.domain`).
+const SITE = process.env.SITE_URL ?? "https://silong.rahmanef.com";
 // Convex self-hosted exposes httpActions on the SITE origin
 // (api- is the CLOUD origin for queries/mutations only). The MCP
 // JSON-RPC endpoint is registered via httpRouter so it lives here.
-const MCP = "https://site-notion-page-clone.rahmanef.com/mcp";
+const MCP = process.env.MCP_URL ?? "https://site-silong.rahmanef.com/mcp";
 
 const json = (body: unknown): Response =>
   new Response(JSON.stringify(body), {

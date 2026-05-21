@@ -35,7 +35,7 @@ file to reconstruct where work paused.
 - ✅ Repo topics set (10): `notion-clone, notion-alternative, workspace, block-editor, convex, nextjs, react, self-hosted, open-source, indonesia`
 - ✅ GitHub Discussions enabled (via `gh api -X PATCH repos/.../open-silong -f has_discussions=true`)
 - ✅ Local git remote updated to SSH `git@github.com:rahmanef63/open-silong.git`
-- ✅ Dokploy domain `silong.rahmanef.com` added — id `tRFJgMqVT0AtOblef_sVF`, app `7xt1vXUDyMpKDbcFG16lV`, port 3000, https=true, letsencrypt
+- ✅ Dokploy domain `silong.rahmanef.com` added — id `<dokploy-domain-id-silong>`, app `<dokploy-app-id>`, port 3000, https=true, letsencrypt
 - ✅ Convex backend deployed at `https://api-silong.rahmanef.com` (env via Dokploy compose `<dokploy-compose-id>`, admin key var `CONVEX_ADMIN_KEY`)
 - ⏸ DNS A record `silong.rahmanef.com → <YOUR_VPS_IP>` PENDING user-side at Hostinger
 - ⏸ Repo visibility flip to PUBLIC PENDING (currently PRIVATE)
@@ -69,7 +69,8 @@ For "easy track in rr" → tag `notion-like` added to 5 rr catalog
 entries: `command-menu`, `icon-picker`, `notion-blocks`, `notion-shell`,
 `theme-presets`. Filter via:
 ```bash
-grep "notion-like" /home/rahman/projects/resources/lib/content/slices.ts
+# in the sibling rahman-resources checkout
+grep "notion-like" lib/content/slices.ts
 ```
 Or rr's catalog UI search.
 
@@ -129,7 +130,7 @@ Next plausible actions (user pick):
 - Repo: https://github.com/rahmanef63/open-silong (PRIVATE, flip to PUBLIC when P0 closes)
 - rr sibling: https://github.com/rahmanef63/resources (rr-side catalog)
 - Convex API: https://api-silong.rahmanef.com (admin key in Dokploy compose env)
-- Dokploy project: `cr6xjiRS92vPXyK1Oj8JP`
-- Dokploy frontend app: `7xt1vXUDyMpKDbcFG16lV`
-- Dokploy frontend domains: `tRFJgMqVT0AtOblef_sVF` (silong) + `PRBO37TeXNPj9kSvlC9Al` (nosion legacy)
+- Dokploy project: `<dokploy-project-id>`
+- Dokploy frontend app: `<dokploy-app-id>`
+- Dokploy frontend domains: `<dokploy-domain-id-silong>` (silong) + `<dokploy-domain-id-legacy>` (nosion legacy)
 - Dokploy convex backend compose: `<dokploy-compose-id>`
