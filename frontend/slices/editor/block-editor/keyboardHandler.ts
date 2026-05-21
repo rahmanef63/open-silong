@@ -126,12 +126,23 @@ export async function handleBlockKeyDown(e: KeyboardEvent<HTMLElement>, deps: De
   }
   if (e.key === "Backspace" && el.innerText === "") {
     e.preventDefault();
+    // Notion-canonical: backspace on an EMPTY text-shape block
+    // (heading, bullet, numbered, todo, quote, callout) first exits
+    // the block-type — converts to paragraph + restores focus. A
+    // second backspace from the empty paragraph then triggers the
+    // delete branch below. This matches the user's mental model:
+    // "list items are just text with a visual prefix; deleting them
+    // empties text first, then drops the prefix, then deletes."
+    if (block.type !== "paragraph" && DECORATE_TYPES.has(block.type)) {
+      setBlockType(pageId, block.id, "paragraph");
+      const blockId = block.id;
+      setTimeout(() => document.querySelector<HTMLElement>(`[data-block-id="${blockId}"]`)?.focus(), 0);
+      return;
+    }
     if (total > 1) {
       const blockId = block.id;
       deleteBlock(pageId, blockId);
       setTimeout(() => focusByOffset(blockId, -1), 0);
-    } else if (block.type !== "paragraph") {
-      setBlockType(pageId, block.id, "paragraph");
     }
     return;
   }
