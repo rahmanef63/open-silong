@@ -3,6 +3,11 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { Block, BlockType } from "@/shared/types/domain";
 import { cn } from "@/shared/lib/utils";
+import {
+  Popover,
+  PopoverAnchor,
+  PopoverContent,
+} from "@/shared/ui/popover";
 import { SlashMenu } from "../SlashMenu";
 import { bgColorClass, colorClass } from "../lib/colors";
 import { nestedRegistry } from "./nestedRegistry";
@@ -101,22 +106,35 @@ export function NestedBlock({
           onDelete={onDelete}
         />
       </div>
-      <div className={cn("relative flex-1 min-w-0", bgCls && "-mx-1 px-1 rounded", bgCls)}>
-        <NestedContent
-          block={block}
-          baseProps={baseProps}
-          setRef={setRef}
-          handleKeyDown={handleKeyDown}
-          onUpdate={onUpdate}
-          depth={depth}
-          pageId={pageId}
-        />
-        {slashOpen && (
-          <div className="relative">
-            <SlashMenu query={slashQuery} onSelect={onSlashSelect} onClose={() => setSlashOpen(false)} />
+      <Popover open={slashOpen} onOpenChange={(o) => { if (!o) setSlashOpen(false); }} modal={false}>
+        <PopoverAnchor asChild>
+          <div className={cn("relative flex-1 min-w-0", bgCls && "-mx-1 px-1 rounded", bgCls)}>
+            <NestedContent
+              block={block}
+              baseProps={baseProps}
+              setRef={setRef}
+              handleKeyDown={handleKeyDown}
+              onUpdate={onUpdate}
+              depth={depth}
+              pageId={pageId}
+            />
           </div>
-        )}
-      </div>
+        </PopoverAnchor>
+        <PopoverContent
+          side="bottom"
+          align="start"
+          sideOffset={4}
+          className="w-72 max-h-72 overflow-y-auto p-1"
+          onOpenAutoFocus={(e) => e.preventDefault()}
+          onCloseAutoFocus={(e) => e.preventDefault()}
+        >
+          <SlashMenu
+            query={slashQuery}
+            onSelect={onSlashSelect}
+            onClose={() => setSlashOpen(false)}
+          />
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }

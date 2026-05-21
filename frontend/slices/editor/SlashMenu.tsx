@@ -79,14 +79,14 @@ export function SlashMenu({ query, onSelect, onClose, onSelectLinkedDatabase }: 
 
   if (filtered.length === 0) {
     return (
-      <div className="absolute z-50 mt-1 w-72 rounded-lg border border-border bg-popover p-2 shadow-pop animate-fade-in">
+      <div className="w-72 rounded-lg border border-border bg-popover p-2 shadow-pop animate-fade-in">
         <div className="text-xs text-muted-foreground p-2">No matching blocks</div>
       </div>
     );
   }
 
   return (
-    <div ref={listRef} className="absolute z-50 mt-1 w-72 max-h-72 overflow-y-auto rounded-lg border border-border bg-popover p-1 shadow-pop animate-fade-in">
+    <div ref={listRef} className="w-72 max-h-72 overflow-y-auto rounded-lg border border-border bg-popover p-1 shadow-pop animate-fade-in">
       <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold px-2 py-1.5">Basic blocks</div>
       {filtered.map((it, i) => {
         const Icon = it.kind === "block" ? it.spec.icon : Link2;
