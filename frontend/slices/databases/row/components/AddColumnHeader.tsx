@@ -3,7 +3,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
 import { Button } from "@/shared/ui/button";
-import { useStore } from "@/shared/lib/store";
+import { useDbAdapter } from "../../lib/useDbAdapter";
 import { PROPERTY_TYPE_LABELS } from "@/slices/databases/DatabaseBlock";
 import type { PropertyType } from "@/shared/types/domain";
 
@@ -12,7 +12,7 @@ interface Props {
 }
 
 export function AddColumnHeader({ dbId }: Props) {
-  const { addProperty } = useStore();
+  const { addProperty } = useDbAdapter();
   return (
     <div className="w-8 shrink-0 flex items-center justify-center border-r border-border last:border-r-0">
       <DropdownMenu>

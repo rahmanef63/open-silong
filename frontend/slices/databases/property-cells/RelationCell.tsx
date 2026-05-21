@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { AlertTriangle, Check, Link2, Plus, X } from "lucide-react";
 import type { Page } from "@/shared/types/domain";
-import { useStore } from "@/shared/lib/store";
+import { useDbAdapter } from "../lib/useDbAdapter";
 import { cn } from "@/shared/lib/utils";
 import { filterRelationCandidates } from "../lib/relationCandidates";
 import {
@@ -12,7 +12,7 @@ import type { CellProps } from "./types";
 import { DynamicIcon } from "@/shared/components/icon-picker";
 
 export function RelationCell({ db, prop, row, value, onSet, cellClass }: CellProps) {
-  const { pages, databases, updateProperty, addRow } = useStore();
+  const { pages, databases, updateProperty, addRow } = useDbAdapter();
   const [query, setQuery] = useState("");
   const linkedIds = Array.isArray(value) ? value : [];
   const linkedResolved: Array<{ id: string; page: Page | null }> = linkedIds.map((id) => ({

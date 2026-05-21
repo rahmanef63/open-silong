@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Database, DatabaseViewConfig, PropertyValue } from "@/shared/types/domain";
-import { useStore } from "@/shared/lib/store";
+import { useDbAdapter } from "../lib/useDbAdapter";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Alert, AlertDescription } from "@/shared/ui/alert";
@@ -13,7 +13,7 @@ import { FormSettings } from "./form/FormSettings";
 interface Props { db: Database; view: DatabaseViewConfig }
 
 export function FormView({ db, view }: Props) {
-  const { addRow, updateView } = useStore();
+  const { addRow, updateView } = useDbAdapter();
 
   const formableProps = useMemo(() => db.properties.filter(isFormable), [db.properties]);
   const shown = useMemo(() => {

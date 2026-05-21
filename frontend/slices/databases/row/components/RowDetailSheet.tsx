@@ -2,7 +2,7 @@
 
 import { type ReactNode } from "react";
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/shared/ui/sheet";
-import { useFullPage } from "@/slices/editor";
+import { useNotionAdapter } from "@/slices/notion";
 import { RowDetailBody } from "./RowDetailBody";
 
 interface Props {
@@ -13,7 +13,7 @@ interface Props {
 }
 
 export function RowDetailSheet({ pageId, onOpenChange, headerExtras }: Props) {
-  const fullPage = useFullPage(pageId ?? null);
+  const fullPage = useNotionAdapter().pages.useOne(pageId ?? null);
   const title = fullPage?.title || "Untitled row";
 
   return (

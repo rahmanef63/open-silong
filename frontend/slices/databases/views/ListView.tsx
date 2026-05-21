@@ -3,7 +3,7 @@ import { PropertyCell } from "../PropertyCell";
 import { focusSiblingBySelector } from "@/shared/lib/keyboard";
 import { cn } from "@/shared/lib/utils";
 import { getVisibleProps } from "../lib/visibility";
-import { useStore } from "@/shared/lib/store";
+import { useDbAdapter } from "../lib/useDbAdapter";
 import { Plus, MoreHorizontal, Trash2 } from "lucide-react";
 import { DynamicIcon } from "@/shared/components/icon-picker";
 import {
@@ -16,7 +16,7 @@ import { useState } from "react";
 interface Props { db: Database; view: DatabaseViewConfig; rows: Page[]; onOpenRow: (id: string) => void }
 
 export function ListView({ db, view, rows, onOpenRow }: Props) {
-  const { deleteRow } = useStore();
+  const { deleteRow } = useDbAdapter();
   const [quickOpen, setQuickOpen] = useState(false);
   const viewVisible = getVisibleProps(db, view);
   const visibleSet = new Set(viewVisible.map(p => p.id));

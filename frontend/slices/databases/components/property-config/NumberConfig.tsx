@@ -1,5 +1,5 @@
 import type { Database, NumberFormat, Property } from "@/shared/types/domain";
-import { useStore } from "@/shared/lib/store";
+import { useDbAdapter } from "../../lib/useDbAdapter";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/shared/ui/select";
@@ -7,7 +7,7 @@ import { COMMON_CURRENCIES } from "../../lib/numberFormat";
 import { Label, NUMBER_FORMAT_LABELS } from "./atoms";
 
 export function NumberConfig({ db, prop }: { db: Database; prop: Property }) {
-  const { updateProperty } = useStore();
+  const { updateProperty } = useDbAdapter();
   const format = (prop.numberFormat ?? "number") as NumberFormat;
   const decimalsValue = String(prop.numberDecimals ?? (format === "number" ? 0 : format === "percent" ? 0 : 2));
   return (

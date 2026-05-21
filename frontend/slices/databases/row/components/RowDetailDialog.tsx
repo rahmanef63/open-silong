@@ -4,7 +4,7 @@ import { type ReactNode } from "react";
 import {
   Dialog, DialogContent, DialogTitle, DialogDescription,
 } from "@/shared/ui/dialog";
-import { useFullPage } from "@/slices/editor";
+import { useNotionAdapter } from "@/slices/notion";
 import { RowDetailBody } from "./RowDetailBody";
 
 interface Props {
@@ -20,7 +20,7 @@ interface Props {
  * to RowDetailSheet so toggling between the two preserves edit state.
  */
 export function RowDetailDialog({ pageId, onOpenChange, headerExtras }: Props) {
-  const fullPage = useFullPage(pageId ?? null);
+  const fullPage = useNotionAdapter().pages.useOne(pageId ?? null);
   const title = fullPage?.title || "Untitled row";
 
   return (

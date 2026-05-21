@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 import { AlertTriangle, Calculator } from "lucide-react";
 import type { Database, Page, Property } from "@/shared/types/domain";
-import { useStore } from "@/shared/lib/store";
+import { useDbAdapter } from "../lib/useDbAdapter";
 import { cn } from "@/shared/lib/utils";
 import {
   Popover, PopoverContent, PopoverTrigger,
@@ -17,7 +17,7 @@ interface Props {
 }
 
 export function FormulaCell({ db, prop, row, cellClass }: Props) {
-  const { pages, updateProperty } = useStore();
+  const { pages, updateProperty } = useDbAdapter();
   const expression = prop.formulaExpression ?? "{{title}}";
   const [draft, setDraft] = useState(expression);
   const inputRef = useRef<HTMLInputElement | null>(null);

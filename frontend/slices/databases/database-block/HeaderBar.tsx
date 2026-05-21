@@ -1,4 +1,4 @@
-import { useStore } from "@/shared/lib/store";
+import { useDbAdapter } from "../lib/useDbAdapter";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
@@ -34,7 +34,7 @@ export function DatabaseHeaderBar({
   /** Per-block view writer for non-structural fields. */
   writeView: (viewId: string, patch: Partial<DatabaseViewConfig>) => void;
 }) {
-  const { updateDatabase, addView, updateView, deleteView } = useStore();
+  const { updateDatabase, addView, updateView, deleteView } = useDbAdapter();
   return (
     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-3 py-2">
       <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -91,11 +91,11 @@ export function DatabaseHeaderBar({
             active={v.id === activeViewId}
             onActivate={() => onActivateView(v.id)}
             onRename={(name) => updateView(db.id, v.id, { name })}
-            onDuplicate={() => {
+            onDuplicate={async () => {
               const { id: _id, ...rest } = v;
               void _id;
               const cloned = structuredClone(rest);
-              const nv = addView(db.id, { ...cloned, name: `${v.name} copy` });
+              const nv = await addView(db.id, { ...cloned, name: `${v.name} copy` });
               onActivateView(nv.id);
             }}
             onDelete={() => {
@@ -126,8 +126,8 @@ export function DatabaseHeaderBar({
               return (
                 <DropdownMenuItem
                   key={t}
-                  onClick={() => {
-                    const nv = addView(db.id, { name: M.label, type: t, sorts: [], filters: [], search: "" });
+                  onClick={async () => {
+                    const nv = await addView(db.id, { name: M.label, type: t, sorts: [], filters: [], search: "" });
                     onActivateView(nv.id);
                   }}
                 >

@@ -5,7 +5,7 @@
  *  swapping renderers is mechanical. */
 
 import type { ComponentType } from "react";
-import { useStore } from "@/shared/lib/store";
+import { useDbAdapter } from "../../../lib/useDbAdapter";
 import type { Database, Property, PropertyType } from "@/shared/types/domain";
 import { NumberConfig } from "../../property-config/NumberConfig";
 import { DateConfig } from "../../property-config/DateConfig";
@@ -20,7 +20,7 @@ export type TypePanelProps = {
 };
 
 const RelationPanel = ({ db, prop, updateProperty }: TypePanelProps) => {
-  const { databases, setRelationTwoWay } = useStore();
+  const { databases, setRelationTwoWay } = useDbAdapter();
   return (
     <RelationConfig
       db={db}
@@ -33,7 +33,7 @@ const RelationPanel = ({ db, prop, updateProperty }: TypePanelProps) => {
 };
 
 const RollupPanel = ({ db, prop, updateProperty }: TypePanelProps) => {
-  const { databases } = useStore();
+  const { databases } = useDbAdapter();
   return (
     <RollupConfig db={db} prop={prop} databases={databases} updateProperty={updateProperty} />
   );

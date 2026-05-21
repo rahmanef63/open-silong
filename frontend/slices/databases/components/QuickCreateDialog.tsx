@@ -9,7 +9,7 @@ import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Alert, AlertDescription } from "@/shared/ui/alert";
 import type { Database, DatabaseViewConfig, Property, PropertyValue } from "@/shared/types/domain";
-import { useStore } from "@/shared/lib/store";
+import { useDbAdapter } from "../lib/useDbAdapter";
 import {
   PropertyFormInput, FormField, isFormableProperty, emptyDraft, isEmptyValue,
 } from "./PropertyFormInput";
@@ -43,7 +43,7 @@ export function QuickCreateDialog({
   db, view, open, onOpenChange, prefill, prefillTitle, requiredPropIds,
   title, description, onCreated,
 }: Props) {
-  const { addRow } = useStore();
+  const { addRow } = useDbAdapter();
 
   const formable = useMemo(() => db.properties.filter(isFormableProperty), [db.properties]);
   const visibleSet = useMemo(() => {

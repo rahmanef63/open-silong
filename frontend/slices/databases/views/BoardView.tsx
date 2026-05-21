@@ -1,5 +1,5 @@
 import { Database, DatabaseViewConfig, Page, Property, SelectOption } from "@/shared/types/domain";
-import { useStore } from "@/shared/lib/store";
+import { useDbAdapter } from "../lib/useDbAdapter";
 import { useCallback, useMemo, useState } from "react";
 import {
   DndContext, PointerSensor, useSensor, useSensors, DragEndEvent, KeyboardSensor,
@@ -38,7 +38,7 @@ function resolveOverColId(
 }
 
 export function BoardView({ db, view, rows, onOpenRow }: Props) {
-  const { setRowValue, updateView } = useStore();
+  const { setRowValue, updateView } = useDbAdapter();
   const [quickOpen, setQuickOpen] = useState(false);
   const [quickPrefill, setQuickPrefill] = useState<Record<string, PropertyValue>>({});
   const sensors = useSensors(

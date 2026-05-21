@@ -1,6 +1,6 @@
 import { Lock, Pencil, Trash2, X } from "lucide-react";
 import { useMemo, useState } from "react";
-import { useStore } from "@/shared/lib/store";
+import { useDbAdapter } from "../../lib/useDbAdapter";
 import { useRowSelection } from "./RowSelectionProvider";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
 import { Separator } from "@/shared/ui/separator";
@@ -18,7 +18,7 @@ interface Props {
 
 export function RowSelectionToolbar({ databaseId }: Props) {
   const { state, count, clear } = useRowSelection();
-  const { deleteRow, getDatabase, setRowValue, pages } = useStore();
+  const { deleteRow, getDatabase, setRowValue, pages } = useDbAdapter();
   const db = getDatabase(databaseId);
   const [editOpen, setEditOpen] = useState(false);
   const [editProp, setEditProp] = useState<Property | null>(null);

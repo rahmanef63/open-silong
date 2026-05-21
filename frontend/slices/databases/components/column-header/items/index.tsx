@@ -19,7 +19,7 @@ import {
   DropdownMenuSubContent, DropdownMenuSubTrigger,
 } from "@/shared/ui/dropdown-menu";
 import { cn } from "@/shared/lib/utils";
-import { useStore } from "@/shared/lib/store";
+import { useDbAdapter } from "../../../lib/useDbAdapter";
 import type { PropertyType } from "@/shared/types/domain";
 import {
   PROPERTY_TYPE_LABELS, PROPERTY_TYPES,
@@ -64,7 +64,7 @@ const EditPropertyItem: MenuItemRenderer = ({ db, prop }) => (
 );
 
 const EditAutomationItem: MenuItemRenderer = ({ db, prop }) => {
-  const { updateProperty } = useStore();
+  const { updateProperty } = useDbAdapter();
   return (
     <ConfigSub
       label="Edit automation"
@@ -78,7 +78,7 @@ const EditAutomationItem: MenuItemRenderer = ({ db, prop }) => {
 };
 
 const EditFormulaItem: MenuItemRenderer = ({ db, prop }) => {
-  const { updateProperty } = useStore();
+  const { updateProperty } = useDbAdapter();
   return (
     <ConfigSub
       label="Edit formula"

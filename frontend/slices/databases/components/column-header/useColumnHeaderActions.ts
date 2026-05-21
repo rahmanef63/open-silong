@@ -5,7 +5,7 @@
  *  stay declarative; this hook is the only place that talks to the
  *  store + view writer. */
 
-import { useStore } from "@/shared/lib/store";
+import { useDbAdapter } from "../../lib/useDbAdapter";
 import type {
   CalcKind, Database, DatabaseViewConfig, Property, PropertyType,
 } from "@/shared/types/domain";
@@ -31,7 +31,7 @@ export function useColumnHeaderActions({ db, view, prop, index, writeView }: Arg
   const {
     updateProperty, deleteProperty, duplicateProperty, addProperty,
     reorderProperties, updateView,
-  } = useStore();
+  } = useDbAdapter();
 
   const writeViewLocal = (patch: Partial<DatabaseViewConfig>) => {
     if (writeView) writeView(view.id, patch);
@@ -84,8 +84,8 @@ export function useColumnHeaderActions({ db, view, prop, index, writeView }: Arg
     toggleFreeze: () => togglePropIdInList("frozenPropIds"),
     toggleHide: () => togglePropIdInList("hiddenPropIds"),
     toggleWrap: () => updateView(db.id, view.id, { tableWrapCells: !flags.isWrap }),
-    insertAt: (offset) => {
-      const newProp = addProperty(db.id, "text");
+    insertAt: async (offset) => {
+      const newProp = await addProperty(db.id, "text");
       const all = [...db.properties.map((p) => p.id)];
       const allWithout = all.filter((id) => id !== newProp.id);
       const target = Math.max(0, Math.min(allWithout.length, index + (offset === 1 ? 1 : 0)));

@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { ChartAggregate, ChartKind, Database, DatabaseViewConfig, Page } from "@/shared/types/domain";
-import { useStore } from "@/shared/lib/store";
+import { useDbAdapter } from "../lib/useDbAdapter";
 import { PALETTES, KIND_META, AGG_LABEL } from "./chart/constants";
 import { labelFor, aggregate } from "./chart/data";
 import { Picker } from "./chart/parts";
@@ -9,7 +9,7 @@ import { ChartCanvas } from "./chart/ChartCanvas";
 interface Props { db: Database; view: DatabaseViewConfig; rows: Page[]; onOpenRow: (id: string) => void }
 
 export function ChartView({ db, view, rows }: Props) {
-  const { updateView } = useStore();
+  const { updateView } = useDbAdapter();
   const kind: ChartKind = view.chartKind ?? "bar";
   const agg: ChartAggregate = view.chartAggregate ?? "count";
 

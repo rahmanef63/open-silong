@@ -5,7 +5,7 @@ import { PropertyCell } from "../PropertyCell";
 import { focusSiblingBySelector } from "@/shared/lib/keyboard";
 import { cn } from "@/shared/lib/utils";
 import { getVisibleProps } from "../lib/visibility";
-import { useStore } from "@/shared/lib/store";
+import { useDbAdapter } from "../lib/useDbAdapter";
 import { Plus, MoreHorizontal, Trash2 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -41,7 +41,7 @@ function pickCover(view: DatabaseViewConfig, db: Database, r: Page): string | un
 }
 
 export function GalleryView({ db, view, rows, onOpenRow }: Props) {
-  const { deleteRow } = useStore();
+  const { deleteRow } = useDbAdapter();
   const [quickOpen, setQuickOpen] = useState(false);
   const size = view.gallerySize ?? "medium";
   const aspect = view.galleryAspect ?? "video";

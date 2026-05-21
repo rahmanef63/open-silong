@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useStore } from "@/shared/lib/store";
+import { useDbAdapter } from "../../lib/useDbAdapter";
 import { useRowSelection } from "./RowSelectionProvider";
 
 interface Props {
@@ -8,7 +8,7 @@ interface Props {
 
 export function RowSelectionKeyboard({ databaseId }: Props) {
   const { state, count, clear } = useRowSelection();
-  const { deleteRow } = useStore();
+  const { deleteRow } = useDbAdapter();
 
   useEffect(() => {
     if (count === 0) return;

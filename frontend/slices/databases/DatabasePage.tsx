@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { useParams, useNavigate } from "@/shared/lib/router";
 import { ROUTES } from "@/shared/lib/routes";
-import { useStore } from "@/shared/lib/store";
+import { useDbAdapter } from "./lib/useDbAdapter";
 import { DatabaseBlock } from "./DatabaseBlock";
 import { DatabaseSkeleton } from "@/shared/components/RouteSkeleton";
 import { PageHeaderSlot } from "@/shared/components/PageHeaderSlot";
@@ -26,7 +26,7 @@ import type { Block } from "@/shared/types/domain";
  */
 export function DatabasePage() {
   const { id } = useParams<{ id: string }>();
-  const { getDatabase } = useStore();
+  const { getDatabase } = useDbAdapter();
   const navigate = useNavigate();
   const db = id ? getDatabase(id) : undefined;
   // `recents.pageIds[]` is `Id<"pages">[]` — pushing a database id

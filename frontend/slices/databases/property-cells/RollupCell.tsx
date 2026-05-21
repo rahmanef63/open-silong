@@ -1,6 +1,6 @@
 import { AlertTriangle, Sigma } from "lucide-react";
 import type { Database, Page, Property } from "@/shared/types/domain";
-import { useStore } from "@/shared/lib/store";
+import { useDbAdapter } from "../lib/useDbAdapter";
 import { cn } from "@/shared/lib/utils";
 import {
   Popover, PopoverContent, PopoverTrigger,
@@ -30,7 +30,7 @@ const AGGREGATE_LABELS: Record<NonNullable<Property["rollupAggregate"]>, string>
 };
 
 export function RollupCell({ db, prop, row, cellClass }: Props) {
-  const { pages, databases, updateProperty } = useStore();
+  const { pages, databases, updateProperty } = useDbAdapter();
   const relationProps = db.properties.filter((p) => p.type === "relation");
   // Source-of-truth: id stored on the rollup. If it points at nothing, that's
   // an error state — don't silently fall back to the first relation.
