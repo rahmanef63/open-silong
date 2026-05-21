@@ -179,13 +179,17 @@ export interface DatabasesAdapter {
     value: PropertyValue;
   }): Promise<void>;
 
-  // Relation properties — bidirectional relation maintenance.
+  // Relation properties — toggle bidirectional inverse on an existing
+  // relation property. When `on: true`, an inverse relation prop is
+  // created on the target database (named via `name` or auto-derived);
+  // when `on: false`, the inverse is removed. Returns the inverse
+  // prop id when one is created/exists, otherwise undefined.
   setRelationTwoWay(args: {
     dbId: string;
     propId: string;
-    targetDbId: string;
-    targetPropId: string;
-  }): Promise<void>;
+    on: boolean;
+    name?: string;
+  }): Promise<string | undefined>;
 }
 
 // ─── OPTIONAL sub-namespaces ────────────────────────────────────────

@@ -10,6 +10,8 @@ import { TooltipProvider } from "@/shared/ui/tooltip";
 import { Toaster } from "@/shared/ui/toaster";
 import { Toaster as Sonner } from "@/shared/ui/sonner";
 import { StoreProvider } from "@/shared/lib/store";
+import { NotionAdapterProvider } from "@/slices/notion";
+import { useConvexNotionAdapter } from "@/slices/notion/adapter/convexAdapter";
 import { RouterProvider } from "@/shared/lib/router";
 import { WorkspaceIOProvider } from "@/slices/workspace-io";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/shared/ui/sidebar";
@@ -34,6 +36,16 @@ const CommandPalette = lazy(() =>
 const ShortcutsDialog = lazy(() =>
   import("@/slices/command-palette").then((m) => ({ default: m.ShortcutsDialog })),
 );
+
+/** Mount the production NotionAdapter — must live inside StoreProvider
+ *  because the Convex adapter wraps useStore() for pages + databases.
+ *  Phase 1 mount: additive, no consumer yet. Editor refactor in Phase 2
+ *  flips slice files from useStore() → useNotionAdapter() inside this
+ *  provider's subtree. */
+function NotionAdapterMount({ children }: { children: ReactNode }) {
+  const adapter = useConvexNotionAdapter();
+  return <NotionAdapterProvider adapter={adapter}>{children}</NotionAdapterProvider>;
+}
 
 function AuthGuard({ children }: { children: ReactNode }) {
   const { isAuthenticated, isLoading } = useConvexAuth();
@@ -101,6 +113,7 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
         <AuthGuard>
           <RouterProvider basename="/dashboard">
           <StoreProvider>
+            <NotionAdapterMount>
             <ConfirmProvider>
             <WorkspaceIOProvider>
             <Suspense fallback={null}>
@@ -168,6 +181,7 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
             <MobileBottomNav onOpenSearch={() => setSearchOpen(true)} />
             </WorkspaceIOProvider>
             </ConfirmProvider>
+            </NotionAdapterMount>
           </StoreProvider>
           </RouterProvider>
         </AuthGuard>

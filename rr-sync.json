@@ -15,9 +15,10 @@
     "slice.contract.ts",
     "*.test.ts",
     "*.test.tsx",
-    "convexAdapter.tsx"
+    "convexAdapter.tsx",
+    "convexAdapter/"
   ],
-  "_skipFilesNote": "Basename match OR *.suffix wildcard. slice.json + slice.contract.ts have rr-specific schemas; *.test.* skips co-located unit tests (rr runs its own test discipline). convexAdapter.tsx is the nosion-only production adapter for storage-adapter slices (files, …); rr ships the localStorageAdapter sibling as default.",
+  "_skipFilesNote": "Three patterns: exact basename ('foo.ts'), suffix wildcard ('*.test.ts'), directory match ('convexAdapter/' = any file under any path segment named convexAdapter). slice.json + slice.contract.ts have rr-specific schemas; *.test.* skips co-located unit tests (rr runs its own test discipline). convexAdapter.tsx is the single-file legacy nosion-only adapter for storage-adapter slices (files, …). convexAdapter/ is the directory form used by the notion mega-slice (split into pages.ts + databases.ts + optional.ts + index.tsx). Both forms exist; either path is skipped at lift. rr ships the localStorageAdapter sibling as the default.",
   "pathMap": [
     {
       "from": "frontend/shared/lib/utils",
