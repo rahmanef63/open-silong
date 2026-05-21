@@ -2,6 +2,7 @@ import type { FormEvent, KeyboardEvent } from "react";
 import type { Block, BlockType } from "@/shared/types/domain";
 import { uid } from "@/shared/lib/uid";
 import { MARKDOWN_TRIGGERS } from "../../lib/markdownTriggers";
+import { DECORATE_TYPES } from "../../block-editor/decorateTypes";
 
 interface InputDeps {
   block: Block;
@@ -105,6 +106,19 @@ export function handleNestedKeyDown(e: KeyboardEvent<HTMLElement>, deps: KeyDeps
   }
   if (e.key === "Backspace" && el.innerText === "") {
     e.preventDefault();
+    // Notion-canonical: backspace on empty text-shape converts it to
+    // paragraph first; only the next backspace from empty paragraph
+    // actually removes the block.
+    if (
+      onUpdate &&
+      block.type !== "paragraph" &&
+      DECORATE_TYPES.has(block.type)
+    ) {
+      onUpdate({ type: "paragraph" });
+      const blockId = block.id;
+      setTimeout(() => document.querySelector<HTMLElement>(`[data-block-id="${blockId}"]`)?.focus(), 0);
+      return;
+    }
     onDelete();
     onFocusPrev?.();
     return;
