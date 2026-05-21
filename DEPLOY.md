@@ -117,6 +117,30 @@ pnpm exec convex deploy --yes
 # .env.local sourced AND the value the Docker container received.
 ```
 
+### Auto-deploy on git push (recommended)
+
+Once `.env.local` carries the two self-hosted vars:
+
+```dotenv
+CONVEX_SELF_HOSTED_URL=https://your-convex.example.com
+CONVEX_SELF_HOSTED_ADMIN_KEY=your-instance|<admin-key>
+```
+
+Install the pre-push hook:
+
+```bash
+bash scripts/install-pre-push.sh
+```
+
+From then on, `git push` auto-deploys Convex first whenever the
+pushed range touches `convex/`. Backend lands before frontend, so the
+Dokploy rebuild that follows never gets ahead of the schema. If
+Convex deploy fails the push is aborted.
+
+If you also keep `CONVEX_DEPLOYMENT=...` for local `convex dev`, leave
+it in `.env.local` — the hook unsets it for the deploy step so the CLI
+doesn't reject the dual-target combo.
+
 ### Build the Next frontend (Docker or systemd)
 
 Easiest path with Dokploy: connect this repo, set build command
