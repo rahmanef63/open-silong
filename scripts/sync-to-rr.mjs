@@ -44,6 +44,12 @@ const args = process.argv.slice(2);
 const dryRun = args.includes("--dry-run");
 const force = args.includes("--force");
 const explain = args.includes("--explain-imports");
+// --with-peers: recursively include peer slices declared in the
+// manifest. Used by mega-bundles (e.g. the `notion` slice depends on
+// editor + databases bundled internally — they get lifted together).
+// Skips the wave-order check; peer slices are appended to the file
+// list instead. Each peer's own peers are followed recursively.
+const withPeers = args.includes("--with-peers");
 
 if (args[0] === "--regen-doc") {
   await (await import("./regen-rr-features-doc.mjs")).main();
@@ -99,19 +105,50 @@ async function main() {
     process.exit(1);
   }
 
-  // wave-order check: every slice-dep must already be tracked
+  // wave-order check: every slice-dep must already be tracked, OR the
+  // caller passed --with-peers to bundle them into this lift.
   const peerSlices = manifest.deps?.slices ?? [];
   const untracked = peerSlices.filter((s) => !registry.tracked[s]);
-  if (untracked.length) {
+  if (untracked.length && !withPeers) {
     console.error(`✗ blocked. peer slices not yet tracked in rr:`);
     for (const u of untracked) console.error(`    - ${u}`);
-    console.error(`  lift those first (wave order keeps rr coherent).`);
+    console.error(`  lift those first (wave order keeps rr coherent), OR`);
+    console.error(`  re-run with --with-peers to bundle them into this lift.`);
     process.exit(1);
+  }
+  if (withPeers && untracked.length) {
+    console.log(`  bundling untracked peer slices (--with-peers):`);
+    for (const u of untracked) console.log(`    + ${u}`);
   }
 
   // 1. resolve full file list (slice + shared + convex, skip _generated)
   const files = [];
   files.push(...(await walkDir(path.join(SLICES_DIR, slice), REPO)));
+
+  // 1a. --with-peers: walk untracked peer slices recursively
+  if (withPeers) {
+    const queue = [...untracked];
+    const seen = new Set([slice, ...untracked]);
+    while (queue.length) {
+      const peerName = queue.shift();
+      const peerManifest = await readManifest(peerName);
+      if (peerManifest) {
+        for (const p of peerManifest.deps?.slices ?? []) {
+          if (!registry.tracked[p] && !seen.has(p)) {
+            seen.add(p);
+            queue.push(p);
+          }
+        }
+        // Append peer's shared deps to the lift's shared set.
+        for (const sh of peerManifest.deps?.shared ?? []) {
+          if (!manifest.deps) manifest.deps = {};
+          if (!manifest.deps.shared) manifest.deps.shared = [];
+          if (!manifest.deps.shared.includes(sh)) manifest.deps.shared.push(sh);
+        }
+      }
+      files.push(...(await walkDir(path.join(SLICES_DIR, peerName), REPO)));
+    }
+  }
 
   for (const sh of manifest.deps?.shared ?? []) {
     const resolved = await resolveDepPath(path.join(SHARED_DIR, sh));

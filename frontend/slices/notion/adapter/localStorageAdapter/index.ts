@@ -1,101 +1,129 @@
 "use client";
 
 /**
- * Local-storage NotionAdapter — skeleton.
+ * Local-storage NotionAdapter — demo / portfolio / rr default.
  *
- * Phase 1 deliverable: types compile, hooks return undefined,
- * writes throw with a descriptive "not yet implemented" error so
- * any caller knows where to look.
+ * Pure-localStorage backend. Single hard-coded workspace
+ * (`"default"`). All data lives in:
+ *   - localStorage["silong-demo:pages"]     `{ [id]: Page }`
+ *   - localStorage["silong-demo:databases"] `{ [id]: Database }`
+ *   - localStorage["silong-demo:recents"]   `string[]`
  *
- * Phase 4 will flesh this out into the real demo backend:
- *   - JSON tree of pages keyed by id under `localStorage["silong:pages"]`
- *   - JSON tree of databases under `localStorage["silong:databases"]`
- *   - Cross-tab realtime via the `storage` event channel
- *   - `useSyncExternalStore` for live reads
- *   - Single hard-coded workspaceId ("default")
+ * Reactivity: same-tab via custom `silong-demo:change` events,
+ * cross-tab via the native `storage` event. `useSyncExternalStore`
+ * under the hood (see `./store.ts`).
  *
- * Consumer pattern (Phase 4+):
+ * Quota: 5–10 MB per origin (browser-dependent). Writes throw a
+ * descriptive error on quota exceeded — consumers should expect
+ * upload failures for large files (use a real adapter for prod).
  *
- *   import { NotionAppProvider, useLocalStorageNotionAdapter }
- *     from "@/slices/notion";
+ * Optional namespaces shipped:
+ *   - `recents` (push only, list via store)
+ *   - `user` (single hard-coded demo user — "Demo user")
+ *   - `workspaces` (single hard-coded workspace — "Default")
  *
- *   <NotionAppProvider adapter={useLocalStorageNotionAdapter()}>
- *     {children}
- *   </NotionAppProvider>
- *
- * Until Phase 4 lands, this returns a typed adapter where every
- * write throws and every hook returns undefined — so a consumer
- * who wires it gets clear errors instead of silent failures.
+ * Optional namespaces NOT shipped (consumer surfaces hide):
+ *   - ai (no inference backend)
+ *   - presence (single-tab only)
+ *   - search (basic in-memory could be added Phase 6)
+ *   - snapshots (defer to caller persistence)
  */
 
+import { useCallback, useMemo } from "react";
 import type { FilesAdapter } from "@/slices/files";
 import { useLocalStorageFilesAdapter } from "@/slices/files/adapter/localStorageAdapter";
-import type { NotionAdapter } from "../types";
+import type {
+  NotionAdapter, RecentsAdapter, UserAdapter, WorkspacesAdapter,
+} from "../types";
+import { useLocalStoragePagesAdapter } from "./pages";
+import { useLocalStorageDatabasesAdapter } from "./databases";
+import {
+  DEMO_WORKSPACE_ID, getRecents, setRecents, useDemoStore,
+} from "./store";
 
-function todo(method: string): never {
-  throw new Error(
-    `localStorageAdapter.${method}() — not yet implemented. ` +
-      "Lift plan Phase 4 wires this. See " +
-      "docs/rr-sync/2026-05-21-notion-mega-lift-plan.md#phase-4.",
+const DEMO_USER = {
+  id: "demo-user",
+  email: "demo@example.com",
+  name: "Demo user",
+  icon: "🙂",
+  bio: "",
+  color: "#888",
+  role: "owner" as const,
+  isSuperAdmin: false,
+};
+
+const DEMO_WORKSPACE = {
+  id: DEMO_WORKSPACE_ID,
+  name: "Default",
+  emoji: "🏠",
+  slug: "default",
+  isPersonal: true,
+  role: "owner" as const,
+};
+
+function useRecentsLocal(): RecentsAdapter {
+  const recents = useDemoStore<string[]>(useCallback(() => getRecents(), []));
+  return useMemo<RecentsAdapter>(
+    () => ({
+      useList: () =>
+        recents.map((targetId) => ({
+          targetType: "page" as const,
+          targetId,
+          lastVisitedAt: Date.now(),
+        })),
+      push: async ({ targetId }) => {
+        const cur = getRecents().filter((id) => id !== targetId);
+        cur.unshift(targetId);
+        setRecents(cur.slice(0, 20));
+      },
+    }),
+    [recents],
+  );
+}
+
+function useUserLocal(): UserAdapter {
+  return useMemo<UserAdapter>(
+    () => ({
+      useCurrent: () => DEMO_USER,
+      useById: (userId) => (userId === DEMO_USER.id ? DEMO_USER : null),
+    }),
+    [],
+  );
+}
+
+function useWorkspacesLocal(): WorkspacesAdapter {
+  return useMemo<WorkspacesAdapter>(
+    () => ({
+      useList: () => [DEMO_WORKSPACE],
+      useActive: () => DEMO_WORKSPACE,
+      setActive: async () => {
+        // No-op — demo adapter is single-workspace.
+      },
+      create: async () => {
+        throw new Error(
+          "localStorageAdapter is single-workspace — wire a real " +
+            "NotionAdapter (Convex or custom) for multi-workspace.",
+        );
+      },
+    }),
+    [],
   );
 }
 
 export function useLocalStorageNotionAdapter(): NotionAdapter {
-  // Files adapter already exists as the proof-of-pattern lift —
-  // reuse it directly.
+  const pages = useLocalStoragePagesAdapter();
+  const databases = useLocalStorageDatabasesAdapter();
   const files: FilesAdapter = useLocalStorageFilesAdapter();
+  const recents = useRecentsLocal();
+  const user = useUserLocal();
+  const workspaces = useWorkspacesLocal();
 
-  return {
-    pages: {
-      useList: () => undefined,
-      useOne: () => undefined,
-      useChildren: () => undefined,
-      create: async () => todo("pages.create"),
-      update: async () => todo("pages.update"),
-      trash: async () => todo("pages.trash"),
-      restore: async () => todo("pages.restore"),
-      delete: async () => todo("pages.delete"),
-      duplicate: async () => todo("pages.duplicate"),
-      move: async () => todo("pages.move"),
-      toggleFavorite: async () => todo("pages.toggleFavorite"),
-      addBlock: async () => todo("pages.addBlock"),
-      insertBlocksAfter: async () => todo("pages.insertBlocksAfter"),
-      updateBlock: async () => todo("pages.updateBlock"),
-      deleteBlock: async () => todo("pages.deleteBlock"),
-      duplicateBlock: async () => todo("pages.duplicateBlock"),
-      reorderBlocks: async () => todo("pages.reorderBlocks"),
-      replaceBlock: async () => todo("pages.replaceBlock"),
-    },
-    databases: {
-      useList: () => undefined,
-      useOne: () => undefined,
-      useRows: () => undefined,
-      create: async () => todo("databases.create"),
-      update: async () => todo("databases.update"),
-      trash: async () => todo("databases.trash"),
-      restore: async () => todo("databases.restore"),
-      delete: async () => todo("databases.delete"),
-      addProperty: async () => todo("databases.addProperty"),
-      updateProperty: async () => todo("databases.updateProperty"),
-      deleteProperty: async () => todo("databases.deleteProperty"),
-      reorderProperties: async () => todo("databases.reorderProperties"),
-      addSelectOption: async () => todo("databases.addSelectOption"),
-      updateSelectOption: async () => todo("databases.updateSelectOption"),
-      deleteSelectOption: async () => todo("databases.deleteSelectOption"),
-      addView: async () => todo("databases.addView"),
-      updateView: async () => todo("databases.updateView"),
-      deleteView: async () => todo("databases.deleteView"),
-      setActiveView: async () => todo("databases.setActiveView"),
-      addRow: async () => todo("databases.addRow"),
-      deleteRow: async () => todo("databases.deleteRow"),
-      reorderRows: async () => todo("databases.reorderRows"),
-      setRowValue: async () => todo("databases.setRowValue"),
-      setRelationTwoWay: async () => todo("databases.setRelationTwoWay") as never,
-    },
-    files,
-    // Optional namespaces intentionally omitted — consumers degrade
-    // (e.g. AI button hides when `adapter.ai?.complete` is undefined).
-    // Phase 4 may wire local stubs for `user` (single hard-coded
-    // "demo" user) + `workspaces` (single hard-coded "default" ws).
-  };
+  return useMemo<NotionAdapter>(
+    () => ({
+      pages, databases, files,
+      recents, user, workspaces,
+      // ai, presence, search, snapshots omitted — UI degrades.
+    }),
+    [pages, databases, files, recents, user, workspaces],
+  );
 }

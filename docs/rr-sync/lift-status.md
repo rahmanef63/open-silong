@@ -11,6 +11,31 @@ Updated after each sync round. Pair with `rr-sync.json.tracked`
 bidirectional dep between editor ↔ databases). Read that doc before
 attempting any work on the 🟡 "in mega-bundle only" rows below.
 
+**Phase 5 status (2026-05-21)**: code-side deliverables READY,
+operator action PENDING.
+
+- ✅ `localStorageNotionAdapter` flesh-out — full pages + databases +
+  files + recents + user + workspaces impls (single hard-coded demo
+  workspace, reactive via `useSyncExternalStore` + `storage` event,
+  ~500 LOC across `adapter/localStorageAdapter/{store,pages,databases,index}.ts`)
+- ✅ `scripts/sync-to-rr.mjs --with-peers` flag — recursively
+  includes peer-slice deps when lifting a mega-bundle. Bypasses
+  wave-order check (peers travel together inside the bundle).
+- ✅ Dry-run + real lift attempted: `node scripts/sync-to-rr.mjs
+  notion --with-peers`. **Zero convex / cycle blockers** — the
+  structural cycle is gone (Phase 4 win). Only blockers are:
+  - **16 file-level conflicts** with rr-side divergent edits in
+    `comments`, `database-csv`, `database-json`, `code-block`,
+    `equation` (these slices were independently developed in rr
+    post-last-sync). Manual per-file resolution required —
+    `--force` would clobber rr's in-flight work.
+  - rr-side catalog entry + demo page (`app/demo/notion/page.tsx`
+    mounting `useLocalStorageNotionAdapter()`) still TODO.
+  - rr-side `pnpm typecheck` + `pnpm build` verification still TODO.
+- 📋 Operator runbook for completing Phase 5 lives in
+  [`2026-05-21-notion-mega-lift-plan.md` § "rr agent coordination"](./2026-05-21-notion-mega-lift-plan.md#rr-agent-coordination)
+  — read that before attempting conflict resolution.
+
 ## Summary
 
 | Status | Count | Where |
