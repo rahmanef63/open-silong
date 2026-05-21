@@ -3,7 +3,7 @@
 > **Auto-generated.** Edit `rr-sync.json` (registry) or rerun sync — DO NOT hand-edit this file.
 > Regenerate: `node scripts/sync-to-rr.mjs --regen-doc`
 
-Tracked slices: **7**  ·  Source: notion-page-clone  ·  Dest: `~/projects/resources`
+Tracked slices: **8**  ·  Source: notion-page-clone  ·  Dest: `~/projects/resources`
 
 ## Summary
 
@@ -13,8 +13,9 @@ Tracked slices: **7**  ·  Source: notion-page-clone  ·  Dest: `~/projects/reso
 | database-cell-selection | 0.1.0 | 4 | 0 (0+) | 2026-05-19 |
 | equation | 0.1.0 | 6 | 1 (1+) | 2026-05-19 |
 | files | 0.1.0 | 11 | 0 (0+) | 2026-05-21 |
-| mentions | 0.1.0 | 51 | 46 (1+) | 2026-05-19 |
+| mentions | 0.1.0 | 51 | 46 (46+) | 2026-05-19 |
 | notifications | 0.1.0 | 5 | 0 (0+) | 2026-05-19 |
+| notion | 0.1.0 | 416 | 80 (47+) | 2026-05-21 |
 | theme-presets | 0.1.0 | 20 | 0 (0+) | 2026-05-20 |
 
 - **shared+** = count of shared files this slice depends on that ALSO consumed by another tracked slice. High value = shared infra that must stay coherent.
@@ -64,7 +65,7 @@ Tracked slices: **7**  ·  Source: notion-page-clone  ·  Dest: `~/projects/reso
 
 **shared deps (1):**
 
-- `frontend/shared/lib/error.ts`  _(also: mentions)_
+- `frontend/shared/lib/error.ts`  _(also: mentions, notion)_
 
 ### `files`
 
@@ -102,52 +103,52 @@ Tracked slices: **7**  ·  Source: notion-page-clone  ·  Dest: `~/projects/reso
 
 **shared deps (46):**
 
-- `frontend/shared/components/icon-picker/components/DynamicIcon.tsx`
-- `frontend/shared/components/icon-picker/components/IconPicker.tsx`
-- `frontend/shared/components/icon-picker/components/IconPickerInline.tsx`
-- `frontend/shared/components/icon-picker/components/PickerSkeleton.tsx`
-- `frontend/shared/components/icon-picker/components/picker-parts/ColorRow.tsx`
-- `frontend/shared/components/icon-picker/components/picker-parts/Toolbar.tsx`
-- `frontend/shared/components/icon-picker/components/picker-parts/cells.tsx`
-- `frontend/shared/components/icon-picker/index.ts`
-- `frontend/shared/components/icon-picker/lib/colors.ts`
-- `frontend/shared/components/icon-picker/lib/defaults.ts`
-- `frontend/shared/components/icon-picker/lib/emoji-catalog.ts`
-- `frontend/shared/components/icon-picker/lib/emoji-keywords.ts`
-- `frontend/shared/components/icon-picker/lib/lucide-catalog.ts`
-- `frontend/shared/components/icon-picker/lib/lucide-icons.ts`
-- `frontend/shared/components/icon-picker/lib/parse.ts`
-- `frontend/shared/components/icon-picker/lib/recents.ts`
-- `frontend/shared/components/icon-picker/lib/style-pref.ts`
-- `frontend/shared/components/icon-picker/lib/twemoji.ts`
-- `frontend/shared/lib/databases/propertyTypeMeta.ts`
-- `frontend/shared/lib/databases/relationMirror.ts`
-- `frontend/shared/lib/error.ts`  _(also: equation)_
-- `frontend/shared/lib/keyboard.ts`
-- `frontend/shared/lib/router/index.tsx`
-- `frontend/shared/lib/store/context.ts`
-- `frontend/shared/lib/store/databaseActions.ts`
-- `frontend/shared/lib/store/databaseActions/constants.ts`
-- `frontend/shared/lib/store/databaseActions/db.ts`
-- `frontend/shared/lib/store/databaseActions/properties.ts`
-- `frontend/shared/lib/store/databaseActions/relations.ts`
-- `frontend/shared/lib/store/databaseActions/rows.ts`
-- `frontend/shared/lib/store/databaseActions/views.ts`
-- `frontend/shared/lib/store/history.ts`
-- `frontend/shared/lib/store/hooks.ts`
-- `frontend/shared/lib/store/mappers.ts`
-- `frontend/shared/lib/store/mutationGuard.ts`
-- `frontend/shared/lib/store/pageActions.ts`
-- `frontend/shared/lib/store/pageActions/blockCrud.ts`
-- `frontend/shared/lib/store/pageActions/childrenIndex.ts`
-- `frontend/shared/lib/store/pageActions/constants.ts`
-- `frontend/shared/lib/store/pageActions/pageCrud.ts`
-- `frontend/shared/lib/store/pageActions/searchTrash.ts`
-- `frontend/shared/lib/store/snapshots.ts`
-- `frontend/shared/lib/store/useThemeEffect.ts`
-- `frontend/shared/lib/store/useWorkspaceMuts.ts`
-- `frontend/shared/lib/uid.ts`
-- `frontend/shared/types/domain.ts`
+- `frontend/shared/components/icon-picker/components/DynamicIcon.tsx`  _(also: notion)_
+- `frontend/shared/components/icon-picker/components/IconPicker.tsx`  _(also: notion)_
+- `frontend/shared/components/icon-picker/components/IconPickerInline.tsx`  _(also: notion)_
+- `frontend/shared/components/icon-picker/components/PickerSkeleton.tsx`  _(also: notion)_
+- `frontend/shared/components/icon-picker/components/picker-parts/ColorRow.tsx`  _(also: notion)_
+- `frontend/shared/components/icon-picker/components/picker-parts/Toolbar.tsx`  _(also: notion)_
+- `frontend/shared/components/icon-picker/components/picker-parts/cells.tsx`  _(also: notion)_
+- `frontend/shared/components/icon-picker/index.ts`  _(also: notion)_
+- `frontend/shared/components/icon-picker/lib/colors.ts`  _(also: notion)_
+- `frontend/shared/components/icon-picker/lib/defaults.ts`  _(also: notion)_
+- `frontend/shared/components/icon-picker/lib/emoji-catalog.ts`  _(also: notion)_
+- `frontend/shared/components/icon-picker/lib/emoji-keywords.ts`  _(also: notion)_
+- `frontend/shared/components/icon-picker/lib/lucide-catalog.ts`  _(also: notion)_
+- `frontend/shared/components/icon-picker/lib/lucide-icons.ts`  _(also: notion)_
+- `frontend/shared/components/icon-picker/lib/parse.ts`  _(also: notion)_
+- `frontend/shared/components/icon-picker/lib/recents.ts`  _(also: notion)_
+- `frontend/shared/components/icon-picker/lib/style-pref.ts`  _(also: notion)_
+- `frontend/shared/components/icon-picker/lib/twemoji.ts`  _(also: notion)_
+- `frontend/shared/lib/databases/propertyTypeMeta.ts`  _(also: notion)_
+- `frontend/shared/lib/databases/relationMirror.ts`  _(also: notion)_
+- `frontend/shared/lib/error.ts`  _(also: equation, notion)_
+- `frontend/shared/lib/keyboard.ts`  _(also: notion)_
+- `frontend/shared/lib/router/index.tsx`  _(also: notion)_
+- `frontend/shared/lib/store/context.ts`  _(also: notion)_
+- `frontend/shared/lib/store/databaseActions.ts`  _(also: notion)_
+- `frontend/shared/lib/store/databaseActions/constants.ts`  _(also: notion)_
+- `frontend/shared/lib/store/databaseActions/db.ts`  _(also: notion)_
+- `frontend/shared/lib/store/databaseActions/properties.ts`  _(also: notion)_
+- `frontend/shared/lib/store/databaseActions/relations.ts`  _(also: notion)_
+- `frontend/shared/lib/store/databaseActions/rows.ts`  _(also: notion)_
+- `frontend/shared/lib/store/databaseActions/views.ts`  _(also: notion)_
+- `frontend/shared/lib/store/history.ts`  _(also: notion)_
+- `frontend/shared/lib/store/hooks.ts`  _(also: notion)_
+- `frontend/shared/lib/store/mappers.ts`  _(also: notion)_
+- `frontend/shared/lib/store/mutationGuard.ts`  _(also: notion)_
+- `frontend/shared/lib/store/pageActions.ts`  _(also: notion)_
+- `frontend/shared/lib/store/pageActions/blockCrud.ts`  _(also: notion)_
+- `frontend/shared/lib/store/pageActions/childrenIndex.ts`  _(also: notion)_
+- `frontend/shared/lib/store/pageActions/constants.ts`  _(also: notion)_
+- `frontend/shared/lib/store/pageActions/pageCrud.ts`  _(also: notion)_
+- `frontend/shared/lib/store/pageActions/searchTrash.ts`  _(also: notion)_
+- `frontend/shared/lib/store/snapshots.ts`  _(also: notion)_
+- `frontend/shared/lib/store/useThemeEffect.ts`  _(also: notion)_
+- `frontend/shared/lib/store/useWorkspaceMuts.ts`  _(also: notion)_
+- `frontend/shared/lib/uid.ts`  _(also: notion)_
+- `frontend/shared/types/domain.ts`  _(also: notion, notion)_
 
 ### `notifications`
 
@@ -162,6 +163,114 @@ Tracked slices: **7**  ·  Source: notion-page-clone  ·  Dest: `~/projects/reso
 - `frontend/slices/notifications/index.ts`
 - `frontend/slices/notifications/slice.manifest.json`
 - `frontend/slices/notifications/types/index.ts`
+
+### `notion`
+
+- **version:** 0.1.0
+- **synced:** 2026-05-21T21:48:38.256Z (commit `bd51560`)
+- **slicePath:** `frontend/slices/notion`
+
+**slice files (12):**
+
+- `frontend/slices/notion/NotionAppProvider.tsx`
+- `frontend/slices/notion/README.md`
+- `frontend/slices/notion/adapter/context.tsx`
+- `frontend/slices/notion/adapter/localStorageAdapter/databases.ts`
+- `frontend/slices/notion/adapter/localStorageAdapter/index.ts`
+- `frontend/slices/notion/adapter/localStorageAdapter/pages.ts`
+- `frontend/slices/notion/adapter/localStorageAdapter/store.ts`
+- `frontend/slices/notion/adapter/noopAdapter.ts`
+- `frontend/slices/notion/adapter/types.ts`
+- `frontend/slices/notion/index.ts`
+- `frontend/slices/notion/lib/config.ts`
+- `frontend/slices/notion/slice.manifest.json`
+
+**shared deps (80):**
+
+- `frontend/shared/components/ConfirmProvider.tsx`
+- `frontend/shared/components/ErrorBoundary.tsx`
+- `frontend/shared/components/Marquee.tsx`
+- `frontend/shared/components/PageHeaderSlot.tsx`
+- `frontend/shared/components/RouteSkeleton.tsx`
+- `frontend/shared/components/icon-picker/components/DynamicIcon.tsx`  _(also: mentions)_
+- `frontend/shared/components/icon-picker/components/IconPicker.tsx`  _(also: mentions)_
+- `frontend/shared/components/icon-picker/components/IconPickerInline.tsx`  _(also: mentions)_
+- `frontend/shared/components/icon-picker/components/PickerSkeleton.tsx`  _(also: mentions)_
+- `frontend/shared/components/icon-picker/components/picker-parts/ColorRow.tsx`  _(also: mentions)_
+- `frontend/shared/components/icon-picker/components/picker-parts/Toolbar.tsx`  _(also: mentions)_
+- `frontend/shared/components/icon-picker/components/picker-parts/cells.tsx`  _(also: mentions)_
+- `frontend/shared/components/icon-picker/index.ts`  _(also: mentions)_
+- `frontend/shared/components/icon-picker/lib/colors.ts`  _(also: mentions)_
+- `frontend/shared/components/icon-picker/lib/defaults.ts`  _(also: mentions)_
+- `frontend/shared/components/icon-picker/lib/emoji-catalog.ts`  _(also: mentions)_
+- `frontend/shared/components/icon-picker/lib/emoji-keywords.ts`  _(also: mentions)_
+- `frontend/shared/components/icon-picker/lib/lucide-catalog.ts`  _(also: mentions)_
+- `frontend/shared/components/icon-picker/lib/lucide-icons.ts`  _(also: mentions)_
+- `frontend/shared/components/icon-picker/lib/parse.ts`  _(also: mentions)_
+- `frontend/shared/components/icon-picker/lib/recents.ts`  _(also: mentions)_
+- `frontend/shared/components/icon-picker/lib/style-pref.ts`  _(also: mentions)_
+- `frontend/shared/components/icon-picker/lib/twemoji.ts`  _(also: mentions)_
+- `frontend/shared/components/marquee/predicates.ts`
+- `frontend/shared/components/marquee/types.ts`
+- `frontend/shared/components/marquee/useMarqueeDrag.ts`
+- `frontend/shared/components/notion/NotionBlock.tsx`
+- `frontend/shared/components/notion/NotionDatabase.tsx`
+- `frontend/shared/components/notion/NotionHeader.tsx`
+- `frontend/shared/components/notion/NotionPage.tsx`
+- `frontend/shared/components/notion/NotionProperty.tsx`
+- `frontend/shared/components/notion/NotionSidebar.tsx`
+- `frontend/shared/components/notion/index.ts`
+- `frontend/shared/hooks/useAsyncError.ts`
+- `frontend/shared/hooks/useBlockHistory.ts`
+- `frontend/shared/lib/csv.ts`
+- `frontend/shared/lib/databaseTable.ts`
+- `frontend/shared/lib/databases/propertyTypeMeta.ts`  _(also: mentions)_
+- `frontend/shared/lib/databases/relationMirror.ts`  _(also: mentions)_
+- `frontend/shared/lib/error.ts`  _(also: equation, mentions)_
+- `frontend/shared/lib/exportContext.ts`
+- `frontend/shared/lib/format.ts`
+- `frontend/shared/lib/html.ts`
+- `frontend/shared/lib/inlineMd.tsx`
+- `frontend/shared/lib/keyboard.ts`  _(also: mentions)_
+- `frontend/shared/lib/markdown.ts`
+- `frontend/shared/lib/router/index.tsx`  _(also: mentions)_
+- `frontend/shared/lib/routes.ts`
+- `frontend/shared/lib/seed.ts`
+- `frontend/shared/lib/seed/pages.ts`
+- `frontend/shared/lib/seed/profile.ts`
+- `frontend/shared/lib/seed/tasksDb.ts`
+- `frontend/shared/lib/store.tsx`
+- `frontend/shared/lib/store/context.ts`  _(also: mentions)_
+- `frontend/shared/lib/store/databaseActions.ts`  _(also: mentions)_
+- `frontend/shared/lib/store/databaseActions/constants.ts`  _(also: mentions)_
+- `frontend/shared/lib/store/databaseActions/db.ts`  _(also: mentions)_
+- `frontend/shared/lib/store/databaseActions/properties.ts`  _(also: mentions)_
+- `frontend/shared/lib/store/databaseActions/relations.ts`  _(also: mentions)_
+- `frontend/shared/lib/store/databaseActions/rows.ts`  _(also: mentions)_
+- `frontend/shared/lib/store/databaseActions/views.ts`  _(also: mentions)_
+- `frontend/shared/lib/store/history.ts`  _(also: mentions)_
+- `frontend/shared/lib/store/hooks.ts`  _(also: mentions)_
+- `frontend/shared/lib/store/mappers.ts`  _(also: mentions)_
+- `frontend/shared/lib/store/mutationGuard.ts`  _(also: mentions)_
+- `frontend/shared/lib/store/pageActions.ts`  _(also: mentions)_
+- `frontend/shared/lib/store/pageActions/blockCrud.ts`  _(also: mentions)_
+- `frontend/shared/lib/store/pageActions/childrenIndex.ts`  _(also: mentions)_
+- `frontend/shared/lib/store/pageActions/constants.ts`  _(also: mentions)_
+- `frontend/shared/lib/store/pageActions/pageCrud.ts`  _(also: mentions)_
+- `frontend/shared/lib/store/pageActions/searchTrash.ts`  _(also: mentions)_
+- `frontend/shared/lib/store/snapshots.ts`  _(also: mentions)_
+- `frontend/shared/lib/store/useThemeEffect.ts`  _(also: mentions)_
+- `frontend/shared/lib/store/useWorkspaceMuts.ts`  _(also: mentions)_
+- `frontend/shared/lib/uid.ts`  _(also: mentions)_
+- `frontend/shared/lib/zipExport.ts`
+- `frontend/shared/types/block.ts`
+- `frontend/shared/types/domain.ts`  _(also: mentions)_
+- `frontend/shared/types/domain.ts`  _(also: mentions)_
+- `frontend/shared/types/index.ts`
+
+**convex deps (1):**
+
+- `convex/features/unsplash/actions.ts`
 
 ### `theme-presets`
 
@@ -198,5 +307,50 @@ _Files used by 2+ tracked slices. Keep these in sync — corruption here breaks 
 
 | shared file | consumers |
 |---|---|
-| `frontend/shared/lib/error.ts` | equation, mentions |
+| `frontend/shared/components/icon-picker/components/DynamicIcon.tsx` | mentions, notion |
+| `frontend/shared/components/icon-picker/components/IconPicker.tsx` | mentions, notion |
+| `frontend/shared/components/icon-picker/components/IconPickerInline.tsx` | mentions, notion |
+| `frontend/shared/components/icon-picker/components/PickerSkeleton.tsx` | mentions, notion |
+| `frontend/shared/components/icon-picker/components/picker-parts/ColorRow.tsx` | mentions, notion |
+| `frontend/shared/components/icon-picker/components/picker-parts/Toolbar.tsx` | mentions, notion |
+| `frontend/shared/components/icon-picker/components/picker-parts/cells.tsx` | mentions, notion |
+| `frontend/shared/components/icon-picker/index.ts` | mentions, notion |
+| `frontend/shared/components/icon-picker/lib/colors.ts` | mentions, notion |
+| `frontend/shared/components/icon-picker/lib/defaults.ts` | mentions, notion |
+| `frontend/shared/components/icon-picker/lib/emoji-catalog.ts` | mentions, notion |
+| `frontend/shared/components/icon-picker/lib/emoji-keywords.ts` | mentions, notion |
+| `frontend/shared/components/icon-picker/lib/lucide-catalog.ts` | mentions, notion |
+| `frontend/shared/components/icon-picker/lib/lucide-icons.ts` | mentions, notion |
+| `frontend/shared/components/icon-picker/lib/parse.ts` | mentions, notion |
+| `frontend/shared/components/icon-picker/lib/recents.ts` | mentions, notion |
+| `frontend/shared/components/icon-picker/lib/style-pref.ts` | mentions, notion |
+| `frontend/shared/components/icon-picker/lib/twemoji.ts` | mentions, notion |
+| `frontend/shared/lib/databases/propertyTypeMeta.ts` | mentions, notion |
+| `frontend/shared/lib/databases/relationMirror.ts` | mentions, notion |
+| `frontend/shared/lib/error.ts` | equation, mentions, notion |
+| `frontend/shared/lib/keyboard.ts` | mentions, notion |
+| `frontend/shared/lib/router/index.tsx` | mentions, notion |
+| `frontend/shared/lib/store/context.ts` | mentions, notion |
+| `frontend/shared/lib/store/databaseActions.ts` | mentions, notion |
+| `frontend/shared/lib/store/databaseActions/constants.ts` | mentions, notion |
+| `frontend/shared/lib/store/databaseActions/db.ts` | mentions, notion |
+| `frontend/shared/lib/store/databaseActions/properties.ts` | mentions, notion |
+| `frontend/shared/lib/store/databaseActions/relations.ts` | mentions, notion |
+| `frontend/shared/lib/store/databaseActions/rows.ts` | mentions, notion |
+| `frontend/shared/lib/store/databaseActions/views.ts` | mentions, notion |
+| `frontend/shared/lib/store/history.ts` | mentions, notion |
+| `frontend/shared/lib/store/hooks.ts` | mentions, notion |
+| `frontend/shared/lib/store/mappers.ts` | mentions, notion |
+| `frontend/shared/lib/store/mutationGuard.ts` | mentions, notion |
+| `frontend/shared/lib/store/pageActions.ts` | mentions, notion |
+| `frontend/shared/lib/store/pageActions/blockCrud.ts` | mentions, notion |
+| `frontend/shared/lib/store/pageActions/childrenIndex.ts` | mentions, notion |
+| `frontend/shared/lib/store/pageActions/constants.ts` | mentions, notion |
+| `frontend/shared/lib/store/pageActions/pageCrud.ts` | mentions, notion |
+| `frontend/shared/lib/store/pageActions/searchTrash.ts` | mentions, notion |
+| `frontend/shared/lib/store/snapshots.ts` | mentions, notion |
+| `frontend/shared/lib/store/useThemeEffect.ts` | mentions, notion |
+| `frontend/shared/lib/store/useWorkspaceMuts.ts` | mentions, notion |
+| `frontend/shared/lib/uid.ts` | mentions, notion |
+| `frontend/shared/types/domain.ts` | mentions, notion, notion |
 
