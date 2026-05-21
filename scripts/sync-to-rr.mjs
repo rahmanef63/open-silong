@@ -165,12 +165,18 @@ async function main() {
     console.log(`  → likely need pathMap entry OR target file moved/renamed`);
   }
 
-  // filter out skipFiles (basename match OR *.suffix wildcard)
+  // filter out skipFiles — three patterns:
+  //   "foo.ts"   → exact basename match
+  //   "*.test.ts" → suffix wildcard
+  //   "convexAdapter/" → directory match (any file under a path
+  //                      segment named "convexAdapter")
   const skipMatch = (rel) => {
     const base = path.basename(rel);
+    const segments = rel.split("/");
     for (const p of skipFiles) {
       if (p === base) return true;
       if (p.startsWith("*.") && base.endsWith(p.slice(1))) return true;
+      if (p.endsWith("/") && segments.includes(p.slice(0, -1))) return true;
     }
     return false;
   };

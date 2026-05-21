@@ -42,3 +42,28 @@ export {
   type NotionPageProps, type NotionBlockProps,
   type NotionDatabaseProps, type NotionPropertyProps,
 } from "@/shared/components/notion";
+
+// ─── Adapter contract (backend-agnostic data layer). Required mount:
+//     wrap the wrappers above in `<NotionAdapterProvider adapter={...}>`
+//     or use the umbrella `<NotionAppProvider adapter={...}>` which
+//     composes config + adapter into one mount. Reference impls below.
+//     Full contract docs: `docs/api/notion-adapter.md`.
+export {
+  NotionAdapterProvider, useNotionAdapter, useNotionAdapterOptional,
+  type NotionAdapterProviderProps,
+} from "./adapter/context";
+export { noopAdapter } from "./adapter/noopAdapter";
+export type {
+  NotionAdapter, PagesAdapter, DatabasesAdapter,
+  AiAdapter, PresenceAdapter, SearchAdapter, UserAdapter,
+  WorkspacesAdapter, RecentsAdapter, SnapshotsAdapter,
+} from "./adapter/types";
+
+// ─── Reference adapter implementations. The Convex one is the
+//     production default for this repo; the localStorage one is the
+//     rr / demo / portfolio default.
+//     NOTE: `useConvexNotionAdapter` is intentionally NOT re-exported
+//     here — `convexAdapter/` is skip-listed in rr-sync.json. Consumers
+//     wanting the Convex impl import it directly from the file path:
+//     `@/slices/notion/adapter/convexAdapter`.
+export { useLocalStorageNotionAdapter } from "./adapter/localStorageAdapter";

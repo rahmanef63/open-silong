@@ -1,12 +1,16 @@
 {
   "name": "notion",
-  "description": "Mega-slice: bundles editor + databases + templates + workspace-io + wrappers + config provider as one drop-in. Re-exported from frontend/slices/notion/. Portable bundle for embedding the Notion experience in other React projects.",
+  "description": "Mega-slice: bundles editor + databases + templates + workspace-io + wrappers + config provider + NotionAdapter contract as one drop-in. Re-exported from frontend/slices/notion/. Portable bundle for embedding the Notion-inspired experience in other React projects, with a backend-agnostic adapter layer (Convex + localStorage reference implementations).",
   "deps": {
     "shared": [
-      "components/notion"
+      "components/notion",
+      "lib/store",
+      "types/domain"
     ],
-    "slices": [],
+    "slices": [
+      "files"
+    ],
     "convex": []
   },
-  "notes": "Backend (convex/) is co-required but not part of this barrel — consumers ship their own convex/ dir or use the npm-published convex package once it exists. NotionAppConfig defaults match Nosion's own conventions; override via NotionAppProvider config prop."
+  "notes": "Adapter contract at adapter/types.ts. Reference impls: adapter/convexAdapter/ (production, skip-listed via rr-sync.json convexAdapter/ pattern), adapter/localStorageAdapter/ (rr demo default). Phase 1 ship 2026-05-21 — see docs/rr-sync/2026-05-21-notion-mega-lift-plan.md. The store + types/domain shared deps are consumed by the Convex adapter only; downstream consumers using the localStorage adapter need neither at runtime (Phase 4 cleanup will remove from manifest)."
 }
