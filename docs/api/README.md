@@ -6,6 +6,7 @@ core. Read in order:
 | Doc | Audience |
 |---|---|
 | `slices.md` | **Catalog of every frontend slice** — start here for UI |
+| `notion-adapter.md` | **Adapter contract** for the `notion` mega-slice — read if integrating it into another React project |
 | `conventions.md` | Anyone adding a Convex fn — read first |
 | `workspaces.md` | Multi-workspace foundation, switcher, member roles |
 | `pages.md` | Reading / mutating page docs |
