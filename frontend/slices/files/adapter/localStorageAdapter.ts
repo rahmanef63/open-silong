@@ -63,5 +63,16 @@ export function useLocalStorageFilesAdapter(): FilesAdapter {
     return url;
   };
 
-  return useMemo<FilesAdapter>(() => ({ upload, remove, useUrl }), [upload, remove]);
+  const resolveUrl = useCallback(async (storageId: string): Promise<string | null> => {
+    try {
+      return localStorage.getItem(KEY_PREFIX + storageId);
+    } catch {
+      return null;
+    }
+  }, []);
+
+  return useMemo<FilesAdapter>(
+    () => ({ upload, remove, useUrl, resolveUrl }),
+    [upload, remove, resolveUrl],
+  );
 }

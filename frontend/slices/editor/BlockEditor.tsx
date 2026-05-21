@@ -1,13 +1,13 @@
 import { memo, useRef, useState, useCallback } from "react";
-import { useMutation } from "convex/react";
-import { api } from "@convex/_generated/api";
 import { Block, BlockType } from "@/shared/types/domain";
 import { useStore } from "@/shared/lib/store";
+import { useNotionAdapter } from "@/slices/notion";
 import { SlashMenu } from "./SlashMenu";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useBlockHistory } from "@/shared/hooks/useBlockHistory";
-import { DatabaseBlock } from "@/slices/databases";
+import { DatabaseBlock as DefaultDatabaseBlock } from "@/slices/databases";
+import { useEditorComponents } from "./lib/componentsRegistry";
 import { BlockShell } from "./blocks/BlockShell";
 import { BlockControls } from "./blocks/BlockControls";
 import { BlockBody } from "./blocks/BlockBody";
@@ -45,7 +45,13 @@ function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerR
     updateBlock, addBlock, deleteBlock, setBlockType, duplicateBlock,
     createPage, createDatabase, replaceBlock, updatePage, getPage,
   } = useStore();
-  const insertBlocksAfter = useMutation(api.pages.insertBlocksAfter);
+  const insertBlocksAfter = useNotionAdapter().pages.insertBlocksAfter;
+  // Render-prop seam: consumers can swap the DatabaseBlock implementation
+  // via <EditorComponentsProvider value={{ DatabaseBlock }}>. Falls back
+  // to the bundled @/slices/databases impl when no override is mounted.
+  // Phase 4 cleanup removes the default import once NotionAppProvider
+  // mounts the registry universally.
+  const { DatabaseBlock = DefaultDatabaseBlock } = useEditorComponents();
   const [slashOpen, setSlashOpen] = useState(false);
   const [slashQuery, setSlashQuery] = useState("");
   const [askOpen, setAskOpen] = useState(false);

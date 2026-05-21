@@ -1,10 +1,8 @@
-import { useQuery } from "convex/react";
 import { Eye } from "lucide-react";
-import { api } from "@convex/_generated/api";
-import type { Id } from "@convex/_generated/dataModel";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
 import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
+import { useNotionAdapter } from "@/slices/notion";
 
 interface Props {
   pageId: string;
@@ -24,8 +22,13 @@ function relative(ts: number): string {
 }
 
 export function SeenByBadge({ pageId, className }: Props) {
-  const viewers = useQuery(api.pageViews.recentViewers, { pageId: pageId as Id<"pages"> });
-  if (!viewers || viewers.length === 0) return null;
+  const adapter = useNotionAdapter();
+  // Presence is an optional adapter capability — hide the badge
+  // entirely on deployments that don't wire it. The hook must always
+  // be called (React rules), so we call it with a guard then no-op
+  // when the capability is absent.
+  const viewers = adapter.presence?.useRecentViewers(pageId);
+  if (!adapter.presence || !viewers || viewers.length === 0) return null;
   const top = viewers[0];
   return (
     <Popover>
@@ -51,9 +54,9 @@ export function SeenByBadge({ pageId, className }: Props) {
         </div>
         <ul className="space-y-1">
           {viewers.map((v) => (
-            <li key={String(v.userId)} className="flex items-center justify-between gap-2">
+            <li key={v.userId} className="flex items-center justify-between gap-2">
               <span className="truncate text-xs">{v.name}</span>
-              <span className="shrink-0 text-[10px] text-muted-foreground">{relative(v.lastViewedAt)}</span>
+              <span className="shrink-0 text-[10px] text-muted-foreground">{relative(v.lastSeenAt)}</span>
             </li>
           ))}
         </ul>

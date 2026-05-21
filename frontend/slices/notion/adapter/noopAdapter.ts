@@ -32,6 +32,7 @@ const filesNoop: FilesAdapter = {
   upload: async () => unimpl("files.upload"),
   remove: async () => unimpl("files.remove"),
   useUrl: () => null,
+  resolveUrl: async () => null,
 };
 
 export const noopAdapter: NotionAdapter = {

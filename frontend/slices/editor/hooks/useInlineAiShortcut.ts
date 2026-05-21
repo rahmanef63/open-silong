@@ -9,10 +9,9 @@
  */
 
 import { useEffect, useRef } from "react";
-import { useAction } from "convex/react";
 import { toast } from "sonner";
-import { api } from "@convex/_generated/api";
 import { useBlocks, usePages } from "@/shared/lib/store";
+import { useNotionAdapter } from "@/slices/notion";
 import { reportError } from "@/shared/lib/error";
 
 const SYSTEM_CONTINUE =
@@ -28,10 +27,12 @@ function findFocusedBlockId(): string | null {
 export function useInlineAiShortcut() {
   const { updateBlock } = useBlocks();
   const { pages } = usePages();
-  const complete = useAction(api.ai.chat.complete);
+  const adapter = useNotionAdapter();
+  const aiComplete = adapter.ai?.complete;
   const pendingRef = useRef(false);
 
   useEffect(() => {
+    if (!aiComplete) return;
     const onKey = async (e: KeyboardEvent) => {
       if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== "j") return;
       const blockId = findFocusedBlockId();
@@ -45,12 +46,11 @@ export function useInlineAiShortcut() {
       pendingRef.current = true;
       const toastId = toast.loading("AI continuing…");
       try {
-        const res = await complete({
+        const next = (await aiComplete({
           messages: [{ role: "user", content: block.text }],
           system: SYSTEM_CONTINUE,
           maxTokens: 400,
-        });
-        const next = (res.text ?? "").trim();
+        })).trim();
         if (!next) {
           toast.error("AI returned empty response", { id: toastId });
           return;
@@ -66,5 +66,5 @@ export function useInlineAiShortcut() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [pages, complete, updateBlock]);
+  }, [pages, aiComplete, updateBlock]);
 }

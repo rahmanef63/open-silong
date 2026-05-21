@@ -29,11 +29,20 @@ export function useConvexAiAdapter(): AiAdapter {
   const complete = useAction(api.ai.chat.complete);
   return useMemo<AiAdapter>(
     () => ({
-      complete: async ({ messages, model }) => {
+      complete: async ({ messages, system, model, maxTokens }) => {
         // temperature is not currently exposed by the Convex action —
         // omitted on call; consumers requesting it get the backend's
         // default temperature.
-        const result = await complete({ messages, model });
+        const args: {
+          messages: typeof messages;
+          system?: string;
+          model?: string;
+          maxTokens?: number;
+        } = { messages };
+        if (system !== undefined) args.system = system;
+        if (model !== undefined) args.model = model;
+        if (maxTokens !== undefined) args.maxTokens = maxTokens;
+        const result = await complete(args);
         if (typeof result === "string") return result;
         // The action may return a richer shape; coerce defensively.
         const text = (result as { text?: string } | null)?.text;
