@@ -88,6 +88,12 @@ export function handleNestedKeyDown(e: KeyboardEvent<HTMLElement>, deps: KeyDeps
       el.innerText === ""
     ) {
       onUpdate({ type: "paragraph" });
+      // List → paragraph swaps the DOM tag (flex shell w/ dot → <p>),
+      // which unmounts the contentEditable and drops focus. Re-focus
+      // once React commits the new element so the user can keep typing
+      // (especially "/" for the slash menu).
+      const blockId = block.id;
+      setTimeout(() => document.querySelector<HTMLElement>(`[data-block-id="${blockId}"]`)?.focus(), 0);
       return;
     }
     const next: BlockType =

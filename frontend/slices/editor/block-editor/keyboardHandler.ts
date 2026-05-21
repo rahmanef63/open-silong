@@ -97,6 +97,13 @@ export async function handleBlockKeyDown(e: KeyboardEvent<HTMLElement>, deps: De
       el.innerText === ""
     ) {
       setBlockType(pageId, block.id, "paragraph");
+      // The list types render <div flex><span dot/><div editable/></div>
+      // while paragraph renders <p editable>. Tag change → React
+      // unmounts the old contentEditable → focus is lost, so subsequent
+      // keystrokes (including "/") go to <body> instead of the new
+      // paragraph. Restore focus once React commits the new element.
+      const blockId = block.id;
+      setTimeout(() => document.querySelector<HTMLElement>(`[data-block-id="${blockId}"]`)?.focus(), 0);
       return;
     }
     const next: BlockType =
