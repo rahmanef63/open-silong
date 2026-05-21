@@ -72,6 +72,25 @@ export const getAllMenus = query({
   },
 });
 
+/** CMS view — returns every row including inactive, with the portal
+ *  field intact so the cross-app admin UI can render the full table. */
+export const listAllForCms = query({
+  args: {},
+  handler: async (ctx) => {
+    const items = await ctx.db.query("zianMenuItems").collect();
+    return items.map((i) => ({
+      portal: i.portal,
+      slug: i.slug,
+      label: i.label,
+      icon: i.icon,
+      route: i.route,
+      order: i.order,
+      requirePermission: i.requirePermission,
+      active: i.active,
+    }));
+  },
+});
+
 /** Upsert one menu item. Used by the seed action + by future admin UI. */
 export const upsert = mutation({
   args: {
@@ -118,11 +137,40 @@ export const upsert = mutation({
   },
 });
 
-/** Toggle active flag (soft delete). */
+/** Toggle active flag (soft delete) — by Convex id. */
 export const setActive = mutation({
   args: { id: v.id("zianMenuItems"), active: v.boolean() },
   handler: async (ctx, { id, active }) => {
     await ctx.db.patch(id, { active, updatedAt: Date.now() });
+  },
+});
+
+/** Toggle active by (portal, slug) — for cross-app HTTP clients that
+ *  don't carry the Convex id. */
+export const setActiveBySlug = mutation({
+  args: { portal: PORTAL, slug: v.string(), active: v.boolean() },
+  handler: async (ctx, { portal, slug, active }) => {
+    const row = await ctx.db
+      .query("zianMenuItems")
+      .withIndex("by_portal_slug", (q) => q.eq("portal", portal).eq("slug", slug))
+      .unique();
+    if (!row) throw new Error(`zianMenuItems not found: ${portal}/${slug}`);
+    await ctx.db.patch(row._id, { active, updatedAt: Date.now() });
+    return row._id;
+  },
+});
+
+/** Hard delete a menu item by (portal, slug). */
+export const removeBySlug = mutation({
+  args: { portal: PORTAL, slug: v.string() },
+  handler: async (ctx, { portal, slug }) => {
+    const row = await ctx.db
+      .query("zianMenuItems")
+      .withIndex("by_portal_slug", (q) => q.eq("portal", portal).eq("slug", slug))
+      .unique();
+    if (!row) return null;
+    await ctx.db.delete(row._id);
+    return row._id;
   },
 });
 
