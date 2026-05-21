@@ -14,9 +14,10 @@
     "slice.json",
     "slice.contract.ts",
     "*.test.ts",
-    "*.test.tsx"
+    "*.test.tsx",
+    "convexAdapter.tsx"
   ],
-  "_skipFilesNote": "Basename match OR *.suffix wildcard. slice.json + slice.contract.ts have rr-specific schemas; *.test.* skips co-located unit tests (rr runs its own test discipline).",
+  "_skipFilesNote": "Basename match OR *.suffix wildcard. slice.json + slice.contract.ts have rr-specific schemas; *.test.* skips co-located unit tests (rr runs its own test discipline). convexAdapter.tsx is the nosion-only production adapter for storage-adapter slices (files, …); rr ships the localStorageAdapter sibling as default.",
   "pathMap": [
     {
       "from": "frontend/shared/lib/utils",
@@ -377,6 +378,42 @@
         "frontend/shared/ui/button.tsx",
         "frontend/shared/ui/popover.tsx"
       ]
+    },
+    "files": {
+      "version": "0.1.0",
+      "syncedAt": "2026-05-21T06:15:56.713Z",
+      "syncedFromCommit": "13006eff66a12d1242426aa002cda6d41c02d58e",
+      "slicePath": "frontend/slices/files",
+      "files": [
+        "frontend/slices/files/adapter/context.tsx",
+        "frontend/slices/files/adapter/localStorageAdapter.ts",
+        "frontend/slices/files/adapter/types.ts",
+        "frontend/slices/files/components/FileChip.tsx",
+        "frontend/slices/files/components/FileUploadButton.tsx",
+        "frontend/slices/files/hooks/useFileUpload.ts",
+        "frontend/slices/files/hooks/useFileUrl.ts",
+        "frontend/slices/files/index.ts",
+        "frontend/slices/files/lib/parse.ts",
+        "frontend/slices/files/slice.manifest.json",
+        "frontend/slices/files/types/index.ts"
+      ],
+      "fileDestMap": {
+        "frontend/slices/files/adapter/context.tsx": "frontend/slices/files/adapter/context.tsx",
+        "frontend/slices/files/adapter/localStorageAdapter.ts": "frontend/slices/files/adapter/localStorageAdapter.ts",
+        "frontend/slices/files/adapter/types.ts": "frontend/slices/files/adapter/types.ts",
+        "frontend/slices/files/components/FileChip.tsx": "frontend/slices/files/components/FileChip.tsx",
+        "frontend/slices/files/components/FileUploadButton.tsx": "frontend/slices/files/components/FileUploadButton.tsx",
+        "frontend/slices/files/hooks/useFileUpload.ts": "frontend/slices/files/hooks/useFileUpload.ts",
+        "frontend/slices/files/hooks/useFileUrl.ts": "frontend/slices/files/hooks/useFileUrl.ts",
+        "frontend/slices/files/index.ts": "frontend/slices/files/index.ts",
+        "frontend/slices/files/lib/parse.ts": "frontend/slices/files/lib/parse.ts",
+        "frontend/slices/files/slice.manifest.json": "frontend/slices/files/slice.manifest.json",
+        "frontend/slices/files/types/index.ts": "frontend/slices/files/types/index.ts"
+      },
+      "skipNpm": [
+        "frontend/shared/lib/utils.ts",
+        "frontend/shared/ui/button.tsx"
+      ]
     }
   },
   "fileHashes": {
@@ -470,6 +507,17 @@
     "frontend/slices/theme-presets/presets/types.ts": "sha256-baff65ba73907f01d229a305cd98239f7857c4d7118e0c69f695bf4113c23949",
     "frontend/slices/theme-presets/presets.ts": "sha256-59d15ad991a3e751ab170206157701fda4b751b634b48cb94d9b75a9da4f6902",
     "frontend/slices/theme-presets/slice.manifest.json": "sha256-43a9486f17fe0e8876c25c87694e5318e319ef2262e42792b5e7ba2a0aa8dd2f",
-    "frontend/slices/theme-presets/useThemePreset.ts": "sha256-59f9b248920541f0176d2ab5d42cd5c9925bcc5233abc6d610d0f09fd05ed1c6"
+    "frontend/slices/theme-presets/useThemePreset.ts": "sha256-59f9b248920541f0176d2ab5d42cd5c9925bcc5233abc6d610d0f09fd05ed1c6",
+    "frontend/slices/files/adapter/context.tsx": "sha256-53c17d5034923efdd1874454714fdc74eca0b13cdfbc957dddafa989cfb56bb6",
+    "frontend/slices/files/adapter/localStorageAdapter.ts": "sha256-747b4298cdd3de00f933ed4c6a09938b0bfa095f2c0ffd439a486705908ffa40",
+    "frontend/slices/files/adapter/types.ts": "sha256-523a2a94d41c7a41ad3ebe763f819497984cbb950cceef050b77c0558892fd67",
+    "frontend/slices/files/components/FileChip.tsx": "sha256-a37e562bb0d679f8a1845d7bc546f6923134ff69ee6ec33473767a730893ae72",
+    "frontend/slices/files/components/FileUploadButton.tsx": "sha256-536d86a7ed504ed12599d1b5a150f1f6d8cf36d2d49ccfd0a34c704b9cbbb85c",
+    "frontend/slices/files/hooks/useFileUpload.ts": "sha256-ad9916c5b4a8b04d8a98be60fb11020a314a8992fcac5d672ca7800a822f1d63",
+    "frontend/slices/files/hooks/useFileUrl.ts": "sha256-112fb914112254ae29f79de05d586539e2b8dcf62606e02e25690a3af1ca2dc8",
+    "frontend/slices/files/index.ts": "sha256-633676e5e0f0dbc51101f4d15ea5dbb82462e0ed7ef00fddb3a88817fed1d260",
+    "frontend/slices/files/lib/parse.ts": "sha256-b741fafa299ee61270b6a4f5862bb93b5de2d01c96ffaf3ccd8d100b4272f124",
+    "frontend/slices/files/slice.manifest.json": "sha256-cbea1a628ad427bef728b57c4fe8e0febc3dbe3e7b1dc4e326ec1d5f9015aee9",
+    "frontend/slices/files/types/index.ts": "sha256-142f3fd9fd51d549c86a97dc6efb33db0f586cd96dc52f2c9b0e2a6dc06fbc9c"
   }
 }

@@ -3,7 +3,7 @@
 > **Auto-generated.** Edit `rr-sync.json` (registry) or rerun sync — DO NOT hand-edit this file.
 > Regenerate: `node scripts/sync-to-rr.mjs --regen-doc`
 
-Tracked slices: **6**  ·  Source: notion-page-clone  ·  Dest: `~/projects/resources`
+Tracked slices: **7**  ·  Source: notion-page-clone  ·  Dest: `~/projects/resources`
 
 ## Summary
 
@@ -12,6 +12,7 @@ Tracked slices: **6**  ·  Source: notion-page-clone  ·  Dest: `~/projects/reso
 | code-block | 0.1.0 | 5 | 0 (0+) | 2026-05-19 |
 | database-cell-selection | 0.1.0 | 4 | 0 (0+) | 2026-05-19 |
 | equation | 0.1.0 | 6 | 1 (1+) | 2026-05-19 |
+| files | 0.1.0 | 11 | 0 (0+) | 2026-05-21 |
 | mentions | 0.1.0 | 51 | 46 (1+) | 2026-05-19 |
 | notifications | 0.1.0 | 5 | 0 (0+) | 2026-05-19 |
 | theme-presets | 0.1.0 | 20 | 0 (0+) | 2026-05-20 |
@@ -64,6 +65,26 @@ Tracked slices: **6**  ·  Source: notion-page-clone  ·  Dest: `~/projects/reso
 **shared deps (1):**
 
 - `frontend/shared/lib/error.ts`  _(also: mentions)_
+
+### `files`
+
+- **version:** 0.1.0
+- **synced:** 2026-05-21T06:15:56.713Z (commit `13006ef`)
+- **slicePath:** `frontend/slices/files`
+
+**slice files (11):**
+
+- `frontend/slices/files/adapter/context.tsx`
+- `frontend/slices/files/adapter/localStorageAdapter.ts`
+- `frontend/slices/files/adapter/types.ts`
+- `frontend/slices/files/components/FileChip.tsx`
+- `frontend/slices/files/components/FileUploadButton.tsx`
+- `frontend/slices/files/hooks/useFileUpload.ts`
+- `frontend/slices/files/hooks/useFileUrl.ts`
+- `frontend/slices/files/index.ts`
+- `frontend/slices/files/lib/parse.ts`
+- `frontend/slices/files/slice.manifest.json`
+- `frontend/slices/files/types/index.ts`
 
 ### `mentions`
 
