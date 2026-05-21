@@ -86,7 +86,7 @@ function Hero() {
           100% built by AI · 0% human typing
         </div>
         <h1 className="font-serif text-5xl font-bold leading-[1.05] tracking-tight md:text-7xl">
-          A Notion clone.
+          A block-based workspace.
           <br />
           <span className="text-brand">Built while I doomscrolled.</span>
         </h1>
@@ -237,7 +237,7 @@ function Features() {
           What&apos;s in the box
         </p>
         <h2 className="font-serif text-3xl font-bold tracking-tight md:text-5xl">
-          The bits Notion has,
+          Block editor + databases,
           <br />
           minus the price tag.
         </h2>
@@ -281,7 +281,7 @@ function Workflow() {
     {
       n: "02",
       title: "Type one sentence to Claude",
-      body: "&ldquo;Build a Notion clone with React, Convex, and zero feelings.&rdquo;",
+      body: "&ldquo;Build a Notion-inspired block workspace with React, Convex, and zero feelings.&rdquo;",
     },
     {
       n: "03",
@@ -340,7 +340,7 @@ function Testimonials() {
     },
     {
       quote:
-        "It&apos;s Notion if Notion was made by a single guy who really wanted to nap.",
+        "A block editor without the SaaS bill. Built for people who want to nap.",
       who: "Hacker News (probably)",
     },
   ];
@@ -385,15 +385,15 @@ function FAQ() {
     },
     {
       q: "Should I trust my notes to a vibe project?",
-      a: "Convex Auth, Postgres-backed self-hosted Convex, daily exports possible. As trustworthy as the Tuesday version of Notion was in 2017. Probably more.",
+      a: "Convex Auth, Postgres-backed self-hosted Convex, daily exports possible. Production-grade infrastructure. Probably more reliable than that one app you started using in 2017.",
     },
     {
-      q: "Why does the landing page look like Notion?",
-      a: "Because Notion solved this. Why fight a battle that&apos;s already lost.",
+      q: "Why does the editor feel familiar?",
+      a: "Block-based editors are a settled UX pattern (Notion, Coda, Craft, AnyType, Outline, Logseq, …). open-silong is an independent clean-room implementation in that pattern — see NOTICE for the trademark + clean-room statement.",
     },
     {
-      q: "Can I import from Notion?",
-      a: "JSON import works. Markdown import works. CSV → database with type inference works. Notion .zip import is on the backlog (i.e., the AI&apos;s next sprint, not yours).",
+      q: "Can I import from other block editors?",
+      a: "JSON import works. Markdown import works. CSV → database with type inference works. ZIP archive import (for tools that export in that format) is on the backlog.",
     },
     {
       q: "Is it free?",

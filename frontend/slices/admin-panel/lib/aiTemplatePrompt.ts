@@ -175,7 +175,7 @@ const RULES = `# Rules
 /** Build a single, fully-formed prompt the user can paste into any
  *  LLM web UI. Includes schema, few-shot, rules, and the user's intent. */
 export function buildAiPrompt(userIntent: string): string {
-  return `You are an expert at designing Nosion (Notion-clone) workspace templates.
+  return `You are an expert at designing block-based workspace templates for open-silong (a Notion-inspired collaborative workspace).
 Generate a single \`TemplateJson\` for the user's intent below.
 
 ${SCHEMA_SPEC}

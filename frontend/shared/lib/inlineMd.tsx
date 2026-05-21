@@ -11,7 +11,7 @@
  *    bare http(s)://…  → <a>
  *
  *  Greedy left-to-right, no nesting beyond one level — sufficient for the
- *  90% Notion-clone case. Returns React children, not HTML strings, so
+ *  90% block-editor case. Returns React children, not HTML strings, so
  *  there is no XSS surface. */
 
 import * as React from "react";
