@@ -13,6 +13,8 @@
 | `scripts/rr-sync-status.mjs` | Drift report. Used by pre-push nag. |
 | `scripts/regen-rr-features-doc.mjs` | Auto-rebuild `docs/rr-sync/features.md`. |
 | `docs/rr-sync/features.md` | Auto-gen inventory (do not hand-edit). |
+| `docs/rr-sync/lift-status.md` | Per-slice lift state (synced / blocked / mega-bundle only). |
+| `docs/rr-sync/2026-05-21-notion-mega-lift-plan.md` | Forward plan for lifting editor + databases as one adapter-driven mega-bundle. Read before refactoring those slices. |
 
 ---
 
