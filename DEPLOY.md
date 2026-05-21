@@ -156,6 +156,62 @@ pnpm start                          # next start on port 3000
 # front with Traefik / nginx on port 443
 ```
 
+### Google OAuth sign-in (optional)
+
+`convex/auth.ts` already wires the Google provider — the UI shows a
+"Sign in with Google" button on `/auth` once the backend env is set.
+
+**1. Create an OAuth 2.0 client in Google Cloud Console**
+
+- Go to <https://console.cloud.google.com/apis/credentials>
+- Create a project (or reuse one) → enable **Google+ API** (or just
+  "OAuth consent screen" → External → fill app name + support email)
+- Credentials → **Create credentials → OAuth client ID** →
+  Application type: **Web application**
+- **Authorized JavaScript origins** (one per environment):
+  - `http://localhost:3000` (local dev)
+  - `https://your-frontend.example.com` (production)
+- **Authorized redirect URIs** — point at your **Convex site origin**
+  (NOT the frontend), path `/api/auth/callback/google`:
+  - Convex Cloud: `https://<your-project>.convex.site/api/auth/callback/google`
+  - Self-hosted: `https://<CONVEX_SITE_ORIGIN>/api/auth/callback/google`
+    (e.g. `https://api-silong.rahmanef.com/api/auth/callback/google` if
+    your Convex backend serves httpActions on the same host as queries,
+    or `https://site-silong.rahmanef.com/api/auth/callback/google` if
+    you split `site-` from `api-` per the Convex self-host pattern)
+- Copy the **Client ID** + **Client secret** that Google generates
+
+**2. Set the env vars on the Convex backend**
+
+```bash
+pnpm exec convex env set AUTH_GOOGLE_ID <client-id>.apps.googleusercontent.com
+pnpm exec convex env set AUTH_GOOGLE_SECRET <client-secret>
+```
+
+Self-hosted variant — add the same two keys to your Dokploy compose
+env (or whichever orchestrator runs the Convex container). The
+backend container picks them up on next restart.
+
+**3. Verify**
+
+```bash
+# List backend env (values shown masked)
+pnpm exec convex env list | grep AUTH_GOOGLE
+```
+
+Visit `/auth` in your browser → "Sign in with Google" should now
+redirect through Google's consent screen and back into the app. If
+you see `redirect_uri_mismatch`, the exact URL you hit (visible in
+the error page) needs to be added verbatim to the OAuth client's
+authorized redirect URIs.
+
+**Adding more providers** — `@convex-dev/auth` ships first-class
+support for GitHub, Apple, Microsoft, Discord, … the same shape
+applies: import the provider in `convex/auth.ts`, set the matching
+`AUTH_<PROVIDER>_ID` + `AUTH_<PROVIDER>_SECRET` env vars on the
+Convex backend, drop a sign-in button in `app/auth/AuthForm.tsx`.
+See <https://labs.convex.dev/auth> for the provider catalog.
+
 ### Backup strategy
 
 Convex self-hosted persists data in Postgres (rows) + local disk (or
