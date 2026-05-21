@@ -327,10 +327,10 @@ function ActionCard({
       <div className="mt-2 flex items-center justify-end gap-1.5">
         {proposal.state === "pending" && (
           <>
-            <Button size="sm" variant="ghost" onClick={onDiscard} className="h-6 px-2 text-[11px]">
+            <Button size="sm" variant="ghost" onClick={onDiscard} className="h-8 px-3 text-xs">
               Discard
             </Button>
-            <Button size="sm" onClick={onApprove} className="h-6 px-2 text-[11px]">
+            <Button size="sm" onClick={onApprove} className="h-8 px-3 text-xs">
               Approve
             </Button>
           </>
@@ -347,7 +347,7 @@ function ActionCard({
           <span className="text-[11px] text-muted-foreground">Discarded</span>
         )}
         {proposal.state === "error" && (
-          <Button size="sm" onClick={onApprove} className="h-6 px-2 text-[11px]">
+          <Button size="sm" onClick={onApprove} className="h-8 px-3 text-xs">
             Retry
           </Button>
         )}
