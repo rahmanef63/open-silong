@@ -28,10 +28,13 @@ interface Props {
   depth?: number;
   /** Owning page id — needed by leaf blocks (e.g. database). */
   pageId?: string;
+  /** 1-based ordinal for `numbered` blocks. Container computes it via
+   *  `computeOrdinals(children)` (see lib/listOrdinals.ts). */
+  ordinal?: number;
 }
 
 export function NestedBlock({
-  block, onUpdate, onAddAfter, onDelete, onFocusNext, onFocusPrev, registerRef, depth = 1, pageId,
+  block, onUpdate, onAddAfter, onDelete, onFocusNext, onFocusPrev, registerRef, depth = 1, pageId, ordinal,
 }: Props) {
   const ref = useRef<HTMLElement | null>(null);
   const [slashOpen, setSlashOpen] = useState(false);
@@ -65,7 +68,7 @@ export function NestedBlock({
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLElement>) =>
-    handleNestedKeyDown(e, { block, slashOpen, onAddAfter, onDelete, onFocusNext, onFocusPrev });
+    handleNestedKeyDown(e, { block, slashOpen, onAddAfter, onDelete, onFocusNext, onFocusPrev, onUpdate });
 
   const textCls = colorClass(block.color);
   const bgCls = bgColorClass(block.bgColor);
@@ -117,6 +120,7 @@ export function NestedBlock({
               onUpdate={onUpdate}
               depth={depth}
               pageId={pageId}
+              ordinal={ordinal}
             />
           </div>
         </PopoverAnchor>

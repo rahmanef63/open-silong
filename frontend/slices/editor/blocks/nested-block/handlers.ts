@@ -70,12 +70,26 @@ interface KeyDeps {
   onFocusPrev?: () => void;
 }
 
-export function handleNestedKeyDown(e: KeyboardEvent<HTMLElement>, deps: KeyDeps) {
-  const { block, slashOpen, onAddAfter, onDelete, onFocusNext, onFocusPrev } = deps;
+interface KeyDepsWithUpdate extends KeyDeps {
+  onUpdate?: (patch: Partial<Block>) => void;
+}
+
+export function handleNestedKeyDown(e: KeyboardEvent<HTMLElement>, deps: KeyDepsWithUpdate) {
+  const { block, slashOpen, onAddAfter, onDelete, onFocusNext, onFocusPrev, onUpdate } = deps;
   const el = e.currentTarget as HTMLElement;
   if (slashOpen && ["ArrowDown", "ArrowUp", "Enter", "Escape"].includes(e.key)) return;
   if (e.key === "Enter" && !e.shiftKey) {
     e.preventDefault();
+    // Notion-canonical: Enter on an empty list item exits the list
+    // by converting the current block to a paragraph.
+    if (
+      onUpdate &&
+      (block.type === "bullet" || block.type === "numbered" || block.type === "todo") &&
+      el.innerText === ""
+    ) {
+      onUpdate({ type: "paragraph" });
+      return;
+    }
     const next: BlockType =
       block.type === "todo" ? "todo" :
       block.type === "bullet" ? "bullet" :

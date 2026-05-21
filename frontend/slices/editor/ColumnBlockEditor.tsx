@@ -1,4 +1,4 @@
-import { Fragment, useRef } from "react";
+import { Fragment, useMemo, useRef } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { Block, BlockType } from "@/shared/types/domain";
@@ -7,6 +7,7 @@ import { uid } from "@/shared/lib/uid";
 import { Plus } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { requireNested } from "./blocks/nestedRegistry";
+import { computeOrdinals } from "./lib/listOrdinals";
 
 const MIN_COL = 10;
 
@@ -24,6 +25,7 @@ function ColumnPane({
   onColumnsChange: (colIndex: number, newBlocks: Block[]) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: `col:${columnBlockId}:${colIndex}` });
+  const ordinals = useMemo(() => computeOrdinals(blocks), [blocks]);
   const refs = useRef<Map<string, HTMLElement | null>>(new Map());
   const registerRef = (id: string, el: HTMLElement | null) => refs.current.set(id, el);
   const focusBlock = (idx: number) => {
@@ -80,6 +82,7 @@ function ColumnPane({
                 block={b}
                 depth={depth}
                 pageId={pageId}
+                ordinal={ordinals.get(b.id)}
                 onUpdate={(patch: Partial<Block>) => onUpdate(b.id, patch)}
                 onAddAfter={(type: BlockType) => onAdd(i, type)}
                 onDelete={() => onDelete(b.id)}
