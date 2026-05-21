@@ -1,40 +1,67 @@
 # `notion` mega-slice — portable bundle
 
-Drop-in bundle that ships the full Nosion experience (block editor +
-Notion-style databases + templates + workspace-io + sharing + comments +
-snapshots + AI agent) under one consumer import. Use it inside another
-React project to embed the whole Notion-like surface without dragging
-27 individual slices manually.
+Drop-in bundle that ships the full open-silong experience (block
+editor + Notion-style databases + templates + workspace-io +
+sharing + comments + snapshots + AI agent) under one consumer
+import. Use it inside another React project to embed the whole
+Notion-inspired surface without dragging 27 individual slices
+manually.
 
-## Consumer pattern
+**Updated 2026-05-21 (Phase 4 of the mega-lift plan)** — the
+provider is now the umbrella for config + `NotionAdapter` + the two
+componentsRegistry contexts. Sub-slices (editor / databases) no
+longer import each other directly; the cycle is hoisted to this
+umbrella. See [`docs/rr-sync/2026-05-21-notion-mega-lift-plan.md`](./rr-sync/2026-05-21-notion-mega-lift-plan.md)
+for the full architecture rationale, and
+[`frontend/slices/notion/README.md`](../frontend/slices/notion/README.md)
+for the in-slice quick-start.
+
+## Consumer pattern (Phase 4+)
 
 ```tsx
 import {
-  NotionAppProvider, NotionPage, NotionDatabase, NotionSidebar,
+  NotionAppProvider, useLocalStorageNotionAdapter,
+  NotionPage, NotionDatabase, NotionSidebar,
 } from "@/slices/notion";
 
-<NotionAppProvider config={{
-  routes: { basePath: "/notes", page: (id) => `/notes/${id}` },
-  features: { ai: false, sharing: false },
-  i18n:    { untitledPage: "Halaman tanpa judul" },
-}}>
-  <NotionSidebar pages={pages} onSelect={openId => router.push(...)} />
-  <NotionPage pageId={openId} />
-</NotionAppProvider>
+function Demo() {
+  const adapter = useLocalStorageNotionAdapter();
+  return (
+    <NotionAppProvider
+      adapter={adapter}
+      config={{
+        routes: { basePath: "/notes", page: (id) => `/notes/${id}` },
+        features: { ai: false, sharing: false },
+        i18n:    { untitledPage: "Halaman tanpa judul" },
+      }}
+    >
+      <NotionSidebar pages={pages} onSelect={openId => router.push(...)} />
+      <NotionPage pageId={openId} />
+    </NotionAppProvider>
+  );
+}
 ```
 
-`NotionAppProvider` is optional — when omitted, every sub-slice falls
-through to `DEFAULT_NOTION_CONFIG` which matches Nosion's own
-conventions. Nosion itself does NOT mount the provider.
+`adapter` is **required** (post-Phase 4). Pick one of the bundled
+reference impls or write your own implementing the `NotionAdapter`
+contract from [`adapter/types.ts`](../frontend/slices/notion/adapter/types.ts).
+`config` and `components` remain optional.
 
 ## Files in this slice
 
 | Path | Role |
 |---|---|
-| `index.ts` | Public-API barrel — re-exports config provider + wrappers |
-| `NotionAppProvider.tsx` | React context for `NotionAppConfig` |
+| `index.ts` | Public-API barrel — re-exports umbrella + wrappers + adapter symbols |
+| `NotionAppProvider.tsx` | Umbrella — mounts adapter + config + 2 componentsRegistry contexts |
 | `lib/config.ts` | Type + `DEFAULT_NOTION_CONFIG` + `mergeNotionConfig` |
+| `lib/useNotionConfig.ts` | Hook over the config context |
 | `slice.manifest.json` | Sub-slice + shared + convex dep list |
+| `README.md` | In-slice quick-start (consumer-facing) |
+| `adapter/types.ts` | `NotionAdapter` contract — backend-agnostic data layer |
+| `adapter/context.tsx` | `NotionAdapterProvider` + `useNotionAdapter` |
+| `adapter/noopAdapter.ts` | Throws-on-call shim for tests / fallback |
+| `adapter/convexAdapter/` | Production impl (skip-listed at rr-lift time) |
+| `adapter/localStorageAdapter/` | rr / demo default (skeleton today, full impl Phase 4+) |
 
 The wrappers themselves (`NotionPage` / `NotionDatabase` / `NotionHeader`
 / `NotionSidebar` / `NotionBlock` / `NotionProperty`) live under

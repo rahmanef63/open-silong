@@ -26,11 +26,18 @@
  */
 
 import { createContext, useContext, type ComponentType, type ReactNode } from "react";
-import type { Block } from "@/shared/types/domain";
+import type { Block, Database, Page, Property } from "@/shared/types/domain";
 
 export interface EditorComponentsRegistry {
   /** Inline / full-page database renderer. */
   DatabaseBlock?: ComponentType<{ pageId: string; block: Block }>;
+  /** Per-row property cell (consumed by RowPropertiesPanel). */
+  PropertyCell?: ComponentType<{
+    db: Database;
+    prop: Property;
+    row: Page;
+    compact?: boolean;
+  }>;
 }
 
 const Ctx = createContext<EditorComponentsRegistry>({});

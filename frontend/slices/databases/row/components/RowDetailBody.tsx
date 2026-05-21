@@ -10,10 +10,6 @@ import {
 } from "@dnd-kit/sortable";
 import { Plus, X } from "lucide-react";
 import { useDbAdapter } from "../../lib/useDbAdapter";
-import {
-  BlockEditor as DefaultBlockEditor,
-  RowPropertiesPanel as DefaultRowPropertiesPanel,
-} from "@/slices/editor";
 import { useNotionAdapter } from "@/slices/notion";
 import { useDatabasesComponents } from "../../lib/componentsRegistry";
 import { PageCommentsProvider } from "@/slices/comments";
@@ -38,15 +34,12 @@ interface Props {
  */
 export function RowDetailBody({ pageId, headerExtras, onClose }: Props) {
   const { updatePage, addBlock, reorderBlocks } = useDbAdapter();
-  // Render-prop seam: consumers can swap BlockEditor / RowPropertiesPanel
-  // via <DatabasesComponentsProvider>. Falls back to the bundled
-  // @/slices/editor impls when no override is mounted. Phase 4 cleanup
-  // removes the default imports once NotionAppProvider mounts the
-  // registry universally.
-  const {
-    BlockEditor = DefaultBlockEditor,
-    RowPropertiesPanel = DefaultRowPropertiesPanel,
-  } = useDatabasesComponents();
+  // Render-prop seam: the mounted <NotionAppProvider> supplies the
+  // bundled BlockEditor + RowPropertiesPanel from @/slices/editor.
+  // Consumers can override via <NotionAppProvider components={{...}}>.
+  // Phase 4 strip: the databases slice itself no longer imports the
+  // editor slice — the registry IS the dep boundary.
+  const { BlockEditor, RowPropertiesPanel } = useDatabasesComponents();
   // useFullPage hook from editor was a thin wrapper over
   // adapter.pages.useOne — call directly so this file does not need
   // to import from @/slices/editor for the read path.
@@ -134,12 +127,18 @@ export function RowDetailBody({ pageId, headerExtras, onClose }: Props) {
           className="mt-2 w-full bg-transparent text-3xl font-bold tracking-tight outline-none placeholder:text-muted-foreground/40"
         />
         <div className="mt-5">
-          <RowPropertiesPanel page={page} />
+          {RowPropertiesPanel ? (
+            <RowPropertiesPanel page={page} />
+          ) : (
+            <div className="rounded border border-dashed border-border bg-muted/30 p-2 text-xs text-muted-foreground">
+              RowPropertiesPanel not registered — wrap in &lt;NotionAppProvider&gt;.
+            </div>
+          )}
         </div>
         <div className="mt-2 prose-editor">
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
             <SortableContext items={page.blocks.map((b) => b.id)} strategy={verticalListSortingStrategy}>
-              {page.blocks.map((b, i) => (
+              {BlockEditor && page.blocks.map((b, i) => (
                 <BlockEditor
                   key={b.id}
                   pageId={page.id}
@@ -150,6 +149,11 @@ export function RowDetailBody({ pageId, headerExtras, onClose }: Props) {
                   focusByOffset={focusByOffset}
                 />
               ))}
+              {!BlockEditor && (
+                <div className="rounded border border-dashed border-border bg-muted/30 p-3 text-xs text-muted-foreground">
+                  BlockEditor not registered — wrap your app in &lt;NotionAppProvider&gt;.
+                </div>
+              )}
             </SortableContext>
           </DndContext>
           <Button
