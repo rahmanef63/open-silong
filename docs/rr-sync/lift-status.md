@@ -11,30 +11,57 @@ Updated after each sync round. Pair with `rr-sync.json.tracked`
 bidirectional dep between editor ↔ databases). Read that doc before
 attempting any work on the 🟡 "in mega-bundle only" rows below.
 
-**Phase 5 status (2026-05-21)**: code-side deliverables READY,
-operator action PENDING.
+**Phase 5 status (2026-05-21)**: lift script + conflicts resolved,
+BUT rr-side build fails due to transitive deps. Files were rolled
+back from rr; re-attempt after Phase 6 store-strip.
 
-- ✅ `localStorageNotionAdapter` flesh-out — full pages + databases +
-  files + recents + user + workspaces impls (single hard-coded demo
-  workspace, reactive via `useSyncExternalStore` + `storage` event,
-  ~500 LOC across `adapter/localStorageAdapter/{store,pages,databases,index}.ts`)
-- ✅ `scripts/sync-to-rr.mjs --with-peers` flag — recursively
-  includes peer-slice deps when lifting a mega-bundle. Bypasses
-  wave-order check (peers travel together inside the bundle).
-- ✅ Dry-run + real lift attempted: `node scripts/sync-to-rr.mjs
-  notion --with-peers`. **Zero convex / cycle blockers** — the
-  structural cycle is gone (Phase 4 win). Only blockers are:
-  - **16 file-level conflicts** with rr-side divergent edits in
-    `comments`, `database-csv`, `database-json`, `code-block`,
-    `equation` (these slices were independently developed in rr
-    post-last-sync). Manual per-file resolution required —
-    `--force` would clobber rr's in-flight work.
-  - rr-side catalog entry + demo page (`app/demo/notion/page.tsx`
-    mounting `useLocalStorageNotionAdapter()`) still TODO.
-  - rr-side `pnpm typecheck` + `pnpm build` verification still TODO.
-- 📋 Operator runbook for completing Phase 5 lives in
-  [`2026-05-21-notion-mega-lift-plan.md` § "rr agent coordination"](./2026-05-21-notion-mega-lift-plan.md#rr-agent-coordination)
-  — read that before attempting conflict resolution.
+Open-silong deliverables shipped
+- ✅ `localStorageNotionAdapter` flesh-out — full pages + databases
+  + files + recents + user + workspaces impls (~500 LOC).
+- ✅ `sync-to-rr.mjs --with-peers` flag — recursive peer lift.
+- ✅ `rr-sync.json.skipFiles` extended with multi-segment path
+  substring pattern. 5 new entries (`slices/comments/`,
+  `slices/database-csv/`, `slices/database-json/`,
+  `slices/code-block/`, `slices/equation/`) preserve rr's
+  divergent standalone slices.
+
+Lift attempted twice (notion --with-peers)
+- 1st attempt: 16 file conflicts in the 5 divergent slices →
+  resolved via skipFiles additions
+- 2nd attempt: zero conflicts, ~45 files written to rr, BUT:
+
+What blocks the rr-side ship
+- **`@convex/_generated/*` transitive imports.** `editor` /
+  `databases` slices still call `useStore()` for non-CRUD reads
+  (block history, reactive page lookup). The store imports
+  `@convex/_generated/dataModel` + `api`. rr has no such types.
+  Fix: complete the strict Phase 4 cleanup — remove `useStore()`
+  from editor entirely, route everything through `useNotionAdapter()`.
+- **`@/components/ui/responsive-dialog`.** `ConfirmProvider` imports
+  it. rr lacks this primitive. Fix: promote to a sibling slice OR
+  add a stub to rr's components/ui.
+- **`FilesAdapter.resolveUrl` breaking change.** Phase 2 added
+  `resolveUrl` to the interface. Custom impls in rr fail typecheck.
+  Fix: add `resolveUrl` to rr's other consumers OR make the
+  addition optional (default fallback via `useUrl`).
+
+These gaps are Phase 6 work — "complete the adapter abstraction"
+pass that Phase 4 left at "good enough for the cycle break". The
+cycle IS broken (editor↔databases zero peer imports). But editor
+still has store dependence for non-cycle-breaking concerns.
+
+rr-side state
+- Lift writes ROLLED BACK (45 untracked removed via
+  `git status --short | grep "^??" | xargs rm -rf`).
+- rr's other in-flight work (workspace-shell staged commits +
+  lib/content/slices.ts auto-gen) NOT touched.
+- `feat(database-json): lift standalone slice from open-silong`
+  rr commit (`a0d1f3f`) stands — committed cleanly per user
+  request before the lift attempt.
+
+📋 Operator runbook in
+[`2026-05-21-notion-mega-lift-plan.md` § "rr agent coordination"](./2026-05-21-notion-mega-lift-plan.md#rr-agent-coordination).
+Re-attempt after Phase 6 store-strip closes the transitive-dep gaps.
 
 ## Summary
 

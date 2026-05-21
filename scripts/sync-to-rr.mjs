@@ -202,18 +202,31 @@ async function main() {
     console.log(`  → likely need pathMap entry OR target file moved/renamed`);
   }
 
-  // filter out skipFiles — three patterns:
-  //   "foo.ts"   → exact basename match
-  //   "*.test.ts" → suffix wildcard
-  //   "convexAdapter/" → directory match (any file under a path
-  //                      segment named "convexAdapter")
+  // filter out skipFiles — four patterns:
+  //   "foo.ts"           → exact basename match
+  //   "*.test.ts"        → suffix wildcard
+  //   "convexAdapter/"   → single-segment match (file under any path
+  //                        segment named "convexAdapter")
+  //   "slices/comments/" → multi-segment path substring (keeps
+  //                        rr-side divergent slices intact during
+  //                        mega-bundle lifts)
   const skipMatch = (rel) => {
     const base = path.basename(rel);
     const segments = rel.split("/");
     for (const p of skipFiles) {
       if (p === base) return true;
       if (p.startsWith("*.") && base.endsWith(p.slice(1))) return true;
-      if (p.endsWith("/") && segments.includes(p.slice(0, -1))) return true;
+      if (p.endsWith("/")) {
+        const inner = p.slice(0, -1);
+        if (!inner.includes("/")) {
+          // single-segment match
+          if (segments.includes(inner)) return true;
+        } else {
+          // multi-segment path substring match (anchor on `/` so
+          // "slices/foo/" doesn't match "X-slices/foo/")
+          if (rel.includes(`/${p}`) || rel.startsWith(p)) return true;
+        }
+      }
     }
     return false;
   };
