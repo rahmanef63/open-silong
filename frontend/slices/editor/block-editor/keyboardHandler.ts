@@ -89,6 +89,16 @@ export async function handleBlockKeyDown(e: KeyboardEvent<HTMLElement>, deps: De
   // ----- editing flow -----
   if (e.key === "Enter" && !e.shiftKey) {
     e.preventDefault();
+    // Notion-canonical: Enter on an empty list item exits the list
+    // (converts current block to paragraph) instead of stacking
+    // another empty list item.
+    if (
+      (block.type === "bullet" || block.type === "numbered" || block.type === "todo") &&
+      el.innerText === ""
+    ) {
+      setBlockType(pageId, block.id, "paragraph");
+      return;
+    }
     const next: BlockType =
       block.type === "todo" ? "todo" :
       block.type === "bullet" || block.type === "numbered" ? block.type :

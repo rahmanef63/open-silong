@@ -12,6 +12,7 @@ import { Button } from "@/shared/ui/button";
 import { findSyncedSource } from "../lib/syncedBlocks";
 import { focusBlockSoon, findBlockNode } from "../lib/focusBlock";
 import { requireNested } from "./nestedRegistry";
+import { computeOrdinals } from "../lib/listOrdinals";
 import { bgColorClass } from "../lib/colors";
 
 /** Synced block — Notion-canonical reusable content.
@@ -246,6 +247,7 @@ function SyncedChildrenList({
   editable: boolean;
 }) {
   const NestedBlock = requireNested();
+  const ordinals = useMemo(() => computeOrdinals(children), [children]);
   return (
     <SortableContext items={children.map((c) => c.id)} strategy={verticalListSortingStrategy}>
       <div className="space-y-0.5">
@@ -255,6 +257,7 @@ function SyncedChildrenList({
             block={child}
             depth={1}
             pageId={pageId}
+            ordinal={ordinals.get(child.id)}
             onUpdate={(patch: Partial<Block>) => {
               if (!editable) return;
               setChildren(children.map((c, j) => (j === ci ? { ...c, ...patch } : c)));

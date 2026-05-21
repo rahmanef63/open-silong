@@ -29,11 +29,14 @@ interface Props {
   onUpdate: (patch: Partial<Block>) => void;
   depth: number;
   pageId?: string;
+  /** 1-based ordinal for numbered blocks, computed by the parent
+   *  container. Falls back to 1 if absent. */
+  ordinal?: number;
 }
 
 const wrap = (inner: React.ReactNode) => <div className="flex-1 min-w-0">{inner}</div>;
 
-export function NestedContent({ block, baseProps, setRef, handleKeyDown, onUpdate, depth, pageId }: Props) {
+export function NestedContent({ block, baseProps, setRef, handleKeyDown, onUpdate, depth, pageId, ordinal }: Props) {
   const navigate = useNavigate();
   const { getPage } = useStore();
 
@@ -79,7 +82,7 @@ export function NestedContent({ block, baseProps, setRef, handleKeyDown, onUpdat
   case "numbered":
     return (
       <div className="flex items-start gap-2 py-0.5">
-        <span className="mt-0.5 text-sm text-muted-foreground tabular-nums shrink-0">•</span>
+        <span className="mt-0.5 text-sm text-muted-foreground tabular-nums shrink-0 min-w-[1.5em]">{ordinal ?? 1}.</span>
         <div ref={setRef as React.Ref<HTMLDivElement>} {...baseProps} />
       </div>
     );

@@ -1,4 +1,4 @@
-import { useEffect, useRef, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, type CSSProperties } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { ChevronRight, Plus } from "lucide-react";
@@ -10,6 +10,7 @@ import { BlockShell } from "./BlockShell";
 import { BlockControls } from "./BlockControls";
 import { requireNested } from "./nestedRegistry";
 import { bgColorClass, colorClass } from "../lib/colors";
+import { computeOrdinals } from "../lib/listOrdinals";
 import { Button } from "@/shared/ui/button";
 
 /** Body of a toggle block — chevron + heading + children list.
@@ -27,6 +28,7 @@ export function ToggleContent({
 }) {
   const collapsed = block.collapsed !== false;
   const children: Block[] = block.children ?? [];
+  const ordinals = useMemo(() => computeOrdinals(children), [children]);
   const { setNodeRef: setDropRef, isOver: dropIsOver } = useDroppable({ id: `toggle:${block.id}` });
   const headRef = useRef<HTMLDivElement | null>(null);
 
@@ -104,6 +106,7 @@ export function ToggleContent({
                   block={child}
                   depth={depth}
                   pageId={pageId}
+                  ordinal={ordinals.get(child.id)}
                   onUpdate={(patch: Partial<Block>) => {
                     setChildren(children.map((c, j) => (j === ci ? { ...c, ...patch } : c)));
                   }}
