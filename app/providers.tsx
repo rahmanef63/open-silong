@@ -8,6 +8,15 @@ import { ChunkErrorBoundary } from "@/shared/components/ChunkErrorBoundary";
 import { GlobalErrorListeners } from "@/shared/components/GlobalErrorListeners";
 import { ServiceWorkerCleanup } from "@/shared/components/ServiceWorkerCleanup";
 import { VersionWatcher } from "@/shared/components/VersionWatcher";
+import { FilesAdapterProvider } from "@/slices/files";
+import { useConvexFilesAdapter } from "@/slices/files/adapter/convexAdapter";
+
+function FilesProvider({ children }: { children: ReactNode }) {
+  // Must mount inside ConvexAuthNextjsProvider — the adapter calls
+  // useMutation/useQuery which need the Convex client context.
+  const adapter = useConvexFilesAdapter();
+  return <FilesAdapterProvider adapter={adapter}>{children}</FilesAdapterProvider>;
+}
 
 export default function Providers({ children }: { children: ReactNode }) {
   const [convex] = useState(
@@ -22,7 +31,7 @@ export default function Providers({ children }: { children: ReactNode }) {
         {/* Mounted at root so the version-update toast also shows on
          *  /auth, /share, and other routes outside DashboardShell. */}
         <SonnerToaster richColors closeButton />
-        {children}
+        <FilesProvider>{children}</FilesProvider>
       </ConvexAuthNextjsProvider>
     </ChunkErrorBoundary>
   );

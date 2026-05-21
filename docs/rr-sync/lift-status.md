@@ -1,4 +1,4 @@
-# open-silong → rr lift status (2026-05-20)
+# open-silong → rr lift status (2026-05-21)
 
 Per-slice tracking of every open-silong slice's lift state to rr.
 Updated after each sync round. Pair with `rr-sync.json.tracked`
@@ -9,9 +9,9 @@ Updated after each sync round. Pair with `rr-sync.json.tracked`
 
 | Status | Count | Where |
 |---|---|---|
-| ✅ Synced (compiles in rr) | **6** | `frontend/slices/<slug>/` in rr standalone |
+| ✅ Synced (compiles in rr) | **7** | `frontend/slices/<slug>/` in rr standalone |
 | 🟡 In mega-bundle only | **20** | `template-base/frontend/slices/notion/slices/` in rr |
-| 🔴 Blocked-pending-adapter | **11** | needs lift but convex/coupling/missing-primitives |
+| 🔴 Blocked-pending-adapter | **10** | needs lift but convex/coupling/missing-primitives |
 | **TOTAL** | **37** | every nosion slice with `slice.manifest.json` |
 
 ## ✅ Synced (file-level, tsc green in rr)
@@ -24,19 +24,22 @@ Updated after each sync round. Pair with `rr-sync.json.tracked`
 | `database-cell-selection` | 2026-05-19 | sync round 0 | pure UI hook |
 | `mentions` | 2026-05-19 | sync round 0 | pure UI parser |
 | `theme-presets` | 2026-05-20 | sync round 1 (BS) | tweakcn + next-themes, no backend |
+| `files` | 2026-05-21 | sync round 2 (BT) | **storage-adapter pattern** — `FilesAdapter` (upload + remove + useUrl). nosion wires `useConvexFilesAdapter` (skip-listed in rr-sync.json), rr defaults to `useLocalStorageFilesAdapter` (data-URL bucket). First proof of the adapter contract — reference for the remaining round 2 lifts. |
 
 Tag in rr catalog: `notion-like`. Source field: `notion-page-clone`.
 
-## 🔴 Blocked-pending-adapter (11 slices)
+## 🔴 Blocked-pending-adapter (10 slices)
 
-Each row: blocker + adapter contract needed.
+Each row: blocker + adapter contract needed. **Pattern reference:**
+the `files` slice (synced 2026-05-21) is the first proof of the
+storage-adapter contract — see its `adapter/types.ts` and
+`adapter/{convex,localStorage}Adapter.{tsx,ts}` for the template.
 
 | Slice | Blocker | Path forward |
 |---|---|---|
 | `ai-agent` | 2 `@convex/_generated` imports (AI tool/skill registry tables) | Storage-adapter interface for registry CRUD; localStorage fallback for demo |
-| `cover` | 2 convex imports (`files` slice + Unsplash backend action) | Adapter for upload + Unsplash render-prop; strip backend coupling |
+| `cover` | 2 convex imports (`files` slice + Unsplash backend action) | Now unblocked on the files side; needs Unsplash render-prop adapter only |
 | `feedback` | 3 convex imports (feedback submission mutations) | Adapter for submit; localStorage demo bucket |
-| `files` | 2 convex imports (file storage queries) | Adapter for read/write; localStorage data URLs for demo |
 | `inbox` | 2 convex imports (notifications + activity feed) | Adapter for stream; SSE or polling option |
 | `library` | depends on `workspace-io` (blocked) | Lift after workspace-io adapter |
 | `mobile-nav` | deps on admin-panel + ai-agent + inbox + templates (all blocked) | Cascade-blocked; lift after deps |
@@ -94,8 +97,8 @@ direct `@convex/_generated` import; pass data via render-prop or
 adapter call.
 
 Per-slice adapter work is **~2-4 hours** depending on surface area.
-Realistic batch order:
-1. files (foundation — many depend on it)
+Realistic batch order (✅ marks done):
+1. ✅ files (foundation — many depend on it) — synced 2026-05-21
 2. workspace-members (clean — 1 convex import)
 3. workspace-io (depends on files; JSON serializer already pure)
 4. library (depends on workspace-io)
