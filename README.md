@@ -202,11 +202,28 @@ see [`SECURITY.md`](./SECURITY.md) for SLAs and scope.
 
 ---
 
-### Trademark notice
+### Trademark + inspiration notice
 
-`open-silong` is **not affiliated with, endorsed by, or associated
-with Notion Labs, Inc.** "Notion" is a registered trademark of Notion
-Labs. This project is independently developed and uses the name only
-as a generic descriptor of its UI metaphor (block-based editor +
-database). Any visual / interaction resemblance is inspirational, not
-derivative.
+`open-silong` is an **independent open-source project**. It is **not
+affiliated with, sponsored by, endorsed by, or associated with Notion
+Labs, Inc.** in any way.
+
+"Notion" is a registered trademark of Notion Labs, Inc., used here
+only in a **nominative / descriptive sense** to identify a familiar UI
+pattern (block-based editor + lightweight databases). This usage is
+analogous to how an "iPhone case" advertises compatibility without
+claiming any link to Apple.
+
+The project is **inspired by** Notion's block-editor pattern but is a
+**clean-room implementation** built independently with the
+[Convex](https://convex.dev) backend, [Next.js](https://nextjs.org)
+frontend, and [shadcn/ui](https://ui.shadcn.com) primitives. No
+proprietary Notion code, assets, or trade secrets have been used.
+Database import/export adapters (CSV / JSON / Markdown / ZIP) target
+documented public file formats for the explicit purpose of
+**interoperability** — a use case covered by fair-use principles.
+
+If you are a representative of Notion Labs, Inc. and have concerns
+about this project, please reach out via the email in
+[`SECURITY.md`](./SECURITY.md) — we are happy to adjust naming,
+disclaimers, or surfaces in good faith.

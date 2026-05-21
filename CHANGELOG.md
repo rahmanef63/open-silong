@@ -68,7 +68,7 @@ monorepo:
   demo" + pointer to open-silong as the production stack
 - `notion-shell` slice agentRecipe adds product-pointer block
 - Two-surface model: rr = template marketplace + lifted slice;
-  open-silong = production OSS Notion clone
+  open-silong = production OSS Notion-inspired workspace
 
 ### rr-sync round 1 (rr commit `193f9f0`, this repo commit `abb17f6`)
 

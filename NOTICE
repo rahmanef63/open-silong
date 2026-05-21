@@ -1,0 +1,86 @@
+open-silong
+Copyright (c) 2026 Rahman Effendi and open-silong contributors.
+
+This product is licensed under the MIT License (see LICENSE).
+
+===============================================================================
+Trademark notice
+===============================================================================
+
+This project is **not affiliated with, sponsored by, endorsed by, or
+associated with Notion Labs, Inc.** in any way.
+
+"Notion" is a registered trademark of Notion Labs, Inc. Any reference to
+"Notion" within this project's documentation, source code comments,
+configuration files, or user interface is made in a **nominative /
+descriptive sense** — to identify a familiar UI pattern (block-based
+editor + lightweight relational databases) or to document
+interoperability with Notion's published file formats (CSV, ZIP, JSON
+export shape). No claim of affiliation, endorsement, or origin is made
+or implied.
+
+This project is an **independent, clean-room implementation**. It has
+been built from scratch using publicly available technologies
+(Convex, Next.js, React, Tailwind CSS, shadcn/ui) and contains **no
+proprietary Notion code, design files, brand assets, trade secrets, or
+confidential information**.
+
+===============================================================================
+Third-party software
+===============================================================================
+
+This project bundles third-party open-source software. Their licenses
+apply to those components. Notable dependencies:
+
+- Next.js (MIT) — https://github.com/vercel/next.js
+- React (MIT) — https://github.com/facebook/react
+- Convex (Apache-2.0) — https://github.com/get-convex/convex-backend
+- Tailwind CSS (MIT) — https://github.com/tailwindlabs/tailwindcss
+- shadcn/ui (MIT) — https://github.com/shadcn-ui/ui
+- Radix UI (MIT) — https://github.com/radix-ui/primitives
+- lucide-react (ISC) — https://github.com/lucide-icons/lucide
+- KaTeX (MIT) — https://github.com/KaTeX/KaTeX
+- Highlight.js (BSD-3-Clause) — https://github.com/highlightjs/highlight.js
+- date-fns (MIT) — https://github.com/date-fns/date-fns
+- @dnd-kit (MIT) — https://github.com/clauderic/dnd-kit
+- cmdk (MIT) — https://github.com/pacocoursey/cmdk
+- @convex-dev/auth (Apache-2.0) — https://github.com/get-convex/convex-auth
+- recharts (MIT) — https://github.com/recharts/recharts
+
+The full dependency list is in `package.json`. Run
+`pnpm licenses list` for a complete machine-readable inventory.
+
+===============================================================================
+Interoperability formats
+===============================================================================
+
+For data portability, this project implements importers and exporters
+targeting publicly documented file formats used by Notion (and other
+block-editor / note-taking products):
+
+- Markdown (CommonMark + GFM extensions)
+- CSV (RFC 4180)
+- HTML (W3C)
+- JSON (in shapes that mirror Notion's public API documentation
+  available at https://developers.notion.com/, for the explicit
+  purpose of enabling users to move their data between products)
+- ZIP archives bundling the above
+
+These adapters consume / produce **public, documented file formats
+only**. Implementing such interoperability is a long-recognised fair-use
+of trademark + format references — see, e.g., **Sega Enterprises Ltd.
+v. Accolade, Inc.**, 977 F.2d 1510 (9th Cir. 1992) and
+**Sony Computer Entertainment, Inc. v. Connectix Corp.**, 203 F.3d 596
+(9th Cir. 2000) — both of which protect reverse-engineered
+interoperability work.
+
+===============================================================================
+Contact
+===============================================================================
+
+If you are a representative of Notion Labs, Inc., or any other company
+referenced in this NOTICE, and have **good-faith concerns** about how
+this project uses your trademark, brand, or documented formats, please
+reach the maintainers via the email in SECURITY.md. Adjustments —
+including naming, surface labelling, or removal of specific references
+— will be considered in good faith.
