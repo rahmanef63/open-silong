@@ -114,13 +114,13 @@ top of `mcpHandler`.
 
 ```bash
 # Search
-curl https://api-notion-page-clone.rahmanef.com/mcp/v1 \
+curl https://api-silong.rahmanef.com/mcp/v1 \
   -H "authorization: Bearer $TOKEN" \
   -H "content-type: application/json" \
   -d '{"tool":"nosion-search","params":{"query":"meeting notes"}}'
 
 # Create a page
-curl https://api-notion-page-clone.rahmanef.com/mcp/v1 \
+curl https://api-silong.rahmanef.com/mcp/v1 \
   -H "authorization: Bearer $TOKEN" \
   -H "content-type: application/json" \
   -d '{
@@ -140,7 +140,7 @@ curl https://api-notion-page-clone.rahmanef.com/mcp/v1 \
   }'
 
 # Insert a row in a database
-curl https://api-notion-page-clone.rahmanef.com/mcp/v1 \
+curl https://api-silong.rahmanef.com/mcp/v1 \
   -H "authorization: Bearer $TOKEN" \
   -H "content-type: application/json" \
   -d '{

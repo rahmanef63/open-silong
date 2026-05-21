@@ -547,9 +547,11 @@ export default defineSchema({
     .index("by_user", ["userId"])
     .index("by_updated", ["updatedAt"]),
 
-  /** Cross-app dashboard menu items consumed by homestay-zian (zianinn.com)
-   *  and any other downstream app. Edit via the Convex dashboard table view
-   *  or via mutations in `convex/zianMenu.ts`. Public read, no auth gate. */
+  /** Generic per-portal dashboard menu items. Useful for any downstream
+   *  app consuming this Convex backend that wants pluggable navigation
+   *  per role (owner / staff / guest / …). Edit via the Convex dashboard
+   *  table view or via mutations in `convex/zianMenu.ts`. Public read,
+   *  no auth gate. */
   zianMenuItems: defineTable({
     portal: v.string(),            // owner | manager | staff | guest | resident | security | admin
     slug: v.string(),              // stable id within portal

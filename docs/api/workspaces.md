@@ -156,57 +156,57 @@ Membership-aware reads/writes go through
 Legacy unstamped rows fall back to owner-only via `row.userId === viewer`
 when the active workspace is the viewer's personal one.
 
-## Portability into SuperSpace
+## Portability into a host platform
 
-Nosion will ship as a feature inside SuperSpace. To keep the workspace
-interface portable, the contract on the frontend `Workspace` type is
-deliberately minimal:
+open-silong is designed to be embeddable inside larger multi-tenant
+host platforms. To keep the workspace interface portable, the contract
+on the frontend `Workspace` type is deliberately minimal:
 
 ```ts
 interface Workspace {
   id: string;          // string id (Convex id today; opaque to consumers)
   name: string;
   emoji: string;       // emoji|url|lucide:name — DynamicIcon already handles all 3
-  slug?: string;       // url-safe; SuperSpace can choose to wrap this
+  slug?: string;       // url-safe; a host may choose to wrap this
   isPersonal?: boolean;
   role?: "owner" | "editor" | "viewer";
 }
 ```
 
-Rules to keep us portable:
+Rules to keep the surface portable:
 
-1. **No Nosion-specific fields on `Workspace`** — e.g. don't put
+1. **No app-specific fields on `Workspace`** — e.g. don't put
    `defaultPageId` or `wikiRootId` here. Those belong on a per-app
-   config row (`nosionWorkspaceConfig.workspaceId`) so SuperSpace can
-   adopt the same `Workspace` shape for unrelated apps (Sheets,
-   Whiteboard, etc.).
-2. **Roles are an open union** — when SuperSpace introduces
-   `admin` / `guest`, widen the union; existing checks
+   config row (`nosionWorkspaceConfig.workspaceId`) so a host can
+   reuse the same `Workspace` shape for unrelated apps (sheets,
+   whiteboards, etc.).
+2. **Roles are an open union** — when a host introduces extra roles
+   (`admin` / `guest`), widen the union; existing checks
    (`role === "owner"`) keep working.
-3. **`id` is opaque** — never branch on convex id format. SuperSpace
-   may switch to UUIDv7 later.
+3. **`id` is opaque** — never branch on convex id format. A host may
+   switch the underlying id format later (e.g. UUIDv7).
 4. **`emoji` is icon-agnostic** — `DynamicIcon` already accepts
-   `<emoji>`, `lucide:<name>`, or `<https://...png>`. SuperSpace's
-   icon system slots in without breaking the read path.
-5. **Personal workspace is a Nosion convention** — SuperSpace might
-   omit it or model it differently (e.g. a "Drafts" tenant). Treat
-   `isPersonal` as advisory; never make it load-bearing for permission
-   checks.
-6. **Membership is the source of truth** — never trust `workspace.role`
-   on the client to gate writes; always re-check on the server via
-   `requireWorkspaceMember` / `requireWorkspaceAccess`.
+   `<emoji>`, `lucide:<name>`, or `<https://...png>`. Any host icon
+   system slots in without breaking the read path.
+5. **Personal workspace is a convention, not a contract** — a host
+   may omit it or model it differently (e.g. a "Drafts" tenant).
+   Treat `isPersonal` as advisory; never make it load-bearing for
+   permission checks.
+6. **Membership is the source of truth** — never trust
+   `workspace.role` on the client to gate writes; always re-check on
+   the server via `requireWorkspaceMember` / `requireWorkspaceAccess`.
 7. **The store API is the abstraction surface**:
    `useStore() → { workspace, workspaces, setActiveWorkspace,
    createWorkspace, deleteWorkspace, leaveWorkspace, updateWorkspace }`.
    When porting, only this surface needs to be re-implemented against
-   the SuperSpace tenancy SDK. The 50+ consumer components stay
+   the host's tenancy SDK. The 50+ consumer components stay
    identical.
-8. **No raw Convex ids in URLs yet** — slug routing (session 2) will
-   give SuperSpace a stable URL contract (`/[wsSlug]/p/<pageId>`)
-   that does not leak the convex id of the workspace.
+8. **No raw Convex ids in URLs** — slug routing gives a host a stable
+   URL contract (`/[wsSlug]/p/<pageId>`) that does not leak the
+   convex id of the workspace.
 
 The sidebar / settings switchers consume only the store contract above
-— they will mount unchanged inside SuperSpace as long as the host
+— they mount unchanged inside any host platform as long as the host
 provides the same `useStore()` shape (or an adapter).
 
 ## What's NOT scoped yet (sessions 2+)

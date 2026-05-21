@@ -1,33 +1,52 @@
+<div align="center">
+
 # open-silong
 
-**Open-source collaborative workspace, built for everyone.**
+**Open-source, self-hostable, Notion-inspired collaborative workspace.**
 
-An open-source Notion-inspired workspace for teams and personal use —
-self-hostable, block-based, with multi-workspace, real-time sync,
-sharing, comments, snapshots, and a polished editor.
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
+[![Stack](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org)
+[![React](https://img.shields.io/badge/React-19-61dafb?logo=react)](https://react.dev)
+[![Convex](https://img.shields.io/badge/Convex-1.36-cc4444)](https://convex.dev)
+[![Tailwind](https://img.shields.io/badge/Tailwind-v4-38bdf8?logo=tailwindcss)](https://tailwindcss.com)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](./CONTRIBUTING.md)
 
-Live demo · [silong.rahmanef.com](https://silong.rahmanef.com)
-License · MIT
-Stack · Next 16 (App Router) · React 19 · Convex 1.36 · Tailwind v4 · shadcn
+[Live demo](https://silong.rahmanef.com) ·
+[Docs](./docs/) ·
+[Contributing](./CONTRIBUTING.md) ·
+[Security](./SECURITY.md)
+
+</div>
 
 ---
 
-## Why open-silong?
+A block-based workspace for notes, docs, and lightweight databases.
+Built for teams that want to **own their data**: self-host the full
+stack with Docker Compose, or run on Convex Cloud free tier. MIT
+licensed. No vendor lock-in.
 
-- **All your notes, your server.** Self-host the whole stack (Next +
-  Convex via Docker Compose) and own your data.
-- **Notion-grade UX.** Block editor with slash menu, inline-markdown
-  decorator, drag-handle reorder, cover image. Databases with 6
-  views (Table / Board / List / Gallery / Calendar / Feed), filter,
-  sort, search, 10 property types.
-- **Multi-workspace + sharing.** Per-workspace membership, role-based
-  access, public share links with optional password, wiki mode.
-- **Built-in collaboration.** Comments, @mentions, version snapshots,
-  presence indicators (per-doc).
+## Features
+
+- **Block editor.** Slash-menu, drag-handle reorder, nested children,
+  inline markdown decorator (bold/italic/strike/code/links), cover
+  image, 30+ block types (paragraph, headings, todo, bullet/numbered
+  lists, toggle, callout, quote, code, equation, table, image,
+  video, embed, columns, divider, synced, …).
+- **Databases.** Six views (Table · Board · List · Gallery · Calendar
+  · Feed). Filter, sort, search, group, hide. Ten property types.
+  Inline embed in any page OR open as full page.
+- **Multi-workspace.** Per-user workspaces, member roles, invites.
+  Workspace switcher in sidebar.
+- **Sharing.** Public read-only share links (optional password +
+  expiry). Wiki mode. Per-page grants.
+- **Collaboration.** Threaded comments per block, `@page` mentions,
+  presence indicators, version snapshots.
 - **Import / export.** JSON round-trip preserves blocks + databases
-  + sharing state. Markdown export per page.
+  + sharing state. Markdown export per page. ZIP bundle export.
 - **MCP-ready.** First-class Notion-canonical JSON HTTP surface for
-  AI tooling and integrations.
+  AI agents and integrations (`/mcp/v1`).
+- **Self-host friendly.** Docker Compose template for Convex backend +
+  Postgres. Traefik-frontable. Dokploy-tested.
 
 ## Quick start (pick a lane)
 
@@ -37,12 +56,12 @@ Stack · Next 16 (App Router) · React 19 · Convex 1.36 · Tailwind v4 · shadc
 git clone https://github.com/rahmanef63/open-silong.git
 cd open-silong
 pnpm install
-cp .env.example .env.local       # fill in NEXT_PUBLIC_CONVEX_URL after step 3
-npx convex dev                   # creates a Convex Cloud project, prints URL
-pnpm dev                         # open http://localhost:3000
+cp .env.example .env.local        # fill NEXT_PUBLIC_CONVEX_URL after step 4
+npx convex dev                    # creates Convex Cloud project, prints URL
+pnpm dev                          # http://localhost:3000
 ```
 
-Convex Cloud free tier covers small teams. Detailed steps in
+Convex Cloud free tier covers small teams. Full walk-through in
 [`DEPLOY.md`](./DEPLOY.md#lane-1--convex-cloud).
 
 ### Lane 2 — Self-hosted (Docker Compose, full control)
@@ -50,37 +69,55 @@ Convex Cloud free tier covers small teams. Detailed steps in
 ```bash
 git clone https://github.com/rahmanef63/open-silong.git
 cd open-silong
-cp .env.example .env.local       # fill in INSTANCE_NAME / INSTANCE_SECRET / JWT_PRIVATE_KEY / JWKS / CONVEX_ADMIN_KEY / POSTGRES_URL
-docker compose up -d             # spins Convex backend on port 3210
+cp .env.example .env.local        # fill INSTANCE_*, JWT_*, POSTGRES_URL
+docker compose up -d              # Convex backend on port 3210
 pnpm install
-pnpm exec convex deploy --yes    # push schema + functions to your backend
-pnpm dev                         # open http://localhost:3000
+pnpm exec convex deploy --yes     # push schema + functions
+pnpm dev                          # http://localhost:3000
 ```
 
 Full Dokploy + Traefik + Postgres + S3 setup in
 [`DEPLOY.md`](./DEPLOY.md#lane-2--self-hosted-docker-compose).
 
-### Lane 3 — Try it without installing anything
+### Lane 3 — Try without installing
 
-Open [silong.rahmanef.com](https://silong.rahmanef.com) — public demo
-deploy. Sign up with email magic link, start writing.
+[silong.rahmanef.com](https://silong.rahmanef.com) — public demo.
+Sign in with email magic link, start writing. Data is real, instance
+is shared.
 
-> Looking for a **localStorage-only template** (no backend, no auth)?
-> The same UI ships as `notion-page-clone-os` in the
-> [rahmanef-resources-site](https://github.com/rahmanef63/resources)
-> template marketplace: `npx rr add notion-page-clone-os`.
+### Lane 4 — Template only (no backend)
+
+Looking for the UI as a localStorage-only starter? The same editor
+ships as `notion-page-clone-os` in the
+[rahman-resources](https://github.com/rahmanef63/resources) template
+marketplace:
+
+```bash
+npx rahman-resources@latest add notion-page-clone-os
+```
+
+## Stack
+
+| Layer | Choice | Why |
+|---|---|---|
+| Frontend | Next 16 (App Router) + React 19 | RSC, streaming, file-based routing |
+| Styling | Tailwind v4 + shadcn/ui | Theme tokens, primitives, dark mode |
+| Backend | Convex 1.36 (self-hostable) | Realtime, optimistic, typed end-to-end |
+| Auth | `@convex-dev/auth` | Magic-link, OAuth-ready, no Clerk |
+| Storage | Convex file storage OR S3 adapter | Pluggable per slice |
+| Search | Convex full-text index | No external search service |
+| Deploy | Docker Compose + Traefik (self-host) OR Convex Cloud | Pick your trade-off |
 
 ## Architecture (one screen)
 
 ```
 app/                  Next 16 App Router routes
-  dashboard/*         Authenticated surfaces (pages, databases, settings, …)
+  dashboard/*         Authenticated surfaces (pages, db, settings, …)
   share/[id]          Public read-only share surface
   preview/*           Marketing + sandbox
 
 frontend/
-  slices/<name>/      Vertical feature slices (editor, databases, comments,
-                      mentions, snapshots, sharing, wiki, …)
+  slices/<name>/      Vertical feature slices — see docs/api/slices.md
   shared/             Cross-slice primitives, providers, store hooks
 proxy.ts              Convex auth optimistic gate (not the security boundary)
 
@@ -93,15 +130,43 @@ convex/
 docker-compose.yml    Convex self-hosted (port 3210, Traefik-frontable)
 ```
 
-Full slice index and per-feature docs live under [`docs/`](./docs/).
-Architectural decisions and audit notes:
-[`docs/audit/`](./docs/audit/). OSS readiness tracker:
-[`docs/notion-clone/PUBLIC-READINESS.md`](./docs/notion-clone/PUBLIC-READINESS.md).
+The codebase follows a **slice architecture**: each feature lives in
+`frontend/slices/<name>/` with optional `convex/features/<name>/`
+mirror. Cross-slice imports go **through the barrel only**. See
+[`CONTRIBUTING.md`](./CONTRIBUTING.md#slice-contract) for the rules.
+
+## Documentation
+
+| Topic | Where |
+|---|---|
+| Per-slice API + UX docs | [`docs/api/`](./docs/api/) |
+| Deploy walkthroughs (cloud + self-host + Dokploy) | [`DEPLOY.md`](./DEPLOY.md) |
+| Slice catalog (every feature in one page) | [`docs/api/slices.md`](./docs/api/slices.md) |
+| Architecture decisions + audit notes | [`docs/audit/`](./docs/audit/) |
+| Contributing guide | [`CONTRIBUTING.md`](./CONTRIBUTING.md) |
+| Security policy | [`SECURITY.md`](./SECURITY.md) |
+| Code of Conduct | [`CODE_OF_CONDUCT.md`](./CODE_OF_CONDUCT.md) |
+| Changelog | [`CHANGELOG.md`](./CHANGELOG.md) |
+
+## Roadmap
+
+- [x] Block editor + 6 database views
+- [x] Multi-workspace + invites
+- [x] Public share links + wiki mode
+- [x] Comments + mentions + snapshots
+- [x] JSON import/export
+- [x] MCP HTTP surface
+- [ ] OAuth providers (Google, GitHub)
+- [ ] Real-time multiplayer cursors
+- [ ] PWA + offline mode
+
+See [`docs/notion-clone/ROADMAP.md`](./docs/notion-clone/ROADMAP.md)
+for the full backlog.
 
 ## Contributing
 
-Bug reports, PRs, and feature ideas welcome. See
-[`CONTRIBUTING.md`](./CONTRIBUTING.md) for dev setup, slice
+Bug reports, feature ideas, doc fixes, and code PRs are all welcome.
+Read [`CONTRIBUTING.md`](./CONTRIBUTING.md) for dev setup, slice
 architecture, and PR conventions.
 
 By participating, you agree to the
@@ -109,17 +174,21 @@ By participating, you agree to the
 
 ## Security
 
-Found a vulnerability? Please **don't** open a public issue — see
-[`SECURITY.md`](./SECURITY.md) for the responsible-disclosure
-process.
+Found a vulnerability? Please **don't** open a public issue. Email
+**security@rahmanef.com** or use a private GitHub Security Advisory —
+see [`SECURITY.md`](./SECURITY.md) for SLAs and scope.
 
 ## License
 
-[MIT](./LICENSE). © 2026 Rahman Effendi and contributors.
+[MIT](./LICENSE) © 2026 Rahman Effendi and open-silong contributors.
+
+---
+
+### Trademark notice
 
 `open-silong` is **not affiliated with, endorsed by, or associated
-with Notion Labs, Inc.** "Notion" is a registered trademark of
-Notion Labs. This project is independently developed and uses the
-name only as a generic descriptor of its UI metaphor (block-based
-editor + database). Any visual / interaction resemblance is
-inspirational, not derivative.
+with Notion Labs, Inc.** "Notion" is a registered trademark of Notion
+Labs. This project is independently developed and uses the name only
+as a generic descriptor of its UI metaphor (block-based editor +
+database). Any visual / interaction resemblance is inspirational, not
+derivative.

@@ -44,7 +44,7 @@ export const contactsSeed: SeedRows = [
   { props: { name: "Budi Santoso", email: "budi@vendor.io", phone: "+62 812 2222 0002", company: "Vendor.io", role: "Engineer", lastContact: "2026-05-10", tags: ["vendor", "team"] } },
   { props: { name: "Citra Wijaya", email: "citra@team.local", phone: "+62 812 3333 0003", company: "Our team", role: "Lead Designer", lastContact: "2026-05-17", tags: ["team"] } },
   { props: { name: "Dewi Kusuma", email: "dewi@partner.com", phone: "+62 812 4444 0004", company: "Partner Co", role: "Director", lastContact: "2026-05-12", tags: ["client", "friend"] } },
-  { props: { name: "Eko Prabowo", email: "eko@gmail.com", phone: "+62 812 5555 0005", company: "Freelance", role: "Consultant", lastContact: "2026-04-28", tags: ["friend"] } },
+  { props: { name: "Eko Prabowo", email: "eko@example.com", phone: "+62 812 5555 0005", company: "Freelance", role: "Consultant", lastContact: "2026-04-28", tags: ["friend"] } },
 ];
 
 export const readingSeed: SeedRows = [

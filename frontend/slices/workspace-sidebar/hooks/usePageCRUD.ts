@@ -6,7 +6,7 @@ import { useStore } from "@/shared/lib/store";
 import { ROUTE_BASE, ROUTES_ABS } from "@/shared/lib/routes";
 
 /**
- * Page CRUD orchestrator — adapted from SuperSpace's useWorkspaceCRUD.
+ * Page CRUD orchestrator
  * Manages dialog state for create + delete; rename stays inline because Notion
  * UX favours typing-to-rename over a modal. Caller drives navigation.
  */

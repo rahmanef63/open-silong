@@ -1,7 +1,7 @@
 # Multi-workspace roadmap — 2026-05-10
 
 Five-session lift to true multi-workspace + collaboration. Patterned
-after the SuperSpace / Manef workspace shape (workspaces table +
+after a generic multi-tenant workspace shape (workspaces table +
 members ledger + active-workspace state). Session 1 ships in this
 cycle; sessions 2–5 are scoped enough that each fits in one focused
 session.

@@ -5,6 +5,7 @@ core. Read in order:
 
 | Doc | Audience |
 |---|---|
+| `slices.md` | **Catalog of every frontend slice** — start here for UI |
 | `conventions.md` | Anyone adding a Convex fn — read first |
 | `workspaces.md` | Multi-workspace foundation, switcher, member roles |
 | `pages.md` | Reading / mutating page docs |

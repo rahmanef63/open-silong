@@ -247,7 +247,7 @@ Target project installs both via `pnpm install` and gets:
 
 Slice consumers DO copy `convex/<feature>.ts` files into their own
 backend, but everything frontend is a versioned dep. This is also the
-SuperSpace path your CLAUDE.md alludes to.
+host-platform path your CLAUDE.md alludes to.
 
 ### B) Standardize the slice contract
 Make each slice declare its dependencies via a manifest:
@@ -340,7 +340,7 @@ Cost: medium-large refactor; benefit: real drop-in portability.
 
 10. **Monorepo split** per strategy A. Highest payoff, biggest
     upfront; required eventually if you commit to multi-app via
-    SuperSpace.
+    a host platform.
 
 ---
 

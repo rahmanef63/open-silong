@@ -12,7 +12,7 @@
  *          "command": "node",
  *          "args": ["/abs/path/to/nosion/mcp/dist/server.js"],
  *          "env": {
- *            "NOSION_BASE_URL": "https://api-notion-page-clone.rahmanef.com",
+ *            "NOSION_BASE_URL": "https://api-silong.rahmanef.com",
  *            "NOSION_MCP_TOKEN": "<MCP_API_TOKEN value from convex deployment>"
  *          }
  *        }
