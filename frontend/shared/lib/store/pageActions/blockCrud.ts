@@ -98,6 +98,10 @@ export function useBlockCrud({ pageMap, pushStructuralAction, mutUpdatePage }: A
   const updateBlock = useCallback(
     (pageId: string, blockId: string, patch: Partial<Block>) => {
       const key = `${pageId}:${blockId}`;
+      if (typeof window !== "undefined" && window.location.search.includes("debug=blocks")) {
+        // eslint-disable-next-line no-console
+        console.log("[updateBlock]", { pageId, blockId, patch, textOnly: isTextOnlyPatch(patch) });
+      }
       if (!isTextOnlyPatch(patch)) {
         flushBlockKey(key);
         guardMutVoid("updateBlock", mutUpdateBlock({ pageId: asPageId(pageId), blockId, patch }));
@@ -170,7 +174,12 @@ export function useBlockCrud({ pageMap, pushStructuralAction, mutUpdatePage }: A
 
   const setBlockType = useCallback(
     (pageId: string, blockId: string, type: BlockType) => {
-      mutUpdateBlock({ pageId: asPageId(pageId), blockId, patch: { type, checked: type === "todo" ? false : undefined } });
+      const patch = { type, checked: type === "todo" ? false : undefined };
+      if (typeof window !== "undefined" && window.location.search.includes("debug=blocks")) {
+        // eslint-disable-next-line no-console
+        console.log("[setBlockType]", { pageId, blockId, type, patch });
+      }
+      mutUpdateBlock({ pageId: asPageId(pageId), blockId, patch });
     },
     [mutUpdateBlock],
   );
