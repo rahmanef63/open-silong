@@ -41,9 +41,10 @@ Status legend: `[ ]` todo · `[x]` done · `[~]` partial.
   personal workspace (Phase 3, commit `1f012ad`, Convex deployed)
 - [x] Opt-out env var `SILONG_DISABLE_SEED=1` documented
 - [ ] First-run UX polish pass (smoke test will surface gaps)
-- [ ] Public demo deploy at `silong.rahmanef.com` (Dokploy domain
-  configured — pending user-side DNS A record at the DNS provider:
-  `silong` → `<YOUR_VPS_IP>`)
+- [x] Public demo deploy at `silong.rahmanef.com` LIVE — DNS resolved,
+  TLS active, Google OAuth threaded through new GCP origin. Legacy
+  hosts (`nosion.rahmanef.com`, `notion-page-clone.rahmanef.com`)
+  308-redirect to canonical via Next.js `redirects()` (commit `e1b69d7`)
 
 ### Code-side polish
 - [x] Sweep all `TODO` / `FIXME` / `XXX` — closed: snapshot retention
@@ -57,9 +58,9 @@ Status legend: `[ ]` todo · `[x]` done · `[~]` partial.
   targets bumped to h-8). Final ✅ awaits browser smoke pass.
 - [x] Error boundary review — `app/error.tsx` (route),
   `app/dashboard/error.tsx` + per-segment `error.tsx` (auth, share,
-  admin), `app/global-error.tsx` (root layout fallback, NEW commit
-  `60a2433`), `ErrorBoundary` + `ChunkErrorBoundary` wrap shell/db
-  block. Coverage complete.
+  admin, forms, oauth/authorize, site/[ws]), `app/global-error.tsx`
+  (root layout fallback), `ErrorBoundary` + `ChunkErrorBoundary` wrap
+  shell/db block. All public + dashboard segments covered.
 - [ ] Lighthouse pass — fix critical performance regressions
 
 ### Security hygiene
