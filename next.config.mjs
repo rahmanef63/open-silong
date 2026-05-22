@@ -66,8 +66,25 @@ const nextConfig = {
   },
   turbopack: {},
   async redirects() {
+    // Legacy hostnames that pre-date the silong.rahmanef.com rebrand.
+    // 301-redirect to the canonical host, preserving full path + query.
+    // Both legacy domains still resolve to this same Dokploy app; the
+    // Host header is what triggers the redirect. SEO ranks transfer
+    // via permanent: true.
+    const legacyHosts = [
+      "nosion.rahmanef.com",
+      "notion-page-clone.rahmanef.com",
+    ];
+    const legacyRedirects = legacyHosts.map((host) => ({
+      source: "/:path*",
+      has: [{ type: "host", value: host }],
+      destination: "https://silong.rahmanef.com/:path*",
+      permanent: true,
+    }));
+
     // Pre-/dashboard URLs from before the app was moved under a route prefix.
     return [
+      ...legacyRedirects,
       { source: "/p/:id", destination: "/dashboard/p/:id", permanent: true },
       { source: "/inbox", destination: "/dashboard/inbox", permanent: true },
       { source: "/trash", destination: "/dashboard/trash", permanent: true },
