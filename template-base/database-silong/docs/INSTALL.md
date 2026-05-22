@@ -70,31 +70,21 @@ npx convex codegen
 
 ## Step 4 — Add the convex backend handlers
 
-Two options:
-
-### Option B.1 — Lift open-silong's reference impl (recommended)
-
 ```bash
-npx rr add notion-database-convex
-# (placeholder — see ROADMAP.md; the Convex backend lift lands in v0.5)
+# Minimal mode (single-user / prototype / hobby)
+cp -r template-base/database-silong/convex/_shared/minimal/* convex/_shared/
+cp template-base/database-silong/convex/handlers/databases.ts convex/databases.ts
+cp template-base/database-silong/convex/handlers/pages.ts     convex/pages.ts
+
+# OR full mode (multi-user / multi-workspace / production)
+cp -r template-base/database-silong/convex/_shared/full/* convex/_shared/
+cp template-base/database-silong/convex/handlers/databases.ts convex/databases.ts
+cp template-base/database-silong/convex/handlers/pages.ts     convex/pages.ts
 ```
 
-### Option B.2 — Write your own
-
-Reference impl: <https://github.com/rahmanef63/open-silong/tree/main/convex/databases.ts>
-
-Required handlers:
-
-| Function | Signature |
-|---|---|
-| `databases.list` | `query() → Database[]` |
-| `databases.get` | `query({ dbId }) → Database \| null` |
-| `databases.create` | `mutation({ name, icon }) → Id<"databases">` |
-| `databases.update` | `mutation({ dbId, patch }) → void` |
-| `databases.addProperty` | `mutation({ dbId, type, name? }) → string` |
-| `databases.addRow` | `mutation({ dbId, init? }) → Id<"pages">` |
-| `databases.setRowValue` | `mutation({ dbId, rowPageId, propId, value }) → void` |
-| _(see WIRING.md for the full ~22-method list)_ | |
+See [CONVEX-BACKEND.md](./CONVEX-BACKEND.md) for full mode vs minimal
+mode comparison, switching between modes, adding webhooks, upstream
+update path.
 
 ## Step 5 — Mount the provider
 
