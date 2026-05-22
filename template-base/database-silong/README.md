@@ -46,7 +46,7 @@ Consumer project
 
 The slice ships UI. The adapter is the only swap point.
 
-## Feature matrix (v0.4)
+## Feature matrix (v0.5)
 
 | Capability | Status |
 |---|---|
@@ -60,8 +60,8 @@ The slice ships UI. The adapter is the only swap point.
 | Drag-to-reorder rows / properties | ✅ |
 | Search index (Convex `searchIndex`) | ✅ Convex mode only |
 | Multi-workspace tenancy | ✅ Convex mode only |
-| Relation property (cross-DB lookup) | ⏳ deferred to v0.5 |
-| Rollup property (aggregate over relation) | ⏳ deferred to v0.5 |
+| Relation property (cross-DB lookup) | ⏳ deferred to v0.6 |
+| Rollup property (aggregate over relation) | ⏳ deferred to v0.6 |
 | Real-time multi-user | ✅ Convex mode only |
 | Public sharing via `/share/<slug>` | ✅ Convex mode only |
 | Snapshots (version history) | ⏳ requires snapshots adapter |
@@ -76,6 +76,21 @@ The slice ships UI. The adapter is the only swap point.
 - **Component overrides** — `components.{DatabaseBlock, PropertyCell, BlockEditor}`
 
 All optional. Sensible defaults match open-silong.
+
+## Versioning
+
+**Current version**: v0.5
+
+| Doc | Use for |
+|---|---|
+| [`docs/ROADMAP.md`](./docs/ROADMAP.md) | What's shipped, what's planned, what won't ship |
+| [`docs/UPDATE-FROM-UPSTREAM.md`](./docs/UPDATE-FROM-UPSTREAM.md) | How to pull bugfixes / features from open-silong into your fork |
+
+**Compatibility policy** — semver:
+
+- **patch** (v0.5.x) — bugfix only. No schema change, no adapter contract change. Pull anytime.
+- **minor** (v0.6.0) — additive feature. New optional schema fields, new adapter methods. Existing code keeps working; backfill may be required for denormalised fields (see `UPDATE-FROM-UPSTREAM.md` → Schema migrations).
+- **major** (v1.0.0) — breaking. Migration doc shipped alongside.
 
 ## License
 

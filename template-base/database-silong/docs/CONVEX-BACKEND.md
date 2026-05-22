@@ -40,11 +40,11 @@ attributed to a synthetic `SYNTHETIC_USER_ID` from `_shared/auth.ts`.
 
 ```bash
 # 1. Install peer deps
-pnpm add @convex-dev/auth
+pnpm add @convex-dev/auth @auth/core
 
-# 2. Wire @convex-dev/auth (see https://labs.convex.dev/auth)
-#    Required tables: users, authAccounts, authSessions, etc.
-#    Easiest: copy convex/auth.ts from open-silong reference.
+# 2. Wire @convex-dev/auth — copy the reference snippet:
+cp template-base/database-silong/convex/auth.snippet.ts convex/auth.ts
+#    (see "Setting up @convex-dev/auth" sub-section below for env vars)
 
 # 3. Pick the full helper variant
 cp -r template-base/database-silong/convex/_shared/full/* convex/_shared/
@@ -64,6 +64,45 @@ cp template-base/database-silong/convex/schema.database-silong.ts convex/
 npx convex codegen
 npx convex deploy
 ```
+
+### Setting up @convex-dev/auth
+
+The snippet at `template-base/database-silong/convex/auth.snippet.ts`
+ships a minimal Google OAuth configuration. Rename to `convex/auth.ts`
+in your project, then set the env vars on your Convex deployment:
+
+```bash
+# RSA key for session JWT signing
+openssl genrsa -out private.pem 2048
+# (then derive a JWKS string — see https://labs.convex.dev/auth/setup#jwt)
+
+npx convex env set JWT_PRIVATE_KEY "$(cat private.pem)"
+npx convex env set JWKS '{"keys":[...]}'
+
+# Frontend origin (used for OAuth callback redirects)
+npx convex env set SITE_URL https://app.example.com
+
+# Google OAuth (from Google Cloud Console → Credentials → OAuth client ID)
+npx convex env set AUTH_GOOGLE_ID     "<your-client-id>.apps.googleusercontent.com"
+npx convex env set AUTH_GOOGLE_SECRET "<your-client-secret>"
+```
+
+Required env vars at a glance:
+
+| Var | Why |
+|---|---|
+| `JWT_PRIVATE_KEY` | PEM RSA private key — signs session JWTs |
+| `JWKS` | Public JWKS JSON — verifies session JWTs |
+| `SITE_URL` | Your frontend origin — OAuth callback redirect target |
+| `AUTH_GOOGLE_ID` | Google OAuth client id |
+| `AUTH_GOOGLE_SECRET` | Google OAuth client secret |
+
+For other providers (GitHub, Resend magic links, Password, passkeys),
+custom profile mapping, or advanced bootstrap (auto-create workspace
+on first sign-in), see the @convex-dev/auth docs at
+<https://labs.convex.dev/auth> and the open-silong production
+reference at
+<https://github.com/rahmanef63/open-silong/blob/main/convex/auth.ts>.
 
 ## What's in each mode
 
@@ -173,6 +212,7 @@ git checkout open-silong/3f4da51 -- convex/databases.ts convex/pages.ts
 | `convex/_shared/full/*.ts` | `convex/_shared/*.ts` | full |
 | `convex/_shared/minimal/*.ts` | `convex/_shared/*.ts` | minimal |
 | `convex/schema.database-silong.ts` | `convex/schema.database-silong.ts` (then merge into `schema.ts`) | both |
+| `convex/auth.snippet.ts` | `convex/auth.ts` (rename + set env vars) | full |
 
 ## Common gotchas
 
