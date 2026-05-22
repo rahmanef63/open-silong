@@ -1,13 +1,13 @@
 import { FileText } from "lucide-react";
 import { useNavigate } from "@/shared/lib/router";
-import { useStore } from "@/shared/lib/store";
+import { useEditorAdapter } from "@/slices/editor/lib/useEditorAdapter";
 import { DynamicIcon } from "@/shared/components/icon-picker";
 import { Button } from "@/shared/ui/button";
 import type { Block } from "@/shared/types/domain";
 
 export function PageRefBlock({ block }: { block: Block }) {
   const navigate = useNavigate();
-  const { getPage } = useStore();
+  const { getPage } = useEditorAdapter();
   const target = block.pageId ? getPage(block.pageId) : undefined;
   return (
     <Button

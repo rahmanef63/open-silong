@@ -13,9 +13,9 @@ Tracked slices: **8**  ·  Source: notion-page-clone  ·  Dest: `~/projects/reso
 | database-cell-selection | 0.1.0 | 4 | 0 (0+) | 2026-05-19 |
 | equation | 0.1.0 | 6 | 1 (1+) | 2026-05-19 |
 | files | 0.1.0 | 11 | 0 (0+) | 2026-05-21 |
-| mentions | 0.1.0 | 51 | 46 (46+) | 2026-05-19 |
+| mentions | 0.1.0 | 51 | 46 (25+) | 2026-05-19 |
 | notifications | 0.1.0 | 5 | 0 (0+) | 2026-05-19 |
-| notion | 0.1.0 | 416 | 80 (47+) | 2026-05-21 |
+| notion | 0.1.0 | 396 | 59 (26+) | 2026-05-22 |
 | theme-presets | 0.1.0 | 20 | 0 (0+) | 2026-05-20 |
 
 - **shared+** = count of shared files this slice depends on that ALSO consumed by another tracked slice. High value = shared infra that must stay coherent.
@@ -126,27 +126,27 @@ Tracked slices: **8**  ·  Source: notion-page-clone  ·  Dest: `~/projects/reso
 - `frontend/shared/lib/error.ts`  _(also: equation, notion)_
 - `frontend/shared/lib/keyboard.ts`  _(also: notion)_
 - `frontend/shared/lib/router/index.tsx`  _(also: notion)_
-- `frontend/shared/lib/store/context.ts`  _(also: notion)_
-- `frontend/shared/lib/store/databaseActions.ts`  _(also: notion)_
-- `frontend/shared/lib/store/databaseActions/constants.ts`  _(also: notion)_
-- `frontend/shared/lib/store/databaseActions/db.ts`  _(also: notion)_
-- `frontend/shared/lib/store/databaseActions/properties.ts`  _(also: notion)_
-- `frontend/shared/lib/store/databaseActions/relations.ts`  _(also: notion)_
-- `frontend/shared/lib/store/databaseActions/rows.ts`  _(also: notion)_
-- `frontend/shared/lib/store/databaseActions/views.ts`  _(also: notion)_
-- `frontend/shared/lib/store/history.ts`  _(also: notion)_
-- `frontend/shared/lib/store/hooks.ts`  _(also: notion)_
-- `frontend/shared/lib/store/mappers.ts`  _(also: notion)_
-- `frontend/shared/lib/store/mutationGuard.ts`  _(also: notion)_
-- `frontend/shared/lib/store/pageActions.ts`  _(also: notion)_
-- `frontend/shared/lib/store/pageActions/blockCrud.ts`  _(also: notion)_
-- `frontend/shared/lib/store/pageActions/childrenIndex.ts`  _(also: notion)_
-- `frontend/shared/lib/store/pageActions/constants.ts`  _(also: notion)_
-- `frontend/shared/lib/store/pageActions/pageCrud.ts`  _(also: notion)_
-- `frontend/shared/lib/store/pageActions/searchTrash.ts`  _(also: notion)_
-- `frontend/shared/lib/store/snapshots.ts`  _(also: notion)_
-- `frontend/shared/lib/store/useThemeEffect.ts`  _(also: notion)_
-- `frontend/shared/lib/store/useWorkspaceMuts.ts`  _(also: notion)_
+- `frontend/shared/lib/store/context.ts`
+- `frontend/shared/lib/store/databaseActions.ts`
+- `frontend/shared/lib/store/databaseActions/constants.ts`
+- `frontend/shared/lib/store/databaseActions/db.ts`
+- `frontend/shared/lib/store/databaseActions/properties.ts`
+- `frontend/shared/lib/store/databaseActions/relations.ts`
+- `frontend/shared/lib/store/databaseActions/rows.ts`
+- `frontend/shared/lib/store/databaseActions/views.ts`
+- `frontend/shared/lib/store/history.ts`
+- `frontend/shared/lib/store/hooks.ts`
+- `frontend/shared/lib/store/mappers.ts`
+- `frontend/shared/lib/store/mutationGuard.ts`
+- `frontend/shared/lib/store/pageActions.ts`
+- `frontend/shared/lib/store/pageActions/blockCrud.ts`
+- `frontend/shared/lib/store/pageActions/childrenIndex.ts`
+- `frontend/shared/lib/store/pageActions/constants.ts`
+- `frontend/shared/lib/store/pageActions/pageCrud.ts`
+- `frontend/shared/lib/store/pageActions/searchTrash.ts`
+- `frontend/shared/lib/store/snapshots.ts`
+- `frontend/shared/lib/store/useThemeEffect.ts`
+- `frontend/shared/lib/store/useWorkspaceMuts.ts`
 - `frontend/shared/lib/uid.ts`  _(also: notion)_
 - `frontend/shared/types/domain.ts`  _(also: notion, notion)_
 
@@ -167,7 +167,7 @@ Tracked slices: **8**  ·  Source: notion-page-clone  ·  Dest: `~/projects/reso
 ### `notion`
 
 - **version:** 0.1.0
-- **synced:** 2026-05-21T21:48:38.256Z (commit `bd51560`)
+- **synced:** 2026-05-22T05:24:53.149Z (commit `fe319f5`)
 - **slicePath:** `frontend/slices/notion`
 
 **slice files (12):**
@@ -185,7 +185,7 @@ Tracked slices: **8**  ·  Source: notion-page-clone  ·  Dest: `~/projects/reso
 - `frontend/slices/notion/lib/config.ts`
 - `frontend/slices/notion/slice.manifest.json`
 
-**shared deps (80):**
+**shared deps (59):**
 
 - `frontend/shared/components/ConfirmProvider.tsx`
 - `frontend/shared/components/ErrorBoundary.tsx`
@@ -239,34 +239,13 @@ Tracked slices: **8**  ·  Source: notion-page-clone  ·  Dest: `~/projects/reso
 - `frontend/shared/lib/seed/pages.ts`
 - `frontend/shared/lib/seed/profile.ts`
 - `frontend/shared/lib/seed/tasksDb.ts`
-- `frontend/shared/lib/store.tsx`
-- `frontend/shared/lib/store/context.ts`  _(also: mentions)_
-- `frontend/shared/lib/store/databaseActions.ts`  _(also: mentions)_
-- `frontend/shared/lib/store/databaseActions/constants.ts`  _(also: mentions)_
-- `frontend/shared/lib/store/databaseActions/db.ts`  _(also: mentions)_
-- `frontend/shared/lib/store/databaseActions/properties.ts`  _(also: mentions)_
-- `frontend/shared/lib/store/databaseActions/relations.ts`  _(also: mentions)_
-- `frontend/shared/lib/store/databaseActions/rows.ts`  _(also: mentions)_
-- `frontend/shared/lib/store/databaseActions/views.ts`  _(also: mentions)_
-- `frontend/shared/lib/store/history.ts`  _(also: mentions)_
-- `frontend/shared/lib/store/hooks.ts`  _(also: mentions)_
-- `frontend/shared/lib/store/mappers.ts`  _(also: mentions)_
-- `frontend/shared/lib/store/mutationGuard.ts`  _(also: mentions)_
-- `frontend/shared/lib/store/pageActions.ts`  _(also: mentions)_
-- `frontend/shared/lib/store/pageActions/blockCrud.ts`  _(also: mentions)_
-- `frontend/shared/lib/store/pageActions/childrenIndex.ts`  _(also: mentions)_
-- `frontend/shared/lib/store/pageActions/constants.ts`  _(also: mentions)_
-- `frontend/shared/lib/store/pageActions/pageCrud.ts`  _(also: mentions)_
-- `frontend/shared/lib/store/pageActions/searchTrash.ts`  _(also: mentions)_
-- `frontend/shared/lib/store/snapshots.ts`  _(also: mentions)_
-- `frontend/shared/lib/store/useThemeEffect.ts`  _(also: mentions)_
-- `frontend/shared/lib/store/useWorkspaceMuts.ts`  _(also: mentions)_
 - `frontend/shared/lib/uid.ts`  _(also: mentions)_
 - `frontend/shared/lib/zipExport.ts`
 - `frontend/shared/types/block.ts`
 - `frontend/shared/types/domain.ts`  _(also: mentions)_
 - `frontend/shared/types/domain.ts`  _(also: mentions)_
 - `frontend/shared/types/index.ts`
+- `frontend/shared/ui/responsive-dialog.tsx`
 
 **convex deps (1):**
 
@@ -330,27 +309,6 @@ _Files used by 2+ tracked slices. Keep these in sync — corruption here breaks 
 | `frontend/shared/lib/error.ts` | equation, mentions, notion |
 | `frontend/shared/lib/keyboard.ts` | mentions, notion |
 | `frontend/shared/lib/router/index.tsx` | mentions, notion |
-| `frontend/shared/lib/store/context.ts` | mentions, notion |
-| `frontend/shared/lib/store/databaseActions.ts` | mentions, notion |
-| `frontend/shared/lib/store/databaseActions/constants.ts` | mentions, notion |
-| `frontend/shared/lib/store/databaseActions/db.ts` | mentions, notion |
-| `frontend/shared/lib/store/databaseActions/properties.ts` | mentions, notion |
-| `frontend/shared/lib/store/databaseActions/relations.ts` | mentions, notion |
-| `frontend/shared/lib/store/databaseActions/rows.ts` | mentions, notion |
-| `frontend/shared/lib/store/databaseActions/views.ts` | mentions, notion |
-| `frontend/shared/lib/store/history.ts` | mentions, notion |
-| `frontend/shared/lib/store/hooks.ts` | mentions, notion |
-| `frontend/shared/lib/store/mappers.ts` | mentions, notion |
-| `frontend/shared/lib/store/mutationGuard.ts` | mentions, notion |
-| `frontend/shared/lib/store/pageActions.ts` | mentions, notion |
-| `frontend/shared/lib/store/pageActions/blockCrud.ts` | mentions, notion |
-| `frontend/shared/lib/store/pageActions/childrenIndex.ts` | mentions, notion |
-| `frontend/shared/lib/store/pageActions/constants.ts` | mentions, notion |
-| `frontend/shared/lib/store/pageActions/pageCrud.ts` | mentions, notion |
-| `frontend/shared/lib/store/pageActions/searchTrash.ts` | mentions, notion |
-| `frontend/shared/lib/store/snapshots.ts` | mentions, notion |
-| `frontend/shared/lib/store/useThemeEffect.ts` | mentions, notion |
-| `frontend/shared/lib/store/useWorkspaceMuts.ts` | mentions, notion |
 | `frontend/shared/lib/uid.ts` | mentions, notion |
 | `frontend/shared/types/domain.ts` | mentions, notion, notion |
 

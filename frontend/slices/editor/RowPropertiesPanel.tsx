@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "@/shared/lib/router";
 import { ROUTES } from "@/shared/lib/routes";
-import { useStore } from "@/shared/lib/store";
+import { useEditorAdapter } from "@/slices/editor/lib/useEditorAdapter";
 import { Page } from "@/shared/types/domain";
 import { DynamicIcon } from "@/shared/components/icon-picker";
 import { ChevronRight, ChevronDown, ChevronUp } from "lucide-react";
@@ -15,7 +15,7 @@ import { AddPropertyMenu } from "./row-properties/AddPropertyMenu";
 const PREVIEW_COUNT = 4;
 
 export function RowPropertiesPanel({ page }: { page: Page }) {
-  const { getDatabase, addProperty } = useStore();
+  const { getDatabase, addProperty } = useEditorAdapter();
   const navigate = useNavigate();
   const [expanded, setExpanded] = useState(false);
 

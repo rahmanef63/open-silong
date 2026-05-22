@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate } from "@/shared/lib/router";
-import { useStore } from "@/shared/lib/store";
+import { useEditorAdapter } from "@/slices/editor/lib/useEditorAdapter";
 import type { Page, PageFont } from "@/shared/types/domain";
 import { toast } from "sonner";
 import {
@@ -12,7 +12,7 @@ import { buildExportContext } from "@/shared/lib/exportContext";
 import { useWorkspaceIO } from "@/slices/workspace-io";
 
 export function usePageActions(page: Page, close: () => void) {
-  const { updatePage, duplicatePage, deletePage, addBlock, pages, databases } = useStore();
+  const { updatePage, duplicatePage, deletePage, addBlock, pages, databases } = useEditorAdapter();
   const navigate = useNavigate();
   const workspaceIO = useWorkspaceIO();
   const exportCtx = buildExportContext(databases, pages);

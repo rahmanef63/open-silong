@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { ListTree } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { Button } from "@/shared/ui/button";
-import { usePages } from "@/shared/lib/store";
+import { useEditorAdapter } from "@/slices/editor/lib/useEditorAdapter";
 import type { Block, BlockType } from "@/shared/types/domain";
 import type { BlockRendererProps } from "@/shared/types";
 
@@ -36,7 +36,7 @@ function jumpTo(blockId: string) {
 }
 
 export function TocBlock({ pageId }: BlockRendererProps) {
-  const { pages } = usePages();
+  const { pages } = useEditorAdapter();
   const page = pageId ? pages.find((p) => p.id === pageId) : null;
   const headings = useMemo(() => (page ? collectHeadings(page.blocks) : []), [page]);
 

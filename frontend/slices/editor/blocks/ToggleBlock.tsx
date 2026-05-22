@@ -3,7 +3,7 @@ import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { ChevronRight, Plus } from "lucide-react";
 import type { Block, BlockType } from "@/shared/types/domain";
-import { useStore } from "@/shared/lib/store";
+import { useEditorAdapter } from "@/slices/editor/lib/useEditorAdapter";
 import { cn } from "@/shared/lib/utils";
 import { uid } from "@/shared/lib/uid";
 import { BlockShell } from "./BlockShell";
@@ -163,7 +163,7 @@ export function ToggleBlock({
   pageId, block, index, setNodeRef, style, isDragging, isOver: shellIsOver,
   attributes, listeners, convertTo,
 }: Props) {
-  const { updateBlock } = useStore();
+  const { updateBlock } = useEditorAdapter();
   return (
     <BlockShell
       setNodeRef={setNodeRef} style={style} isDragging={isDragging} isOver={shellIsOver}

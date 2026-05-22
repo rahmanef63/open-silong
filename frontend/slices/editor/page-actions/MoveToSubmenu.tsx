@@ -7,7 +7,7 @@
  */
 
 import { useMemo } from "react";
-import { useStore } from "@/shared/lib/store";
+import { useEditorAdapter } from "@/slices/editor/lib/useEditorAdapter";
 import type { Page } from "@/shared/types/domain";
 import { ArrowRight, ChevronRight, Check } from "lucide-react";
 import { toast } from "sonner";
@@ -20,7 +20,7 @@ import {
 import { Button } from "@/shared/ui/button";
 
 export function MoveToSubmenu({ page, close }: { page: Page; close: () => void }) {
-  const { pages, movePage } = useStore();
+  const { pages, movePage } = useEditorAdapter();
 
   const moveCandidates = useMemo(() => {
     const isDescendant = (targetId: string, ancestorId: string): boolean => {

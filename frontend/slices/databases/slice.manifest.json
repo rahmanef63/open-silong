@@ -40,8 +40,8 @@
       "database-cell-selection",
       "database-json",
       "database-templates",
-      "editor",
-      "files"
+      "files",
+      "notion"
     ],
     "convex": []
   },

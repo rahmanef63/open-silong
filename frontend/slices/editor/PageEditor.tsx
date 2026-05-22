@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef, useState, useEffect, type ComponentType } from "react";
 import { useParams } from "@/shared/lib/router";
-import { useStore } from "@/shared/lib/store";
+import { useEditorAdapter } from "@/slices/editor/lib/useEditorAdapter";
 import type { Block } from "@/shared/types/domain";
 import { EditorComponentsProvider, type EditorComponentsRegistry } from "./lib/componentsRegistry";
 import { BlockEditor } from "./BlockEditor";
@@ -62,7 +62,7 @@ export function PageEditor({ components }: PageEditorProps = {}) {
     [components?.DatabaseBlock],
   );
   const { id } = useParams<{ id: string }>();
-  const { updatePage, pushRecent, addBlock, reorderBlocks, childrenOf, getDatabase } = useStore();
+  const { updatePage, pushRecent, addBlock, reorderBlocks, childrenOf, getDatabase } = useEditorAdapter();
   void reorderBlocks; // tree-aware move below uses updatePage directly
   const fullPageRaw = useFullPage(id ?? null);
   // Virtualize legacy `columns2..5` blocks into the new layout-primitive

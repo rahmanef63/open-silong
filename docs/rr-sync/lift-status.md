@@ -15,6 +15,41 @@ attempting any work on the 🟡 "in mega-bundle only" rows below.
 BUT rr-side build fails due to transitive deps. Files were rolled
 back from rr; re-attempt after Phase 6 store-strip.
 
+**Phase 6 status (2026-05-22)**: store-strip COMPLETE on open-silong
+side. Editor slice no longer imports `@/shared/lib/store` from any
+file (`useEditorAdapter` shim mirrors the legacy useStore API but
+sources from `useNotionAdapter`). 21 editor files migrated. Open-
+silong typecheck + 1288 tests + build all green. ResponsiveDialog
+explicit pathMap entry added so rr gets the primitive on lift.
+FilesAdapter.resolveUrl made optional with `useUrl` fallback so
+predating rr adapters don't break.
+
+BUT the `--with-peers` lift to rr STILL FAILS — Phase 6 closed the
+store gap, but uncovered a NEW class of blocker: **peer-slice API
+divergence**. rr's `@/features/comments` exports `useComments` but
+open-silong's editor expects `useBlockComments` + `PageCommentsPanel`
++ `PageCommentsProvider` + `BlockCommentsPopover`. Same pattern with
+`@/features/database-json` (rr has standalone, editor expects
+`DataMenu`). The rr-divergent slice skip-list intentionally preserves
+rr's versions, but their APIs don't satisfy open-silong's lifted
+consumers.
+
+This is **Phase 7 work — peer-slice componentsRegistry seams**:
+hoist `comments` + `database-json` (and other rr-divergent peers)
+into `componentsRegistry` slots inside editor + databases, so the
+lifted slices render stubs/no-ops when the peer impl isn't compatible,
+and consumers wire concrete impls via `<NotionAppProvider components={
+{ PageCommentsPanel, useBlockComments, ... }}>`. Same render-prop
+pattern that resolved the editor ↔ databases bidirectional cycle in
+Phase 2-3 — just extended to cover non-cycle peer imports.
+
+Other Phase 6 lift attempts revealed Phase 7 scope is broader:
+analytics, backlinks, block-selection, sharing, snapshots,
+simple-table, wiki, workspace-io, database-templates all import
+`@/shared/store` (rr's custom path, NOT `@/shared/lib/store`) — they
+need the same store-strip pass applied editor got. Each is ~2-4h of
+adapter wiring.
+
 Open-silong deliverables shipped
 - ✅ `localStorageNotionAdapter` flesh-out — full pages + databases
   + files + recents + user + workspaces impls (~500 LOC).

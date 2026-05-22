@@ -32,6 +32,11 @@ export interface FilesAdapter {
    *  `null` for missing / unresolvable ids. Adapters should resolve
    *  the same way `useUrl` would — Convex calls the `getUrl` query,
    *  localStorage returns the data-URL bucket value, S3 returns the
-   *  presigned URL, etc. */
-  resolveUrl(storageId: string): Promise<string | null>;
+   *  presigned URL, etc.
+   *
+   *  Optional — adapters that omit it cause consumers to fall back to
+   *  `useUrl` at hook-call sites only. Kept optional so existing host
+   *  adapters (rr standalone, custom embeds) don't break on the type
+   *  surface when they predate this addition. */
+  resolveUrl?(storageId: string): Promise<string | null>;
 }

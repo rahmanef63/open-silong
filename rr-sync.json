@@ -21,9 +21,10 @@
     "slices/database-csv/",
     "slices/database-json/",
     "slices/code-block/",
-    "slices/equation/"
+    "slices/equation/",
+    "shared/lib/store/"
   ],
-  "_skipFilesNote": "Four patterns: exact basename ('foo.ts'), suffix wildcard ('*.test.ts'), single-segment dir ('convexAdapter/' = any file under any path segment named convexAdapter), multi-segment path substring ('slices/comments/' = preserves rr-side divergent slices intact during mega-bundle lifts). slice.json + slice.contract.ts have rr-specific schemas; *.test.* skips co-located unit tests. convexAdapter.tsx + convexAdapter/ skip the production Convex adapter (rr uses localStorage). slices/{comments,database-csv,database-json,code-block,equation}/ preserve rr's independently-developed standalone lifts (rr has rr-specific config.ts + richer barrels + props-driven onImport callbacks). These rr versions are deliberate divergences from open-silong; the mega-bundle consumer in rr uses rr's bundled versions, not open-silong's overwrites.",
+  "_skipFilesNote": "Patterns: exact basename ('foo.ts'), suffix wildcard ('*.test.ts'), single-segment dir ('convexAdapter/' = any file under any path segment named convexAdapter), multi-segment path substring ('slices/comments/' = preserves rr-side divergent slices intact during mega-bundle lifts). slice.json + slice.contract.ts have rr-specific schemas; *.test.* skips co-located unit tests. convexAdapter.tsx + convexAdapter/ skip the production Convex adapter (rr uses localStorage). slices/{comments,database-csv,database-json,code-block,equation}/ preserve rr's independently-developed standalone lifts (rr has rr-specific config.ts + richer barrels + props-driven onImport callbacks). shared/lib/store/ skips the entire Convex-wrapped store (rr resolves via NotionAdapter context; useStore() no longer called from any lifted slice as of Phase 6). These rr versions are deliberate divergences from open-silong; the mega-bundle consumer in rr uses rr's bundled versions, not open-silong's overwrites.",
   "pathMap": [
     {
       "from": "frontend/shared/lib/utils",
@@ -109,6 +110,17 @@
     {
       "from": "frontend/shared/hooks",
       "to": "components/shared/hooks"
+    },
+    {
+      "from": "frontend/shared/ui/responsive-dialog",
+      "to": "components/ui/responsive-dialog",
+      "_note": "FORCE-COPY (Phase 6): rr doesn't have responsive-dialog yet; ConfirmProvider (shared/components, lifted) needs it. Explicit entry beats the broader shared/ui skip below by longer-from precedence."
+    },
+    {
+      "from": "frontend/shared/hooks/use-mobile",
+      "to": "hooks/use-mobile",
+      "skip": true,
+      "_note": "Phase 6: rr already has hooks/use-mobile.ts (shadcn standard). Rewrite import path so the lifted responsive-dialog finds rr's existing copy."
     },
     {
       "from": "frontend/shared/ui",

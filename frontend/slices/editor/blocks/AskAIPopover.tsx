@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Sparkles, Wand2, FileText, ListChecks, ArrowRight, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { useStore } from "@/shared/lib/store";
+import { useEditorAdapter } from "@/slices/editor/lib/useEditorAdapter";
 import { useNotionAdapter } from "@/slices/notion";
 import type { Block } from "@/shared/types/domain";
 import { useAsyncError } from "@/shared/hooks/useAsyncError";
@@ -76,7 +76,7 @@ export function collectPageText(blocks: Block[]): string {
 }
 
 export function AskAIPanel({ pageId, block, index, onClose }: Props) {
-  const { getPage, addBlock } = useStore();
+  const { getPage, addBlock } = useEditorAdapter();
   const adapter = useNotionAdapter();
   const aiComplete = adapter.ai?.complete;
   const ask = useAsyncError("AskAIPopover.run");

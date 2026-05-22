@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useStore } from "@/shared/lib/store";
+import { useEditorAdapter } from "@/slices/editor/lib/useEditorAdapter";
 import { cn } from "@/shared/lib/utils";
 import { DynamicIcon } from "@/shared/components/icon-picker";
 import { walkBack } from "./mention-typeahead/dom";
@@ -16,7 +16,7 @@ const TRIGGER_RE = /(?:^|\s)@([\w-]{0,40})$/;
  *  `[icon Page Title](/dashboard/p/<id>)` so the share view renders it
  *  via `inlineMd`. */
 export function MentionTypeahead() {
-  const { pages } = useStore();
+  const { pages } = useEditorAdapter();
   const [state, setState] = React.useState<State | null>(null);
   const [active, setActive] = React.useState(0);
 

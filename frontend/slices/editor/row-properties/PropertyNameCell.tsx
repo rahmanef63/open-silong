@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { Trash2 } from "lucide-react";
-import { useStore } from "@/shared/lib/store";
+import { useEditorAdapter } from "@/slices/editor/lib/useEditorAdapter";
 import { Button } from "@/shared/ui/button";
 import type { Property } from "@/shared/types/domain";
 import { PROPERTY_TYPE_ICONS } from "@/shared/lib/databases/propertyTypeMeta";
 
 export function PropertyNameCell({ dbId, prop }: { dbId: string; prop: Property }) {
-  const { updateProperty, deleteProperty } = useStore();
+  const { updateProperty, deleteProperty } = useEditorAdapter();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(prop.name);
   const Icon = PROPERTY_TYPE_ICONS[prop.type];

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Search } from "lucide-react";
 import { Popover, PopoverAnchor, PopoverContent } from "@/shared/ui/popover";
-import { useStore } from "@/shared/lib/store";
+import { useEditorAdapter } from "@/slices/editor/lib/useEditorAdapter";
 import { cn } from "@/shared/lib/utils";
 import { DynamicIcon } from "@/shared/components/icon-picker";
 import { Button } from "@/shared/ui/button";
@@ -14,7 +14,7 @@ interface Props {
 }
 
 export function DatabasePicker({ open, onOpenChange, onPick }: Props) {
-  const { databases } = useStore();
+  const { databases } = useEditorAdapter();
   const [q, setQ] = useState("");
   const [active, setActive] = useState(0);
   const ref = useRef<HTMLInputElement>(null);

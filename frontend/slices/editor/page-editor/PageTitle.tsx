@@ -1,4 +1,4 @@
-import { useStore } from "@/shared/lib/store";
+import { useEditorAdapter } from "@/slices/editor/lib/useEditorAdapter";
 import { cn } from "@/shared/lib/utils";
 import { Button } from "@/shared/ui/button";
 import { IconPickerPopover, DynamicIcon, DEFAULT_PAGE_ICON } from "@/shared/components/icon-picker";
@@ -13,7 +13,7 @@ interface Props {
 }
 
 export function PageTitle({ page, fullPageDb, firstBlockRef }: Props) {
-  const { updatePage, updateDatabase } = useStore();
+  const { updatePage, updateDatabase } = useEditorAdapter();
   return (
     <>
       <IconPickerPopover

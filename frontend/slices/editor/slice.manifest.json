@@ -7,6 +7,7 @@
       "components/icon-picker",
       "hooks/useAsyncError",
       "hooks/useBlockHistory",
+      "lib/databases",
       "lib/error",
       "lib/exportContext",
       "lib/format",
@@ -38,14 +39,13 @@
       "databases",
       "mentions",
       "notifications",
+      "notion",
       "sharing",
       "snapshots",
       "wiki",
       "workspace-io"
     ],
-    "convex": [
-      "_generated"
-    ]
+    "convex": []
   },
   "notes": ""
 }
