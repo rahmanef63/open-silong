@@ -2,7 +2,7 @@ import { useCallback, useMemo, useRef, useState, useEffect, type ComponentType }
 import { useParams } from "@/shared/lib/router";
 import { useEditorAdapter } from "@/slices/editor/lib/useEditorAdapter";
 import type { Block } from "@/shared/types/domain";
-import { EditorComponentsProvider, type EditorComponentsRegistry } from "./lib/componentsRegistry";
+import { EditorComponentsProvider, useEditorComponents, type EditorComponentsRegistry } from "./lib/componentsRegistry";
 import { BlockEditor } from "./BlockEditor";
 import { RowPropertiesPanel } from "./RowPropertiesPanel";
 import { PageCommentsPanel, PageCommentsProvider } from "@/slices/comments";
@@ -52,14 +52,17 @@ export interface PageEditorProps {
 }
 
 export function PageEditor({ components }: PageEditorProps = {}) {
-  // Optional per-call override. The mounted NotionAppProvider supplies
-  // the bundled default; only the `components` prop adds an additional
-  // override for this instance. If neither is present (e.g. consumer
-  // mounted PageEditor without NotionAppProvider), `DatabaseBlock`
-  // falls through as `undefined` and BlockEditor renders a stub.
+  // Per-call override merges OVER the outer NotionAppProvider-supplied
+  // registry. Without the merge, a bare `{}` here would shadow the
+  // outer DatabaseBlock and BlockEditor would render the "not
+  // registered" stub even though the umbrella IS mounted.
+  const outerComponents = useEditorComponents();
   const componentsValue = useMemo<EditorComponentsRegistry>(
-    () => (components?.DatabaseBlock ? { DatabaseBlock: components.DatabaseBlock } : {}),
-    [components?.DatabaseBlock],
+    () => ({
+      ...outerComponents,
+      ...(components?.DatabaseBlock ? { DatabaseBlock: components.DatabaseBlock } : {}),
+    }),
+    [outerComponents, components?.DatabaseBlock],
   );
   const { id } = useParams<{ id: string }>();
   const { updatePage, pushRecent, addBlock, reorderBlocks, childrenOf, getDatabase } = useEditorAdapter();
