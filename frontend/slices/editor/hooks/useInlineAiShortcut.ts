@@ -10,8 +10,8 @@
 
 import { useEffect, useRef } from "react";
 import { toast } from "sonner";
-import { useBlocks, usePages } from "@/shared/lib/store";
 import { useNotionAdapter } from "@/slices/notion";
+import { useEditorAdapter } from "@/slices/editor/lib/useEditorAdapter";
 import { reportError } from "@/shared/lib/error";
 
 const SYSTEM_CONTINUE =
@@ -25,8 +25,7 @@ function findFocusedBlockId(): string | null {
 }
 
 export function useInlineAiShortcut() {
-  const { updateBlock } = useBlocks();
-  const { pages } = usePages();
+  const { updateBlock, pages } = useEditorAdapter();
   const adapter = useNotionAdapter();
   const aiComplete = adapter.ai?.complete;
   const pendingRef = useRef(false);

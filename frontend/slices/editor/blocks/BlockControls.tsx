@@ -5,7 +5,7 @@ import {
 } from "@/shared/ui/dropdown-menu";
 import { Popover, PopoverAnchor, PopoverContent } from "@/shared/ui/popover";
 import type { Block, BlockType } from "@/shared/types/domain";
-import { useStore } from "@/shared/lib/store";
+import { useEditorAdapter } from "@/slices/editor/lib/useEditorAdapter";
 import { BLOCK_SPECS } from "../blockSpecs";
 import { useBlockComments } from "@/slices/comments";
 import { useBlockSelectionOptional } from "@/slices/block-selection";
@@ -26,7 +26,7 @@ interface Props {
 }
 
 export function BlockControls({ pageId, block, index, listeners, convertTo, askOpen, onAskOpenChange }: Props) {
-  const { addBlock, deleteBlock, duplicateBlock, updateBlock, user, getPage } = useStore();
+  const { addBlock, deleteBlock, duplicateBlock, updateBlock, user, getPage } = useEditorAdapter();
   const { openCount, create } = useBlockComments(block.id);
   const sel = useBlockSelectionOptional();
   const [open, setOpen] = useState(false);

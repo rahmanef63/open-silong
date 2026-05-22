@@ -2,7 +2,7 @@ import * as React from "react";
 import { ChevronRight } from "lucide-react";
 import { useNavigate } from "@/shared/lib/router";
 import { ROUTES } from "@/shared/lib/routes";
-import { useStore } from "@/shared/lib/store";
+import { useEditorAdapter } from "@/slices/editor/lib/useEditorAdapter";
 import { cn } from "@/shared/lib/utils";
 import { DynamicIcon } from "@/shared/components/icon-picker";
 import { Button } from "@/shared/ui/button";
@@ -17,7 +17,7 @@ export const HeaderBreadcrumbs = React.memo(HeaderBreadcrumbsImpl, (a, b) =>
 );
 
 function HeaderBreadcrumbsImpl({ page }: { page: Page }) {
-  const { getPage, getDatabase } = useStore();
+  const { getPage, getDatabase } = useEditorAdapter();
   const navigate = useNavigate();
   const crumbs = React.useMemo(() => {
     const out: Page[] = [];

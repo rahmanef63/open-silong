@@ -30,7 +30,7 @@ interface Props {
   convertTo: (t: BlockType) => void;
   addBlock: (pageId: string, after: number, type?: BlockType) => Promise<string | undefined>;
   deleteBlock: (pageId: string, blockId: string) => void;
-  duplicateBlock: (pageId: string, blockId: string) => string | undefined;
+  duplicateBlock: (pageId: string, blockId: string) => Promise<string>;
   updateBlock: (pageId: string, blockId: string, patch: Partial<Block>) => void;
   createComment: (input: { pageId: string; blockId: string; text: string; authorName?: string; authorIcon?: string }) => void;
 }
@@ -119,8 +119,9 @@ export function MenuHierarchy(props: Props) {
 
       <DropdownMenuItem onSelect={(e) => {
         e.preventDefault();
-        const id = duplicateBlock(pageId, block.id);
-        if (id) setTimeout(() => document.querySelector<HTMLElement>(`[data-block-id="${id}"]`)?.focus(), 0);
+        duplicateBlock(pageId, block.id).then((id) => {
+          if (id) setTimeout(() => document.querySelector<HTMLElement>(`[data-block-id="${id}"]`)?.focus(), 0);
+        });
         closeMenu();
       }}>
         <Copy className="mr-2 h-3.5 w-3.5" /> Duplicate

@@ -1,7 +1,7 @@
 import * as React from "react";
 import { FileText, Plus } from "lucide-react";
 import { useNavigate } from "@/shared/lib/router";
-import { useStore } from "@/shared/lib/store";
+import { useEditorAdapter } from "@/slices/editor/lib/useEditorAdapter";
 import { Button } from "@/shared/ui/button";
 import { DynamicIcon } from "@/shared/components/icon-picker";
 import type { Page } from "@/shared/types/domain";
@@ -14,7 +14,7 @@ export const Subpages = React.memo(SubpagesImpl, (a, b) =>
 
 function SubpagesImpl({ page, subpages }: { page: Page; subpages: Page[] }) {
   const navigate = useNavigate();
-  const { createPage } = useStore();
+  const { createPage } = useEditorAdapter();
   return (
     <section className="mt-12 border-t border-border pt-6">
       <div className="flex items-center justify-between mb-3">

@@ -1,5 +1,5 @@
 import { Share2, History, Star } from "lucide-react";
-import { useStore } from "@/shared/lib/store";
+import { useEditorAdapter } from "@/slices/editor/lib/useEditorAdapter";
 import { cn } from "@/shared/lib/utils";
 import { Button } from "@/shared/ui/button";
 import type { Page } from "@/shared/types/domain";
@@ -14,7 +14,7 @@ interface Props {
 }
 
 export function HeaderActions({ page, onShare, onHistory, historyOpen }: Props) {
-  const { toggleFavorite, saving } = useStore();
+  const { toggleFavorite, saving } = useEditorAdapter();
   return (
     <div className="flex items-center gap-1 shrink-0">
       <SeenByBadge pageId={page.id} className="mr-1 hidden sm:inline-flex" />

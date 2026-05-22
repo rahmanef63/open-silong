@@ -34,7 +34,7 @@ export function useMediaUpload(kind: MediaKind, onUrl: (url: string) => void) {
     setUploading(true);
     try {
       const storageId = await files.upload(file);
-      const url = await files.resolveUrl(storageId);
+      const url = files.resolveUrl ? await files.resolveUrl(storageId) : storageId;
       if (!url) throw new Error("Storage URL not available");
       onUrl(url);
       toast.success(`${LABEL[kind]} uploaded`);

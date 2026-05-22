@@ -1,6 +1,6 @@
 import { memo, useRef, useState, useCallback } from "react";
 import { Block, BlockType } from "@/shared/types/domain";
-import { useStore } from "@/shared/lib/store";
+import { useEditorAdapter } from "@/slices/editor/lib/useEditorAdapter";
 import { useNotionAdapter } from "@/slices/notion";
 import { SlashMenu } from "./SlashMenu";
 import { useSortable } from "@dnd-kit/sortable";
@@ -43,7 +43,7 @@ function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerR
   const {
     updateBlock, addBlock, deleteBlock, setBlockType, duplicateBlock,
     createPage, createDatabase, replaceBlock, updatePage, getPage,
-  } = useStore();
+  } = useEditorAdapter();
   const insertBlocksAfter = useNotionAdapter().pages.insertBlocksAfter;
   // Render-prop seam: the mounted <NotionAppProvider> supplies the
   // bundled DatabaseBlock from @/slices/databases. Consumers can

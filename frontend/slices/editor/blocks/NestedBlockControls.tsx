@@ -18,7 +18,7 @@ import { TURN_INTO_SPECS } from "./block-controls/searchRows";
 import { buildSmartTurnIntoPatch } from "../lib/turnInto";
 import { BlockColorMenu } from "./BlockColorMenu";
 import { GripButton } from "./block-controls/QuickButtons";
-import { useStore } from "@/shared/lib/store";
+import { useEditorAdapter } from "@/slices/editor/lib/useEditorAdapter";
 import { useBlockComments } from "@/slices/comments";
 
 interface Props {
@@ -42,7 +42,7 @@ interface Props {
 export function NestedBlockControls({ block, pageId, listeners, onUpdate, onAddAfter, onDelete }: Props) {
   const [open, setOpen] = useState(false);
   const closeMenu = () => setOpen(false);
-  const { user } = useStore();
+  const { user } = useEditorAdapter();
   const { openCount, create } = useBlockComments(block.id);
 
   return (

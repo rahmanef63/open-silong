@@ -7,7 +7,9 @@
       "ui/button"
     ],
     "slices": [],
-    "convex": []
+    "convex": [
+      "_generated"
+    ]
   },
   "notes": "Adapter pattern (2026-05-21). convexAdapter.tsx is nosion-only (skip-listed in rr-sync.json); localStorageAdapter.ts is the rr-default. See docs/rr-sync/lift-status.md for the contract."
 }

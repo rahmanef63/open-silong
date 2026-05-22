@@ -17,7 +17,7 @@ interface Deps {
   history: History;
   setAskOpen: (o: boolean) => void;
   convertTo: (t: BlockType) => void;
-  duplicateBlock: (pageId: string, blockId: string) => string | undefined;
+  duplicateBlock: (pageId: string, blockId: string) => Promise<string>;
   addBlock: (pageId: string, after: number, type?: BlockType, init?: Partial<Block>) => Promise<string | undefined>;
   deleteBlock: (pageId: string, blockId: string) => void;
   setBlockType: (pageId: string, blockId: string, type: BlockType) => void;
@@ -54,8 +54,9 @@ export async function handleBlockKeyDown(e: KeyboardEvent<HTMLElement>, deps: De
   if (meta && e.shiftKey && e.key === "8") { e.preventDefault(); convertTo("bullet"); return; }
   if (meta && e.key.toLowerCase() === "d") {
     e.preventDefault();
-    const newId = duplicateBlock(pageId, block.id);
-    if (newId) setTimeout(() => document.querySelector<HTMLElement>(`[data-block-id="${newId}"]`)?.focus(), 0);
+    duplicateBlock(pageId, block.id).then((newId) => {
+      if (newId) setTimeout(() => document.querySelector<HTMLElement>(`[data-block-id="${newId}"]`)?.focus(), 0);
+    });
     return;
   }
   if (meta && e.shiftKey && e.key.toLowerCase() === "z") {

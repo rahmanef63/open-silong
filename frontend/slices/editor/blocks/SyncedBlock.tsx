@@ -2,8 +2,7 @@ import { useMemo, useState } from "react";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { RefreshCw, Plus, Link2, AlertTriangle, Copy, Check } from "lucide-react";
 import type { Block, BlockType } from "@/shared/types/domain";
-import { useStore } from "@/shared/lib/store";
-import { useWorkspaces } from "@/shared/lib/store/hooks";
+import { useEditorAdapter } from "@/slices/editor/lib/useEditorAdapter";
 import { cn } from "@/shared/lib/utils";
 import { uid } from "@/shared/lib/uid";
 import { Link } from "@/shared/lib/router";
@@ -36,8 +35,7 @@ export function SyncedBlockContent({
   pageId?: string;
   onUpdate: (patch: Partial<Block>) => void;
 }) {
-  const { pages } = useStore();
-  const { workspace } = useWorkspaces();
+  const { pages, workspace } = useEditorAdapter();
   const viewerWorkspaceId = workspace?.id;
   const isRef = !!block.syncRef;
   const sourceLookup = useMemo(
@@ -182,7 +180,7 @@ function SyncedRefView({
   sourceBlock: Block | null;
   cycle?: boolean;
 }) {
-  const { updateBlock } = useStore();
+  const { updateBlock } = useEditorAdapter();
 
   if (!sourceBlock || !sourcePage) {
     return (

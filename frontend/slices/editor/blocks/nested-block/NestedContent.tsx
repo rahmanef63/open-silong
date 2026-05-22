@@ -4,7 +4,7 @@ import { FileText } from "lucide-react";
 import { useNavigate } from "@/shared/lib/router";
 import { Checkbox } from "@/shared/ui/checkbox";
 import { Skeleton } from "@/shared/ui/skeleton";
-import { useStore } from "@/shared/lib/store";
+import { useEditorAdapter } from "@/slices/editor/lib/useEditorAdapter";
 import { cn } from "@/shared/lib/utils";
 import { DynamicIcon } from "@/shared/components/icon-picker";
 import { Button } from "@/shared/ui/button";
@@ -38,7 +38,7 @@ const wrap = (inner: React.ReactNode) => <div className="flex-1 min-w-0">{inner}
 
 export function NestedContent({ block, baseProps, setRef, handleKeyDown, onUpdate, depth, pageId, ordinal }: Props) {
   const navigate = useNavigate();
-  const { getPage } = useStore();
+  const { getPage } = useEditorAdapter();
   const { DatabaseBlock } = useEditorComponents();
 
   // Leaf blocks (image, embed, button, equation, table, divider) from registry
