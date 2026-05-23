@@ -1,6 +1,6 @@
 "use client";
 
-import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
 import { useConvexAuth } from "convex/react";
 import { Search } from "lucide-react";
 import { ErrorBoundary } from "@/shared/components/ErrorBoundary";
@@ -27,9 +27,6 @@ import { AppSidebar } from "@/slices/workspace-sidebar";
 import { SearchModal } from "@/slices/command-palette/components/SearchModal";
 import { SelectionToolbar } from "@/slices/editor/components/SelectionToolbar";
 import { MentionTypeahead } from "@/slices/editor/components/MentionTypeahead";
-import { useTheme } from "next-themes";
-import { useStore } from "@/shared/lib/store";
-import type { ThemePref } from "@/shared/types/domain";
 import { TweakcnSwitcher, ThemeColorSync } from "@/slices/theme-presets";
 import { useTouchLastSeen } from "@/shared/hooks/useTouchLastSeen";
 import { MobileBottomNav } from "@/slices/mobile-nav";
@@ -67,35 +64,6 @@ function AuthGuard({ children }: { children: ReactNode }) {
 }
 
 const SIDEBAR_STYLE = { "--sidebar-width": "17rem" } as React.CSSProperties;
-
-/** Bidirectional sync between `preferences.theme` (Convex, cross-device)
- *  and next-themes' `useTheme()` (per-device localStorage + class). Both
- *  sides have a guard so the inverse write never re-fires the effect
- *  that just ran. Old `useThemePreset()` from the simple-preset system
- *  was removed — it wrote INLINE styles on documentElement which
- *  beat the tweakcn `<style>` tag on specificity, so picking a preset
- *  didn't visibly do anything. */
-function ThemeBridge() {
-  const { preferences, updatePreferences } = useStore();
-  const { theme, setTheme } = useTheme();
-  const lastApplied = useRef<string | null>(null);
-  useEffect(() => {
-    if (preferences?.theme && preferences.theme !== theme) {
-      lastApplied.current = preferences.theme;
-      setTheme(preferences.theme);
-    }
-  }, [preferences?.theme, theme, setTheme]);
-  useEffect(() => {
-    if (
-      theme && preferences?.theme && theme !== preferences.theme &&
-      theme !== lastApplied.current
-    ) {
-      updatePreferences({ theme: theme as ThemePref });
-    }
-    lastApplied.current = theme ?? null;
-  }, [theme, preferences?.theme, updatePreferences]);
-  return null;
-}
 
 export default function DashboardShell({ children }: { children: ReactNode }) {
   useTouchLastSeen();
@@ -151,7 +119,6 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
             <NotionAdapterMount>
             <ConfirmProvider>
             <WorkspaceIOProvider>
-            <ThemeBridge />
             <ThemeColorSync />
             <Suspense fallback={null}>
               <CommandPalette />
