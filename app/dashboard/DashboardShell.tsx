@@ -22,6 +22,7 @@ import {
   PageHeaderLeftAnchor,
   PageHeaderRightAnchor,
 } from "@/shared/components/PageHeaderSlot";
+import { UndoRedoButtons } from "@/shared/components/UndoRedoButtons";
 import { AppSidebar } from "@/slices/workspace-sidebar";
 import { SearchModal } from "@/slices/command-palette/components/SearchModal";
 import { SelectionToolbar } from "@/slices/editor/components/SelectionToolbar";
@@ -145,6 +146,7 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
                         orientation="vertical"
                         className="mr-1 data-[orientation=vertical]:h-4"
                       />
+                      <UndoRedoButtons />
                       {/* Left slot: route-injected breadcrumb. Falls back to flex spacer. */}
                       <PageHeaderLeftAnchor className="flex min-w-0 flex-1 items-center gap-2" />
                       <Button
