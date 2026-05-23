@@ -86,6 +86,87 @@ export interface EditorAdapterApi {
   deleteProperty: (dbId: string, propId: string) => Promise<void>;
 }
 
+/** Writers-only subset of the editor adapter. Stable across
+ *  pages/databases data changes — deps reduce to `[adapter, workspace]`.
+ *  Use this in hot components (BlockEditor, every block in a 200-block
+ *  page) so typing into one block does NOT invalidate the API object
+ *  on every Convex realtime tick. The full `useEditorAdapter()` is
+ *  fine for surfaces that already need the reads (PageEditor,
+ *  PageRefBlock title lookup). */
+export interface EditorWritersApi {
+  updatePage: EditorAdapterApi["updatePage"];
+  updateDatabase: EditorAdapterApi["updateDatabase"];
+  createPage: EditorAdapterApi["createPage"];
+  duplicatePage: EditorAdapterApi["duplicatePage"];
+  deletePage: EditorAdapterApi["deletePage"];
+  movePage: EditorAdapterApi["movePage"];
+  toggleFavorite: EditorAdapterApi["toggleFavorite"];
+  pushRecent: EditorAdapterApi["pushRecent"];
+  addBlock: EditorAdapterApi["addBlock"];
+  updateBlock: EditorAdapterApi["updateBlock"];
+  deleteBlock: EditorAdapterApi["deleteBlock"];
+  duplicateBlock: EditorAdapterApi["duplicateBlock"];
+  reorderBlocks: EditorAdapterApi["reorderBlocks"];
+  setBlockType: EditorAdapterApi["setBlockType"];
+  replaceBlock: EditorAdapterApi["replaceBlock"];
+  createDatabase: EditorAdapterApi["createDatabase"];
+  addProperty: EditorAdapterApi["addProperty"];
+  updateProperty: EditorAdapterApi["updateProperty"];
+  deleteProperty: EditorAdapterApi["deleteProperty"];
+}
+
+export function useEditorWriters(): EditorWritersApi {
+  const adapter = useNotionAdapter();
+  const workspace = adapter.workspaces?.useActive() ?? null;
+  return useMemo<EditorWritersApi>(() => ({
+    updatePage: (pageId, patch) => adapter.pages.update({ pageId, patch }),
+    updateDatabase: (dbId, patch) => adapter.databases.update({ dbId, patch }),
+    createPage: async (parentId, opts) => {
+      const id = await adapter.pages.create({
+        workspaceId: workspace?.id ?? "",
+        parentId: parentId ?? null,
+        title: opts?.title, icon: opts?.icon, init: opts,
+      });
+      return { id };
+    },
+    duplicatePage: async (id) => {
+      try { return { id: await adapter.pages.duplicate(id) }; } catch { return null; }
+    },
+    deletePage: (id) => adapter.pages.trash(id),
+    movePage: (id, newParentId) => adapter.pages.move({ pageId: id, newParentId }),
+    toggleFavorite: (id) => adapter.pages.toggleFavorite(id),
+    pushRecent: async (id) => { await adapter.recents?.push({ targetType: "page", targetId: id }); },
+    addBlock: (pageId, afterIndex, type = "paragraph", init = {}) =>
+      adapter.pages.addBlock({ pageId, afterIndex, type, init }),
+    updateBlock: (pageId, blockId, patch) =>
+      adapter.pages.updateBlock({ pageId, blockId, patch }),
+    deleteBlock: (pageId, blockId) =>
+      adapter.pages.deleteBlock({ pageId, blockId }),
+    duplicateBlock: (pageId, blockId) =>
+      adapter.pages.duplicateBlock({ pageId, blockId }),
+    reorderBlocks: (pageId, orderedIds) =>
+      adapter.pages.reorderBlocks({ pageId, orderedIds }),
+    setBlockType: (pageId, blockId, type) =>
+      adapter.pages.updateBlock({ pageId, blockId, patch: { type } }),
+    replaceBlock: (pageId, blockId, nextBlock) =>
+      adapter.pages.replaceBlock({ pageId, blockId, nextBlock }),
+    createDatabase: async (name) => {
+      const id = await adapter.databases.create({
+        workspaceId: workspace?.id ?? "", name: name ?? "Untitled",
+      });
+      return { id };
+    },
+    addProperty: async (dbId, type, name) => {
+      const id = await adapter.databases.addProperty({ dbId, type, name });
+      return { id };
+    },
+    updateProperty: (dbId, propId, patch) =>
+      adapter.databases.updateProperty({ dbId, propId, patch }),
+    deleteProperty: (dbId, propId) =>
+      adapter.databases.deleteProperty({ dbId, propId }),
+  }), [adapter, workspace]);
+}
+
 export function useEditorAdapter(): EditorAdapterApi {
   const adapter = useNotionAdapter();
   const pages = adapter.pages.useList({ workspaceId: "" }) ?? [];
