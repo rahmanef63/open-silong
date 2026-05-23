@@ -159,15 +159,12 @@ export function useLocalStorageDatabasesAdapter(): DatabasesAdapter {
         patchDb(dbId, { properties });
       },
 
-      addView: async ({ dbId, type, name }) => {
+      addView: async ({ dbId, view }) => {
         const db = getAllDatabases()[dbId];
         if (!db) throw new Error(`addView: db not found: ${dbId}`);
         const id = genId("view");
-        const view: DatabaseViewConfig = {
-          id, name: name ?? type, type: type as DbView,
-          sorts: [], filters: [], search: "",
-        };
-        patchDb(dbId, { views: [...db.views, view] });
+        const full: DatabaseViewConfig = { ...view, id };
+        patchDb(dbId, { views: [...db.views, full] });
         return id;
       },
 

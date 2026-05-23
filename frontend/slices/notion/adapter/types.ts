@@ -172,7 +172,11 @@ export interface DatabasesAdapter {
   deleteSelectOption(args: { dbId: string; propId: string; optionId: string }): Promise<void>;
 
   // Views
-  addView(args: { dbId: string; type: DbView; name?: string }): Promise<string>;
+  /** Accepts a full view config (sans id) so consumers can seed the
+   *  view's sorts/filters/search/groupBy/etc in ONE round-trip. Two
+   *  sequential addView+updateView calls would race — the second reads
+   *  stale state (mid-callback) and clobbers the first's mutation. */
+  addView(args: { dbId: string; view: Omit<DatabaseViewConfig, "id"> }): Promise<string>;
   updateView(args: { dbId: string; viewId: string; patch: Partial<DatabaseViewConfig> }): Promise<void>;
   deleteView(args: { dbId: string; viewId: string }): Promise<void>;
   setActiveView(args: { dbId: string; viewId: string }): Promise<void>;
