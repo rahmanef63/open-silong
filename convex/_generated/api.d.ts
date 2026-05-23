@@ -9,6 +9,7 @@
  */
 
 import type * as _shared_aiCrypto from "../_shared/aiCrypto.js";
+import type * as _shared_aiKeyResolver from "../_shared/aiKeyResolver.js";
 import type * as _shared_aiProviders from "../_shared/aiProviders.js";
 import type * as _shared_aiQuota from "../_shared/aiQuota.js";
 import type * as _shared_auth from "../_shared/auth.js";
@@ -36,6 +37,10 @@ import type * as ai_mutations from "../ai/mutations.js";
 import type * as ai_queries from "../ai/queries.js";
 import type * as ai_skillCatalog from "../ai/skillCatalog.js";
 import type * as ai_skillHandlers from "../ai/skillHandlers.js";
+import type * as aiKeys_list from "../aiKeys/list.js";
+import type * as aiKeys_save from "../aiKeys/save.js";
+import type * as aiKeys_write from "../aiKeys/write.js";
+import type * as aiUsage_log from "../aiUsage/log.js";
 import type * as auth from "../auth.js";
 import type * as crons from "../crons.js";
 import type * as databases from "../databases.js";
@@ -136,6 +141,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   "_shared/aiCrypto": typeof _shared_aiCrypto;
+  "_shared/aiKeyResolver": typeof _shared_aiKeyResolver;
   "_shared/aiProviders": typeof _shared_aiProviders;
   "_shared/aiQuota": typeof _shared_aiQuota;
   "_shared/auth": typeof _shared_auth;
@@ -163,6 +169,10 @@ declare const fullApi: ApiFromModules<{
   "ai/queries": typeof ai_queries;
   "ai/skillCatalog": typeof ai_skillCatalog;
   "ai/skillHandlers": typeof ai_skillHandlers;
+  "aiKeys/list": typeof aiKeys_list;
+  "aiKeys/save": typeof aiKeys_save;
+  "aiKeys/write": typeof aiKeys_write;
+  "aiUsage/log": typeof aiUsage_log;
   auth: typeof auth;
   crons: typeof crons;
   databases: typeof databases;
