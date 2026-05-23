@@ -20,6 +20,15 @@ export default defineSchema({
     slug: v.optional(v.string()),            // url-safe (lowercase, digits, hyphens)
     isPersonal: v.optional(v.boolean()),     // true for the user's auto-created workspace
     createdAt: v.optional(v.number()),
+    // Per-workspace theme — applied on workspace activation. User's
+    // per-device localStorage override (next-themes "silong-theme" +
+    // tweakcn "nosion:theme-preset" keys) wins if explicitly set
+    // AFTER activation. Workspace admins set these via Settings →
+    // Workspace → Appearance.
+    themePresetId: v.optional(v.string()),   // matches a tweakcn registry preset name
+    themeMode: v.optional(                   // light / dark / system
+      v.union(v.literal("light"), v.literal("dark"), v.literal("system")),
+    ),
   })
     .index("by_user", ["userId"])
     .index("by_owner", ["ownerId"])
@@ -567,4 +576,81 @@ export default defineSchema({
     .index("by_portal_order", ["portal", "order"])
     .index("by_portal_slug", ["portal", "slug"])
     .index("by_portal_parent", ["portal", "parentSlug"]),
+
+  /** BYOK AI keys — users add their own provider keys to offset
+   *  admin AI costs OR use private models. Scope decides visibility:
+   *    - "personal" → only `ownerUserId` sees + uses the key
+   *    - "workspace" → all members of `workspaceId` can use it;
+   *                     only `ownerUserId` (must be workspace admin)
+   *                     can edit / delete / re-validate
+   *  `encryptedKey` is the `enc:v1:iv:ct` envelope produced by
+   *  `_shared/aiCrypto.ts:encryptApiKey` (shared with the existing
+   *  globalAISettings admin key path — one crypto helper, one rotation
+   *  story). Plaintext is NEVER returned to the client — only `last4`
+   *  for display. `enabledModels` lets one key (esp. OpenRouter)
+   *  expose multiple models to the AI picker; each entry may be
+   *  toggled without re-entering the key. `endpoint` is OpenAI-
+   *  compatible base URL override (custom provider). `validatedAt`
+   *  is the last successful 1-token test call timestamp. */
+  aiUserKeys: defineTable({
+    ownerUserId: v.id("users"),
+    scope: v.union(v.literal("personal"), v.literal("workspace")),
+    workspaceId: v.optional(v.id("workspaces")),  // required when scope="workspace"
+    provider: v.union(
+      v.literal("openai"),
+      v.literal("anthropic"),
+      v.literal("google"),
+      v.literal("openrouter"),
+      v.literal("custom"),
+    ),
+    label: v.optional(v.string()),                // user-given nickname
+    encryptedKey: v.string(),                     // enc:v1:iv:ct envelope
+    last4: v.string(),
+    endpoint: v.optional(v.string()),
+    enabledModels: v.array(v.object({
+      id: v.string(),
+      label: v.string(),
+      enabled: v.boolean(),
+    })),
+    preferOwn: v.boolean(),                       // personal scope: prefer own over admin
+    validatedAt: v.optional(v.number()),
+    validatedError: v.optional(v.string()),       // last validation error message
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_owner", ["ownerUserId"])
+    .index("by_workspace_scope", ["workspaceId", "scope"]),
+
+  /** AI usage log — one row per successful AI call. Drives Settings →
+   *  AI → Usage tab + Admin → AI Usage panel. `keySource` records
+   *  which fallback tier was used:
+   *    - "user"      → ownerUserId's personal key
+   *    - "workspace" → workspace-scoped key (keyOwnerUserId = creator)
+   *    - "admin"     → process.env admin fallback
+   *  `costEstimateUsd` is computed at log-time from a hardcoded
+   *  pricing table; refreshed quarterly via redeploy. `feature` lets
+   *  us break down which surfaces drive cost (chat, summarize, etc).
+   *  Indexed for per-user-month and per-workspace-month rollups. */
+  aiUsageLog: defineTable({
+    userId: v.id("users"),
+    workspaceId: v.id("workspaces"),
+    provider: v.string(),
+    model: v.string(),
+    keySource: v.union(
+      v.literal("user"),
+      v.literal("workspace"),
+      v.literal("admin"),
+    ),
+    keyId: v.optional(v.id("aiUserKeys")),        // null when source="admin"
+    keyOwnerUserId: v.optional(v.id("users")),    // creator of workspace-scope key
+    tokensInput: v.number(),
+    tokensOutput: v.number(),
+    costEstimateUsd: v.number(),
+    feature: v.string(),                          // "chat" / "summarize" / "mention" / etc
+    durationMs: v.number(),
+    timestamp: v.number(),
+  })
+    .index("by_user_time", ["userId", "timestamp"])
+    .index("by_workspace_time", ["workspaceId", "timestamp"])
+    .index("by_key", ["keyId"]),
 });
