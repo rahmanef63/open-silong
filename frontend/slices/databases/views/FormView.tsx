@@ -76,8 +76,8 @@ export function FormView({ db, view }: Props) {
   if (submitted) {
     return (
       <div className="p-6 max-w-xl mx-auto">
-        <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/5 p-8 text-center">
-          <CheckCircle2 className="mx-auto h-10 w-10 text-emerald-600" />
+        <div className="rounded-lg border border-success/40 bg-success/5 p-8 text-center">
+          <CheckCircle2 className="mx-auto h-10 w-10 text-success" />
           <div className="mt-3 text-lg font-semibold">{view.formSuccessMessage || "Submitted!"}</div>
           <div className="mt-1 text-xs text-muted-foreground">Your response was saved as a new row.</div>
           <div className="mt-4 flex justify-center gap-2">

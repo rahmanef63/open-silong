@@ -63,7 +63,7 @@ export function ViewTab({ db: _db, v, active, onActivate, onRename, onDuplicate,
       >
         <Meta.icon className="h-3.5 w-3.5" />
         <span className="hidden sm:inline">{v.name}</span>
-        {locked && <Lock className="h-3 w-3 text-amber-600 dark:text-amber-400" aria-label="View locked" />}
+        {locked && <Lock className="h-3 w-3 text-warning" aria-label="View locked" />}
       </Button>
       {active && (
         <DropdownMenu>

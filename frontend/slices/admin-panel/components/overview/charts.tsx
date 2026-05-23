@@ -92,12 +92,12 @@ export function RoleDistribution({ counts }: { counts: RoleCounts }) {
   return (
     <div className="space-y-2">
       <div className="flex h-3 w-full overflow-hidden rounded bg-muted">
-        <div className="bg-amber-500" style={{ width: `${pctSuper}%` }} />
+        <div className="bg-warning" style={{ width: `${pctSuper}%` }} />
         <div className="bg-brand" style={{ width: `${pctAdmin}%` }} />
         <div className="bg-muted-foreground/40" style={{ width: `${pctUser}%` }} />
       </div>
       <div className="grid grid-cols-3 text-xs">
-        <div><span className="inline-block h-2 w-2 rounded-sm bg-amber-500 mr-1.5" />{counts.superadmin} owner</div>
+        <div><span className="inline-block h-2 w-2 rounded-sm bg-warning mr-1.5" />{counts.superadmin} owner</div>
         <div><span className="inline-block h-2 w-2 rounded-sm bg-brand mr-1.5" />{counts.admin} admin</div>
         <div><span className="inline-block h-2 w-2 rounded-sm bg-muted-foreground/40 mr-1.5" />{counts.user} user</div>
       </div>

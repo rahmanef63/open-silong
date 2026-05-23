@@ -27,7 +27,7 @@ export function Avatar({ user, large }: { user: User; large?: boolean }) {
 export function RoleBadge({ role }: { role: User["role"] }) {
   const cls =
     role === "superadmin"
-      ? "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-400"
+      ? "border-warning/40 bg-warning/10 text-warning"
       : role === "admin"
         ? "border-brand/50 bg-brand/10 text-foreground"
         : "border-border bg-muted/40 text-muted-foreground";

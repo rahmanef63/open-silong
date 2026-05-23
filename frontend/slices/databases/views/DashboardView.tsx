@@ -160,9 +160,9 @@ function Stat({ label, value, sub, icon: Icon, accent }: {
 }) {
   const tones = {
     brand: "text-brand bg-brand/10",
-    emerald: "text-emerald-600 bg-emerald-500/10",
-    blue: "text-blue-600 bg-blue-500/10",
-    purple: "text-purple-600 bg-purple-500/10",
+    emerald: "text-success bg-success/10",
+    blue: "text-primary bg-primary/10",
+    purple: "text-accent-foreground bg-accent",
   };
   return (
     <div className="rounded-lg border border-border bg-card p-3">

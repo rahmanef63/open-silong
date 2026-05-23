@@ -65,7 +65,7 @@ export function Segmented<T extends string | number>({ value, options, onChange 
           onClick={() => onChange(o.value)}
           className={cn(
             "h-auto flex-1 rounded px-2 py-1 text-xs font-normal transition",
-            value === o.value ? "bg-brand text-white font-medium hover:bg-brand hover:text-white" : "text-muted-foreground hover:bg-accent"
+            value === o.value ? "bg-brand text-brand-foreground font-medium hover:bg-brand hover:text-brand-foreground" : "text-muted-foreground hover:bg-accent"
           )}
         >{o.label}</Button>
       ))}

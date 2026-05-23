@@ -23,7 +23,7 @@ export function TimelineBar({
     : null;
   const tone = colorOpt?.color
     ? colorClass(colorOpt.color)
-    : "bg-brand/70 hover:bg-brand text-white";
+    : "bg-brand/70 hover:bg-brand text-brand-foreground";
 
   const beginDrag = (e: React.PointerEvent<HTMLElement>, mode: "move" | "start" | "end") => {
     e.stopPropagation();
@@ -74,7 +74,7 @@ export function TimelineBar({
       title={colorOpt?.name ?? "Drag to move · Drag edges to resize"}
     >
       <div
-        className="absolute left-0 top-0 bottom-0 w-1.5 cursor-ew-resize hover:bg-black/20 rounded-l-full"
+        className="absolute left-0 top-0 bottom-0 w-1.5 cursor-ew-resize hover:bg-foreground/20 rounded-l-full"
         onPointerDown={(e) => beginDrag(e, "start")}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
@@ -83,7 +83,7 @@ export function TimelineBar({
         {bar.width > 40 && (row.title || "Untitled")}
       </span>
       <div
-        className="absolute right-0 top-0 bottom-0 w-1.5 cursor-ew-resize hover:bg-black/20 rounded-r-full"
+        className="absolute right-0 top-0 bottom-0 w-1.5 cursor-ew-resize hover:bg-foreground/20 rounded-r-full"
         onPointerDown={(e) => beginDrag(e, "end")}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}

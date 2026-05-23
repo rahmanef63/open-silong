@@ -65,7 +65,7 @@ export function RowSelectionToolbar({ databaseId }: Props) {
       {lockedCount > 0 && (
         <span
           title={`${lockedCount} row${lockedCount === 1 ? "" : "s"} locked — will be skipped`}
-          className="flex items-center gap-1 px-2 text-[11px] text-amber-600 dark:text-amber-400"
+          className="flex items-center gap-1 px-2 text-[11px] text-warning"
         >
           <Lock className="h-3 w-3" /> {lockedCount} locked
         </span>

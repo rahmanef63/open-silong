@@ -78,9 +78,9 @@ export function McpTokensSection() {
       </Field>
 
       {issued && (
-        <div className="rounded-md border border-amber-500/40 bg-amber-500/5 p-3 space-y-2">
+        <div className="rounded-md border border-warning/40 bg-warning/5 p-3 space-y-2">
           <div className="flex items-center gap-2 text-sm font-medium">
-            <KeyRound className="h-4 w-4 text-amber-600" /> Copy now — shown only once
+            <KeyRound className="h-4 w-4 text-warning" /> Copy now — shown only once
           </div>
           <div className="flex items-center gap-2 rounded border border-border bg-card p-1">
             <code className="flex-1 px-2 py-1 text-xs font-mono break-all">{issued.token}</code>

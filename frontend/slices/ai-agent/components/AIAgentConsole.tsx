@@ -163,10 +163,10 @@ export function AIAgentConsole({ open, onOpenChange, context, activeContext }: P
                         {isLast
                           ? <div className="h-2 w-2 rounded-full bg-brand animate-pulse shrink-0" />
                           : s.ok === false
-                            ? <XCircle className="h-3 w-3 text-rose-500 shrink-0" />
+                            ? <XCircle className="h-3 w-3 text-destructive shrink-0" />
                             : isWrite
-                              ? <Pencil className="h-3 w-3 text-amber-500 shrink-0" />
-                              : <CheckCircle2 className="h-3 w-3 text-emerald-500 shrink-0" />}
+                              ? <Pencil className="h-3 w-3 text-warning shrink-0" />
+                              : <CheckCircle2 className="h-3 w-3 text-success shrink-0" />}
                         <span className="font-mono">{s.skillId ?? s.label}</span>
                         {s.ms != null && <span className="text-muted-foreground/60">· {s.ms}ms</span>}
                       </li>
@@ -301,15 +301,15 @@ function ActionCard({
     <div
       className={cn(
         "rounded-md border p-2.5 text-xs",
-        proposal.state === "applied" && "border-emerald-500/40 bg-emerald-500/5",
+        proposal.state === "applied" && "border-success/40 bg-success/5",
         proposal.state === "discarded" && "border-border opacity-60",
-        proposal.state === "error" && "border-rose-500/40 bg-rose-500/5",
-        proposal.state === "pending" && "border-amber-500/40 bg-amber-500/5",
+        proposal.state === "error" && "border-destructive/40 bg-destructive/5",
+        proposal.state === "pending" && "border-warning/40 bg-warning/5",
         proposal.state === "approving" && "border-brand/40 bg-brand/5",
       )}
     >
       <div className="flex items-start gap-2">
-        {isWrite ? <Pencil className="h-3.5 w-3.5 text-amber-600 shrink-0 mt-0.5" /> : <Wrench className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5" />}
+        {isWrite ? <Pencil className="h-3.5 w-3.5 text-warning shrink-0 mt-0.5" /> : <Wrench className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5" />}
         <div className="flex-1 min-w-0">
           <div className="font-mono text-[11px]">{proposal.skillId}</div>
           <div className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">{proposal.label}</div>
@@ -320,7 +320,7 @@ function ActionCard({
             </pre>
           </details>
           {proposal.error && (
-            <div className="mt-1 text-[11px] text-rose-600">{proposal.error}</div>
+            <div className="mt-1 text-[11px] text-destructive">{proposal.error}</div>
           )}
         </div>
       </div>
@@ -339,7 +339,7 @@ function ActionCard({
           <span className="text-[11px] text-brand">Applying…</span>
         )}
         {proposal.state === "applied" && (
-          <span className="text-[11px] text-emerald-600 inline-flex items-center gap-1">
+          <span className="text-[11px] text-success inline-flex items-center gap-1">
             <CheckCircle2 className="h-3 w-3" /> Applied
           </span>
         )}
@@ -382,10 +382,10 @@ function ProgressStrip({ steps }: { steps: NonNullable<ReturnType<typeof useAICh
               <li key={i} className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
                 {s.kind === "tool"
                   ? (s.ok === false
-                      ? <XCircle className="h-3 w-3 text-rose-500" />
+                      ? <XCircle className="h-3 w-3 text-destructive" />
                       : isWrite
-                        ? <Pencil className="h-3 w-3 text-amber-500" />
-                        : <SearchIcon className="h-3 w-3 text-emerald-500" />)
+                        ? <Pencil className="h-3 w-3 text-warning" />
+                        : <SearchIcon className="h-3 w-3 text-success" />)
                   : <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/40" />}
                 <span className="font-mono">{s.skillId ?? s.label}</span>
                 {s.ms != null && <span className="text-muted-foreground/60">· {s.ms}ms</span>}

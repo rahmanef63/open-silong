@@ -40,7 +40,7 @@ export function WikiBadge({ pageId, isOwner = true }: Props) {
 
   const Icon = meta.verified ? ShieldCheck : BookOpen;
   const tone = meta.verified
-    ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-400"
+    ? "bg-success/10 border-success/30 text-success"
     : "bg-muted border-border text-muted-foreground";
 
   return (

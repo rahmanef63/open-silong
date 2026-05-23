@@ -95,7 +95,7 @@ export function AIAssistDialog({ db, open, onOpenChange, onImported }: Props) {
       <DialogContent className="max-w-xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-1.5">
-            <Sparkles className="h-4 w-4 text-amber-500" /> AI assist
+            <Sparkles className="h-4 w-4 text-brand" /> AI assist
           </DialogTitle>
           <DialogDescription>
             Describe a database or rows in plain language. Claude generates the schema (formulas included)
@@ -164,8 +164,8 @@ export function AIAssistDialog({ db, open, onOpenChange, onImported }: Props) {
         {genRows && !done && <RowsPreview genRows={genRows} />}
 
         {done && (
-          <div className="rounded-md border border-green-500/30 bg-green-500/10 p-4 text-center text-sm">
-            <Check className="mx-auto h-6 w-6 text-green-600 mb-2" />
+          <div className="rounded-md border border-success/30 bg-success/10 p-4 text-center text-sm">
+            <Check className="mx-auto h-6 w-6 text-success mb-2" />
             {done.kind === "db" ? "Database imported." : `Added ${done.count} rows.`}
           </div>
         )}

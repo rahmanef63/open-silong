@@ -51,7 +51,7 @@ export function DatabaseToolbar({ db, view, writeView }: ToolbarProps) {
             >
               <Filter className="h-3 w-3" />
               Filter
-              {activeFilters > 0 && <span className="ml-0.5 rounded-full bg-brand text-white text-[10px] px-1">{activeFilters}</span>}
+              {activeFilters > 0 && <span className="ml-0.5 rounded-full bg-brand text-brand-foreground text-[10px] px-1">{activeFilters}</span>}
             </Button>
           </PopoverTrigger>
           <PopoverContent align="end" className="p-0 w-auto">
@@ -72,7 +72,7 @@ export function DatabaseToolbar({ db, view, writeView }: ToolbarProps) {
             >
               <ArrowUpDown className="h-3 w-3" />
               Sort
-              {activeSorts > 0 && <span className="ml-0.5 rounded-full bg-brand text-white text-[10px] px-1">{activeSorts}</span>}
+              {activeSorts > 0 && <span className="ml-0.5 rounded-full bg-brand text-brand-foreground text-[10px] px-1">{activeSorts}</span>}
             </Button>
           </PopoverTrigger>
           <PopoverContent align="end" className="p-0 w-auto">

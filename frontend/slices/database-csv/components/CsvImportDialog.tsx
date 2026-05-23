@@ -101,8 +101,8 @@ export function CsvImportDialog({ db, open, onOpenChange }: Props) {
         )}
 
         {imported !== null && (
-          <div className="rounded-md border border-green-500/30 bg-green-500/10 p-4 text-center text-sm">
-            <Check className="mx-auto h-6 w-6 text-green-600 mb-2" />
+          <div className="rounded-md border border-success/30 bg-success/10 p-4 text-center text-sm">
+            <Check className="mx-auto h-6 w-6 text-success mb-2" />
             Imported {imported} row{imported === 1 ? "" : "s"} into {db.name}.
           </div>
         )}
