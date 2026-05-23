@@ -31,3 +31,9 @@ export interface TweakcnPresetGroup<
 export const STORAGE_KEY = "nosion:theme-preset";
 export const STYLE_ID = "tweakcn-vars";
 export const REGISTRY_URL = "/r/registry.json";
+
+/** First-time visitors land on this preset. Pick something opinionated
+ *  so "empty session" doesn't show the bare nosion default and look
+ *  like the switcher isn't doing anything. "claude" = warm minimal,
+ *  matches the brand vibe and works for both light + dark. */
+export const DEFAULT_PRESET = "claude";

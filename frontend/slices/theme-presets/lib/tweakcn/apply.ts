@@ -1,4 +1,4 @@
-import { STORAGE_KEY, STYLE_ID } from "./types";
+import { DEFAULT_PRESET, STORAGE_KEY, STYLE_ID } from "./types";
 import { buildBlock, buildBrandBridge } from "./cssBuilder";
 import { findTweakcnPreset, loadTweakcnRegistry } from "./registry";
 
@@ -84,9 +84,13 @@ export function clearTweakcnPreset(): void {
   try { localStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
 }
 
-/** Boot: re-apply persisted preset on first client mount. */
+/** Boot: re-apply persisted preset on first client mount, or fall
+ *  back to DEFAULT_PRESET so the session is never empty/unstyled. */
 export async function bootTweakcnPreset(): Promise<void> {
   const saved = getSavedTweakcnPreset();
-  if (!saved) return;
-  await writeVars(saved);
+  const name = saved ?? DEFAULT_PRESET;
+  await writeVars(name);
+  if (!saved) {
+    try { localStorage.setItem(STORAGE_KEY, DEFAULT_PRESET); } catch { /* ignore */ }
+  }
 }

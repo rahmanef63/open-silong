@@ -120,7 +120,7 @@ export function GalleryView({ db, view, rows, onOpenRow }: Props) {
                     <div className="w-full h-full" style={{ background: cover }} />
                   )
                 ) : (
-                  <div className="w-full h-full" style={{ background: "linear-gradient(135deg, hsl(var(--muted)), hsl(var(--accent)))" }} />
+                  <div className="w-full h-full" style={{ background: "linear-gradient(135deg, var(--muted), var(--accent))" }} />
                 )}
               </div>
             )}

@@ -22,15 +22,15 @@ export function MapSvg({
 }) {
   const hovered = hover ? pins.find((x) => x.row.id === hover) : null;
   return (
-    <div className="rounded-lg border border-border overflow-hidden bg-[hsl(var(--accent)/0.3)]">
+    <div className="rounded-lg border border-border overflow-hidden bg-accent/30">
       <svg viewBox={`0 0 ${VW} ${VH}`} className="w-full h-auto block" role="img" aria-label="World map">
-        <rect width={VW} height={VH} fill="hsl(var(--muted))" />
+        <rect width={VW} height={VH} fill="var(--muted)" />
         {Array.from({ length: 13 }, (_, i) => (
           <line
             key={`v${i}`}
             x1={(i / 12) * VW} y1={0}
             x2={(i / 12) * VW} y2={VH}
-            stroke="hsl(var(--border))" strokeWidth={0.5} strokeDasharray="2 4"
+            stroke="var(--border)" strokeWidth={0.5} strokeDasharray="2 4"
           />
         ))}
         {Array.from({ length: 7 }, (_, i) => (
@@ -38,12 +38,12 @@ export function MapSvg({
             key={`h${i}`}
             x1={0} y1={(i / 6) * VH}
             x2={VW} y2={(i / 6) * VH}
-            stroke="hsl(var(--border))" strokeWidth={0.5} strokeDasharray="2 4"
+            stroke="var(--border)" strokeWidth={0.5} strokeDasharray="2 4"
           />
         ))}
-        <line x1={0} y1={VH / 2} x2={VW} y2={VH / 2} stroke="hsl(var(--border))" strokeWidth={1} />
+        <line x1={0} y1={VH / 2} x2={VW} y2={VH / 2} stroke="var(--border)" strokeWidth={1} />
         {CONTINENTS.map((d, i) => (
-          <path key={i} d={d} fill="hsl(var(--card))" stroke="hsl(var(--border))" strokeWidth={1} />
+          <path key={i} d={d} fill="var(--card)" stroke="var(--border)" strokeWidth={1} />
         ))}
         {pins.map(({ row, x, y, color }) => {
           const isHover = hover === row.id;
