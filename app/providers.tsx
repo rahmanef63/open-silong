@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from "react";
 import { ConvexReactClient } from "convex/react";
 import { ConvexAuthNextjsProvider } from "@convex-dev/auth/nextjs";
+import { ThemeProvider } from "next-themes";
 import { Toaster as SonnerToaster } from "@/shared/ui/sonner";
 import { ChunkErrorBoundary } from "@/shared/components/ChunkErrorBoundary";
 import { GlobalErrorListeners } from "@/shared/components/GlobalErrorListeners";
@@ -25,13 +26,21 @@ export default function Providers({ children }: { children: ReactNode }) {
   return (
     <ChunkErrorBoundary>
       <ConvexAuthNextjsProvider client={convex}>
-        <GlobalErrorListeners />
-        <ServiceWorkerCleanup />
-        <VersionWatcher />
-        {/* Mounted at root so the version-update toast also shows on
-         *  /auth, /share, and other routes outside DashboardShell. */}
-        <SonnerToaster richColors closeButton />
-        <FilesProvider>{children}</FilesProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange={false}
+          storageKey="silong-theme"
+        >
+          <GlobalErrorListeners />
+          <ServiceWorkerCleanup />
+          <VersionWatcher />
+          {/* Mounted at root so the version-update toast also shows on
+           *  /auth, /share, and other routes outside DashboardShell. */}
+          <SonnerToaster richColors closeButton />
+          <FilesProvider>{children}</FilesProvider>
+        </ThemeProvider>
       </ConvexAuthNextjsProvider>
     </ChunkErrorBoundary>
   );

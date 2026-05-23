@@ -15,7 +15,6 @@ import { usePageActions } from "./store/pageActions";
 import { useDatabaseActions } from "./store/databaseActions";
 import { toPage, toDatabase } from "./store/mappers";
 import { useWorkspaceMuts } from "./store/useWorkspaceMuts";
-import { useThemeEffect } from "./store/useThemeEffect";
 
 export { useStore };
 
@@ -81,7 +80,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }));
   }, [me]);
 
-  useThemeEffect(preferences);
+  // useThemeEffect removed — next-themes' ThemeProvider (mounted in
+  // app/providers.tsx with attribute="class") now owns the .dark class.
+  // DashboardShell's ThemeBridge syncs preferences.theme ↔ next-themes.
 
   const history = useHistoryStack();
   const snapshotsApi = useSnapshots(user.name);
