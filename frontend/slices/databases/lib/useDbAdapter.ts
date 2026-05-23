@@ -145,22 +145,13 @@ export function useDbAdapter(): DbAdapterApi {
       deleteProperty: (dbId, propId) =>
         adapter.databases.deleteProperty({ dbId, propId }),
       duplicateProperty: async (dbId, propId) => {
-        // No direct adapter method — clone client-side and add via
-        // addProperty + apply property metadata via updateProperty.
-        const db = dbMap.get(dbId);
-        const src = db?.properties.find((p) => p.id === propId);
-        if (!db || !src) return null;
-        const newId = await adapter.databases.addProperty({ dbId, type: src.type, name: `${src.name} copy` });
-        // Re-apply non-default fields onto the new prop.
-        await adapter.databases.updateProperty({
-          dbId, propId: newId,
-          patch: {
-            options: src.options?.map((o) => ({ ...o, id: "" })),
-            formulaExpression: src.formulaExpression,
-            rollupAggregate: src.rollupAggregate,
-          },
-        });
-        return { id: newId };
+        // Single round-trip via the adapter. Earlier two-step compose
+        // (addProperty + updateProperty) raced — same pattern as the
+        // addView bug (a5a950d): the second call read stale databaseMap,
+        // mapped over old properties, and clobbered the freshly-added
+        // prop. Now the adapter clones server-side in one mutation.
+        const newId = await adapter.databases.duplicateProperty({ dbId, propId });
+        return newId ? { id: newId } : null;
       },
       reorderProperties: (dbId, orderedIds) =>
         adapter.databases.reorderProperties({ dbId, orderedIds }),

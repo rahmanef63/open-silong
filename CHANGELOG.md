@@ -13,6 +13,38 @@ notes under `docs/audit/`.
 Polish wave — root `CHANGELOG.md`, smoke-test golden flow doc, env
 gitignore hardening, OSS readiness tick-off.
 
+## 2026-05-23 — Production hardening (post-Phase 7)
+
+### Fixed
+- **Add View** silently failed after Phase 3 (`38f8243`): clicking
+  "+ Add view" flashed but the new view never persisted. Root cause
+  was a race in `useDbAdapter.addView`'s two-step compose
+  (addView + updateView); the second call read stale `databaseMap`
+  mid-callback and clobbered the first mutation's writes. Fix:
+  `adapter.databases.addView` contract now accepts the full view
+  config so the create completes in one round-trip. (`a5a950d`)
+- **Duplicate Property** lost cloned `options` / `formulaExpression` /
+  `rollupAggregate` for the same race-pattern reason. Added a
+  dedicated `adapter.databases.duplicateProperty` method that
+  delegates to the store's single-mutation clone. (this release)
+- **PageEditor** mounted an inner `EditorComponentsProvider` with an
+  empty `{}` fallback, shadowing `NotionAppProvider`'s bundled
+  `DatabaseBlock` registry — block renderer showed a "not registered"
+  stub even though the provider was mounted. Fix: merge outer
+  registry into per-call overrides. (`bdcdcbf`)
+
+### Added
+- **Undo / Redo buttons** in the dashboard header, surfacing the
+  existing workspace-level `useUndoRedo()` stack. Tooltip exposes
+  ⌘Z / ⌘⇧Z hotkeys (Mac/Win-aware). Native contenteditable undo
+  still handles in-block text edits. (`186617f`)
+- **Error boundaries** for `/forms/:slug`, `/oauth/authorize`,
+  `/site/:ws` — three public routes that previously bubbled render
+  errors to the root boundary. (`5ae4356`)
+- **301 / 308 redirects** from `nosion.rahmanef.com` and
+  `notion-page-clone.rahmanef.com` to the canonical
+  `silong.rahmanef.com`, preserving path + query. (`e1b69d7`)
+
 ## 2026-05-20 — Open-source pivot (v0.1.0-pre)
 
 The first public OSS release prep. Project renamed

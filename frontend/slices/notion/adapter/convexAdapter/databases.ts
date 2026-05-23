@@ -69,6 +69,11 @@ export function useConvexDatabasesAdapter(): DatabasesAdapter {
         return prop.id;
       },
 
+      duplicateProperty: async ({ dbId, propId }) => {
+        const cloned = store.duplicateProperty(dbId, propId);
+        return cloned?.id ?? null;
+      },
+
       updateProperty: async ({ dbId, propId, patch }) => {
         store.updateProperty(dbId, propId, patch);
       },

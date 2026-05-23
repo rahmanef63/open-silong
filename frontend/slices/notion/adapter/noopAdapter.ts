@@ -68,6 +68,7 @@ export const noopAdapter: NotionAdapter = {
     addProperty: async () => unimpl("databases.addProperty"),
     updateProperty: async () => unimpl("databases.updateProperty"),
     deleteProperty: async () => unimpl("databases.deleteProperty"),
+    duplicateProperty: async () => unimpl("databases.duplicateProperty"),
     reorderProperties: async () => unimpl("databases.reorderProperties"),
     addSelectOption: async () => unimpl("databases.addSelectOption"),
     updateSelectOption: async () => unimpl("databases.updateSelectOption"),
