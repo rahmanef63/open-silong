@@ -27,7 +27,7 @@ import { AppSidebar } from "@/slices/workspace-sidebar";
 import { SearchModal } from "@/slices/command-palette/components/SearchModal";
 import { SelectionToolbar } from "@/slices/editor/components/SelectionToolbar";
 import { MentionTypeahead } from "@/slices/editor/components/MentionTypeahead";
-import { useThemePreset } from "@/slices/theme-presets";
+import { TweakcnSwitcher, ThemeColorSync, useThemePreset } from "@/slices/theme-presets";
 import { useTouchLastSeen } from "@/shared/hooks/useTouchLastSeen";
 import { MobileBottomNav } from "@/slices/mobile-nav";
 
@@ -120,6 +120,7 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
             <NotionAdapterMount>
             <ConfirmProvider>
             <WorkspaceIOProvider>
+            <ThemeColorSync />
             <Suspense fallback={null}>
               <CommandPalette />
             </Suspense>
@@ -160,6 +161,7 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
                         <span className="hidden md:inline">Search</span>
                         <kbd className="hidden sm:inline-flex text-[10px] tracking-wider text-muted-foreground border border-border rounded px-1.5 py-0.5">⌘K</kbd>
                       </Button>
+                      <TweakcnSwitcher />
                       {/* Right slot: route-injected actions (Share, history, …). */}
                       <PageHeaderRightAnchor className="flex items-center gap-1" />
                     </div>
