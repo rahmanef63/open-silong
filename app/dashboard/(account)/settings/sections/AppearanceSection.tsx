@@ -2,7 +2,7 @@
 
 import { useStore } from "@/shared/lib/store";
 import { ThemePref, SidebarDensity } from "@/shared/types/domain";
-import { ThemePicker } from "@/slices/theme-presets";
+import { TweakcnSwitcher } from "@/slices/theme-presets";
 import { Field } from "@/shared/components/forms/Field";
 import { Choice } from "@/shared/components/forms/Choice";
 
@@ -29,7 +29,10 @@ export function AppearanceSection() {
         />
       </Field>
       <Field label="Color preset">
-        <ThemePicker />
+        <div className="flex items-center gap-2">
+          <TweakcnSwitcher />
+          <span className="text-xs text-muted-foreground">~36 tweakcn presets</span>
+        </div>
       </Field>
       <Field label="Sidebar density">
         <Choice
