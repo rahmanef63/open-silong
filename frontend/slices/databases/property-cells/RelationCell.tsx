@@ -55,12 +55,12 @@ export function RelationCell({ db, prop, row, value, onSet, cellClass }: CellPro
       <PopoverTrigger asChild>
         <Button variant="ghost" className={cn(cellClass, "h-auto w-full justify-start gap-1 rounded px-2 py-1 text-left font-normal hover:bg-accent/50 [&_svg]:size-3.5")}>
           {targetDbMissing ? (
-            <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+            <AlertTriangle className="h-3.5 w-3.5 text-warning shrink-0" />
           ) : (
             <Link2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
           )}
           {targetDbMissing ? (
-            <span className="text-xs text-amber-700 dark:text-amber-300">Database removed</span>
+            <span className="text-xs text-warning">Database removed</span>
           ) : linkedExisting.length || linkedStale.length ? (
             <span className="flex min-w-0 flex-wrap gap-1">
               {linkedExisting.slice(0, 2).map((p) => (
@@ -70,7 +70,7 @@ export function RelationCell({ db, prop, row, value, onSet, cellClass }: CellPro
                 </span>
               ))}
               {linkedStale.length > 0 && (
-                <span className="inline-flex items-center gap-1 rounded border border-amber-500/40 bg-amber-500/10 px-1.5 py-0.5 text-xs text-amber-700 dark:text-amber-300">
+                <span className="inline-flex items-center gap-1 rounded border border-warning/40 bg-warning/10 px-1.5 py-0.5 text-xs text-warning">
                   <AlertTriangle className="h-3 w-3" /> {linkedStale.length} removed
                 </span>
               )}
@@ -84,7 +84,7 @@ export function RelationCell({ db, prop, row, value, onSet, cellClass }: CellPro
       <PopoverContent className="w-72 p-2">
         <div className="space-y-2">
           {targetDbMissing && (
-            <div className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-2 text-[11px] text-amber-700 dark:text-amber-300">
+            <div className="flex items-start gap-2 rounded-md border border-warning/40 bg-warning/10 p-2 text-[11px] text-warning">
               <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
               <span>
                 The target database for this relation no longer exists. Pick another below or clear it.
@@ -95,7 +95,7 @@ export function RelationCell({ db, prop, row, value, onSet, cellClass }: CellPro
             <Button
               variant="ghost"
               onClick={stripStale}
-              className="h-auto w-full justify-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-1.5 text-[11px] font-normal text-amber-700 hover:bg-amber-500/20 dark:text-amber-300 [&_svg]:size-3"
+              className="h-auto w-full justify-start gap-2 rounded-md border border-warning/40 bg-warning/10 px-2 py-1.5 text-[11px] font-normal text-warning hover:bg-warning/20 [&_svg]:size-3"
             >
               <X className="h-3 w-3" />
               Remove {linkedStale.length} stale link{linkedStale.length === 1 ? "" : "s"}

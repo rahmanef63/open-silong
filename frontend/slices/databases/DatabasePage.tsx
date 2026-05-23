@@ -74,7 +74,7 @@ export function DatabasePage() {
   if (db.trashed) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-3 text-sm">
-        <div className="font-medium text-amber-700 dark:text-amber-400">
+        <div className="font-medium text-warning">
           Database is in Trash
         </div>
         <Button

@@ -39,7 +39,7 @@ export function VerificationCell({ value, onSet, cellClass }: Props) {
       className={cn(
         cellClass,
         "inline-flex h-auto items-center gap-1.5 rounded px-2 py-1 font-normal transition hover:bg-accent/50 [&_svg]:size-3.5",
-        verified ? "text-emerald-600 hover:text-emerald-600 dark:text-emerald-400" : "text-muted-foreground",
+        verified ? "text-success hover:text-success" : "text-muted-foreground",
       )}
     >
       <Icon className="h-3.5 w-3.5" />

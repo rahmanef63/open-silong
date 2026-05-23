@@ -91,7 +91,7 @@ export function OverviewDashboardView({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
         <div className="rounded-lg border border-border bg-card p-4">
           <div className="mb-3 flex items-center gap-2 text-sm font-medium">
-            <Crown className="h-4 w-4 text-amber-500" /> Role distribution
+            <Crown className="h-4 w-4 text-warning" /> Role distribution
           </div>
           {roleDist ? <RoleDistribution counts={roleDist} /> : <div className="text-xs text-muted-foreground">Loading…</div>}
         </div>

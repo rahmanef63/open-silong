@@ -108,8 +108,8 @@ export function JsonImportDialog({ open, onOpenChange, onImported }: Props) {
         )}
 
         {importedDbId !== null && (
-          <div className="rounded-md border border-green-500/30 bg-green-500/10 p-4 text-center text-sm">
-            <Check className="mx-auto h-6 w-6 text-green-600 mb-2" />
+          <div className="rounded-md border border-success/30 bg-success/10 p-4 text-center text-sm">
+            <Check className="mx-auto h-6 w-6 text-success mb-2" />
             Imported {parsed?.rows.length ?? 0} row{parsed?.rows.length === 1 ? "" : "s"}.
           </div>
         )}

@@ -76,7 +76,7 @@ export function DatabaseHeaderBar({
         {db.locked && (
           <span
             title="Database is locked — property and view structural edits are gated. Toggle in the database menu."
-            className="ml-1 inline-flex items-center gap-1 rounded-full border border-amber-500/40 bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-400"
+            className="ml-1 inline-flex items-center gap-1 rounded-full border border-warning/40 bg-warning/10 px-1.5 py-0.5 text-[10px] font-medium text-warning"
           >
             <Lock className="h-3 w-3" /> locked
           </span>

@@ -38,7 +38,7 @@ type SharedPage = {
 
 export function SharedPageView({ page }: { page: SharedPage }) {
   return (
-    <div className="min-h-screen bg-surface print:bg-white">
+    <div className="min-h-screen bg-surface print:bg-background">
       <ShareThemeBoot />
       <header className="border-b border-border bg-background/80 backdrop-blur px-6 h-12 flex items-center justify-between print:hidden">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">

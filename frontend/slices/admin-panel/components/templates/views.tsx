@@ -140,9 +140,9 @@ export function TemplateFeedView({ items, handlers }: { items: Template[]; handl
                       <span className="text-sm font-medium truncate">{tpl.name}</span>
                       {tpl.isSeed && <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">seed</Badge>}
                       {tpl.isPublished ? (
-                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-emerald-500/50 text-emerald-700 dark:text-emerald-400 bg-emerald-500/5">live</Badge>
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-success/50 text-success bg-success/5">live</Badge>
                       ) : (
-                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-amber-500/50 text-amber-700 dark:text-amber-400 bg-amber-500/5">draft</Badge>
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-warning/50 text-warning bg-warning/5">draft</Badge>
                       )}
                     </div>
                     <div className="text-xs text-muted-foreground truncate">

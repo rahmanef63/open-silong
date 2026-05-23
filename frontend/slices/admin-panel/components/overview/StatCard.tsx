@@ -18,9 +18,9 @@ export function StatCard({
     tone === "brand"
       ? "bg-brand/10 text-brand"
       : tone === "warn"
-        ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+        ? "bg-warning/10 text-warning"
         : tone === "good"
-          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+          ? "bg-success/10 text-success"
           : "bg-muted text-muted-foreground";
   return (
     <div className="rounded-lg border border-border bg-card p-4">

@@ -134,7 +134,7 @@ export function PageRow({
               )}
             </Button>
           )}
-          {page.favorite && <Star className="h-3 w-3 fill-yellow-400 text-yellow-400 shrink-0" />}
+          {page.favorite && <Star className="h-3 w-3 fill-warning text-warning shrink-0" />}
         </div>
       </td>
       <td className="hidden md:table-cell px-2 py-1.5 text-xs text-muted-foreground truncate align-middle">
@@ -167,7 +167,7 @@ export function PageRow({
               <Pencil className="mr-2 h-3.5 w-3.5" /> Rename
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => toggleFavorite(page.id)}>
-              <Star className={cn("mr-2 h-3.5 w-3.5", page.favorite && "fill-yellow-400 text-yellow-400")} />
+              <Star className={cn("mr-2 h-3.5 w-3.5", page.favorite && "fill-warning text-warning")} />
               {page.favorite ? "Unfavorite" : "Favorite"}
             </DropdownMenuItem>
             <DropdownMenuSeparator />

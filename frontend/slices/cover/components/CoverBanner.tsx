@@ -98,7 +98,7 @@ export function CoverBanner({ cover, onChange, className }: Props) {
           </>
         ) : (
           <>
-            <span className="rounded-md bg-black/60 px-2 py-1 text-[10px] text-white">
+            <span className="rounded-md bg-foreground/60 px-2 py-1 text-[10px] text-background">
               Drag to reposition · {Math.round(effectiveY)}%
             </span>
             <Button
@@ -169,7 +169,7 @@ function RepositionableBanner({
       }}
       className={cn(
         "h-44 md:h-56 w-full",
-        reposition && "cursor-ns-resize ring-2 ring-blue-500",
+        reposition && "cursor-ns-resize ring-2 ring-primary",
         className,
       )}
       style={coverStyle(cover, resolvedUrl)}

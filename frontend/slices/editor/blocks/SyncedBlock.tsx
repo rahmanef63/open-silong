@@ -159,7 +159,7 @@ function SyncedSourceView({
               placeholder="nosion://sync/<id>"
               className="rounded border border-border bg-background px-2 py-0.5 text-xs outline-none focus:border-brand"
             />
-            <Button type="submit" className="h-auto rounded bg-brand px-2 py-0.5 text-xs text-white hover:bg-brand/90">Mirror</Button>
+            <Button type="submit" className="h-auto rounded bg-brand px-2 py-0.5 text-xs text-brand-foreground hover:bg-brand/90">Mirror</Button>
             <Button variant="ghost" type="button" onClick={() => { setPasting(false); setPasteValue(""); }} className="h-auto p-0 text-xs font-normal text-muted-foreground hover:bg-transparent hover:text-foreground">Cancel</Button>
           </form>
         )}
@@ -184,7 +184,7 @@ function SyncedRefView({
 
   if (!sourceBlock || !sourcePage) {
     return (
-      <div className="rounded-md border border-amber-500/40 bg-amber-500/5 p-3 text-xs text-amber-700 dark:text-amber-400 flex items-center gap-2">
+      <div className="rounded-md border border-warning/40 bg-warning/5 p-3 text-xs text-warning flex items-center gap-2">
         <AlertTriangle className="h-4 w-4 shrink-0" />
         <div>
           <div className="font-medium">Synced source not found.</div>
@@ -198,7 +198,7 @@ function SyncedRefView({
 
   if (cycle) {
     return (
-      <div className="rounded-md border border-rose-500/40 bg-rose-500/5 p-3 text-xs text-rose-700 dark:text-rose-400 flex items-center gap-2">
+      <div className="rounded-md border border-destructive/40 bg-destructive/5 p-3 text-xs text-destructive flex items-center gap-2">
         <AlertTriangle className="h-4 w-4 shrink-0" />
         <div>
           <div className="font-medium">Synced cycle detected.</div>

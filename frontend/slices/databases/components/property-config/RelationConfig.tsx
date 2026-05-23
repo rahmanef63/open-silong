@@ -33,7 +33,7 @@ export function RelationConfig({ db, prop, databases, setRelationTwoWay, updateP
             });
           }}
         >
-          <SelectTrigger className={cn("mt-1 h-8 text-sm", targetMissing && "border-amber-500/60")}>
+          <SelectTrigger className={cn("mt-1 h-8 text-sm", targetMissing && "border-warning/60")}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -44,7 +44,7 @@ export function RelationConfig({ db, prop, databases, setRelationTwoWay, updateP
           </SelectContent>
         </Select>
         {targetMissing && (
-          <p className="mt-1 text-[11px] text-amber-700 dark:text-amber-300">
+          <p className="mt-1 text-[11px] text-warning">
             Target database removed — pick another or clear.
           </p>
         )}

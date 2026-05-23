@@ -91,8 +91,8 @@ export function DatabaseBlock({
   }
   if (db?.trashed) {
     return (
-      <div className="rounded-lg border border-dashed border-amber-500/40 bg-amber-500/5 p-6 text-center text-sm">
-        <div className="font-medium text-amber-700 dark:text-amber-400">Database moved to Trash</div>
+      <div className="rounded-lg border border-dashed border-warning/40 bg-warning/5 p-6 text-center text-sm">
+        <div className="font-medium text-warning">Database moved to Trash</div>
         <div className="mt-1 text-xs text-muted-foreground">
           Restore from <Link to={ROUTES.trash} className="underline">Trash</Link> to view it again.
         </div>

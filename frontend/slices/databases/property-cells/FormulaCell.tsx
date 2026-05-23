@@ -48,7 +48,7 @@ export function FormulaCell({ db, prop, row, cellClass }: Props) {
       <PopoverTrigger asChild>
         <Button variant="ghost" className={cn(cellClass, "h-auto w-full justify-start gap-1 rounded px-2 py-1 text-left font-normal hover:bg-accent/50 [&_svg]:size-3.5")}>
           {cellResult.error ? (
-            <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+            <AlertTriangle className="h-3.5 w-3.5 text-warning shrink-0" />
           ) : (
             <Calculator className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
           )}
@@ -68,7 +68,7 @@ export function FormulaCell({ db, prop, row, cellClass }: Props) {
             placeholder="{{title}}"
             className={cn(
               "h-8 w-full rounded-md border bg-background px-2 font-mono text-xs outline-none",
-              liveResult.error ? "border-amber-500/60 ring-1 ring-amber-500/30" : "border-border",
+              liveResult.error ? "border-warning/60 ring-1 ring-warning/30" : "border-border",
             )}
           />
           {liveResult.error && (
@@ -76,12 +76,12 @@ export function FormulaCell({ db, prop, row, cellClass }: Props) {
               variant="ghost"
               type="button"
               onClick={jumpToErrorPos}
-              className="h-auto w-full items-start justify-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-1.5 text-left text-[11px] font-normal text-amber-700 hover:bg-amber-500/20 dark:text-amber-300 [&_svg]:size-3"
+              className="h-auto w-full items-start justify-start gap-2 rounded-md border border-warning/40 bg-warning/10 px-2 py-1.5 text-left text-[11px] font-normal text-warning hover:bg-warning/20 [&_svg]:size-3"
             >
               <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
               <span>
                 {liveResult.error.message}
-                <span className="text-amber-600/70"> · pos {liveResult.error.pos} (click to jump)</span>
+                <span className="text-warning/70"> · pos {liveResult.error.pos} (click to jump)</span>
               </span>
             </Button>
           )}

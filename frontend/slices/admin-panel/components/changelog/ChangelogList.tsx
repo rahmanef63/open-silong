@@ -40,7 +40,7 @@ export function ChangelogList({ entries, selectedId, onSelect }: Props) {
                 <span className={cn(
                   "text-[10px] rounded border px-1.5 py-0",
                   e.publishedAt
-                    ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+                    ? "border-success/40 bg-success/10 text-success"
                     : "border-muted bg-muted text-muted-foreground",
                 )}>
                   {e.publishedAt ? "Published" : "Draft"}

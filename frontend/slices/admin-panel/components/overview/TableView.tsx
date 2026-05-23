@@ -35,9 +35,9 @@ export function OverviewTableView({ kpis }: { kpis: KPI[] }) {
                     k.tone === "brand"
                       ? "text-brand"
                       : k.tone === "warn"
-                        ? "text-amber-600 dark:text-amber-400"
+                        ? "text-warning"
                         : k.tone === "good"
-                          ? "text-emerald-600 dark:text-emerald-400"
+                          ? "text-success"
                           : "text-muted-foreground";
                   return (
                     <TableRow key={k.label}>

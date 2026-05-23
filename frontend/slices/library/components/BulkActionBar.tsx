@@ -84,10 +84,10 @@ export function BulkActionBar({ selectedIds, onClear }: Props) {
       </span>
       <Separator orientation="vertical" className="h-5" />
       <Button size="sm" variant="ghost" onClick={handleFav} title={allFavorite ? "Remove favorite" : "Add to favorites"}>
-        <Star className={`h-4 w-4 ${allFavorite ? "fill-amber-400 text-amber-400" : ""}`} />
+        <Star className={`h-4 w-4 ${allFavorite ? "fill-warning text-warning" : ""}`} />
       </Button>
       <Button size="sm" variant="ghost" onClick={handlePublic} title={allPublic ? "Make private" : "Make public"}>
-        <Globe2 className={`h-4 w-4 ${allPublic ? "text-emerald-500" : ""}`} />
+        <Globe2 className={`h-4 w-4 ${allPublic ? "text-success" : ""}`} />
       </Button>
       <Button size="sm" variant="ghost" onClick={handleExport} title="Export selection as JSON">
         <Download className="h-4 w-4" />

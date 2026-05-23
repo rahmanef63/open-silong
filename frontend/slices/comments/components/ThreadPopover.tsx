@@ -74,7 +74,7 @@ export function ThreadPopover({
           >
             <MessageSquare className="h-3.5 w-3.5" />
             {openCount > 0 && (
-              <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-brand text-[8px] text-white flex items-center justify-center font-bold">
+              <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-brand text-[8px] text-brand-foreground flex items-center justify-center font-bold">
                 {openCount}
               </span>
             )}

@@ -229,7 +229,7 @@ function FormRelationInput({
 
   if (!targetDbConfigured) {
     return (
-      <div className="rounded-md border border-amber-500/40 bg-amber-500/5 px-3 py-2 text-xs text-amber-700 dark:text-amber-400 inline-flex items-center gap-1">
+      <div className="rounded-md border border-warning/40 bg-warning/5 px-3 py-2 text-xs text-warning inline-flex items-center gap-1">
         <AlertTriangle className="h-3 w-3" />
         Relation property has no target database configured.
       </div>

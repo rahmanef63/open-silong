@@ -107,7 +107,7 @@ export function ChangelogEditor({ entry, onSaved }: Props) {
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium">{entry ? `Edit ${entry.version}` : "New entry"}</h3>
         {isPublished && (
-          <span className="text-[11px] rounded border border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.5">
+          <span className="text-[11px] rounded border border-success/40 bg-success/10 text-success px-1.5 py-0.5">
             Published {entry.publishedAt ? new Date(entry.publishedAt).toLocaleDateString() : ""}
           </span>
         )}
@@ -172,7 +172,7 @@ export function ChangelogEditor({ entry, onSaved }: Props) {
           {entry ? "Save changes" : "Create draft"}
         </Button>
         {entry && !isPublished && (
-          <Button variant="default" onClick={publish} disabled={busy} className="gap-1.5 bg-emerald-600 hover:bg-emerald-700">
+          <Button variant="default" onClick={publish} disabled={busy} className="gap-1.5 bg-success text-success-foreground hover:bg-success/90">
             <Send className="h-3.5 w-3.5" />
             Publish & notify users
           </Button>
@@ -181,7 +181,7 @@ export function ChangelogEditor({ entry, onSaved }: Props) {
           <Button variant="outline" onClick={unpublish} disabled={busy}>Unpublish</Button>
         )}
         {entry && (
-          <Button variant="ghost" onClick={remove} disabled={busy} className="ml-auto text-rose-600 hover:text-rose-700">
+          <Button variant="ghost" onClick={remove} disabled={busy} className="ml-auto text-destructive hover:text-destructive/80">
             <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete
           </Button>
         )}

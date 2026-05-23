@@ -33,7 +33,7 @@ export function WebhookDeliveryLog({ endpointId }: Props) {
             className="flex items-center gap-2 px-1.5 py-1 text-[11px]"
           >
             {ok ? (
-              <Check className="h-3 w-3 shrink-0 text-emerald-500" />
+              <Check className="h-3 w-3 shrink-0 text-success" />
             ) : d.error ? (
               <X className="h-3 w-3 shrink-0 text-destructive" />
             ) : (
@@ -45,7 +45,7 @@ export function WebhookDeliveryLog({ endpointId }: Props) {
             <span
               className={cn(
                 "shrink-0 font-mono text-[10px]",
-                ok ? "text-emerald-600" : d.error ? "text-destructive" : "text-muted-foreground",
+                ok ? "text-success" : d.error ? "text-destructive" : "text-muted-foreground",
               )}
             >
               {d.statusCode ?? "—"}

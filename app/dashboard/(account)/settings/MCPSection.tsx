@@ -98,7 +98,7 @@ const status = (r: Row): "active" | "expired" | "revoked" => {
 };
 
 const STATUS_CLS: Record<ReturnType<typeof status>, string> = {
-  active: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30",
+  active: "bg-success/15 text-success border-success/30",
   expired: "bg-muted text-muted-foreground border-border",
   revoked: "bg-destructive/10 text-destructive border-destructive/30",
 };
@@ -138,7 +138,7 @@ function CopyRow({ field }: { field: Field }) {
         <code className="text-xs font-mono break-all text-foreground/90">{field.value}</code>
         {field.copyable && (
           <span className="shrink-0 inline-flex items-center gap-1 text-[10px] uppercase text-muted-foreground group-hover:text-foreground">
-            {copied ? <Check className="size-3 text-emerald-500" /> : <Copy className="size-3" />}
+            {copied ? <Check className="size-3 text-success" /> : <Copy className="size-3" />}
             {copied ? "copied" : "copy"}
           </span>
         )}
@@ -193,7 +193,7 @@ function CopySnippet({ title, code }: { title: string; code: string }) {
       <div className="flex items-center justify-between border-b border-border px-4 py-2">
         <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{title}</h4>
         <Button variant="ghost" size="sm" className="h-7 px-2 text-[10px]" onClick={onCopy}>
-          {copied ? <Check className="size-3 mr-1 text-emerald-500" /> : <Copy className="size-3 mr-1" />}
+          {copied ? <Check className="size-3 mr-1 text-success" /> : <Copy className="size-3 mr-1" />}
           {copied ? "copied" : "copy"}
         </Button>
       </div>
@@ -221,7 +221,7 @@ function Step({ n, title, children }: { n: number; title: string; children?: Rea
 function ChatGPTTab() {
   return (
     <div className="space-y-6">
-      <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-foreground/90">
+      <div className="rounded-md border border-warning/40 bg-warning/10 p-3 text-xs text-foreground/90">
         <p>
           <strong>OAuth — bukan paste token.</strong> Token auto-minted setelah kamu
           klik <em>Allow</em> di consent page. <strong>JANGAN</strong> paste nsn_

@@ -64,7 +64,7 @@ export function DataMenu({ db, rows }: Props) {
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => setAiOpen(true)}>
-            <Sparkles className="mr-2 h-3.5 w-3.5 text-amber-500" /> AI assist…
+            <Sparkles className="mr-2 h-3.5 w-3.5 text-brand" /> AI assist…
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

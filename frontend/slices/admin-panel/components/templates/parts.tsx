@@ -27,14 +27,14 @@ export function PublishToggle({
       title={tpl.isPublished ? "Click to unpublish" : "Click to publish"}
       onClick={(e) => e.stopPropagation()}
     >
-      <span className={tpl.isPublished ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}>
+      <span className={tpl.isPublished ? "text-success" : "text-warning"}>
         {tpl.isPublished ? "Live" : "Draft"}
       </span>
       <Switch
         checked={tpl.isPublished}
         onCheckedChange={() => void onToggle(tpl)}
         aria-label="Toggle publish"
-        className="data-[state=checked]:bg-emerald-600"
+        className="data-[state=checked]:bg-success"
       />
     </label>
   );

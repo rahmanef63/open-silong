@@ -135,11 +135,11 @@ function FeedView({ rows }: { rows: Row[] }) {
 
 function ActionBadge({ kind }: { kind: string }) {
   const tone = kind.includes("delete")
-    ? "border-rose-500/40 bg-rose-500/10 text-rose-700 dark:text-rose-400"
+    ? "border-destructive/40 bg-destructive/10 text-destructive"
     : kind.includes("create")
-      ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+      ? "border-success/40 bg-success/10 text-success"
       : kind.includes("role")
-        ? "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-400"
+        ? "border-warning/40 bg-warning/10 text-warning"
         : "border-border bg-muted/40 text-foreground";
   return (
     <Badge variant="outline" className={`${tone} text-[10px] px-1.5 py-0 h-4 font-medium`}>

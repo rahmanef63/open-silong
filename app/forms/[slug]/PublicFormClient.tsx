@@ -58,8 +58,8 @@ export function PublicFormClient({ slug, form }: { slug: string; form: FormSchem
   if (done) {
     return (
       <div className="max-w-xl mx-auto">
-        <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/5 p-8 text-center">
-          <CheckCircle2 className="mx-auto h-10 w-10 text-emerald-600" />
+        <div className="rounded-lg border border-success/40 bg-success/5 p-8 text-center">
+          <CheckCircle2 className="mx-auto h-10 w-10 text-success" />
           <div className="mt-3 text-lg font-semibold">{form.successMessage}</div>
           <div className="mt-1 text-xs text-muted-foreground">Your response was saved.</div>
           <Button variant="outline" size="sm" className="mt-4" onClick={() => setDone(false)}>

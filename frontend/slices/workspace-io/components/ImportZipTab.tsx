@@ -125,7 +125,7 @@ export const ImportZipTab = forwardRef<ImportZipTabHandle, Props>(function Impor
         <div className="space-y-2">
           <div className={cn(
             "flex items-center gap-2",
-            zipSummary.pages + zipSummary.databases + zipSummary.files > 0 ? "text-emerald-600" : "text-amber-600",
+            zipSummary.pages + zipSummary.databases + zipSummary.files > 0 ? "text-success" : "text-warning",
           )}>
             <CheckCircle2 className="h-4 w-4" /> Import done
           </div>
@@ -143,7 +143,7 @@ export const ImportZipTab = forwardRef<ImportZipTabHandle, Props>(function Impor
             </div>
           )}
           {zipSummary.errors.length > 0 && (
-            <div className="rounded border border-amber-500/40 bg-amber-500/10 px-2 py-1.5 text-xs text-amber-700 dark:text-amber-300">
+            <div className="rounded border border-warning/40 bg-warning/10 px-2 py-1.5 text-xs text-warning">
               <div className="font-medium mb-1">{zipSummary.errors.length} entry error</div>
               <ul className="space-y-0.5 max-h-48 overflow-auto">
                 {zipSummary.errors.slice(0, 50).map((er, i) => (

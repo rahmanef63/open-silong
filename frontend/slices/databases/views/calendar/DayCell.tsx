@@ -47,7 +47,7 @@ export function DayCell({
         <div className="flex items-center justify-between mb-1">
           <div className={cn(
             "text-[10px] w-5 h-5 flex items-center justify-center rounded-full",
-            isToday ? "bg-brand text-white font-bold" : "text-muted-foreground"
+            isToday ? "bg-brand text-brand-foreground font-bold" : "text-muted-foreground"
           )}>
             {d.getDate()}
           </div>
@@ -70,7 +70,7 @@ export function DayCell({
             : null;
           const tone = colorOpt?.color
             ? colorClass(colorOpt.color)
-            : "bg-brand/15 text-brand hover:bg-brand/25";
+            : "bg-brand/15 text-brand hover:bg-brand/25 border-brand/20";
           return (
             <DraggableEvent
               key={r.id}

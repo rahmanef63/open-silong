@@ -43,7 +43,7 @@ export function TreeNode({ node }: { node: TemplateTreeNode }) {
             node.kind === "page"
               ? "font-medium truncate"
               : node.kind === "database"
-                ? "text-blue-600 dark:text-blue-400 truncate"
+                ? "text-primary truncate"
                 : "text-muted-foreground truncate"
           }
         >

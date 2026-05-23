@@ -18,7 +18,7 @@ export function ModeToggle({ db, view }: { db: Database; view: DatabaseViewConfi
           onClick={() => updateView(db.id, view.id, { calendarMode: m })}
           className={cn(
             "h-auto rounded px-2 py-0.5 text-[11px] font-normal",
-            mode === m ? "bg-brand text-white font-medium hover:bg-brand hover:text-white" : "text-muted-foreground hover:bg-accent",
+            mode === m ? "bg-brand text-brand-foreground font-medium hover:bg-brand hover:text-brand-foreground" : "text-muted-foreground hover:bg-accent",
           )}
         >{m === "week" ? "Week" : "Month"}</Button>
       ))}
