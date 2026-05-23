@@ -1,6 +1,6 @@
 import { memo, useRef, useState, useCallback } from "react";
 import { Block, BlockType } from "@/shared/types/domain";
-import { useEditorAdapter } from "@/slices/editor/lib/useEditorAdapter";
+import { useEditorWriters } from "@/slices/editor/lib/useEditorAdapter";
 import { useNotionAdapter } from "@/slices/notion";
 import { SlashMenu } from "./SlashMenu";
 import { useSortable } from "@dnd-kit/sortable";
@@ -40,11 +40,22 @@ interface Props {
 }
 
 function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerRef, ordinal }: Props) {
+  // useEditorWriters returns ONLY mutation methods — refs stable across
+  // pages/databases array changes. Big win on pages with many blocks:
+  // typing into one block doesn't invalidate the API in 200 sibling
+  // BlockEditor instances. The legacy useEditorAdapter (full reads +
+  // writes) is still fine for PageEditor / other top-level surfaces.
   const {
     updateBlock, addBlock, deleteBlock, setBlockType, duplicateBlock,
-    createPage, createDatabase, replaceBlock, updatePage, getPage,
-  } = useEditorAdapter();
+    createPage, createDatabase, replaceBlock, updatePage,
+  } = useEditorWriters();
   const insertBlocksAfter = useNotionAdapter().pages.insertBlocksAfter;
+  // getPage was used in onSlashSelect for "/page" auto-link context.
+  // slashHandler treats getPage as optional with a fallback path, so
+  // we drop the eager pages-list subscription here — minor UX
+  // (no contextual page-ref suggestion in slash menu) for major perf
+  // (no per-block re-subscription to the entire workspace pages list).
+  const getPage = undefined;
   // Render-prop seam: the mounted <NotionAppProvider> supplies the
   // bundled DatabaseBlock from @/slices/databases. Consumers can
   // override via <NotionAppProvider components={{ DatabaseBlock }}>.

@@ -24,18 +24,24 @@ import {
 } from "@/shared/components/PageHeaderSlot";
 import { UndoRedoButtons } from "@/shared/components/UndoRedoButtons";
 import { AppSidebar } from "@/slices/workspace-sidebar";
-import { SearchModal } from "@/slices/command-palette/components/SearchModal";
 import { SelectionToolbar } from "@/slices/editor/components/SelectionToolbar";
 import { MentionTypeahead } from "@/slices/editor/components/MentionTypeahead";
 import { TweakcnSwitcher, ThemeColorSync } from "@/slices/theme-presets";
 import { useTouchLastSeen } from "@/shared/hooks/useTouchLastSeen";
-import { MobileBottomNav } from "@/slices/mobile-nav";
 
 const CommandPalette = lazy(() =>
   import("@/slices/command-palette").then((m) => ({ default: m.CommandPalette })),
 );
 const ShortcutsDialog = lazy(() =>
   import("@/slices/command-palette").then((m) => ({ default: m.ShortcutsDialog })),
+);
+// Lazy: SearchModal opens on ⌘K — no need to ship in initial bundle.
+// MobileBottomNav is mobile-only chrome — defer to post-hydration.
+const SearchModal = lazy(() =>
+  import("@/slices/command-palette/components/SearchModal").then((m) => ({ default: m.SearchModal })),
+);
+const MobileBottomNav = lazy(() =>
+  import("@/slices/mobile-nav").then((m) => ({ default: m.MobileBottomNav })),
 );
 
 /** Mount the production NotionApp umbrella — composes NotionAdapter +
@@ -182,9 +188,13 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
 
             {/* Overlays — outside SidebarProvider so they don't participate in
                 the flex layout. SearchModal portals via Dialog; MobileBottomNav
-                is fixed-positioned. */}
-            <SearchModal open={searchOpen} onOpenChange={setSearchOpen} />
-            <MobileBottomNav onOpenSearch={() => setSearchOpen(true)} />
+                is fixed-positioned. Both lazy + Suspense-fallback null. */}
+            <Suspense fallback={null}>
+              <SearchModal open={searchOpen} onOpenChange={setSearchOpen} />
+            </Suspense>
+            <Suspense fallback={null}>
+              <MobileBottomNav onOpenSearch={() => setSearchOpen(true)} />
+            </Suspense>
             </WorkspaceIOProvider>
             </ConfirmProvider>
             </NotionAdapterMount>

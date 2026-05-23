@@ -171,7 +171,7 @@ export function TemplateEditor({ templateId, onClose }: Props) {
               />
               {url && /^https?:\/\//i.test(url) && (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={url} alt="" className="h-8 w-12 rounded border border-border object-cover bg-muted/20" />
+                <img src={url} alt="" loading="lazy" decoding="async" className="h-8 w-12 rounded border border-border object-cover bg-muted/20" />
               )}
               <Button
                 type="button"

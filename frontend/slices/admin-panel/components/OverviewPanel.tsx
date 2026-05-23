@@ -13,11 +13,16 @@ const AVAILABLE_VIEWS: AdminView[] = ["table", "dashboard"];
 
 export function OverviewPanel() {
   const overview = useQuery(api.admin.queries.getOverview);
-  const signupTrend = useQuery(api.admin.queries.getSignupTrend, { days: 30 });
-  const activityTrend = useQuery(api.admin.queries.getActivityTrend, { days: 30 });
-  const topUsers = useQuery(api.admin.queries.getTopUsersByContent, { limit: 8 });
-  const roleDist = useQuery(api.admin.queries.getRoleDistribution);
   const [view, setView] = useAdminView("overview", AVAILABLE_VIEWS);
+  // Trend/role/topUsers queries fire only when the dashboard view is
+  // active. Table view never reads them — wasted Convex round-trips +
+  // websocket subscriptions until this gate. Convex's "skip" sentinel
+  // is the idiomatic way to defer a useQuery without unmounting.
+  const dashboardArgs = view === "dashboard";
+  const signupTrend = useQuery(api.admin.queries.getSignupTrend, dashboardArgs ? { days: 30 } : "skip");
+  const activityTrend = useQuery(api.admin.queries.getActivityTrend, dashboardArgs ? { days: 30 } : "skip");
+  const topUsers = useQuery(api.admin.queries.getTopUsersByContent, dashboardArgs ? { limit: 8 } : "skip");
+  const roleDist = useQuery(api.admin.queries.getRoleDistribution, dashboardArgs ? {} : "skip");
 
   const kpis = useMemo(() => (overview ? buildKpis(overview) : []), [overview]);
 
