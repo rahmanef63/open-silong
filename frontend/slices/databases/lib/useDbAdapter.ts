@@ -177,15 +177,13 @@ export function useDbAdapter(): DbAdapterApi {
         adapter.databases.deleteSelectOption({ dbId, propId, optionId }),
 
       addView: async (dbId, view) => {
-        // Two-step compose: add via the minimal adapter API, then
-        // patch the rich config (sorts/filters/search/groupBy/etc.)
-        // via updateView so the legacy single-call ergonomics work.
-        const id = await adapter.databases.addView({ dbId, type: view.type, name: view.name });
-        const { type: _type, name: _name, ...patch } = view;
-        void _type; void _name;
-        if (Object.keys(patch).length > 0) {
-          await adapter.databases.updateView({ dbId, viewId: id, patch });
-        }
+        // Single round-trip — adapter.databases.addView accepts the
+        // full view config. The historical two-step compose
+        // (addView + updateView) raced: the second call read stale
+        // databaseMap (mid-callback, no re-render yet) and clobbered
+        // the new view with the old views array. Symptom: clicking
+        // "+ Add view" flashed but the new view never persisted.
+        const id = await adapter.databases.addView({ dbId, view });
         return { id };
       },
       updateView: (dbId, viewId, patch) =>

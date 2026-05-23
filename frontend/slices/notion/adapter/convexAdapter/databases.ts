@@ -96,15 +96,9 @@ export function useConvexDatabasesAdapter(): DatabasesAdapter {
       },
 
       // ── Views ───────────────────────────────────────────────────
-      addView: async ({ dbId, type, name }) => {
-        const view = store.addView(dbId, {
-          type,
-          name: name ?? type,
-          sorts: [],
-          filters: [],
-          search: "",
-        });
-        return view.id;
+      addView: async ({ dbId, view }) => {
+        const created = store.addView(dbId, view);
+        return created.id;
       },
 
       updateView: async ({ dbId, viewId, patch }) => {
