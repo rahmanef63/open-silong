@@ -49,7 +49,7 @@ export function PresetList({
                     <span
                       key={i}
                       aria-hidden
-                      className="block h-3 w-3 rounded-full border border-border/60"
+                      className="block h-3 w-3 rounded-full ring-1 ring-foreground/25"
                       style={{ background: c }}
                     />
                   ))}

@@ -3,49 +3,64 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/*
+ * THEME VAR CONTRACT (CK-1G refactor)
+ *
+ * - `--X` declarations hold a FULLY-FORMED color value: `hsl(...)` or
+ *   `oklch(...)`. Never a bare HSL triple.
+ * - `@theme inline` maps `--color-X` to the var directly: `var(--X)`.
+ *   No wrapping at the theme level — that would nest `hsl(oklch(...))`
+ *   when tweakcn injects OKLCH values and silently fail.
+ * - Alpha mixing uses `color-mix(in oklab, var(--X) N%, transparent)`
+ *   so it works regardless of whether the source value is HSL or OKLCH.
+ * - Result: tweakcn presets ship OKLCH and re-paint everything.
+ *   The nosion default values stay HSL because the existing palette
+ *   is hand-tuned in HSL.
+ */
+
 @theme inline {
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-fraunces), ui-serif, Georgia, serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  --color-border: hsl(var(--border));
-  --color-border-strong: hsl(var(--border-strong));
-  --color-input: hsl(var(--input));
-  --color-ring: hsl(var(--ring));
-  --color-background: hsl(var(--background));
-  --color-foreground: hsl(var(--foreground));
-  --color-surface: hsl(var(--surface));
-  --color-surface-elevated: hsl(var(--surface-elevated));
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-elevated: var(--surface-elevated);
 
-  --color-primary: hsl(var(--primary));
-  --color-primary-foreground: hsl(var(--primary-foreground));
-  --color-secondary: hsl(var(--secondary));
-  --color-secondary-foreground: hsl(var(--secondary-foreground));
-  --color-destructive: hsl(var(--destructive));
-  --color-destructive-foreground: hsl(var(--destructive-foreground));
-  --color-muted: hsl(var(--muted));
-  --color-muted-foreground: hsl(var(--muted-foreground));
-  --color-accent: hsl(var(--accent));
-  --color-accent-foreground: hsl(var(--accent-foreground));
-  --color-popover: hsl(var(--popover));
-  --color-popover-foreground: hsl(var(--popover-foreground));
-  --color-card: hsl(var(--card));
-  --color-card-foreground: hsl(var(--card-foreground));
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
 
-  --color-brand: hsl(var(--brand));
-  --color-brand-foreground: hsl(var(--brand-foreground));
-  --color-brand-soft: hsl(var(--brand-soft));
-  --color-success: hsl(var(--success));
-  --color-warning: hsl(var(--warning));
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-brand-soft: var(--brand-soft);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
 
-  --color-sidebar: hsl(var(--sidebar-background));
-  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
-  --color-sidebar-primary: hsl(var(--sidebar-primary));
-  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
-  --color-sidebar-accent: hsl(var(--sidebar-accent));
-  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
-  --color-sidebar-border: hsl(var(--sidebar-border));
-  --color-sidebar-ring: hsl(var(--sidebar-ring));
+  --color-sidebar: var(--sidebar-background);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
 
   --shadow-soft: var(--shadow-soft);
   --shadow-pop: var(--shadow-pop);
@@ -79,44 +94,44 @@
 }
 
 :root {
-  --background: 0 0% 100%;
-  --foreground: 220 13% 13%;
-  --surface: 30 14% 98%;
-  --surface-elevated: 0 0% 100%;
-  --card: 0 0% 100%;
-  --card-foreground: 220 13% 13%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 220 13% 13%;
-  --primary: 220 13% 13%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 30 10% 96%;
-  --secondary-foreground: 220 13% 18%;
-  --muted: 30 10% 96%;
-  --muted-foreground: 220 9% 46%;
-  --accent: 30 14% 94%;
-  --accent-foreground: 220 13% 13%;
-  --brand: 24 90% 56%;
-  --brand-foreground: 0 0% 100%;
-  --brand-soft: 28 100% 96%;
-  --destructive: 0 72% 51%;
-  --destructive-foreground: 0 0% 100%;
-  --success: 142 64% 38%;
-  --warning: 38 92% 50%;
-  --border: 30 8% 90%;
-  --border-strong: 30 6% 82%;
-  --input: 30 8% 90%;
-  --ring: 24 90% 56%;
+  --background: hsl(0 0% 100%);
+  --foreground: hsl(220 13% 13%);
+  --surface: hsl(30 14% 98%);
+  --surface-elevated: hsl(0 0% 100%);
+  --card: hsl(0 0% 100%);
+  --card-foreground: hsl(220 13% 13%);
+  --popover: hsl(0 0% 100%);
+  --popover-foreground: hsl(220 13% 13%);
+  --primary: hsl(220 13% 13%);
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(30 10% 96%);
+  --secondary-foreground: hsl(220 13% 18%);
+  --muted: hsl(30 10% 96%);
+  --muted-foreground: hsl(220 9% 46%);
+  --accent: hsl(30 14% 94%);
+  --accent-foreground: hsl(220 13% 13%);
+  --brand: hsl(24 90% 56%);
+  --brand-foreground: hsl(0 0% 100%);
+  --brand-soft: hsl(28 100% 96%);
+  --destructive: hsl(0 72% 51%);
+  --destructive-foreground: hsl(0 0% 100%);
+  --success: hsl(142 64% 38%);
+  --warning: hsl(38 92% 50%);
+  --border: hsl(30 8% 90%);
+  --border-strong: hsl(30 6% 82%);
+  --input: hsl(30 8% 90%);
+  --ring: hsl(24 90% 56%);
   --radius: 0.625rem;
-  --sidebar-background: 30 14% 97%;
-  --sidebar-foreground: 220 10% 30%;
-  --sidebar-primary: 220 13% 13%;
-  --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 30 14% 92%;
-  --sidebar-accent-foreground: 220 13% 13%;
-  --sidebar-border: 30 8% 88%;
-  --sidebar-ring: 24 90% 56%;
-  --block-hover: 30 14% 96%;
-  --block-handle: 220 9% 60%;
+  --sidebar-background: hsl(30 14% 97%);
+  --sidebar-foreground: hsl(220 10% 30%);
+  --sidebar-primary: hsl(220 13% 13%);
+  --sidebar-primary-foreground: hsl(0 0% 100%);
+  --sidebar-accent: hsl(30 14% 92%);
+  --sidebar-accent-foreground: hsl(220 13% 13%);
+  --sidebar-border: hsl(30 8% 88%);
+  --sidebar-ring: hsl(24 90% 56%);
+  --block-hover: hsl(30 14% 96%);
+  --block-handle: hsl(220 9% 60%);
   --shadow-soft: 0 1px 2px hsl(220 13% 13% / 0.04), 0 4px 12px hsl(220 13% 13% / 0.04);
   --shadow-pop: 0 8px 28px hsl(220 13% 13% / 0.12);
   --shadow-float: 0 1px 1px hsl(220 13% 13% / 0.04), 0 12px 36px hsl(220 13% 13% / 0.10);
@@ -124,49 +139,49 @@
 }
 
 .dark {
-  --background: 220 14% 10%;
-  --foreground: 30 10% 92%;
-  --surface: 220 14% 12%;
-  --surface-elevated: 220 14% 14%;
-  --card: 220 14% 12%;
-  --card-foreground: 30 10% 92%;
-  --popover: 220 14% 14%;
-  --popover-foreground: 30 10% 92%;
-  --primary: 30 10% 92%;
-  --primary-foreground: 220 14% 10%;
-  --secondary: 220 14% 16%;
-  --secondary-foreground: 30 10% 92%;
-  --muted: 220 14% 16%;
-  --muted-foreground: 220 9% 62%;
-  --accent: 220 14% 18%;
-  --accent-foreground: 30 10% 92%;
-  --brand: 24 90% 60%;
-  --brand-foreground: 220 14% 10%;
-  --brand-soft: 24 40% 18%;
-  --destructive: 0 72% 55%;
-  --destructive-foreground: 0 0% 100%;
-  --border: 220 10% 22%;
-  --border-strong: 220 10% 28%;
-  --input: 220 10% 22%;
-  --ring: 24 90% 60%;
-  --sidebar-background: 220 14% 11%;
-  --sidebar-foreground: 30 8% 78%;
-  --sidebar-primary: 30 10% 92%;
-  --sidebar-primary-foreground: 220 14% 10%;
-  --sidebar-accent: 220 14% 16%;
-  --sidebar-accent-foreground: 30 10% 92%;
-  --sidebar-border: 220 10% 20%;
-  --sidebar-ring: 24 90% 60%;
-  --block-hover: 220 14% 15%;
+  --background: hsl(220 14% 10%);
+  --foreground: hsl(30 10% 92%);
+  --surface: hsl(220 14% 12%);
+  --surface-elevated: hsl(220 14% 14%);
+  --card: hsl(220 14% 12%);
+  --card-foreground: hsl(30 10% 92%);
+  --popover: hsl(220 14% 14%);
+  --popover-foreground: hsl(30 10% 92%);
+  --primary: hsl(30 10% 92%);
+  --primary-foreground: hsl(220 14% 10%);
+  --secondary: hsl(220 14% 16%);
+  --secondary-foreground: hsl(30 10% 92%);
+  --muted: hsl(220 14% 16%);
+  --muted-foreground: hsl(220 9% 62%);
+  --accent: hsl(220 14% 18%);
+  --accent-foreground: hsl(30 10% 92%);
+  --brand: hsl(24 90% 60%);
+  --brand-foreground: hsl(220 14% 10%);
+  --brand-soft: hsl(24 40% 18%);
+  --destructive: hsl(0 72% 55%);
+  --destructive-foreground: hsl(0 0% 100%);
+  --border: hsl(220 10% 22%);
+  --border-strong: hsl(220 10% 28%);
+  --input: hsl(220 10% 22%);
+  --ring: hsl(24 90% 60%);
+  --sidebar-background: hsl(220 14% 11%);
+  --sidebar-foreground: hsl(30 8% 78%);
+  --sidebar-primary: hsl(30 10% 92%);
+  --sidebar-primary-foreground: hsl(220 14% 10%);
+  --sidebar-accent: hsl(220 14% 16%);
+  --sidebar-accent-foreground: hsl(30 10% 92%);
+  --sidebar-border: hsl(220 10% 20%);
+  --sidebar-ring: hsl(24 90% 60%);
+  --block-hover: hsl(220 14% 15%);
   --sidebar: hsl(240 5.9% 10%);
 }
 
 @layer base {
-  * { border-color: hsl(var(--border)); }
+  * { border-color: var(--border); }
   html, body, #root { height: 100%; }
   body {
-    background-color: hsl(var(--background));
-    color: hsl(var(--foreground));
+    background-color: var(--background);
+    color: var(--foreground);
     /* Apply Inter on body so the preloaded woff2 is used on first
      * paint. Without this, Chrome's "preloaded but not used within a
      * few seconds" warning fires because the font is loaded eagerly
@@ -177,11 +192,11 @@
     font-feature-settings: "cv11", "ss01", "ss03";
     transition: background-color 220ms ease, color 220ms ease;
   }
-  ::selection { background: hsl(var(--brand) / 0.25); }
+  ::selection { background: color-mix(in oklab, var(--brand) 25%, transparent); }
 
   :focus { outline: none; }
   :focus-visible {
-    outline: 2px solid hsl(var(--ring) / 0.65);
+    outline: 2px solid color-mix(in oklab, var(--ring) 65%, transparent);
     outline-offset: 2px;
     border-radius: var(--radius);
   }
@@ -202,7 +217,7 @@
     margin: 0 -0.5rem;
     transition: background-color 140ms ease;
   }
-  .editor-block:hover { background-color: hsl(var(--block-hover)); }
+  .editor-block:hover { background-color: var(--block-hover); }
   .editor-block .block-handle {
     position: absolute;
     left: -1.75rem;
@@ -210,7 +225,7 @@
     opacity: 0;
     transition: opacity 140ms ease;
     cursor: grab;
-    color: hsl(var(--muted-foreground));
+    color: var(--muted-foreground);
   }
   .group\/block:hover .block-handle { opacity: 1; }
 
@@ -218,18 +233,32 @@
   .prose-editor h2 { font-size: 1.5rem; line-height: 2rem; font-weight: 600; letter-spacing: -0.025em; font-family: var(--font-serif); }
   .prose-editor h3 { font-size: 1.25rem; line-height: 1.75rem; font-weight: 600; letter-spacing: -0.025em; }
   .prose-editor p { line-height: 1.75rem; }
-  .prose-editor blockquote { border-left: 4px solid hsl(var(--foreground) / 0.3); padding-left: 1rem; font-style: italic; color: hsl(var(--foreground) / 0.8); }
-  .prose-editor code.inline { padding: 0.125rem 0.375rem; border-radius: 0.25rem; background-color: hsl(var(--muted)); font-size: 0.9em; font-family: var(--font-mono); }
+  .prose-editor blockquote {
+    border-left: 4px solid color-mix(in oklab, var(--foreground) 30%, transparent);
+    padding-left: 1rem;
+    font-style: italic;
+    color: color-mix(in oklab, var(--foreground) 80%, transparent);
+  }
+  .prose-editor code.inline {
+    padding: 0.125rem 0.375rem;
+    border-radius: 0.25rem;
+    background-color: var(--muted);
+    font-size: 0.9em;
+    font-family: var(--font-mono);
+  }
 
   .scrollbar-thin::-webkit-scrollbar { width: 8px; height: 8px; }
   .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    background: hsl(var(--border-strong) / 0.7);
+    background: color-mix(in oklab, var(--border-strong) 70%, transparent);
     border-radius: 8px;
     border: 2px solid transparent;
     background-clip: padding-box;
   }
-  .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: hsl(var(--border-strong)); background-clip: padding-box; }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: var(--border-strong);
+    background-clip: padding-box;
+  }
 
   [data-radix-popper-content-wrapper] > *,
   [role="dialog"] {

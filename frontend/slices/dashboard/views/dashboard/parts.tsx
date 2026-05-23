@@ -8,7 +8,7 @@ import type { CoverField, Page } from "@/shared/types/domain";
 function pageCardCoverStyle(cover: CoverField | undefined): CSSProperties {
   const parsed = parseCover(cover);
   if (!parsed) {
-    return { background: "linear-gradient(135deg, hsl(var(--accent)), hsl(var(--secondary)))" };
+    return { background: "linear-gradient(135deg, var(--accent), var(--secondary))" };
   }
   return coverStyle(parsed);
 }

@@ -19,7 +19,7 @@ export function Sparkline({ data, color = "brand" }: { data: { date: string; cou
     pts.map((p) => `L ${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ") +
     ` L ${w - pad},${h - pad} Z`;
   const labelEvery = Math.max(1, Math.ceil(pts.length / 7));
-  const stroke = color === "good" ? "hsl(142 70% 45%)" : "hsl(var(--brand, 24 90% 56%))";
+  const stroke = color === "good" ? "hsl(142 70% 45%)" : "var(--brand, hsl(24 90% 56%))";
   const id = color === "good" ? "spark-fill-good" : "spark-fill-brand";
   return (
     <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-full" preserveAspectRatio="none">
@@ -35,13 +35,13 @@ export function Sparkline({ data, color = "brand" }: { data: { date: string; cou
         <g key={p.date}>
           <circle cx={p.x} cy={p.y} r={2.5} fill={stroke} />
           {i % labelEvery === 0 && (
-            <text x={p.x} y={h - 2} fontSize={9} textAnchor="middle" fill="hsl(var(--muted-foreground))">
+            <text x={p.x} y={h - 2} fontSize={9} textAnchor="middle" fill="var(--muted-foreground)">
               {p.date.slice(5)}
             </text>
           )}
         </g>
       ))}
-      <text x={pad} y={pad + 8} fontSize={10} fill="hsl(var(--muted-foreground))">max {max}</text>
+      <text x={pad} y={pad + 8} fontSize={10} fill="var(--muted-foreground)">max {max}</text>
     </svg>
   );
 }
@@ -63,10 +63,10 @@ export function DualBars({ data }: { data: { date: string; created: number; edit
         const eh = (d.edited / max) * (h - pad * 2);
         return (
           <g key={d.date}>
-            <rect x={x0} y={h - pad - ch} width={barW} height={ch} fill="hsl(var(--brand, 24 90% 56%))" rx={1} />
+            <rect x={x0} y={h - pad - ch} width={barW} height={ch} fill="var(--brand, hsl(24 90% 56%))" rx={1} />
             <rect x={x0 + barW + 2} y={h - pad - eh} width={barW} height={eh} fill="hsl(142 70% 45%)" rx={1} opacity={0.85} />
             {i % labelEvery === 0 && (
-              <text x={x0 + barW} y={h - 2} fontSize={9} textAnchor="middle" fill="hsl(var(--muted-foreground))">
+              <text x={x0 + barW} y={h - 2} fontSize={9} textAnchor="middle" fill="var(--muted-foreground)">
                 {d.date.slice(5)}
               </text>
             )}
@@ -74,10 +74,10 @@ export function DualBars({ data }: { data: { date: string; created: number; edit
         );
       })}
       <g transform={`translate(${w - 130}, 8)`}>
-        <rect x={0} y={2} width={8} height={8} fill="hsl(var(--brand, 24 90% 56%))" rx={1} />
-        <text x={12} y={10} fontSize={10} fill="hsl(var(--muted-foreground))">created</text>
+        <rect x={0} y={2} width={8} height={8} fill="var(--brand, hsl(24 90% 56%))" rx={1} />
+        <text x={12} y={10} fontSize={10} fill="var(--muted-foreground)">created</text>
         <rect x={62} y={2} width={8} height={8} fill="hsl(142 70% 45%)" rx={1} />
-        <text x={74} y={10} fontSize={10} fill="hsl(var(--muted-foreground))">edited</text>
+        <text x={74} y={10} fontSize={10} fill="var(--muted-foreground)">edited</text>
       </g>
     </svg>
   );

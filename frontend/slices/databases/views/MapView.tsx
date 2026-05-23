@@ -42,7 +42,7 @@ export function MapView({ db, view, rows, onOpenRow }: Props) {
       if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
       const { x, y } = project(lat, lng);
       const opt = colorProp ? colorProp.options?.find((o) => o.id === r.rowProps?.[colorProp.id]) : null;
-      const color = (opt && COLOR_HEX[opt.color ?? "gray"]) ?? "hsl(var(--brand))";
+      const color = (opt && COLOR_HEX[opt.color ?? "gray"]) ?? "var(--brand)";
       out.push({ row: r, x, y, lat, lng, color });
     }
     return out;
