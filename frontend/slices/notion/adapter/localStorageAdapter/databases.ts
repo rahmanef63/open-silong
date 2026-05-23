@@ -105,6 +105,28 @@ export function useLocalStorageDatabasesAdapter(): DatabasesAdapter {
         return id;
       },
 
+      duplicateProperty: async ({ dbId, propId }) => {
+        const db = getAllDatabases()[dbId];
+        const src = db?.properties.find((p) => p.id === propId);
+        if (!db || !src) return null;
+        const id = genId("prop");
+        const clone: Property = {
+          ...src,
+          id,
+          name: `${src.name} copy`,
+          options: src.options?.map((o) => ({ ...o, id: genId("opt") })),
+          relationInversePropertyId: undefined,
+        };
+        const idx = db.properties.findIndex((p) => p.id === propId);
+        const properties = [
+          ...db.properties.slice(0, idx + 1),
+          clone,
+          ...db.properties.slice(idx + 1),
+        ];
+        patchDb(dbId, { properties });
+        return id;
+      },
+
       updateProperty: async ({ dbId, propId, patch }) => {
         const db = getAllDatabases()[dbId];
         if (!db) return;

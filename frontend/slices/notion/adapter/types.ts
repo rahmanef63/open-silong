@@ -157,6 +157,10 @@ export interface DatabasesAdapter {
 
   // Properties (schema-level)
   addProperty(args: { dbId: string; type: PropertyType; name?: string }): Promise<string>;
+  /** Clone an existing property in ONE round-trip — copies options /
+   *  formula / rollup metadata server-side. A two-step add+update from
+   *  the caller would race against stale databaseMap state. */
+  duplicateProperty(args: { dbId: string; propId: string }): Promise<string | null>;
   updateProperty(args: { dbId: string; propId: string; patch: Partial<Property> }): Promise<void>;
   deleteProperty(args: { dbId: string; propId: string }): Promise<void>;
   reorderProperties(args: { dbId: string; orderedIds: string[] }): Promise<void>;
