@@ -192,15 +192,23 @@ export function IconPickerInline({ value, onChange, onClear, onSelect, className
       : "Search emoji (native)…";
 
   return (
-    <div className={cn("w-full space-y-3", className)} onKeyDown={handleGridKeyDown} ref={gridRef}>
-      <Tabs value={tab} onValueChange={(v) => setTab(v as TopTab)} className="w-full">
+    <div
+      className={cn("flex h-full min-h-0 w-full flex-col gap-3", className)}
+      onKeyDown={handleGridKeyDown}
+      ref={gridRef}
+    >
+      <Tabs
+        value={tab}
+        onValueChange={(v) => setTab(v as TopTab)}
+        className="flex min-h-0 w-full flex-1 flex-col"
+      >
         <PickerToolbar
           onRandom={pickRandom}
           onClear={onClear ? handleClear : undefined}
         />
 
         {/* Sub-variant pills — different choices per top tab. */}
-        <div className="mt-2 flex items-center gap-2">
+        <div className="mt-2 flex shrink-0 items-center gap-2">
           {tab === "emoji" ? (
             <VariantPills
               value={iconStyle}
@@ -222,9 +230,13 @@ export function IconPickerInline({ value, onChange, onClear, onSelect, className
           )}
         </div>
 
-        {colorEnabled && <ColorRow currentColor={currentColor} onPick={pickColor} />}
+        {colorEnabled && (
+          <div className="mt-2 shrink-0">
+            <ColorRow currentColor={currentColor} onPick={pickColor} />
+          </div>
+        )}
 
-        <div className="relative mt-2">
+        <div className="relative mt-2 shrink-0">
           <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <Input
             placeholder={searchPlaceholder}
@@ -235,8 +247,8 @@ export function IconPickerInline({ value, onChange, onClear, onSelect, className
           />
         </div>
 
-        <TabsContent value="emoji" className="mt-2">
-          <ScrollArea className="h-64 pr-2">
+        <TabsContent value="emoji" className="mt-2 flex-1 min-h-[120px] data-[state=inactive]:hidden">
+          <ScrollArea className="h-full max-h-[40dvh] pr-2">
             {filteredEmoji ? (
               <Grid>
                 {filteredEmoji.length === 0 ? <Empty /> : filteredEmoji.map((e, i) => (
@@ -279,8 +291,8 @@ export function IconPickerInline({ value, onChange, onClear, onSelect, className
           </ScrollArea>
         </TabsContent>
 
-        <TabsContent value="icon" className="mt-2">
-          <ScrollArea className="h-64 pr-2">
+        <TabsContent value="icon" className="mt-2 flex-1 min-h-[120px] data-[state=inactive]:hidden">
+          <ScrollArea className="h-full max-h-[40dvh] pr-2">
             {iconVariant === "lucide" ? (
               filteredLucide ? (
                 <Grid>
@@ -368,7 +380,7 @@ export function IconPickerInline({ value, onChange, onClear, onSelect, className
         </TabsContent>
       </Tabs>
 
-      <p className="text-[10px] text-muted-foreground">
+      <p className="shrink-0 text-[10px] text-muted-foreground">
         Emoji rendered via Twemoji (CC-BY 4.0). Lucide icons (ISC). Phosphor icons (MIT).
       </p>
     </div>
