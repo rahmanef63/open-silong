@@ -11,7 +11,7 @@ import { ROUTES_ABS } from "@/shared/lib/routes";
  * the existing inline flow but with a name+icon dialog up front.
  */
 export function useDatabaseCRUD() {
-  const { createPage, createDatabase, addBlock, updateBlock } = useStore();
+  const { createPage, createDatabase, addBlock } = useStore();
   const router = useRouter();
 
   const [createOpen, setCreateOpen] = useState(false);
@@ -24,11 +24,15 @@ export function useDatabaseCRUD() {
         createPage(null, { title: data.name, icon: data.icon }),
         createDatabase(data.name),
       ]);
-      const blockId = await addBlock(hostPage.id, 0, "database");
-      updateBlock(hostPage.id, blockId, { databaseId: db.id });
+      // Single mutation — addBlock takes `init` which is spread onto
+      // the new block. The previous addBlock(type) + fire-and-forget
+      // updateBlock(databaseId) raced the route push: the page
+      // sometimes opened with a database block whose databaseId was
+      // still undefined when the editor first rendered.
+      await addBlock(hostPage.id, 0, "database", { databaseId: db.id });
       router.push(ROUTES_ABS.page(hostPage.id));
     },
-    [createPage, createDatabase, addBlock, updateBlock, router],
+    [createPage, createDatabase, addBlock, router],
   );
 
   return {

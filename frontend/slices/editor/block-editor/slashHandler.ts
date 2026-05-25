@@ -68,24 +68,25 @@ export async function runSlashSelect(type: BlockType, deps: Deps) {
     updateBlock(pageId, block.id, { text: "", layoutGroup: layoutId, layoutCol: 0 });
     return;
   }
+  // Single-mutation contract — every block-type swap is one updateBlock
+  // patch (type + payload). Two-step setBlockType+updateBlock raced on
+  // the same blocks[] array: parallel mutations each read a stale
+  // snapshot, and one overwrites the other's type or payload (same
+  // pattern as the earlier addView / duplicateProperty fixes).
   if (type === "toggle") {
-    setBlockType(pageId, block.id, "toggle");
-    updateBlock(pageId, block.id, { text: "", children: [], collapsed: false });
+    updateBlock(pageId, block.id, { type: "toggle", text: "", children: [], collapsed: false });
     return;
   }
   if (type === "synced") {
-    setBlockType(pageId, block.id, "synced");
-    updateBlock(pageId, block.id, { text: "", children: [], syncId: uid() });
+    updateBlock(pageId, block.id, { type: "synced", text: "", children: [], syncId: uid() });
     return;
   }
   if (type === "database") {
     const db = await createDatabase();
-    setBlockType(pageId, block.id, "database");
-    updateBlock(pageId, block.id, { text: "", databaseId: db.id });
+    updateBlock(pageId, block.id, { type: "database", text: "", databaseId: db.id });
     return;
   }
-  setBlockType(pageId, block.id, type);
-  updateBlock(pageId, block.id, { text: "" });
+  updateBlock(pageId, block.id, { type, text: "" });
   setTimeout(() => {
     const el2 = document.querySelector<HTMLElement>(`[data-block-id="${block.id}"]`);
     el2?.focus();
