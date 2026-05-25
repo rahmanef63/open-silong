@@ -5,13 +5,13 @@
 
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import {
-  User, Palette, FileText, Save, Plug, Webhook, LifeBuoy, KeyRound,
+  User, Palette, FileText, Save, Plug, Webhook, LifeBuoy, KeyRound, Bot,
 } from "lucide-react";
 import type { ComponentType } from "react";
 import { cn } from "@/shared/lib/utils";
 
 export type SettingsKey =
-  | "workspace" | "appearance" | "pages" | "backup"
+  | "workspace" | "appearance" | "ai" | "pages" | "backup"
   | "mcp-apps" | "mcp" | "webhooks" | "tickets";
 
 interface NavItem {
@@ -24,6 +24,7 @@ interface NavItem {
 const NAV: NavItem[] = [
   { key: "workspace",  label: "Workspace",   icon: User,       description: "Name, icon, members" },
   { key: "appearance", label: "Appearance",  icon: Palette,    description: "Theme + density" },
+  { key: "ai",         label: "AI",          icon: Bot,        description: "Bring your own API keys" },
   { key: "pages",      label: "Pages",       icon: FileText,   description: "Sort + landing + editor" },
   { key: "backup",     label: "Backup",      icon: Save,       description: "Export + import workspace" },
   { key: "mcp-apps",   label: "MCP",         icon: Plug,       description: "Connect ChatGPT / Claude / others" },
