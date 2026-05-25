@@ -1,4 +1,4 @@
-import { Plus } from "lucide-react";
+import { ChevronDown, ChevronUp, Plus } from "lucide-react";
 import { DndContext, DragOverlay } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import {
@@ -25,11 +25,16 @@ interface Props {
   onClose?: () => void;
   onRequestDelete: (p: Page) => void;
   onNewPage: () => void;
+  /** Hidden root pages beyond the sidebar cap. 0 = no overflow row. */
+  overflowCount: number;
+  overflowExpanded: boolean;
+  onToggleOverflow: () => void;
 }
 
 export function WorkspaceTree({
   treeItems, density, openIds, setPageOpen, childrenCounts, rootPages, dnd,
   onClose, onRequestDelete, onNewPage,
+  overflowCount, overflowExpanded, onToggleOverflow,
 }: Props) {
   return (
     <SidebarGroup
@@ -104,6 +109,28 @@ export function WorkspaceTree({
             )}
           >
             <Plus className="h-3.5 w-3.5" /> New page
+          </Button>
+        )}
+        {overflowCount > 0 && (
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={onToggleOverflow}
+            className={cn(
+              "flex w-full h-auto items-center gap-2 rounded-md px-2 text-xs font-normal text-muted-foreground hover:bg-sidebar-accent justify-start [&_svg]:size-3.5",
+              density.pageLink,
+            )}
+            title={overflowExpanded ? "Collapse extra pages" : `Show ${overflowCount} more pages`}
+          >
+            {overflowExpanded ? (
+              <>
+                <ChevronUp className="h-3.5 w-3.5" /> Show less
+              </>
+            ) : (
+              <>
+                <ChevronDown className="h-3.5 w-3.5" /> Show {overflowCount} more
+              </>
+            )}
           </Button>
         )}
       </SidebarGroupContent>

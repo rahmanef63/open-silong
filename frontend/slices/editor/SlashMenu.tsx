@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link2 } from "lucide-react";
+import { Link2, ExternalLink } from "lucide-react";
 import { BLOCK_SPECS, BlockSpec } from "./blockSpecs";
 import { BlockType } from "@/shared/types/domain";
 import { cn } from "@/shared/lib/utils";
@@ -10,19 +10,31 @@ interface Props {
   onSelect: (type: BlockType) => void;
   onClose: () => void;
   /** Optional: opt-in to "Database — linked" entry. When provided, the
-   *  slash menu offers it directly under "Database — new". */
+   *  slash menu offers it directly under "Database — inline". */
   onSelectLinkedDatabase?: () => void;
+  /** Optional: opt-in to "Database — full page" entry. Creates a
+   *  standalone DB and navigates to its dedicated /db/:id route
+   *  rather than embedding a block in the current page. */
+  onSelectFullPageDatabase?: () => void;
 }
 
 type Item =
   | { kind: "block"; spec: BlockSpec }
-  | { kind: "linked-db"; label: string; hint: string; keywords: string[] };
+  | { kind: "linked-db"; label: string; hint: string; keywords: string[] }
+  | { kind: "fullpage-db"; label: string; hint: string; keywords: string[] };
 
 const LINKED_DB_ITEM = {
   kind: "linked-db" as const,
   label: "Database — linked",
   hint: "Embed an existing database",
   keywords: ["database", "db", "linked", "link", "embed", "existing"],
+};
+
+const FULLPAGE_DB_ITEM = {
+  kind: "fullpage-db" as const,
+  label: "Database — full page",
+  hint: "Create a standalone database on its own page (no blocks)",
+  keywords: ["database", "db", "full", "page", "standalone", "new", "dedicated"],
 };
 
 function matches(item: Item, q: string): boolean {
@@ -39,16 +51,22 @@ function matches(item: Item, q: string): boolean {
   );
 }
 
-export function SlashMenu({ query, onSelect, onClose, onSelectLinkedDatabase }: Props) {
+export function SlashMenu({
+  query, onSelect, onClose, onSelectLinkedDatabase, onSelectFullPageDatabase,
+}: Props) {
   const items = useMemo<Item[]>(() => {
     const base: Item[] = BLOCK_SPECS.map((spec) => ({ kind: "block", spec }));
+    let cursor = base.findIndex((it) => it.kind === "block" && it.spec.type === "database");
+    if (cursor < 0) cursor = base.length - 1;
+    if (onSelectFullPageDatabase) {
+      base.splice(cursor + 1, 0, FULLPAGE_DB_ITEM);
+      cursor += 1;
+    }
     if (onSelectLinkedDatabase) {
-      const i = base.findIndex((it) => it.kind === "block" && it.spec.type === "database");
-      if (i >= 0) base.splice(i + 1, 0, LINKED_DB_ITEM);
-      else base.push(LINKED_DB_ITEM);
+      base.splice(cursor + 1, 0, LINKED_DB_ITEM);
     }
     return base;
-  }, [onSelectLinkedDatabase]);
+  }, [onSelectLinkedDatabase, onSelectFullPageDatabase]);
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase();
@@ -62,7 +80,8 @@ export function SlashMenu({ query, onSelect, onClose, onSelectLinkedDatabase }: 
 
   const fire = (it: Item) => {
     if (it.kind === "block") onSelect(it.spec.type);
-    else onSelectLinkedDatabase?.();
+    else if (it.kind === "linked-db") onSelectLinkedDatabase?.();
+    else onSelectFullPageDatabase?.();
   };
 
   useEffect(() => {
@@ -75,7 +94,7 @@ export function SlashMenu({ query, onSelect, onClose, onSelectLinkedDatabase }: 
     window.addEventListener("keydown", handler, true);
     return () => window.removeEventListener("keydown", handler, true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filtered, active, onSelect, onClose, onSelectLinkedDatabase]);
+  }, [filtered, active, onSelect, onClose, onSelectLinkedDatabase, onSelectFullPageDatabase]);
 
   if (filtered.length === 0) {
     return (
@@ -89,10 +108,16 @@ export function SlashMenu({ query, onSelect, onClose, onSelectLinkedDatabase }: 
     <div ref={listRef} className="w-72 max-h-72 overflow-y-auto rounded-lg border border-border bg-popover p-1 shadow-pop animate-fade-in">
       <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold px-2 py-1.5">Basic blocks</div>
       {filtered.map((it, i) => {
-        const Icon = it.kind === "block" ? it.spec.icon : Link2;
+        const Icon =
+          it.kind === "block" ? it.spec.icon
+          : it.kind === "linked-db" ? Link2
+          : ExternalLink;
         const label = it.kind === "block" ? it.spec.label : it.label;
         const hint = it.kind === "block" ? it.spec.hint : it.hint;
-        const key = it.kind === "block" ? it.spec.type : "linked-db";
+        const key =
+          it.kind === "block" ? it.spec.type
+          : it.kind === "linked-db" ? "linked-db"
+          : "fullpage-db";
         return (
           <Button
             variant="ghost"

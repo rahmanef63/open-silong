@@ -1,6 +1,6 @@
 import { useNavigate } from "@/shared/lib/router";
 import { ROUTES } from "@/shared/lib/routes";
-import { MoreHorizontal, Table2, Trash2 } from "lucide-react";
+import { MoreHorizontal, Trash2 } from "lucide-react";
 import { useStore } from "@/shared/lib/store";
 import type { Database } from "@/shared/types/domain";
 import { cn } from "@/shared/lib/utils";
@@ -8,6 +8,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
 import { Button } from "@/shared/ui/button";
+import { DynamicIcon, DEFAULT_DATABASE_ICON } from "@/shared/components/icon-picker";
 import type { DensityConfig } from "../lib/density";
 
 interface Props {
@@ -31,7 +32,11 @@ export function DatabaseSidebarRow({ db, density }: Props) {
         className="h-auto min-w-0 flex-1 justify-start gap-1.5 p-0 text-left text-sm font-normal hover:bg-transparent"
         title={`Open ${db.name || "database"}`}
       >
-        <Table2 className={cn("shrink-0 text-muted-foreground", density.actionIcon)} />
+        <DynamicIcon
+          value={db.icon}
+          fallback={DEFAULT_DATABASE_ICON}
+          className={cn("shrink-0 text-muted-foreground", density.actionIcon)}
+        />
         <span className="flex-1 truncate">{db.name}</span>
         <span className="text-[10px] text-muted-foreground shrink-0">{db.rowIds.length}</span>
       </Button>

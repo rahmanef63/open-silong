@@ -1,4 +1,6 @@
 import { memo, useRef, useState, useCallback } from "react";
+import { useNavigate } from "@/shared/lib/router";
+import { ROUTES } from "@/shared/lib/routes";
 import { Block, BlockType } from "@/shared/types/domain";
 import { useEditorWriters } from "@/slices/editor/lib/useEditorAdapter";
 import { useNotionAdapter } from "@/slices/notion";
@@ -66,6 +68,7 @@ function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerR
   const [slashQuery, setSlashQuery] = useState("");
   const [askOpen, setAskOpen] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const navigate = useNavigate();
   const ref = useRef<HTMLElement | null>(null);
   const composingRef = useRef(false);
   const history = useBlockHistory(block.text);
@@ -206,6 +209,11 @@ function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerR
             onSelectLinkedDatabase={() => {
               setSlashOpen(false);
               setPickerOpen(true);
+            }}
+            onSelectFullPageDatabase={async () => {
+              setSlashOpen(false);
+              const db = await createDatabase("Untitled database");
+              if (db?.id) navigate(ROUTES.database(db.id));
             }}
           />
         </div>

@@ -115,7 +115,16 @@ export function DatabaseBlock({
   const ViewComponent = VIEW_COMPONENTS[view.type];
 
   return (
-    <div data-keyboard-scope data-database-block-root className="rounded-lg border border-border bg-card">
+    <div
+      data-keyboard-scope
+      data-database-block-root
+      data-db-surface={fullPage ? "fullpage" : "inline"}
+      className={
+        fullPage
+          ? "bg-transparent"
+          : "rounded-lg border border-border bg-card"
+      }
+    >
       <DatabaseHeaderBar
         db={db}
         view={view}
