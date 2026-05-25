@@ -103,9 +103,83 @@ export function DatabasePage() {
       />
       <div className="flex-1 overflow-y-auto scrollbar-thin">
         <div className="mx-auto max-w-none px-4 sm:px-6 md:px-12 pt-6 pb-12">
+          <DatabaseBodyHeader
+            icon={db.icon}
+            name={db.name}
+            onChange={(patch) => updateDatabase(db.id, patch)}
+          />
           <DatabaseBlock pageId="" block={block} fullPage />
         </div>
       </div>
+    </div>
+  );
+}
+
+/** Body-level icon + name shown at top of the database surface, mirroring
+ *  PageTitle's hero header but smaller (databases are dense, pages are
+ *  hero-shaped). Icon size = 24px, my-[2.4rem] spacing per Notion-ish
+ *  density. The topbar chrome (FullPageHeaderChrome) stays compact so the
+ *  user keeps the icon+name visible while scrolling the database. */
+function DatabaseBodyHeader({
+  icon, name, onChange,
+}: {
+  icon: string | undefined;
+  name: string;
+  onChange: (patch: { name?: string; icon?: string }) => void;
+}) {
+  const [draftName, setDraftName, flush] = useDebouncedCommit(
+    name,
+    (v) => onChange({ name: v.trim() || "Untitled database" }),
+  );
+  const [editing, setEditing] = useState(false);
+
+  useEffect(() => {
+    if (!editing) setDraftName(name);
+  }, [name, editing, setDraftName]);
+
+  return (
+    <div className="my-[2.4rem] flex items-center gap-3 min-w-0">
+      <IconPickerPopover
+        value={icon ?? DEFAULT_DATABASE_ICON}
+        onChange={(next) => onChange({ icon: next })}
+        onClear={() => onChange({ icon: DEFAULT_DATABASE_ICON })}
+      >
+        <Button
+          type="button"
+          variant="ghost"
+          className="h-auto rounded-md p-1 text-[24px] font-normal leading-none [&_svg]:size-[24px]"
+          aria-label="Change database icon"
+        >
+          <DynamicIcon
+            value={icon}
+            fallback={DEFAULT_DATABASE_ICON}
+            className="text-[24px] shrink-0"
+          />
+        </Button>
+      </IconPickerPopover>
+      {editing ? (
+        <Input
+          autoFocus
+          value={draftName}
+          onChange={(e) => setDraftName(e.target.value)}
+          onBlur={() => { flush(); setEditing(false); }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") { flush(); setEditing(false); }
+            if (e.key === "Escape") { setDraftName(name); setEditing(false); }
+          }}
+          maxLength={120}
+          className="h-9 flex-1 max-w-xl bg-transparent px-2 text-2xl font-bold"
+        />
+      ) : (
+        <button
+          type="button"
+          onClick={() => setEditing(true)}
+          className="truncate text-2xl font-bold tracking-tight hover:text-muted-foreground transition"
+          title="Click to rename"
+        >
+          {name || "Untitled database"}
+        </button>
+      )}
     </div>
   );
 }

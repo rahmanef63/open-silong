@@ -57,7 +57,7 @@ export function VariantPills<T extends string>({
   options: ReadonlyArray<{ value: T; label: string; hint?: string }>;
 }) {
   return (
-    <div className="inline-flex h-7 items-center gap-0.5 rounded-md border border-border bg-muted/30 p-0.5">
+    <div className="flex h-7 w-full items-center gap-0.5 rounded-md border border-border bg-muted/30 p-0.5">
       {options.map((opt) => {
         const active = opt.value === value;
         return (
@@ -67,7 +67,7 @@ export function VariantPills<T extends string>({
             onClick={() => onChange(opt.value)}
             title={opt.hint}
             className={
-              "inline-flex h-6 items-center rounded-[5px] px-2 text-[11px] font-medium transition " +
+              "flex h-6 flex-1 items-center justify-center rounded-[5px] px-2 text-[11px] font-medium transition " +
               (active
                 ? "bg-background text-foreground shadow-sm"
                 : "text-muted-foreground hover:text-foreground")
