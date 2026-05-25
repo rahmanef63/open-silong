@@ -3,17 +3,19 @@ import { useNavigate } from "@/shared/lib/router";
 import { ROUTES } from "@/shared/lib/routes";
 import type { Database, Page } from "@/shared/types/domain";
 
-/** Legacy host-page redirect — pages stamped with `databaseHostFor` (or
- *  pre-marker single-DB-block heuristic) used to be how full-page DBs
- *  rendered. Deprecated 2026-05-12; databases live at /dashboard/db/[id]. */
+/** Legacy host-page redirect — pages stamped with `databaseHostFor`
+ *  used to be how full-page DBs rendered. Deprecated 2026-05-12;
+ *  databases live at /dashboard/db/[id].
+ *
+ *  Marker-only: an earlier single-DB-block heuristic was dropped on
+ *  2026-05-25 because it false-positived inline `/database` inserts on
+ *  otherwise-empty pages — users got bounced to the full-page route the
+ *  moment they spawned an inline DB. Pre-marker legacy host pages are
+ *  rare (workspaces created before 2026-05-12); they no longer auto-
+ *  redirect, but the database itself is still reachable via the sidebar
+ *  Databases section and `/dashboard/db/:id`. */
 export function legacyHostDbIdOf(page: Page | undefined): string | undefined {
-  const hosted = page?.databaseHostFor?.[0];
-  if (hosted) return hosted;
-  const onlyBlock = page?.blocks.length === 1 ? page.blocks[0] : null;
-  if (onlyBlock?.type === "database" && onlyBlock.databaseId) {
-    return onlyBlock.databaseId;
-  }
-  return undefined;
+  return page?.databaseHostFor?.[0];
 }
 
 export function useLegacyHostRedirect(
