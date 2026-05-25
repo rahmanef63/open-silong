@@ -2,7 +2,7 @@ import { useDbAdapter } from "../lib/useDbAdapter";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
-import { Plus, Maximize2, Link2, Lock } from "lucide-react";
+import { Plus, Maximize2, Link2, Lock, BoxSelect } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { DynamicIcon, IconPickerPopover, DEFAULT_DATABASE_ICON } from "@/shared/components/icon-picker";
 import { ViewTab } from "./ViewTab";
@@ -38,32 +38,44 @@ export function DatabaseHeaderBar({
   return (
     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-3 py-2">
       <div className="flex items-center gap-2 min-w-0 flex-1">
-        <IconPickerPopover
-          value={db.icon}
-          onChange={(next) => updateDatabase(db.id, { icon: next })}
-          onClear={() => updateDatabase(db.id, { icon: DEFAULT_DATABASE_ICON })}
-        >
-          <Button variant="ghost" type="button" className="h-auto rounded p-0.5 text-base font-normal leading-none" aria-label="Change database icon">
-            <DynamicIcon value={db.icon} fallback={DEFAULT_DATABASE_ICON} />
-          </Button>
-        </IconPickerPopover>
-        <input
-          value={db.name}
-          onChange={(e) => updateDatabase(db.id, { name: e.target.value })}
-          className="bg-transparent text-sm font-semibold outline-none flex-1 min-w-0 max-w-xs"
-        />
         {isInline && (
-          <Button
-            variant="ghost"
-            type="button"
-            size="icon"
-            onClick={onOpenAsPage}
-            title="Open as page"
-            aria-label="Open database as page"
-            className="h-auto rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground [&_svg]:size-3.5"
-          >
-            <Maximize2 className="h-3.5 w-3.5" />
-          </Button>
+          <>
+            <IconPickerPopover
+              value={db.icon}
+              onChange={(next) => updateDatabase(db.id, { icon: next })}
+              onClear={() => updateDatabase(db.id, { icon: DEFAULT_DATABASE_ICON })}
+            >
+              <Button variant="ghost" type="button" className="h-auto rounded p-0.5 text-base font-normal leading-none" aria-label="Change database icon">
+                <DynamicIcon value={db.icon} fallback={DEFAULT_DATABASE_ICON} />
+              </Button>
+            </IconPickerPopover>
+            <input
+              value={db.name}
+              onChange={(e) => updateDatabase(db.id, { name: e.target.value })}
+              className="bg-transparent text-sm font-semibold outline-none flex-1 min-w-0 max-w-xs"
+            />
+          </>
+        )}
+        {isInline && (
+          <>
+            <span
+              title="This database is embedded inline. The canonical home is a dedicated page — open it to edit without surrounding blocks."
+              className="ml-1 inline-flex items-center gap-1 rounded-full border border-muted-foreground/30 bg-muted/50 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground"
+            >
+              <BoxSelect className="h-3 w-3" /> inline
+            </span>
+            <Button
+              variant="ghost"
+              type="button"
+              size="icon"
+              onClick={onOpenAsPage}
+              title="Open as page"
+              aria-label="Open database as page"
+              className="h-auto rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground [&_svg]:size-3.5"
+            >
+              <Maximize2 className="h-3.5 w-3.5" />
+            </Button>
+          </>
         )}
         {isLinked && (
           <span

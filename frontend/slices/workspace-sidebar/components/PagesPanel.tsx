@@ -42,12 +42,20 @@ export function PagesPanel({ onClose }: Props) {
   const density = DENSITY[preferences.sidebarDensity];
   const [openIds, setOpenIds] = useState<Set<string>>(new Set());
   const [treeInitialized, setTreeInitialized] = useState(false);
+  const [pagesExpanded, setPagesExpanded] = useState(false);
+  const [dbsExpanded, setDbsExpanded] = useState(false);
 
   const favorites = pages.filter((p) => p.favorite && !p.trashed && !p.rowOfDatabaseId);
   const recentPages = recents
     .map((id) => pages.find((p) => p.id === id))
     .filter((p): p is Page => !!p && !p.trashed && !p.rowOfDatabaseId);
   const rootPages = childrenOf(null);
+  const SIDEBAR_LIMIT = 10;
+  const visibleRootPages = pagesExpanded ? rootPages : rootPages.slice(0, SIDEBAR_LIMIT);
+  const visibleRootIds = useMemo(
+    () => new Set(visibleRootPages.map((p) => p.id)),
+    [visibleRootPages],
+  );
 
   useEffect(() => {
     if (treeInitialized || rootPages.length === 0) return;
@@ -70,13 +78,17 @@ export function PagesPanel({ onClose }: Props) {
   }, [pages]);
 
   const treeItems = useMemo(() => {
-    const walk = (parentId: string | null, depth: number): TreeItem[] =>
-      childrenOf(parentId).flatMap((page) => {
+    const walk = (parentId: string | null, depth: number): TreeItem[] => {
+      const kids = parentId === null
+        ? childrenOf(null).filter((p) => visibleRootIds.has(p.id))
+        : childrenOf(parentId);
+      return kids.flatMap((page) => {
         const item = { page, depth, parentId };
         return openIds.has(page.id) ? [item, ...walk(page.id, depth + 1)] : [item];
       });
+    };
     return walk(null, 0);
-  }, [childrenOf, openIds]);
+  }, [childrenOf, openIds, visibleRootIds]);
 
   const itemById = useMemo(() => new Map(treeItems.map((i) => [i.page.id, i])), [treeItems]);
 
@@ -125,8 +137,18 @@ export function PagesPanel({ onClose }: Props) {
         onClose={onClose}
         onRequestDelete={(p) => pageCRUD.openDelete(p.id)}
         onNewPage={() => pageCRUD.openCreate(null)}
+        overflowCount={Math.max(0, rootPages.length - SIDEBAR_LIMIT)}
+        overflowExpanded={pagesExpanded}
+        onToggleOverflow={() => setPagesExpanded((v) => !v)}
       />
-      <DatabasesSection databases={databases} density={density} onCreate={() => dbCRUD.openCreate()} />
+      <DatabasesSection
+        databases={databases}
+        density={density}
+        onCreate={() => dbCRUD.openCreate()}
+        limit={SIDEBAR_LIMIT}
+        expanded={dbsExpanded}
+        onToggleExpanded={() => setDbsExpanded((v) => !v)}
+      />
 
       <CreatePageDialog
         open={pageCRUD.createOpen}
