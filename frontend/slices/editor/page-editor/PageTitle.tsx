@@ -21,7 +21,12 @@ export function PageTitle({ page, fullPageDb, firstBlockRef }: Props) {
         onChange={(next) => updatePage(page.id, { icon: next })}
         onClear={() => updatePage(page.id, { icon: DEFAULT_PAGE_ICON })}
       >
-        <Button variant="ghost" type="button" className="h-auto rounded-md p-1 text-6xl font-normal leading-none transition" aria-label="Change icon">
+        <Button
+          variant="ghost"
+          type="button"
+          className="h-auto rounded-md p-1 text-[78px] font-normal leading-none transition [&_svg]:size-[78px]"
+          aria-label="Change icon"
+        >
           <DynamicIcon value={page.icon} />
         </Button>
       </IconPickerPopover>
