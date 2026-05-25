@@ -78,7 +78,10 @@ export const permanentlyDelete = mutation({
  *  options) + one Table view as the active view. Returns the bare
  *  `Id<"databases">`. */
 export const create = mutation({
-  args: { name: v.optional(v.string()) },
+  args: {
+    name: v.optional(v.string()),
+    icon: v.optional(v.string()),
+  },
   handler: async (ctx, args) => {
     const userId = await requireAuth(ctx);
     await rateLimit(ctx, userId, RATE_LIMITS.dbCreate);
@@ -99,7 +102,7 @@ export const create = mutation({
       userId,
       workspaceId: active._id,
       name: args.name ?? "Untitled database",
-      icon: "lucide:Database",
+      icon: args.icon ?? "lucide:Database",
       properties: [titleProp, statusProp],
       rowIds: [],
       views: [view],

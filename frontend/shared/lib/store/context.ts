@@ -49,7 +49,7 @@ export interface StoreCtx {
   databases: Database[];
   trashedDatabases: Database[];
   getDatabase: (id: string) => Database | undefined;
-  createDatabase: (name?: string) => Promise<Database>;
+  createDatabase: (name?: string, icon?: string) => Promise<Database>;
   updateDatabase: (id: string, patch: Partial<Database>) => void;
   trashDatabase: (id: string) => void;
   restoreDatabase: (id: string) => void;

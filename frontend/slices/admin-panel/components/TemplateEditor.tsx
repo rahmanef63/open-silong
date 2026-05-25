@@ -12,6 +12,7 @@ import { Textarea } from "@/shared/ui/textarea";
 import type { Id } from "@convex/_generated/dataModel";
 import { summarizeTemplate } from "@/slices/templates";
 import { AIGenerateDialog } from "./AIGenerateDialog";
+import { DynamicIcon, IconPickerPopover } from "@/shared/components/icon-picker";
 
 const BLANK_JSON = {
   version: 1,
@@ -128,10 +129,19 @@ export function TemplateEditor({ templateId, onClose }: Props) {
 
       <AIGenerateDialog open={aiOpen} onOpenChange={setAiOpen} onAccept={adoptAiJson} />
 
-      <div className="grid md:grid-cols-4 gap-3">
-        <Input value={icon} onChange={(e) => setIcon(e.target.value)} placeholder="Icon (emoji)" className="md:col-span-1" />
-        <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Name" className="md:col-span-2" />
-        <Input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Category" className="md:col-span-1" />
+      <div className="grid md:grid-cols-[auto_minmax(0,1fr)_minmax(0,1fr)] gap-3 items-center">
+        <IconPickerPopover value={icon} onChange={setIcon} onClear={() => setIcon("📝")}>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-10 w-10 p-0 text-xl"
+            aria-label="Change template icon"
+          >
+            <DynamicIcon value={icon} fallback="📝" />
+          </Button>
+        </IconPickerPopover>
+        <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Name" />
+        <Input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Category" />
       </div>
       <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Description (optional)" />
 

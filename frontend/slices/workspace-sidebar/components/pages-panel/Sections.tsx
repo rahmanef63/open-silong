@@ -78,8 +78,8 @@ export function DatabasesSection({
       <SidebarGroupLabel>Databases</SidebarGroupLabel>
       <SidebarGroupAction
         onClick={onCreate}
-        aria-label="New database"
-        title="New database"
+        aria-label="New full-page database"
+        title="New full-page database — use the slash menu /database for inline"
       >
         <Plus />
       </SidebarGroupAction>

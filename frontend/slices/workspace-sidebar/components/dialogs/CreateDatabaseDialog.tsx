@@ -47,9 +47,10 @@ export function CreateDatabaseDialog({ open, onOpenChange, onSubmit }: Props) {
     <Dialog open={open} onOpenChange={(o) => !submitting && onOpenChange(o)}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>New database</DialogTitle>
+          <DialogTitle>New full-page database</DialogTitle>
           <DialogDescription>
-            Track and organise rows. The database opens inside its own page.
+            Opens at its own URL. To embed a database inside an existing
+            page, use the slash menu <code>/database</code> instead.
           </DialogDescription>
         </DialogHeader>
 

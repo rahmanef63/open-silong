@@ -42,8 +42,8 @@ export function useConvexDatabasesAdapter(): DatabasesAdapter {
       },
 
       // ── Database-level writes ───────────────────────────────────
-      create: async ({ name }) => {
-        const db = await store.createDatabase(name);
+      create: async ({ name, icon }) => {
+        const db = await store.createDatabase(name, icon);
         return db.id;
       },
 
