@@ -195,6 +195,10 @@ export interface Workspace {
   slug?: string;
   isPersonal?: boolean;
   role?: "owner" | "editor" | "viewer";
+  /** Owner-set default tweakcn preset id. Applied on workspace switch
+   *  when the user has no per-workspace override. */
+  themePresetId?: string;
+  themeMode?: "light" | "dark" | "system";
 }
 
 export type ThemePref = "light" | "dark" | "system";

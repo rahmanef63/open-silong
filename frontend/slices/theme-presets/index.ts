@@ -8,6 +8,8 @@ export type { ThemePreset, ThemePalette } from "./presets";
 // /r/registry.json. localStorage key: `nosion:theme-preset`.
 export { TweakcnSwitcher } from "./components/TweakcnSwitcher";
 export { ThemeColorSync } from "./components/ThemeColorSync";
+export { WorkspaceThemePicker } from "./components/WorkspaceThemePicker";
+export { WorkspaceThemeBridge } from "./components/WorkspaceThemeBridge";
 export {
   applyTweakcnPreset,
   bootTweakcnPreset,

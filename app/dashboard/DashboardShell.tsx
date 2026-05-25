@@ -26,7 +26,7 @@ import { UndoRedoButtons } from "@/shared/components/UndoRedoButtons";
 import { AppSidebar } from "@/slices/workspace-sidebar";
 import { SelectionToolbar } from "@/slices/editor/components/SelectionToolbar";
 import { MentionTypeahead } from "@/slices/editor/components/MentionTypeahead";
-import { TweakcnSwitcher, ThemeColorSync } from "@/slices/theme-presets";
+import { TweakcnSwitcher, ThemeColorSync, WorkspaceThemeBridge } from "@/slices/theme-presets";
 import { useTouchLastSeen } from "@/shared/hooks/useTouchLastSeen";
 
 const CommandPalette = lazy(() =>
@@ -126,6 +126,7 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
             <ConfirmProvider>
             <WorkspaceIOProvider>
             <ThemeColorSync />
+            <WorkspaceThemeBridge />
             <Suspense fallback={null}>
               <CommandPalette />
             </Suspense>
