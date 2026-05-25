@@ -1,15 +1,16 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useParams, useNavigate } from "@/shared/lib/router";
 import { ROUTES } from "@/shared/lib/routes";
 import { useDbAdapter } from "./lib/useDbAdapter";
 import { DatabaseBlock } from "./DatabaseBlock";
 import { DatabaseSkeleton } from "@/shared/components/RouteSkeleton";
 import { PageHeaderSlot } from "@/shared/components/PageHeaderSlot";
-import { DynamicIcon } from "@/shared/components/icon-picker";
-import { DEFAULT_DATABASE_ICON } from "@/shared/components/icon-picker";
+import { DynamicIcon, IconPickerPopover, DEFAULT_DATABASE_ICON } from "@/shared/components/icon-picker";
 import { Button } from "@/shared/ui/button";
+import { Input } from "@/shared/ui/input";
+import { useDebouncedCommit } from "@/shared/hooks/useDebouncedCommit";
 import type { Block } from "@/shared/types/domain";
 
 /**
@@ -23,16 +24,18 @@ import type { Block } from "@/shared/types/domain";
  * created edge cases where the host page's blocks could be deleted,
  * leaving the marker pointing at an empty page — exactly the bug that
  * triggered this refactor.
+ *
+ * Distinct from inline databases: a `database` block inside a page's
+ * block stream IS editable as a mini DB (see DatabaseBlock). The
+ * full-page route is the dedicated home that has no surrounding
+ * blocks, no "+ Add block" affordance, no Subpages list — just the
+ * database surface with editable icon + title chrome.
  */
 export function DatabasePage() {
   const { id } = useParams<{ id: string }>();
-  const { getDatabase } = useDbAdapter();
+  const { getDatabase, updateDatabase } = useDbAdapter();
   const navigate = useNavigate();
   const db = id ? getDatabase(id) : undefined;
-  // `recents.pageIds[]` is `Id<"pages">[]` — pushing a database id
-  // would fail the Convex validator. Database recents need their
-  // own table; until then, DB visits don't surface in the Recents
-  // dashboard.
 
   // Synthetic block — DatabaseBlock's prop shape is page-block-oriented,
   // but here we have a dbId directly. The block is never written to
@@ -50,10 +53,7 @@ export function DatabasePage() {
     );
   }
 
-  if (db === undefined) {
-    // Loading — store hasn't resolved this DB yet.
-    return <DatabaseSkeleton />;
-  }
+  if (db === undefined) return <DatabaseSkeleton />;
 
   if (db === null) {
     return (
@@ -93,16 +93,12 @@ export function DatabasePage() {
     <div className="flex h-full flex-col overflow-hidden">
       <PageHeaderSlot
         left={
-          <div className="flex items-center gap-1.5 min-w-0">
-            <DynamicIcon
-              value={db.icon}
-              fallback={DEFAULT_DATABASE_ICON}
-              className="text-base shrink-0"
-            />
-            <span className="truncate text-sm font-medium">
-              {db.name || "Untitled database"}
-            </span>
-          </div>
+          <FullPageHeaderChrome
+            dbId={db.id}
+            icon={db.icon}
+            name={db.name}
+            onChange={(patch) => updateDatabase(db.id, patch)}
+          />
         }
       />
       <div className="flex-1 overflow-y-auto scrollbar-thin">
@@ -110,6 +106,75 @@ export function DatabasePage() {
           <DatabaseBlock pageId="" block={block} fullPage />
         </div>
       </div>
+    </div>
+  );
+}
+
+function FullPageHeaderChrome({
+  dbId, icon, name, onChange,
+}: {
+  dbId: string;
+  icon: string | undefined;
+  name: string;
+  onChange: (patch: { name?: string; icon?: string }) => void;
+}) {
+  void dbId;
+  const [draftName, setDraftName, flush] = useDebouncedCommit(
+    name,
+    (v) => onChange({ name: v.trim() || "Untitled database" }),
+  );
+  const [editing, setEditing] = useState(false);
+
+  // External name updates (e.g. another tab) should sync into the
+  // debounced draft without clobbering local typing.
+  useEffect(() => {
+    if (!editing) setDraftName(name);
+  }, [name, editing, setDraftName]);
+
+  return (
+    <div className="flex items-center gap-1.5 min-w-0">
+      <IconPickerPopover
+        value={icon ?? DEFAULT_DATABASE_ICON}
+        onChange={(next) => onChange({ icon: next })}
+        onClear={() => onChange({ icon: DEFAULT_DATABASE_ICON })}
+      >
+        <Button
+          type="button"
+          variant="ghost"
+          className="h-6 w-6 p-0 text-base"
+          aria-label="Change database icon"
+        >
+          <DynamicIcon
+            value={icon}
+            fallback={DEFAULT_DATABASE_ICON}
+            className="text-base shrink-0"
+          />
+        </Button>
+      </IconPickerPopover>
+      {editing ? (
+        <Input
+          autoFocus
+          value={draftName}
+          onChange={(e) => setDraftName(e.target.value)}
+          onBlur={() => { flush(); setEditing(false); }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") { flush(); setEditing(false); }
+            if (e.key === "Escape") { setDraftName(name); setEditing(false); }
+          }}
+          maxLength={120}
+          className="h-6 w-56 px-1 text-sm font-medium"
+        />
+      ) : (
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => setEditing(true)}
+          className="h-6 truncate px-1 text-sm font-medium"
+          title="Click to rename"
+        >
+          {name || "Untitled database"}
+        </Button>
+      )}
     </div>
   );
 }

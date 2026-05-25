@@ -28,10 +28,10 @@ export function useDbCrud({ databaseMap }: Args) {
   const getDatabase = useCallback((id: string) => databaseMap.get(id), [databaseMap]);
 
   const createDatabase = useCallback(
-    async (name = "Untitled database"): Promise<Database> => {
-      const id = await mutCreateDatabase({ name });
+    async (name = "Untitled database", icon?: string): Promise<Database> => {
+      const id = await mutCreateDatabase({ name, icon });
       const now = Date.now();
-      return { id, name, icon: DEFAULT_DATABASE_ICON, properties: [], rowIds: [], views: [], activeViewId: "", createdAt: now, updatedAt: now };
+      return { id, name, icon: icon ?? DEFAULT_DATABASE_ICON, properties: [], rowIds: [], views: [], activeViewId: "", createdAt: now, updatedAt: now };
     },
     [mutCreateDatabase],
   );
