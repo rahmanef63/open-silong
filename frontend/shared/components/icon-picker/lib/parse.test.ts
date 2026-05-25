@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { parseIconValue, lucideValue, withColor, isLucideValue, LUCIDE_PREFIX } from "./parse";
+import {
+  parseIconValue, lucideValue, phosphorValue, withColor, isLucideValue,
+  isPhosphorValue, LUCIDE_PREFIX, PHOSPHOR_PREFIX,
+} from "./parse";
 
 describe("parseIconValue", () => {
   it("returns empty for null/undefined/empty", () => {
@@ -91,5 +94,26 @@ describe("isLucideValue", () => {
 describe("LUCIDE_PREFIX export", () => {
   it("matches actual prefix", () => {
     expect(LUCIDE_PREFIX).toBe("lucide:");
+  });
+});
+
+describe("phosphor value", () => {
+  it("parses phosphor with no color", () => {
+    expect(parseIconValue("phosphor:Star")).toEqual({ kind: "phosphor", name: "Star", color: undefined });
+  });
+  it("parses phosphor with color", () => {
+    expect(parseIconValue("phosphor:Heart?c=ff00aa")).toEqual({ kind: "phosphor", name: "Heart", color: "#ff00aa" });
+  });
+  it("builds canonical phosphor string", () => {
+    expect(phosphorValue("Star")).toBe("phosphor:Star");
+    expect(phosphorValue("Star", "#f59e0b")).toBe("phosphor:Star?c=f59e0b");
+  });
+  it("detects phosphor prefix", () => {
+    expect(isPhosphorValue("phosphor:Star")).toBe(true);
+    expect(isPhosphorValue("lucide:Star")).toBe(false);
+    expect(isPhosphorValue(null)).toBe(false);
+  });
+  it("exports the prefix constant", () => {
+    expect(PHOSPHOR_PREFIX).toBe("phosphor:");
   });
 });

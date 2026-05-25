@@ -8,12 +8,15 @@ import { ScrollArea } from "@/shared/ui/scroll-area";
 import { cn } from "@/shared/lib/utils";
 import { EMOJI_GROUPS, ALL_EMOJIS } from "../lib/emoji-catalog";
 import { LUCIDE_GROUPS, ALL_LUCIDE } from "../lib/lucide-catalog";
-import { lucideValue, parseIconValue, withColor } from "../lib/parse";
+import { PHOSPHOR_GROUPS, ALL_PHOSPHOR } from "../lib/phosphor-catalog";
+import { lucideValue, phosphorValue, parseIconValue, withColor } from "../lib/parse";
 import { useIconStyle, type Style } from "../lib/style-pref";
 import { useRecentIcons, pushRecent } from "../lib/recents";
 import { buildEmojiSearchHaystack } from "../lib/emoji-keywords";
-import { EmojiCell, LucideCell, RecentCell, Grid, Empty } from "./picker-parts/cells";
-import { PickerToolbar } from "./picker-parts/Toolbar";
+import {
+  EmojiCell, LucideCell, PhosphorCell, RecentCell, Grid, Empty,
+} from "./picker-parts/cells";
+import { PickerToolbar, VariantPills } from "./picker-parts/Toolbar";
 import { ColorRow } from "./picker-parts/ColorRow";
 
 export interface IconPickerInlineProps {
@@ -23,15 +26,14 @@ export interface IconPickerInlineProps {
    *  itself; the popover handles close via `onSelect`. */
   onChange: (next: string) => void;
   onClear?: () => void;
-  /** Fired ONLY on icon-pick events (emoji / lucide / recent / random /
-   *  clear). NOT fired on color pick. The popover hooks this to close
-   *  itself; external consumers can hook it for analytics or focus
-   *  management. */
+  /** Fired ONLY on icon-pick events (emoji / lucide / phosphor / recent /
+   *  random / clear). NOT fired on color pick. */
   onSelect?: () => void;
   className?: string;
 }
 
-type Tab = "emoji" | "lucide";
+type TopTab = "emoji" | "icon";
+type IconVariant = "lucide" | "phosphor";
 
 /** Precomputed lowercase search haystacks. Built once at module load. */
 const EMOJI_HAYSTACKS: ReadonlyMap<string, string> = (() => {
@@ -46,8 +48,20 @@ const LUCIDE_LOWER: ReadonlyMap<string, string> = (() => {
   return map;
 })();
 
-/** Inline picker — emoji + lucide tabs, search, color row (lucide only),
- *  twemoji toggle, recents, keyboard nav.
+const PHOSPHOR_LOWER: ReadonlyMap<string, string> = (() => {
+  const map = new Map<string, string>();
+  for (const n of ALL_PHOSPHOR) map.set(n, n.toLowerCase());
+  return map;
+})();
+
+/** Inline picker.
+ *
+ *  Top tabs: Emoji | Icon.
+ *  Sub-variant pills:
+ *    - Emoji tab → Native | Twemoji  (switches `iconStyle` global pref)
+ *    - Icon tab  → Lucide (stroke) | Phosphor (fill)
+ *
+ *  ColorRow is shown on the Icon tab (both lucide + phosphor support color).
  *
  *  Perf contract: ONE `useIconStyle` subscription here, propagated as a
  *  prop to every cell via `RawIcon` (zero per-cell hooks).
@@ -55,19 +69,24 @@ const LUCIDE_LOWER: ReadonlyMap<string, string> = (() => {
  *  Search filter runs in `startTransition` over a precomputed haystack. */
 export function IconPickerInline({ value, onChange, onClear, onSelect, className }: IconPickerInlineProps) {
   const parsed = parseIconValue(value);
-  const initialTab: Tab = parsed.kind === "lucide" ? "lucide" : "emoji";
-  const [tab, setTab] = React.useState<Tab>(initialTab);
+  const initialTab: TopTab = parsed.kind === "lucide" || parsed.kind === "phosphor" ? "icon" : "emoji";
+  const initialIconVariant: IconVariant = parsed.kind === "phosphor" ? "phosphor" : "lucide";
+
+  const [tab, setTab] = React.useState<TopTab>(initialTab);
+  const [iconVariant, setIconVariant] = React.useState<IconVariant>(initialIconVariant);
   const [queryInput, setQueryInput] = React.useState("");
   const [query, setQuery] = React.useState("");
   const [isPending, startTransition] = React.useTransition();
   const [iconStyle, setIconStyle] = useIconStyle();
   const recents = useRecentIcons();
 
-  // Color only makes sense for monochrome lucide SVGs. Twemoji has its
-  // own baked palette — tinting it would either no-op or look wrong.
-  // Hide the color row entirely on the emoji tab.
-  const colorEnabled = tab === "lucide";
-  const currentColor = colorEnabled && parsed.kind !== "empty" ? parsed.color : undefined;
+  // Color row applies to the Icon tab (both lucide + phosphor accept hex).
+  const colorEnabled = tab === "icon";
+  const currentColor =
+    colorEnabled &&
+    (parsed.kind === "lucide" || parsed.kind === "phosphor")
+      ? parsed.color
+      : undefined;
 
   React.useEffect(() => {
     startTransition(() => setQuery(queryInput.trim().toLowerCase()));
@@ -93,40 +112,49 @@ export function IconPickerInline({ value, onChange, onClear, onSelect, className
     return out;
   }, [query]);
 
-  // Icon-pick path: commits value + bumps recents + signals close intent.
+  const filteredPhosphor = React.useMemo(() => {
+    if (!query) return null;
+    const out: string[] = [];
+    for (const n of ALL_PHOSPHOR) {
+      const hay = PHOSPHOR_LOWER.get(n);
+      if (hay && hay.includes(query)) out.push(n);
+    }
+    return out;
+  }, [query]);
+
   function commit(nextValue: string) {
     onChange(nextValue);
     pushRecent(nextValue);
     onSelect?.();
   }
-  function pickEmoji(e: string) {
-    // Emoji values never carry color — strip any leftover suffix.
-    commit(withColor(e, undefined));
-  }
+  function pickEmoji(e: string) { commit(withColor(e, undefined)); }
   function pickLucide(n: string) { commit(lucideValue(n, currentColor)); }
+  function pickPhosphor(n: string) { commit(phosphorValue(n, currentColor)); }
   function pickRecent(v: string) {
     const re = parseIconValue(v);
     if (re.kind === "empty") return;
-    // Honor the recent's embedded color when present (for lucide); when
-    // the recent is emoji or has no color, fall through to the active
-    // color rules.
     if (re.color) { onChange(v); pushRecent(v); onSelect?.(); return; }
     if (re.kind === "lucide") commit(lucideValue(re.name, currentColor));
+    else if (re.kind === "phosphor") commit(phosphorValue(re.name, currentColor));
     else commit(withColor(re.emoji, undefined));
   }
-  // Color-pick path: re-applies color to the current lucide value. Does
-  // NOT call onSelect — popover stays open so user can continue tweaking.
   function pickColor(hex: string) {
     if (!colorEnabled) return;
-    if (parsed.kind !== "lucide") return;
-    const base = `lucide:${parsed.name}`;
-    onChange(withColor(base, hex || undefined));
-    // Intentionally no onSelect.
+    if (parsed.kind === "lucide") {
+      onChange(withColor(`lucide:${parsed.name}`, hex || undefined));
+    } else if (parsed.kind === "phosphor") {
+      onChange(withColor(`phosphor:${parsed.name}`, hex || undefined));
+    }
   }
   function pickRandom() {
-    if (tab === "lucide") {
-      const n = ALL_LUCIDE[Math.floor(Math.random() * ALL_LUCIDE.length)];
-      commit(lucideValue(n, currentColor));
+    if (tab === "icon") {
+      if (iconVariant === "phosphor") {
+        const n = ALL_PHOSPHOR[Math.floor(Math.random() * ALL_PHOSPHOR.length)];
+        commit(phosphorValue(n, currentColor));
+      } else {
+        const n = ALL_LUCIDE[Math.floor(Math.random() * ALL_LUCIDE.length)];
+        commit(lucideValue(n, currentColor));
+      }
     } else {
       const e = ALL_EMOJIS[Math.floor(Math.random() * ALL_EMOJIS.length)];
       commit(withColor(e, undefined));
@@ -137,8 +165,7 @@ export function IconPickerInline({ value, onChange, onClear, onSelect, className
     onSelect?.();
   }
 
-  // Keyboard nav inside the grid. Arrow keys walk the visible cells
-  // via data-icon-cell-index; Enter activates (native button).
+  // Keyboard nav inside the grid.
   const gridRef = React.useRef<HTMLDivElement | null>(null);
   function handleGridKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
     if (e.key !== "ArrowRight" && e.key !== "ArrowLeft" && e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
@@ -155,22 +182,52 @@ export function IconPickerInline({ value, onChange, onClear, onSelect, className
     cells[next]?.focus();
   }
 
+  const searchPlaceholder =
+    tab === "icon"
+      ? iconVariant === "phosphor"
+        ? "Search phosphor icons (fill)…"
+        : "Search lucide icons (outline)…"
+      : iconStyle === "twemoji"
+      ? "Search emoji (twemoji)…"
+      : "Search emoji (native)…";
+
   return (
     <div className={cn("w-full space-y-3", className)} onKeyDown={handleGridKeyDown} ref={gridRef}>
-      <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)} className="w-full">
+      <Tabs value={tab} onValueChange={(v) => setTab(v as TopTab)} className="w-full">
         <PickerToolbar
-          iconStyle={iconStyle}
-          onToggleStyle={() => setIconStyle(iconStyle === "twemoji" ? "native" : "twemoji")}
           onRandom={pickRandom}
           onClear={onClear ? handleClear : undefined}
         />
+
+        {/* Sub-variant pills — different choices per top tab. */}
+        <div className="mt-2 flex items-center gap-2">
+          {tab === "emoji" ? (
+            <VariantPills
+              value={iconStyle}
+              onChange={(v: Style) => setIconStyle(v)}
+              options={[
+                { value: "native",  label: "Native",  hint: "Render with the OS emoji font" },
+                { value: "twemoji", label: "Twemoji", hint: "Render with Twemoji SVG (Notion-style, consistent across devices)" },
+              ]}
+            />
+          ) : (
+            <VariantPills
+              value={iconVariant}
+              onChange={(v: IconVariant) => setIconVariant(v)}
+              options={[
+                { value: "lucide",   label: "Lucide",        hint: "Outline icons (stroke)" },
+                { value: "phosphor", label: "Phosphor fill", hint: "Filled icons (solid) — uses chosen color" },
+              ]}
+            />
+          )}
+        </div>
 
         {colorEnabled && <ColorRow currentColor={currentColor} onPick={pickColor} />}
 
         <div className="relative mt-2">
           <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <Input
-            placeholder={tab === "lucide" ? "Search lucide icons…" : "Search emoji (try: heart, star, fire)…"}
+            placeholder={searchPlaceholder}
             value={queryInput}
             onChange={(e) => setQueryInput(e.target.value)}
             className={cn("pl-7 h-8 text-sm", isPending && "opacity-80")}
@@ -222,18 +279,60 @@ export function IconPickerInline({ value, onChange, onClear, onSelect, className
           </ScrollArea>
         </TabsContent>
 
-        <TabsContent value="lucide" className="mt-2">
+        <TabsContent value="icon" className="mt-2">
           <ScrollArea className="h-64 pr-2">
-            {filteredLucide ? (
+            {iconVariant === "lucide" ? (
+              filteredLucide ? (
+                <Grid>
+                  {filteredLucide.length === 0 ? <Empty /> : filteredLucide.map((n, i) => (
+                    <LucideCell
+                      key={`fl-${n}`}
+                      name={n}
+                      color={currentColor}
+                      style={iconStyle}
+                      active={parsed.kind === "lucide" && parsed.name === n}
+                      onClick={() => pickLucide(n)}
+                      tabIndex={i === 0 ? 0 : -1}
+                      index={i}
+                    />
+                  ))}
+                </Grid>
+              ) : (
+                <div className="space-y-3">
+                  {recents.length > 0 && (
+                    <RecentsSection
+                      recents={recents}
+                      style={iconStyle}
+                      activeValue={value ?? ""}
+                      onPick={pickRecent}
+                    />
+                  )}
+                  {LUCIDE_GROUPS.map((g) => (
+                    <Section key={g.id} label={g.label}>
+                      {g.items.map((n) => (
+                        <LucideCell
+                          key={`${g.id}-${n}`}
+                          name={n}
+                          color={currentColor}
+                          style={iconStyle}
+                          active={parsed.kind === "lucide" && parsed.name === n}
+                          onClick={() => pickLucide(n)}
+                        />
+                      ))}
+                    </Section>
+                  ))}
+                </div>
+              )
+            ) : filteredPhosphor ? (
               <Grid>
-                {filteredLucide.length === 0 ? <Empty /> : filteredLucide.map((n, i) => (
-                  <LucideCell
-                    key={`f-${n}`}
+                {filteredPhosphor.length === 0 ? <Empty /> : filteredPhosphor.map((n, i) => (
+                  <PhosphorCell
+                    key={`fp-${n}`}
                     name={n}
                     color={currentColor}
                     style={iconStyle}
-                    active={parsed.kind === "lucide" && parsed.name === n}
-                    onClick={() => pickLucide(n)}
+                    active={parsed.kind === "phosphor" && parsed.name === n}
+                    onClick={() => pickPhosphor(n)}
                     tabIndex={i === 0 ? 0 : -1}
                     index={i}
                   />
@@ -249,16 +348,16 @@ export function IconPickerInline({ value, onChange, onClear, onSelect, className
                     onPick={pickRecent}
                   />
                 )}
-                {LUCIDE_GROUPS.map((g) => (
-                  <Section key={g.id} label={g.label}>
+                {PHOSPHOR_GROUPS.map((g) => (
+                  <Section key={`p-${g.id}`} label={g.label}>
                     {g.items.map((n) => (
-                      <LucideCell
-                        key={`${g.id}-${n}`}
+                      <PhosphorCell
+                        key={`p-${g.id}-${n}`}
                         name={n}
                         color={currentColor}
                         style={iconStyle}
-                        active={parsed.kind === "lucide" && parsed.name === n}
-                        onClick={() => pickLucide(n)}
+                        active={parsed.kind === "phosphor" && parsed.name === n}
+                        onClick={() => pickPhosphor(n)}
                       />
                     ))}
                   </Section>
@@ -270,7 +369,7 @@ export function IconPickerInline({ value, onChange, onClear, onSelect, className
       </Tabs>
 
       <p className="text-[10px] text-muted-foreground">
-        Emoji rendered via Twemoji (CC-BY 4.0) for consistent look across devices.
+        Emoji rendered via Twemoji (CC-BY 4.0). Lucide icons (ISC). Phosphor icons (MIT).
       </p>
     </div>
   );

@@ -1,10 +1,12 @@
 /** Icon value model. Stored as one string in pages/databases.icon. Forms:
  *
- *   - ""              → empty (default fallback)
- *   - "🎯"             → emoji glyph (legacy + new)
- *   - "lucide:Star"   → lucide icon, currentColor
+ *   - ""                            → empty (default fallback)
+ *   - "🎯"                           → emoji glyph (legacy + new)
+ *   - "lucide:Star"                 → lucide icon (stroke), currentColor
  *   - "lucide:Star?c=f59e0b"        → lucide + hex color (no #)
- *   - "🎯?c=f59e0b"   → emoji + tint hint (only used for twemoji bg/ring)
+ *   - "phosphor:Star"               → phosphor icon (fill), currentColor
+ *   - "phosphor:Star?c=f59e0b"      → phosphor + hex color (no #)
+ *   - "🎯?c=f59e0b"                  → emoji + tint hint (only used for twemoji bg/ring)
  *
  *  Color is suffixed with `?c=<hex>` (no leading #) — backwards-compat
  *  with all existing emoji values, no schema migration. */
@@ -12,9 +14,11 @@
 export type IconValue =
   | { kind: "emoji"; emoji: string; color?: string }
   | { kind: "lucide"; name: string; color?: string }
+  | { kind: "phosphor"; name: string; color?: string }
   | { kind: "empty" };
 
 export const LUCIDE_PREFIX = "lucide:";
+export const PHOSPHOR_PREFIX = "phosphor:";
 
 export function parseIconValue(raw: string | null | undefined): IconValue {
   if (!raw) return { kind: "empty" };
@@ -27,6 +31,10 @@ export function parseIconValue(raw: string | null | undefined): IconValue {
   if (head.startsWith(LUCIDE_PREFIX)) {
     const name = head.slice(LUCIDE_PREFIX.length).trim();
     return name ? { kind: "lucide", name, color } : { kind: "empty" };
+  }
+  if (head.startsWith(PHOSPHOR_PREFIX)) {
+    const name = head.slice(PHOSPHOR_PREFIX.length).trim();
+    return name ? { kind: "phosphor", name, color } : { kind: "empty" };
   }
   return { kind: "emoji", emoji: head, color };
 }
@@ -47,6 +55,10 @@ export function lucideValue(name: string, color?: string): string {
   return withColor(`${LUCIDE_PREFIX}${name}`, color);
 }
 
+export function phosphorValue(name: string, color?: string): string {
+  return withColor(`${PHOSPHOR_PREFIX}${name}`, color);
+}
+
 export function withColor(raw: string, color?: string): string {
   if (!raw) return raw;
   const base = raw.split("?")[0];
@@ -57,4 +69,8 @@ export function withColor(raw: string, color?: string): string {
 
 export function isLucideValue(raw: string | null | undefined): boolean {
   return !!raw && raw.startsWith(LUCIDE_PREFIX);
+}
+
+export function isPhosphorValue(raw: string | null | undefined): boolean {
+  return !!raw && raw.startsWith(PHOSPHOR_PREFIX);
 }
