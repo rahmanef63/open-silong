@@ -173,6 +173,36 @@ export const setIcon = mutation({
   },
 });
 
+/** Set the workspace's default theme preset + mode. Applied at sign-in
+ *  + on workspace activation when the user has no per-workspace local
+ *  override. Owner or editor only — viewers consume but don't manage. */
+export const setTheme = mutation({
+  args: {
+    workspaceId: v.id("workspaces"),
+    themePresetId: v.optional(v.union(v.string(), v.null())),
+    themeMode: v.optional(v.union(
+      v.literal("light"), v.literal("dark"), v.literal("system"), v.null(),
+    )),
+  },
+  handler: async (ctx, { workspaceId, themePresetId, themeMode }) => {
+    const { role } = await requireWorkspaceMember(ctx, workspaceId);
+    if (role !== "owner" && role !== "editor") {
+      throw new Error("Only workspace owner or editor can change theme");
+    }
+    const patch: Record<string, unknown> = {};
+    // `null` = explicit clear, `undefined` = leave unchanged
+    if (themePresetId !== undefined) {
+      patch.themePresetId = themePresetId === null ? undefined : themePresetId;
+    }
+    if (themeMode !== undefined) {
+      patch.themeMode = themeMode === null ? undefined : themeMode;
+    }
+    if (Object.keys(patch).length > 0) {
+      await ctx.db.patch(workspaceId, patch);
+    }
+  },
+});
+
 /** Switch the viewer's active workspace. Throws if not a member. */
 export const setActive = mutation({
   args: { workspaceId: v.id("workspaces") },

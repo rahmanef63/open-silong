@@ -6,6 +6,7 @@ import { IconPickerPopover, DynamicIcon } from "@/shared/components/icon-picker"
 import { Field } from "@/shared/components/forms/Field";
 import { useDebouncedCommit } from "@/shared/hooks/useDebouncedCommit";
 import { Button } from "@/shared/ui/button";
+import { WorkspaceThemePicker } from "@/slices/theme-presets";
 import { WorkspacesSection as WorkspaceList } from "../WorkspacesSection";
 
 export function WorkspaceSection() {
@@ -48,6 +49,12 @@ export function WorkspaceSection() {
             </Button>
           </IconPickerPopover>
         </Field>
+      </div>
+      <div className="rounded-xl border border-border bg-card p-5 space-y-4">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+          Workspace appearance
+        </h2>
+        <WorkspaceThemePicker />
       </div>
     </div>
   );

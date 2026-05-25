@@ -5,13 +5,19 @@ interface ChoiceProps<T extends string> {
   onChange: (value: T) => void;
   options: ReadonlyArray<readonly [T, string]>;
   className?: string;
+  disabled?: boolean;
 }
 
-export function Choice<T extends string>({ value, onChange, options, className }: ChoiceProps<T>) {
+export function Choice<T extends string>({ value, onChange, options, className, disabled }: ChoiceProps<T>) {
   return (
     <div
       role="radiogroup"
-      className={cn("flex flex-wrap gap-1 rounded-md border border-border bg-background p-1 w-fit", className)}
+      aria-disabled={disabled}
+      className={cn(
+        "flex flex-wrap gap-1 rounded-md border border-border bg-background p-1 w-fit",
+        disabled && "opacity-60",
+        className,
+      )}
     >
       {options.map(([v, label]) => {
         const active = value === v;
@@ -21,9 +27,10 @@ export function Choice<T extends string>({ value, onChange, options, className }
             type="button"
             role="radio"
             aria-checked={active}
+            disabled={disabled}
             onClick={() => onChange(v)}
             className={cn(
-              "px-3 py-1 text-xs rounded transition-colors",
+              "px-3 py-1 text-xs rounded transition-colors disabled:cursor-not-allowed",
               active
                 ? "bg-foreground text-background"
                 : "text-muted-foreground hover:bg-accent",

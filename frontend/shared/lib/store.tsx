@@ -61,6 +61,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     slug: rawWorkspace?.slug,
     isPersonal: rawWorkspace?.isPersonal,
     role: rawWorkspace?.role as Workspace["role"],
+    themePresetId: rawWorkspace?.themePresetId,
+    themeMode: rawWorkspace?.themeMode as Workspace["themeMode"],
   }), [rawWorkspace]);
 
   const workspaces: Workspace[] = useMemo(
