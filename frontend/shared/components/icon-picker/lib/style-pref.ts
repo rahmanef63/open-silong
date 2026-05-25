@@ -10,7 +10,8 @@ import { useSyncExternalStore } from "react";
  *  and a single storage-event listener. Previous implementation attached
  *  one listener per icon — which exploded to 800+ in the picker grid. */
 
-const KEY = "nosion:iconStyle";
+const KEY = "icon-picker:style";
+const LEGACY_KEYS = ["nosion:iconStyle"] as const;
 const DEFAULT: Style = "twemoji";
 
 export type Style = "twemoji" | "native";
@@ -22,7 +23,17 @@ function isStyle(v: unknown): v is Style {
 function read(): Style {
   if (typeof window === "undefined") return DEFAULT;
   const raw = window.localStorage.getItem(KEY);
-  return isStyle(raw) ? raw : DEFAULT;
+  if (isStyle(raw)) return raw;
+  // Migrate legacy host-prefixed keys on first read so existing users
+  // keep their preference after this module renames the key.
+  for (const legacy of LEGACY_KEYS) {
+    const lr = window.localStorage.getItem(legacy);
+    if (isStyle(lr)) {
+      try { window.localStorage.setItem(KEY, lr); window.localStorage.removeItem(legacy); } catch { /* quota */ }
+      return lr;
+    }
+  }
+  return DEFAULT;
 }
 
 // Module-singleton state. Hydrated lazily on first client read so SSR
