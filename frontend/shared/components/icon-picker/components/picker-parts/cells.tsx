@@ -1,6 +1,6 @@
 import * as React from "react";
 import { cn } from "@/shared/lib/utils";
-import { lucideValue } from "../../lib/parse";
+import { lucideValue, phosphorValue } from "../../lib/parse";
 import { RawIcon } from "../DynamicIcon";
 import type { Style } from "../../lib/style-pref";
 
@@ -85,6 +85,35 @@ function LucideCellImpl({ name, color, active, onClick, onMouseEnter, tabIndex, 
 }
 
 export const LucideCell = React.memo(LucideCellImpl);
+
+interface PhosphorCellProps extends CellProps {
+  name: string;
+  color: string | undefined;
+  style: Style;
+}
+
+function PhosphorCellImpl({ name, color, active, onClick, onMouseEnter, tabIndex, index, style }: PhosphorCellProps) {
+  const value = React.useMemo(() => phosphorValue(name, color), [name, color]);
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      onMouseEnter={onMouseEnter}
+      tabIndex={tabIndex}
+      data-icon-cell-index={index}
+      className={cn(
+        "flex h-8 w-8 items-center justify-center rounded transition",
+        active ? "bg-brand/15 ring-1 ring-brand" : "hover:bg-accent",
+      )}
+      title={name}
+      aria-label={`Pick ${name}`}
+    >
+      <RawIcon value={value} style={style} className="text-base" />
+    </button>
+  );
+}
+
+export const PhosphorCell = React.memo(PhosphorCellImpl);
 
 /** Renders a recent entry — value may be either emoji or `lucide:Name`,
  *  with optional color suffix. */

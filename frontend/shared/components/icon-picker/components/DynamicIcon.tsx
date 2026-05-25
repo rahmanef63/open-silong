@@ -6,6 +6,7 @@ import { parseIconValue, type IconValue } from "../lib/parse";
 import { twemojiUrl } from "../lib/twemoji";
 import { useIconStyle, type Style } from "../lib/style-pref";
 import { LUCIDE_ICONS, FallbackLucideIcon } from "../lib/lucide-icons";
+import { PHOSPHOR_ICONS, FallbackPhosphorIcon } from "../lib/phosphor-icons";
 
 interface CommonProps {
   value: string | null | undefined;
@@ -47,6 +48,22 @@ function RawIconImpl({ value, style, className, fallback = "📄", title }: RawI
         style={parsed.color ? { color: parsed.color } : undefined}
       >
         <Cmp className="h-[1em] w-[1em]" />
+      </span>
+    );
+  }
+
+  if (parsed.kind === "phosphor") {
+    const Cmp = PHOSPHOR_ICONS[parsed.name] ?? FallbackPhosphorIcon;
+    if (Cmp === FallbackPhosphorIcon && process.env.NODE_ENV !== "production") {
+      console.warn(`[DynamicIcon] Unknown phosphor icon: "${parsed.name}". Falling back to FileText.`);
+    }
+    return (
+      <span
+        className={cn("inline-flex items-center justify-center leading-none", className)}
+        title={title}
+        style={parsed.color ? { color: parsed.color } : undefined}
+      >
+        <Cmp weight="fill" className="h-[1em] w-[1em]" />
       </span>
     );
   }

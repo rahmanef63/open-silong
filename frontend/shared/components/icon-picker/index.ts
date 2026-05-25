@@ -16,9 +16,12 @@ export { PickerSkeleton } from "./components/PickerSkeleton";
 export {
   parseIconValue,
   isLucideValue,
+  isPhosphorValue,
   lucideValue,
+  phosphorValue,
   withColor,
   LUCIDE_PREFIX,
+  PHOSPHOR_PREFIX,
   type IconValue,
 } from "./lib/parse";
 
@@ -27,6 +30,8 @@ export {
 export { EMOJI_GROUPS, ALL_EMOJIS } from "./lib/emoji-catalog";
 export { LUCIDE_GROUPS, ALL_LUCIDE } from "./lib/lucide-catalog";
 export { LUCIDE_ICONS, resolveLucideIcon, type LucideIconName } from "./lib/lucide-icons";
+export { PHOSPHOR_GROUPS, ALL_PHOSPHOR } from "./lib/phosphor-catalog";
+export { PHOSPHOR_ICONS, resolvePhosphorIcon, type PhosphorIconName } from "./lib/phosphor-icons";
 
 // Theming + style preference.
 export { ICON_COLORS, type IconColor } from "./lib/colors";
