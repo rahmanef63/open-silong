@@ -8,7 +8,7 @@ import type { ComponentType } from "react";
 import Link from "next/link";
 import {
   ExternalLink, HelpCircle, KeyRound, Plug, FileText, Save, User,
-  Palette, Webhook, LifeBuoy, ShieldCheck, Sparkles,
+  Palette, Webhook, LifeBuoy, ShieldCheck, Sparkles, Bot,
 } from "lucide-react";
 import type { SettingsKey } from "./SettingsSidebar";
 
@@ -37,6 +37,20 @@ const ASIDE: Record<SettingsKey, AsideContent> = {
     blurb: "Tema dipakai untuk seluruh dashboard. Density mempengaruhi tinggi baris sidebar + list view.",
     tips: [
       { icon: Palette, label: "System mode follow OS preference" },
+    ],
+  },
+  ai: {
+    title: "Bring your own AI keys",
+    blurb: "Kalau admin key kehabisan quota atau kamu mau pakai model premium, daftar key kamu di sini. Personal key cuma untuk kamu; workspace key di-share ke member.",
+    tips: [
+      { icon: KeyRound, label: "Plaintext key di-encrypt sebelum disimpan (AES-GCM-256)" },
+      { icon: Bot, label: "Resolver order: personal preferOwn → workspace shared → admin fallback" },
+      { icon: ShieldCheck, label: "Workspace key butuh role owner / editor" },
+    ],
+    links: [
+      { label: "OpenRouter API keys", href: "https://openrouter.ai/keys", external: true },
+      { label: "Anthropic console", href: "https://console.anthropic.com/settings/keys", external: true },
+      { label: "OpenAI platform", href: "https://platform.openai.com/api-keys", external: true },
     ],
   },
   pages: {

@@ -8,6 +8,7 @@ import {
 } from "./SettingsSidebar";
 import { WorkspaceSection } from "./sections/WorkspaceSection";
 import { AppearanceSection } from "./sections/AppearanceSection";
+import { AISection } from "@/slices/ai-keys";
 import { PagesSection } from "./sections/PagesSection";
 import { BackupSection } from "./sections/BackupSection";
 import { TicketsSection } from "./sections/TicketsSection";
@@ -20,6 +21,7 @@ function SectionForKey({ k }: { k: SettingsKey }) {
   switch (k) {
     case "workspace":  return <WorkspaceSection />;
     case "appearance": return <AppearanceSection />;
+    case "ai":         return <AISection />;
     case "pages":      return <PagesSection />;
     case "backup":     return <BackupSection />;
     case "mcp-apps":   return (
