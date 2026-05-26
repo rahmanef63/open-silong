@@ -81,9 +81,16 @@ function RawIconImpl({ value, style, className, fallback = "📄", title, size }
       console.warn(`[DynamicIcon] Unknown lucide icon: "${parsed.name}". Falling back to FileText.`);
     }
     const sp = sizeProps(size, parsed.color);
+    // When `size` is explicit, pass it to lucide directly so the SVG
+    // renders at width=size height=size attributes — no reliance on
+    // h-[1em] inheriting through SVG, which doesn't override lucide's
+    // own width=24 attribute in every browser. Legacy path keeps the
+    // h-[1em] approach so callers using parent font-size cascade work.
     return (
       <span className={cn(sp.className, className)} title={title} style={sp.style}>
-        <Cmp className="h-[1em] w-[1em]" />
+        {size !== undefined
+          ? <Cmp size={size} />
+          : <Cmp className="h-[1em] w-[1em]" />}
       </span>
     );
   }
@@ -96,7 +103,9 @@ function RawIconImpl({ value, style, className, fallback = "📄", title, size }
     const sp = sizeProps(size, parsed.color);
     return (
       <span className={cn(sp.className, className)} title={title} style={sp.style}>
-        <Cmp weight="fill" className="h-[1em] w-[1em]" />
+        {size !== undefined
+          ? <Cmp weight="fill" size={size} />
+          : <Cmp weight="fill" className="h-[1em] w-[1em]" />}
       </span>
     );
   }
@@ -160,7 +169,9 @@ function TwemojiImgImpl({
         decoding="async"
         draggable={false}
         onError={() => setFailed(true)}
-        className="h-[1em] w-[1em] select-none object-contain"
+        width={size}
+        height={size}
+        className={size !== undefined ? "select-none object-contain" : "h-[1em] w-[1em] select-none object-contain"}
       />
     </span>
   );
