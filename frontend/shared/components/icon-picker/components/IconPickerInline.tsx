@@ -379,10 +379,6 @@ export function IconPickerInline({ value, onChange, onClear, onSelect, className
           </ScrollArea>
         </TabsContent>
       </Tabs>
-
-      <p className="shrink-0 text-[10px] text-muted-foreground">
-        Emoji rendered via Twemoji (CC-BY 4.0). Lucide icons (ISC). Phosphor icons (MIT).
-      </p>
     </div>
   );
 }
