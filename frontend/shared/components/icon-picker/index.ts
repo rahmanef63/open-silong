@@ -10,6 +10,7 @@
  *      grid level and propagate). */
 
 export { DynamicIcon, RawIcon, DEFAULT_ICON_SIZE } from "./components/DynamicIcon";
+export { ICON_FILL_RATIO, renderSizeFor, type IconRenderKind } from "./lib/icon-render-config";
 export { IconPickerInline, IconPickerPopover } from "./components/IconPicker";
 export { PickerSkeleton } from "./components/PickerSkeleton";
 

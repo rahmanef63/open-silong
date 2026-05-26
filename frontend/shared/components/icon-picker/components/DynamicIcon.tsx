@@ -7,58 +7,39 @@ import { twemojiUrl } from "../lib/twemoji";
 import { useIconStyle, type Style } from "../lib/style-pref";
 import { LUCIDE_ICONS, FallbackLucideIcon } from "../lib/lucide-icons";
 import { PHOSPHOR_ICONS, FallbackPhosphorIcon } from "../lib/phosphor-icons";
+import { renderSizeFor, type IconRenderKind } from "../lib/icon-render-config";
 
 interface CommonProps {
   value: string | null | undefined;
-  /** Tailwind classes applied to the wrapping span. Sizing can still be
-   *  set here (`text-base`, `h-4 w-4`, etc) — twMerge lets a className
-   *  `text-*` override the `size` prop default. */
+  /** Extra Tailwind classes for the wrapping span. Layout only — use
+   *  the `size` prop for icon sizing, not className `text-*`. */
   className?: string;
   /** Fallback emoji or `lucide:Name` shown when value is empty. */
   fallback?: string;
   /** Title for tooltip (a11y). */
   title?: string;
-  /** Pixel size for the icon. Drives a CSS var that feeds the wrapper's
-   *  font-size; the emoji glyph and lucide/phosphor SVG (via h-[1em])
-   *  scale from there. Default 72px (Notion-style hero icon). A
-   *  Tailwind `text-*` class in `className` overrides this via twMerge
-   *  dedup — so existing call sites that pre-date the prop keep their
-   *  visual size. */
+  /**
+   * Target VISIBLE mark size in pixels. The wrapper box stays exactly
+   * this size; the inner primitive is up-scaled per kind via
+   * `ICON_FILL_RATIO` so the visible mark hits the same target across
+   * emoji, twemoji, lucide, and phosphor. See `lib/icon-render-config`.
+   *
+   * Legacy callers can omit this prop — the inner primitive falls
+   * back to `h-[1em]` cascade from the parent font-size.
+   */
   size?: number;
 }
 
-/** Recommended default size for hero icons (page covers, etc). Not
- *  applied automatically — callers opt in via `size={DEFAULT_ICON_SIZE}`.
- *  Auto-defaulting would break legacy call sites that rely on the
- *  wrapping element's font-size cascade for sizing. */
+/** Recommended hero-icon size (page covers, profile, …). */
 export const DEFAULT_ICON_SIZE = 72;
 
-const WRAPPER_BASE = "inline-flex items-center justify-center leading-none";
+const WRAPPER_BASE = "inline-flex items-center justify-center leading-none overflow-visible";
 
-function sizeProps(size: number | undefined, color: string | undefined): {
-  className: string;
-  style: React.CSSProperties | undefined;
-} {
-  // No size prop → no font-size override; legacy parent-cascade /
-  // className-driven sizing keeps working.
-  if (size === undefined) {
-    return { className: WRAPPER_BASE, style: color ? { color } : undefined };
-  }
-  // Explicit size → inline style for fontSize + box dimensions. Inline
-  // style beats Tailwind className, so the picked size is authoritative
-  // and not subject to Tailwind JIT picking up arbitrary classes.
-  return {
-    className: WRAPPER_BASE,
-    style: {
-      fontSize: size,
-      width: size,
-      height: size,
-      ...(color ? { color } : null),
-    },
-  };
+function wrapperStyle(size: number | undefined, color: string | undefined): React.CSSProperties | undefined {
+  if (size === undefined) return color ? { color } : undefined;
+  return { width: size, height: size, ...(color ? { color } : null) };
 }
 
-/** Resolve a stored value (or fallback) to a parsed IconValue. */
 function resolveValue(value: string | null | undefined, fallback: string): IconValue {
   const primary = parseIconValue(value);
   if (primary.kind === "emoji" && !primary.emoji) return parseIconValue(fallback);
@@ -67,8 +48,7 @@ function resolveValue(value: string | null | undefined, fallback: string): IconV
 
 interface RawIconProps extends CommonProps {
   /** Explicit render style. When provided, RawIcon does NOT subscribe to
-   *  the global style store — caller is responsible for the value. Used
-   *  by `IconPickerInline` to read once and broadcast to every grid cell. */
+   *  the global style store — caller is responsible for the value. */
   style: Style;
 }
 
@@ -80,18 +60,10 @@ function RawIconImpl({ value, style, className, fallback = "📄", title, size }
     if (Cmp === FallbackLucideIcon && process.env.NODE_ENV !== "production") {
       console.warn(`[DynamicIcon] Unknown lucide icon: "${parsed.name}". Falling back to FileText.`);
     }
-    const sp = sizeProps(size, parsed.color);
-    // When `size` is explicit, pass it to lucide directly so the SVG
-    // renders at width=size height=size attributes — no reliance on
-    // h-[1em] inheriting through SVG, which doesn't override lucide's
-    // own width=24 attribute in every browser. Legacy path keeps the
-    // h-[1em] approach so callers using parent font-size cascade work.
-    return (
-      <span className={cn(sp.className, className)} title={title} style={sp.style}>
-        {size !== undefined
-          ? <Cmp size={size} />
-          : <Cmp className="h-[1em] w-[1em]" />}
-      </span>
+    return renderWithKind("lucide", size, parsed.color, className, title, (renderSize) =>
+      renderSize !== undefined
+        ? <Cmp size={renderSize} />
+        : <Cmp className="h-[1em] w-[1em]" />,
     );
   }
 
@@ -100,38 +72,45 @@ function RawIconImpl({ value, style, className, fallback = "📄", title, size }
     if (Cmp === FallbackPhosphorIcon && process.env.NODE_ENV !== "production") {
       console.warn(`[DynamicIcon] Unknown phosphor icon: "${parsed.name}". Falling back to FileText.`);
     }
-    const sp = sizeProps(size, parsed.color);
-    return (
-      <span className={cn(sp.className, className)} title={title} style={sp.style}>
-        {size !== undefined
-          ? <Cmp weight="fill" size={size} />
-          : <Cmp weight="fill" className="h-[1em] w-[1em]" />}
-      </span>
+    return renderWithKind("phosphor", size, parsed.color, className, title, (renderSize) =>
+      renderSize !== undefined
+        ? <Cmp weight="fill" size={renderSize} />
+        : <Cmp weight="fill" className="h-[1em] w-[1em]" />,
     );
   }
 
   const glyph = parsed.kind === "emoji" ? parsed.emoji : "";
-  const sp = sizeProps(size, undefined);
   if (style === "twemoji" && glyph) {
     const url = twemojiUrl(glyph);
     if (url) return <TwemojiImg url={url} glyph={glyph} className={className} title={title} size={size} />;
   }
-  return (
-    <span className={cn(sp.className, className)} title={title} style={sp.style}>
+  return renderWithKind("emoji", size, undefined, className, title, (renderSize) => (
+    <span style={renderSize !== undefined ? { fontSize: renderSize, lineHeight: 1 } : undefined}>
       {glyph}
+    </span>
+  ));
+}
+
+function renderWithKind(
+  kind: IconRenderKind,
+  size: number | undefined,
+  color: string | undefined,
+  className: string | undefined,
+  title: string | undefined,
+  inner: (renderSize: number | undefined) => React.ReactNode,
+) {
+  const renderSize = size !== undefined ? renderSizeFor(kind, size) : undefined;
+  return (
+    <span className={cn(WRAPPER_BASE, className)} title={title} style={wrapperStyle(size, color)}>
+      {inner(renderSize)}
     </span>
   );
 }
 
-/** Stateless icon renderer. Memoized on all props — re-renders only when
- *  value/style/className change. Use this inside grids / lists where the
- *  parent already knows the style; it skips the global store
- *  subscription entirely. */
 export const RawIcon = React.memo(RawIconImpl);
 
 interface DynamicIconProps extends CommonProps {
-  /** Force native emoji rendering even when twemoji preference is on.
-   *  Used in pickers where we want to preview the OS glyph. */
+  /** Force native emoji rendering even when twemoji preference is on. */
   forceNative?: boolean;
 }
 
@@ -141,25 +120,20 @@ function DynamicIconImpl({ value, className, fallback, title, forceNative, size 
   return <RawIcon value={value} style={effective} className={className} fallback={fallback} title={title} size={size} />;
 }
 
-/** Icon renderer that subscribes to the global style preference. Suitable
- *  for one-off renders (page title, sidebar, table cell). Inside large
- *  grids prefer `RawIcon` + parent-level style read. */
 export const DynamicIcon = React.memo(DynamicIconImpl);
 
 function TwemojiImgImpl({
   url, glyph, className, title, size,
 }: { url: string; glyph: string; className?: string; title?: string; size?: number }) {
   const [failed, setFailed] = React.useState(false);
-  const sp = sizeProps(size, undefined);
+  const renderSize = size !== undefined ? renderSizeFor("twemoji", size) : undefined;
   if (failed) {
-    return (
-      <span className={cn(sp.className, className)} title={title ?? glyph} style={sp.style}>
-        {glyph}
-      </span>
-    );
+    return renderWithKind("emoji", size, undefined, className, title ?? glyph, (rs) => (
+      <span style={rs !== undefined ? { fontSize: rs, lineHeight: 1 } : undefined}>{glyph}</span>
+    ));
   }
   return (
-    <span className={cn(sp.className, className)} style={sp.style}>
+    <span className={cn(WRAPPER_BASE, className)} style={wrapperStyle(size, undefined)}>
       {/* eslint-disable-next-line @next/next/no-img-element -- external SVG CDN; next/image can't optimize without custom loader */}
       <img
         src={url}
@@ -169,9 +143,9 @@ function TwemojiImgImpl({
         decoding="async"
         draggable={false}
         onError={() => setFailed(true)}
-        width={size}
-        height={size}
-        className={size !== undefined ? "select-none object-contain" : "h-[1em] w-[1em] select-none object-contain"}
+        width={renderSize}
+        height={renderSize}
+        className={renderSize !== undefined ? "select-none object-contain" : "h-[1em] w-[1em] select-none object-contain"}
       />
     </span>
   );
