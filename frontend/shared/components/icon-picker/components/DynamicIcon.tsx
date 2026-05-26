@@ -62,7 +62,7 @@ function RawIconImpl({ value, style, className, fallback = "📄", title, size }
     }
     return renderWithKind("lucide", size, parsed.color, className, title, (renderSize) =>
       renderSize !== undefined
-        ? <Cmp size={renderSize} />
+        ? <Cmp size={renderSize} style={{ width: renderSize, height: renderSize }} />
         : <Cmp className="h-[1em] w-[1em]" />,
     );
   }
@@ -74,7 +74,7 @@ function RawIconImpl({ value, style, className, fallback = "📄", title, size }
     }
     return renderWithKind("phosphor", size, parsed.color, className, title, (renderSize) =>
       renderSize !== undefined
-        ? <Cmp weight="fill" size={renderSize} />
+        ? <Cmp weight="fill" size={renderSize} style={{ width: renderSize, height: renderSize }} />
         : <Cmp weight="fill" className="h-[1em] w-[1em]" />,
     );
   }
@@ -145,6 +145,7 @@ function TwemojiImgImpl({
         onError={() => setFailed(true)}
         width={renderSize}
         height={renderSize}
+        style={renderSize !== undefined ? { width: renderSize, height: renderSize } : undefined}
         className={renderSize !== undefined ? "select-none object-contain" : "h-[1em] w-[1em] select-none object-contain"}
       />
     </span>
