@@ -4,7 +4,6 @@ import * as React from "react";
 import { Search } from "lucide-react";
 import { Input } from "@/shared/ui/input";
 import { Tabs, TabsContent } from "@/shared/ui/tabs";
-import { ScrollArea } from "@/shared/ui/scroll-area";
 import { cn } from "@/shared/lib/utils";
 import { EMOJI_GROUPS, ALL_EMOJIS } from "../lib/emoji-catalog";
 import { LUCIDE_GROUPS, ALL_LUCIDE } from "../lib/lucide-catalog";
@@ -261,7 +260,7 @@ export function IconPickerInline({ value, onChange, onClear, onSelect, className
         </div>
 
         <TabsContent value="emoji" className="mt-2 flex flex-col flex-1 min-h-0 data-[state=inactive]:hidden">
-          <ScrollArea className="h-full min-h-0 flex-1 pr-2">
+          <div className="h-full min-h-0 flex-1 overflow-y-auto pr-2 scrollbar-thin">
             {filteredEmoji ? (
               <Grid>
                 {filteredEmoji.length === 0 ? <Empty /> : filteredEmoji.map((e, i) => (
@@ -301,11 +300,11 @@ export function IconPickerInline({ value, onChange, onClear, onSelect, className
                 ))}
               </div>
             )}
-          </ScrollArea>
+          </div>
         </TabsContent>
 
         <TabsContent value="icon" className="mt-2 flex flex-col flex-1 min-h-0 data-[state=inactive]:hidden">
-          <ScrollArea className="h-full min-h-0 flex-1 pr-2">
+          <div className="h-full min-h-0 flex-1 overflow-y-auto pr-2 scrollbar-thin">
             {iconVariant === "lucide" ? (
               filteredLucide ? (
                 <Grid>
@@ -389,7 +388,7 @@ export function IconPickerInline({ value, onChange, onClear, onSelect, className
                 ))}
               </div>
             )}
-          </ScrollArea>
+          </div>
         </TabsContent>
       </Tabs>
     </div>
