@@ -1,6 +1,6 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 
 /** Per-device preference for emoji rendering: Twemoji SVGs (Notion-like,
  *  consistent across devices) vs native OS font.
@@ -96,8 +96,17 @@ export function readIconStyle(): Style {
 
 /** Hook returning `[style, set]`. Single subscription per component.
  *  Picker grids should NOT call this per cell — read once at the picker
- *  level and pass `style` down as a prop to `RawIcon`. */
+ *  level and pass `style` down as a prop to `RawIcon`.
+ *
+ *  Hydration safety: pin the value to DEFAULT until the first effect
+ *  fires so SSR + the initial CSR pass render identical markup. Without
+ *  this, a user who flipped to "native" in a previous session triggers
+ *  React error #418 — SSR ships `<img>` (Twemoji), client wants
+ *  `<span>` (native), DOM structure diverges, hydration aborts. Same
+ *  pattern next-themes uses for its `mounted` gate. */
 export function useIconStyle(): [Style, (next: Style) => void] {
   const style = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-  return [style, setIconStyle];
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+  return [mounted ? style : DEFAULT, setIconStyle];
 }

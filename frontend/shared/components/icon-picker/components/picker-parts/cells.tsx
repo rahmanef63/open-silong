@@ -73,13 +73,13 @@ function LucideCellImpl({ name, color, active, onClick, onMouseEnter, tabIndex, 
       tabIndex={tabIndex}
       data-icon-cell-index={index}
       className={cn(
-        "flex h-8 w-8 items-center justify-center rounded transition",
+        "flex h-8 w-8 items-center justify-center rounded text-lg leading-none transition",
         active ? "bg-brand/15 ring-1 ring-brand" : "hover:bg-accent",
       )}
       title={name}
       aria-label={`Pick ${name}`}
     >
-      <RawIcon value={value} style={style} className="text-base" />
+      <RawIcon value={value} style={style} className="text-lg" />
     </button>
   );
 }
@@ -102,13 +102,13 @@ function PhosphorCellImpl({ name, color, active, onClick, onMouseEnter, tabIndex
       tabIndex={tabIndex}
       data-icon-cell-index={index}
       className={cn(
-        "flex h-8 w-8 items-center justify-center rounded transition",
+        "flex h-8 w-8 items-center justify-center rounded text-lg leading-none transition",
         active ? "bg-brand/15 ring-1 ring-brand" : "hover:bg-accent",
       )}
       title={name}
       aria-label={`Pick ${name}`}
     >
-      <RawIcon value={value} style={style} className="text-base" />
+      <RawIcon value={value} style={style} className="text-lg" />
     </button>
   );
 }
@@ -131,13 +131,13 @@ function RecentCellImpl({ value, active, onClick, onMouseEnter, tabIndex, index,
       tabIndex={tabIndex}
       data-icon-cell-index={index}
       className={cn(
-        "flex h-8 w-8 items-center justify-center rounded transition",
+        "flex h-8 w-8 items-center justify-center rounded text-lg leading-none transition",
         active ? "bg-brand/15 ring-1 ring-brand" : "hover:bg-accent",
       )}
       title={value}
       aria-label={`Pick recent ${value}`}
     >
-      <RawIcon value={value} style={style} className="text-base" />
+      <RawIcon value={value} style={style} className="text-lg" />
     </button>
   );
 }

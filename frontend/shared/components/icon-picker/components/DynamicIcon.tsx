@@ -10,13 +10,49 @@ import { PHOSPHOR_ICONS, FallbackPhosphorIcon } from "../lib/phosphor-icons";
 
 interface CommonProps {
   value: string | null | undefined;
-  /** Tailwind classes applied to the wrapping span. Sizing should be set
-   *  here (`text-base`, `h-4 w-4`, etc) — both emoji and SVG inherit. */
+  /** Tailwind classes applied to the wrapping span. Sizing can still be
+   *  set here (`text-base`, `h-4 w-4`, etc) — twMerge lets a className
+   *  `text-*` override the `size` prop default. */
   className?: string;
   /** Fallback emoji or `lucide:Name` shown when value is empty. */
   fallback?: string;
   /** Title for tooltip (a11y). */
   title?: string;
+  /** Pixel size for the icon. Drives a CSS var that feeds the wrapper's
+   *  font-size; the emoji glyph and lucide/phosphor SVG (via h-[1em])
+   *  scale from there. Default 72px (Notion-style hero icon). A
+   *  Tailwind `text-*` class in `className` overrides this via twMerge
+   *  dedup — so existing call sites that pre-date the prop keep their
+   *  visual size. */
+  size?: number;
+}
+
+/** Recommended default size for hero icons (page covers, etc). Not
+ *  applied automatically — callers opt in via `size={DEFAULT_ICON_SIZE}`
+ *  or just pass any number. Auto-defaulting would break legacy call
+ *  sites that rely on the wrapping element's font-size cascade for
+ *  sizing (sidebar rows, invite cards, etc). */
+export const DEFAULT_ICON_SIZE = 72;
+
+function sizeProps(size: number | undefined, color: string | undefined): {
+  className: string;
+  style: React.CSSProperties | undefined;
+} {
+  // No size prop → don't set font-size on the wrapper, let parent
+  // cascade through. Maintains back-compat with className-driven sizing.
+  if (size === undefined) {
+    return {
+      className: "inline-flex items-center justify-center leading-none",
+      style: color ? { color } : undefined,
+    };
+  }
+  return {
+    className: "inline-flex items-center justify-center leading-none text-[length:var(--icon-size)]",
+    style: {
+      ["--icon-size" as string]: `${size}px`,
+      ...(color ? { color } : null),
+    },
+  };
 }
 
 /** Resolve a stored value (or fallback) to a parsed IconValue. */
@@ -33,7 +69,7 @@ interface RawIconProps extends CommonProps {
   style: Style;
 }
 
-function RawIconImpl({ value, style, className, fallback = "📄", title }: RawIconProps) {
+function RawIconImpl({ value, style, className, fallback = "📄", title, size }: RawIconProps) {
   const parsed = React.useMemo(() => resolveValue(value, fallback), [value, fallback]);
 
   if (parsed.kind === "lucide") {
@@ -41,12 +77,9 @@ function RawIconImpl({ value, style, className, fallback = "📄", title }: RawI
     if (Cmp === FallbackLucideIcon && process.env.NODE_ENV !== "production") {
       console.warn(`[DynamicIcon] Unknown lucide icon: "${parsed.name}". Falling back to FileText.`);
     }
+    const sp = sizeProps(size, parsed.color);
     return (
-      <span
-        className={cn("inline-flex items-center justify-center leading-none", className)}
-        title={title}
-        style={parsed.color ? { color: parsed.color } : undefined}
-      >
+      <span className={cn(sp.className, className)} title={title} style={sp.style}>
         <Cmp className="h-[1em] w-[1em]" />
       </span>
     );
@@ -57,24 +90,22 @@ function RawIconImpl({ value, style, className, fallback = "📄", title }: RawI
     if (Cmp === FallbackPhosphorIcon && process.env.NODE_ENV !== "production") {
       console.warn(`[DynamicIcon] Unknown phosphor icon: "${parsed.name}". Falling back to FileText.`);
     }
+    const sp = sizeProps(size, parsed.color);
     return (
-      <span
-        className={cn("inline-flex items-center justify-center leading-none", className)}
-        title={title}
-        style={parsed.color ? { color: parsed.color } : undefined}
-      >
+      <span className={cn(sp.className, className)} title={title} style={sp.style}>
         <Cmp weight="fill" className="h-[1em] w-[1em]" />
       </span>
     );
   }
 
   const glyph = parsed.kind === "emoji" ? parsed.emoji : "";
+  const sp = sizeProps(size, undefined);
   if (style === "twemoji" && glyph) {
     const url = twemojiUrl(glyph);
-    if (url) return <TwemojiImg url={url} glyph={glyph} className={className} title={title} />;
+    if (url) return <TwemojiImg url={url} glyph={glyph} className={className} title={title} size={size} />;
   }
   return (
-    <span className={cn("inline-flex items-center justify-center leading-none", className)} title={title}>
+    <span className={cn(sp.className, className)} title={title} style={sp.style}>
       {glyph}
     </span>
   );
@@ -92,10 +123,10 @@ interface DynamicIconProps extends CommonProps {
   forceNative?: boolean;
 }
 
-function DynamicIconImpl({ value, className, fallback, title, forceNative }: DynamicIconProps) {
+function DynamicIconImpl({ value, className, fallback, title, forceNative, size }: DynamicIconProps) {
   const [style] = useIconStyle();
   const effective: Style = forceNative ? "native" : style;
-  return <RawIcon value={value} style={effective} className={className} fallback={fallback} title={title} />;
+  return <RawIcon value={value} style={effective} className={className} fallback={fallback} title={title} size={size} />;
 }
 
 /** Icon renderer that subscribes to the global style preference. Suitable
@@ -104,18 +135,19 @@ function DynamicIconImpl({ value, className, fallback, title, forceNative }: Dyn
 export const DynamicIcon = React.memo(DynamicIconImpl);
 
 function TwemojiImgImpl({
-  url, glyph, className, title,
-}: { url: string; glyph: string; className?: string; title?: string }) {
+  url, glyph, className, title, size,
+}: { url: string; glyph: string; className?: string; title?: string; size?: number }) {
   const [failed, setFailed] = React.useState(false);
+  const sp = sizeProps(size, undefined);
   if (failed) {
     return (
-      <span className={cn("inline-flex items-center justify-center leading-none", className)} title={title ?? glyph}>
+      <span className={cn(sp.className, className)} title={title ?? glyph} style={sp.style}>
         {glyph}
       </span>
     );
   }
   return (
-    <span className={cn("inline-flex items-center justify-center leading-none", className)}>
+    <span className={cn(sp.className, className)} style={sp.style}>
       {/* eslint-disable-next-line @next/next/no-img-element -- external SVG CDN; next/image can't optimize without custom loader */}
       <img
         src={url}

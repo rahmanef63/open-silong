@@ -9,7 +9,7 @@
  *      global style subscription per cell — pass `style` once at the
  *      grid level and propagate). */
 
-export { DynamicIcon, RawIcon } from "./components/DynamicIcon";
+export { DynamicIcon, RawIcon, DEFAULT_ICON_SIZE } from "./components/DynamicIcon";
 export { IconPickerInline, IconPickerPopover } from "./components/IconPicker";
 export { PickerSkeleton } from "./components/PickerSkeleton";
 
