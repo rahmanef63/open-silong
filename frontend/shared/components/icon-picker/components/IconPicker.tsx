@@ -141,7 +141,7 @@ export function IconPickerPopover({
           className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-border text-2xl hover:bg-accent transition"
           aria-label="Change icon"
         >
-          <DynamicIcon value={value} />
+          <DynamicIcon value={value} size={24} />
         </button>
       )}
     </Slot>
