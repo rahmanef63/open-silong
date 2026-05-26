@@ -28,28 +28,31 @@ interface CommonProps {
 }
 
 /** Recommended default size for hero icons (page covers, etc). Not
- *  applied automatically — callers opt in via `size={DEFAULT_ICON_SIZE}`
- *  or just pass any number. Auto-defaulting would break legacy call
- *  sites that rely on the wrapping element's font-size cascade for
- *  sizing (sidebar rows, invite cards, etc). */
+ *  applied automatically — callers opt in via `size={DEFAULT_ICON_SIZE}`.
+ *  Auto-defaulting would break legacy call sites that rely on the
+ *  wrapping element's font-size cascade for sizing. */
 export const DEFAULT_ICON_SIZE = 72;
+
+const WRAPPER_BASE = "inline-flex items-center justify-center leading-none";
 
 function sizeProps(size: number | undefined, color: string | undefined): {
   className: string;
   style: React.CSSProperties | undefined;
 } {
-  // No size prop → don't set font-size on the wrapper, let parent
-  // cascade through. Maintains back-compat with className-driven sizing.
+  // No size prop → no font-size override; legacy parent-cascade /
+  // className-driven sizing keeps working.
   if (size === undefined) {
-    return {
-      className: "inline-flex items-center justify-center leading-none",
-      style: color ? { color } : undefined,
-    };
+    return { className: WRAPPER_BASE, style: color ? { color } : undefined };
   }
+  // Explicit size → inline style for fontSize + box dimensions. Inline
+  // style beats Tailwind className, so the picked size is authoritative
+  // and not subject to Tailwind JIT picking up arbitrary classes.
   return {
-    className: "inline-flex items-center justify-center leading-none text-[length:var(--icon-size)]",
+    className: WRAPPER_BASE,
     style: {
-      ["--icon-size" as string]: `${size}px`,
+      fontSize: size,
+      width: size,
+      height: size,
       ...(color ? { color } : null),
     },
   };

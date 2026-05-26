@@ -122,10 +122,17 @@ export function IconPickerInline({ value, onChange, onClear, onSelect, className
     return out;
   }, [query]);
 
+  const currentValue = value ?? "";
+  // Commit: fire onChange + close popover synchronously so the user
+  // sees an instant response, then push to recents in a low-priority
+  // transition so the recents-driven re-render doesn't compete with
+  // the close animation. Noop commits (re-picking the active value)
+  // short-circuit — keeps cells from re-rendering for nothing.
   function commit(nextValue: string) {
+    if (nextValue === currentValue) { onSelect?.(); return; }
     onChange(nextValue);
-    pushRecent(nextValue);
     onSelect?.();
+    React.startTransition(() => pushRecent(nextValue));
   }
   function pickEmoji(e: string) { commit(withColor(e, undefined)); }
   function pickLucide(n: string) { commit(lucideValue(n, currentColor)); }
@@ -133,7 +140,13 @@ export function IconPickerInline({ value, onChange, onClear, onSelect, className
   function pickRecent(v: string) {
     const re = parseIconValue(v);
     if (re.kind === "empty") return;
-    if (re.color) { onChange(v); pushRecent(v); onSelect?.(); return; }
+    if (re.color) {
+      if (v === currentValue) { onSelect?.(); return; }
+      onChange(v);
+      onSelect?.();
+      React.startTransition(() => pushRecent(v));
+      return;
+    }
     if (re.kind === "lucide") commit(lucideValue(re.name, currentColor));
     else if (re.kind === "phosphor") commit(phosphorValue(re.name, currentColor));
     else commit(withColor(re.emoji, undefined));
@@ -247,8 +260,8 @@ export function IconPickerInline({ value, onChange, onClear, onSelect, className
           />
         </div>
 
-        <TabsContent value="emoji" className="mt-2 flex-1 min-h-[120px] data-[state=inactive]:hidden">
-          <ScrollArea className="h-full max-h-[40dvh] pr-2">
+        <TabsContent value="emoji" className="mt-2 flex flex-col flex-1 min-h-0 data-[state=inactive]:hidden">
+          <ScrollArea className="h-full min-h-0 flex-1 pr-2">
             {filteredEmoji ? (
               <Grid>
                 {filteredEmoji.length === 0 ? <Empty /> : filteredEmoji.map((e, i) => (
@@ -291,8 +304,8 @@ export function IconPickerInline({ value, onChange, onClear, onSelect, className
           </ScrollArea>
         </TabsContent>
 
-        <TabsContent value="icon" className="mt-2 flex-1 min-h-[120px] data-[state=inactive]:hidden">
-          <ScrollArea className="h-full max-h-[40dvh] pr-2">
+        <TabsContent value="icon" className="mt-2 flex flex-col flex-1 min-h-0 data-[state=inactive]:hidden">
+          <ScrollArea className="h-full min-h-0 flex-1 pr-2">
             {iconVariant === "lucide" ? (
               filteredLucide ? (
                 <Grid>
