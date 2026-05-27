@@ -33,12 +33,21 @@ export type TemplatePart =
 export type ExprNode =
   | { kind: "num"; value: number; pos: number }
   | { kind: "str"; value: string; pos: number }
+  | { kind: "bool"; value: boolean; pos: number }
   | { kind: "ref"; name: string; pos: number }
   | { kind: "call"; fn: string; args: ExprNode[]; pos: number }
   | { kind: "binop"; op: BinOp; left: ExprNode; right: ExprNode; pos: number }
-  | { kind: "unary"; op: "-" | "+"; arg: ExprNode; pos: number };
+  | { kind: "unary"; op: "-" | "+" | "!"; arg: ExprNode; pos: number };
 
-export type BinOp = "+" | "-" | "*" | "/" | "%";
+export type BinOp =
+  // Arithmetic
+  | "+" | "-" | "*" | "/" | "%"
+  // Comparison
+  | ">" | "<" | ">=" | "<="
+  // Equality
+  | "==" | "!="
+  // Logical (short-circuit at eval time)
+  | "&&" | "||";
 
 /* ============================================================
  * Errors
