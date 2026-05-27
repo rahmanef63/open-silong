@@ -19,7 +19,10 @@ Repo: https://github.com/rahmanef63/open-silong
 - **Next ^16 + React ^19, Tailwind v4** — `proxy.ts` only, no `middleware.ts`.
   `experimental.cacheComponents` opt-in per page.
 - **Convex self-hosted ^1.36** — Docker Compose on Dokploy node. Deploy via
-  `node si-coder/deploy.js` (raw `npx convex deploy` → `BadAdminKey`).
+  the pre-push hook (`scripts/install-pre-push.sh`) which sources
+  `.env.local` then runs `pnpm exec convex deploy --yes`. Manual deploy:
+  `set -a && source .env.local && set +a && pnpm exec convex deploy --yes`
+  (raw `npx convex deploy` without env sourcing → `BadAdminKey`).
 - **Auth = `@convex-dev/auth`** — NO Clerk. Custom auth slices only when
   documented insufficient.
 
@@ -158,10 +161,13 @@ Ignore its grades. `audit-bp.sh` itself is fine.
 
 ## Deploy
 
-- **Convex functions** — `convex-deploy.yml` GitHub Action runs
-  `npx convex deploy --yes` with `CONVEX_SELF_HOSTED_*` env vars. For local
-  pushes use `node si-coder/deploy.js` — raw `npx convex deploy` from a
-  developer machine returns `BadAdminKey` against the self-hosted instance.
+- **Convex functions** — the local pre-push git hook
+  (`scripts/install-pre-push.sh`) sources `.env.local` and runs
+  `pnpm exec convex deploy --yes` whenever the pushed range touches
+  `convex/`. Backend lands before the Dokploy frontend rebuild that
+  follows. Deploy fails → push aborts. Raw `npx convex deploy` without
+  sourced `CONVEX_SELF_HOSTED_*` env returns `BadAdminKey` — always go
+  through the hook (or `set -a && source .env.local && set +a` first).
 - **Frontend** — Dokploy app (`notion-page-clone-app-2tk1pq`) builds from
   main and serves via Traefik fronting the standalone Next image.
 - **Backend** — `docker-compose.yml` runs Convex backend pinned to
