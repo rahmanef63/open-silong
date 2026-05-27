@@ -1,5 +1,11 @@
 import type { BinOp, ExprNode, FormulaError } from "./types";
 
+/** Reserved bare-ident refs — usable anywhere in expression position
+ *  without `(`. Resolve via the eval-time env stack (set by higher-order
+ *  fns like map/filter); outside a lambda context they fall through to
+ *  property lookup (case-insensitive) and ultimately NULL. */
+const LAMBDA_BUILTINS = new Set(["current", "index", "accumulator"]);
+
 export class Parser {
   pos = 0;
   constructor(public src: string) {}
@@ -174,7 +180,18 @@ export class Parser {
     const ch = this.peek();
 
     if (ch === "(") {
-      this.advance();
+      // Could be either:
+      //   (a) `(ident, …) => body`  — lambda
+      //   (b) `(expr)`                — paren group
+      // Try (a) via a non-consuming lookahead; only commit if we find `=>`.
+      const lambdaParams = this.tryParseLambdaParams();
+      if (lambdaParams) {
+        // tryParseLambdaParams left pos at `=>`; consume it now.
+        this.pos += 2;
+        const body = this.parseExpr();
+        return { kind: "lambda", params: lambdaParams, body, pos };
+      }
+      this.advance(); // consume `(`
       const expr = this.parseExpr();
       this.expect(")");
       return expr;
@@ -191,6 +208,14 @@ export class Parser {
       if (lc === "true") return { kind: "bool", value: true, pos };
       if (lc === "false") return { kind: "bool", value: false, pos };
       this.skipWS();
+      // Bare arrow shorthand: `name => body`. Checked BEFORE the fn-call
+      // dispatch so `current => current + 1` doesn't try to enter
+      // parseCallTail with name "current".
+      if (this.src.startsWith("=>", this.pos)) {
+        this.pos += 2;
+        const body = this.parseExpr();
+        return { kind: "lambda", params: [ident], body, pos };
+      }
       if (this.peek() === "(") {
         // Notion-style `prop("name")` — special-case BEFORE generic call
         // dispatch so the result lands as a ref node (not a call), which
@@ -202,9 +227,51 @@ export class Parser {
         if (lc === "prop") return this.parsePropCall(pos);
         return this.parseCallTail(ident, pos);
       }
+      // Reserved bare-ident lambda variables — parse as ref nodes so the
+      // env-stack resolver can bind them at iteration time.
+      if (LAMBDA_BUILTINS.has(lc)) return { kind: "ref", name: ident, pos };
       throw this.err(`Expected '(' after function name '${ident}'`, this.pos);
     }
     throw this.err(`Unexpected character '${ch}'`, pos);
+  }
+
+  /** Lookahead: is the next chunk `(ident, …) => …`? Returns the params on
+   *  match (leaving pos at `=>` — caller consumes); restores pos on miss.
+   *  Accepts empty params `() => body` (rare but unambiguous). */
+  tryParseLambdaParams(): string[] | null {
+    const save = this.pos;
+    this.advance(); // (
+    this.skipWS();
+    const params: string[] = [];
+    if (this.peek() !== ")") {
+      if (!/[A-Za-z_]/.test(this.peek())) {
+        this.pos = save;
+        return null;
+      }
+      params.push(this.parseIdent());
+      this.skipWS();
+      while (this.peek() === ",") {
+        this.advance();
+        this.skipWS();
+        if (!/[A-Za-z_]/.test(this.peek())) {
+          this.pos = save;
+          return null;
+        }
+        params.push(this.parseIdent());
+        this.skipWS();
+      }
+    }
+    if (this.peek() !== ")") {
+      this.pos = save;
+      return null;
+    }
+    this.advance(); // )
+    this.skipWS();
+    if (!this.src.startsWith("=>", this.pos)) {
+      this.pos = save;
+      return null;
+    }
+    return params;
   }
 
   /** Parse `prop("string-literal")` → ref node. Only a string literal is

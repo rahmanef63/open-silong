@@ -61,6 +61,12 @@ export interface EvalContext {
    *  `prop("Owner").<custom>` when the relation target belongs to another
    *  database. When omitted, drilldown is limited to `ctx.db.properties`. */
   databases?: Database[];
+  /** Lambda environment stack. Each frame maps lowercase ident → value.
+   *  Pushed by higher-order fns (map/filter/reduce/etc) per iteration;
+   *  innermost frame wins on lookup. Bare refs to `current` / `index` /
+   *  `accumulator` resolve through this BEFORE falling back to property
+   *  lookup. Outside a lambda call the stack is empty/undefined. */
+  envStack?: Array<Record<string, FormulaValue>>;
   /** Visited keys "rowId:propId" — circular-dependency guard. */
   visited?: Set<string>;
   /** Memoization for repeated formulas across the same tree. */
@@ -155,6 +161,10 @@ function evalExpr(node: ExprNode, ctx: EvalContext): FormulaValue {
     }
     case "call": return evalCall(node, node.args.map((a) => evalExpr(a, ctx)));
     case "member": return resolveMember(evalExpr(node.object, ctx), node.member, ctx);
+    // Bare lambda in non-lambda position evaluates to NULL — lambdas only
+    // do useful work when consumed by a higher-order fn (1.D.2) which
+    // re-evaluates the body with the env frame bound to each element.
+    case "lambda": return NULL_VALUE;
   }
 }
 
@@ -199,6 +209,15 @@ function resolveMember(obj: FormulaValue, member: string, ctx: EvalContext): For
 
 function resolveRef(name: string, ctx: EvalContext, pos: number): FormulaValue {
   const lc = name.toLowerCase();
+  // Lambda env stack — innermost frame wins. Shadows built-ins + property
+  // refs when populated, so `current` inside `map(...)` always points at
+  // the iteration element even when a property named "Current" exists.
+  if (ctx.envStack && ctx.envStack.length > 0) {
+    for (let i = ctx.envStack.length - 1; i >= 0; i--) {
+      const v = ctx.envStack[i][lc];
+      if (v !== undefined) return v;
+    }
+  }
   if (lc === "title" || lc === "name") return str(ctx.row.title || "");
   if (lc === "now") return date(new Date().toISOString());
   if (lc === "today") return date(new Date().toISOString().slice(0, 10));
