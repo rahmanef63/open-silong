@@ -7,12 +7,14 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 // any downstream app that wants per-portal (owner/staff/guest/…)
 // dashboard menu items served from this Convex backend.
 //
-// Reads stay public (no auth gate) — menu structure is non-sensitive UI
-// config shared across consumer apps (superspace, ss-beta, rc-samata-dash).
-// Reads are bounded by .take(READ_LIMIT) and the portal arg is a closed
-// union so an attacker can't widen the scan or smuggle a portal label.
-// Writes (upsert / setActive / setActiveBySlug / removeBySlug) require
-// an authenticated user — anonymous mutation is rejected.
+// BOTH reads AND writes require an authenticated user (2026-05-27).
+// Previously reads were public — that exposed the full admin route map
+// (e.g. /admin/owner/database/petty-cash) as reconnaissance surface even
+// though no user data was returned. Cross-app consumers (superspace,
+// ss-beta, rc-samata-dash, …) must now sign in or use a shared backend
+// service identity; anonymous fetch returns [] / {}.
+// Reads remain bounded by .take(READ_LIMIT); portal arg is a closed
+// PORTAL union so authed callers still can't widen the scan.
 
 const READ_LIMIT = 2000;
 
@@ -30,10 +32,12 @@ const PORTAL = v.union(
   v.literal("admin"),
 );
 
-/** Public — returns active menu items for one portal, ordered. */
+/** Authed — returns active menu items for one portal, ordered. Anon → []. */
 export const getMenu = query({
   args: { portal: PORTAL },
   handler: async (ctx, { portal }) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
     const items = await ctx.db
       .query("zianMenuItems")
       .withIndex("by_portal_order", (q) => q.eq("portal", portal))
@@ -47,10 +51,12 @@ export const getMenu = query({
   },
 });
 
-/** Public — list of portals that have ≥1 active item. */
+/** Authed — list of portals that have ≥1 active item. Anon → []. */
 export const listPortals = query({
   args: {},
   handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
     const items = await ctx.db.query("zianMenuItems").take(READ_LIMIT);
     const set = new Set<string>();
     for (const i of items) if (i.active) set.add(i.portal);
@@ -58,11 +64,13 @@ export const listPortals = query({
   },
 });
 
-/** Public — full snapshot grouped by portal for an admin overview
- *  surface. Returns { portal: [{...items}] }. */
+/** Authed — full snapshot grouped by portal for an admin overview
+ *  surface. Returns { portal: [{...items}] }. Anon → {}. */
 export const getAllMenus = query({
   args: {},
   handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return {};
     const items = await ctx.db.query("zianMenuItems").take(READ_LIMIT);
     const out: Record<string, Array<{ slug: string; label: string; icon: string; route: string; order: number; requirePermission?: string; parentSlug?: string }>> = {};
     for (const i of items) {
@@ -80,10 +88,13 @@ export const getAllMenus = query({
 });
 
 /** CMS view — returns every row including inactive, with the portal
- *  field intact so the cross-app admin UI can render the full table. */
+ *  field intact so the cross-app admin UI can render the full table.
+ *  Authed only — anon → []. */
 export const listAllForCms = query({
   args: {},
   handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
     const items = await ctx.db.query("zianMenuItems").take(READ_LIMIT);
     return items.map((i) => ({
       portal: i.portal,
