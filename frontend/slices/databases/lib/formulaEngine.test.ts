@@ -809,3 +809,90 @@ describe("formulaEngine — higher-order fns (1.D.2)", () => {
     expect(r.error?.message).toMatch(/needs 2 argument/);
   });
 });
+
+// ---- 1.D.3: sort + every / some -------------------------------------------
+
+describe("formulaEngine — sort + every + some (1.D.3)", () => {
+  const dbTags = mkDb({
+    properties: [{
+      id: "tags", name: "Tags", type: "multi_select",
+      options: [
+        { id: "a", name: "alpha", color: "blue" },
+        { id: "b", name: "beta", color: "red" },
+        { id: "c", name: "gamma", color: "green" },
+        { id: "d", name: "delta", color: "amber" },
+      ],
+    }],
+  });
+  const ctx = (ids: string[]) => ({
+    row: mkRow({ rowProps: { tags: ids } }), db: dbTags, pages: [],
+  });
+
+  // ── sort ─────────────────────────────────────────────────────────
+  it("sort alphabetical by `current` (string lex)", () => {
+    expect(formatFormulaValue(evalFormula(`=sort(prop("Tags"), current)`, ctx(["b", "a", "c", "d"])).value))
+      .toBe("alpha, beta, delta, gamma");
+  });
+
+  it("sort numeric by computed key — by string length", () => {
+    // delta=5, alpha=5, gamma=5, beta=4 → stable: beta first, then 5-char in input order
+    expect(formatFormulaValue(evalFormula(`=sort(prop("Tags"), length(current))`, ctx(["a", "c", "b", "d"])).value))
+      .toBe("beta, alpha, gamma, delta");
+  });
+
+  it("sort on empty list → empty", () => {
+    expect(formatFormulaValue(evalFormula(`=sort(prop("Tags"), current)`, ctx([])).value))
+      .toBe("");
+  });
+
+  it("sort is stable — equal keys preserve input order", () => {
+    // All same length → input order preserved
+    expect(formatFormulaValue(evalFormula(`=sort(prop("Tags"), 1)`, ctx(["c", "a", "b", "d"])).value))
+      .toBe("gamma, alpha, beta, delta");
+  });
+
+  // ── every ────────────────────────────────────────────────────────
+  it("every — true when all match", () => {
+    expect(formatFormulaValue(evalFormula(`=every(prop("Tags"), length(current) >= 4)`, ctx(["a", "b", "c"])).value))
+      .toBe("true");
+  });
+
+  it("every — false on first failure", () => {
+    expect(formatFormulaValue(evalFormula(`=every(prop("Tags"), current == "alpha")`, ctx(["a", "b", "c"])).value))
+      .toBe("false");
+  });
+
+  it("every on empty list → vacuous true", () => {
+    expect(formatFormulaValue(evalFormula(`=every(prop("Tags"), false)`, ctx([])).value))
+      .toBe("true");
+  });
+
+  // ── some ─────────────────────────────────────────────────────────
+  it("some — true if any element matches", () => {
+    expect(formatFormulaValue(evalFormula(`=some(prop("Tags"), current == "beta")`, ctx(["a", "b", "c"])).value))
+      .toBe("true");
+  });
+
+  it("some — false when nothing matches", () => {
+    expect(formatFormulaValue(evalFormula(`=some(prop("Tags"), current == "zzz")`, ctx(["a", "b", "c"])).value))
+      .toBe("false");
+  });
+
+  it("some on empty list → false (vacuous)", () => {
+    expect(formatFormulaValue(evalFormula(`=some(prop("Tags"), true)`, ctx([])).value))
+      .toBe("false");
+  });
+
+  // ── composition ──────────────────────────────────────────────────
+  it("sort then map composition — uppercase sorted output", () => {
+    expect(formatFormulaValue(evalFormula(`=map(sort(prop("Tags"), current), upper(current))`, ctx(["b", "a", "c"])).value))
+      .toBe("ALPHA, BETA, GAMMA");
+  });
+
+  it("every + filter — predicate over a filtered subset", () => {
+    expect(formatFormulaValue(evalFormula(
+      `=every(filter(prop("Tags"), current != "alpha"), length(current) == 4)`,
+      ctx(["a", "b"])  // filter → [beta], all length 4 → true
+    ).value)).toBe("true");
+  });
+});

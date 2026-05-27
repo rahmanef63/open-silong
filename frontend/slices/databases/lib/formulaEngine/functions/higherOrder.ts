@@ -1,6 +1,6 @@
 import type { ExprNode, FormulaError, FormulaValue } from "../types";
-import { list, num, NULL_VALUE } from "../types";
-import { toBoolean } from "../coerce";
+import { bool, list, num, NULL_VALUE } from "../types";
+import { toBoolean, toNumber } from "../coerce";
 // Type-only import — erased at compile time, so the runtime circular
 // (evaluator.ts imports higherOrderFns; we'd be importing back into it)
 // is moot. We just need the shape for handler typing.
@@ -113,11 +113,68 @@ export const higherOrderFns: Record<string, HigherOrderHandler> = {
     }
     return NULL_VALUE;
   },
+
+  /** `sort(list, body)` — body returns the sort KEY per element; list is
+   *  re-ordered ascending by that key. Stable sort (Array.prototype.sort
+   *  is stable in V8/JSC/SpiderMonkey since ES2019). Compare rule mirrors
+   *  evaluator.formulaCompare: date/date + string/string compare
+   *  lexicographically (ISO 8601 dates sort chronologically); other kinds
+   *  coerce to number. NaN → treated as 0-difference. */
+  sort: (node, ctx, evalE) => {
+    need(node, node.args, 2);
+    const items = asList(evalE(node.args[0], ctx));
+    const scored = items.map((el, i) => ({
+      el,
+      key: applyLambda(node.args[1], el, i, ctx, evalE),
+    }));
+    scored.sort((a, b) => compareSortKey(a.key, b.key));
+    return list(scored.map((s) => s.el));
+  },
+
+  /** `every(list, body)` — true iff body coerces truthy for ALL elements.
+   *  Short-circuits on first false. Vacuous: empty list → true. */
+  every: (node, ctx, evalE) => {
+    need(node, node.args, 2);
+    const items = asList(evalE(node.args[0], ctx));
+    for (let i = 0; i < items.length; i++) {
+      if (!toBoolean(applyLambda(node.args[1], items[i], i, ctx, evalE))) {
+        return bool(false);
+      }
+    }
+    return bool(true);
+  },
+
+  /** `some(list, body)` — true iff body coerces truthy for at least one
+   *  element. Short-circuits on first true. Vacuous: empty list → false. */
+  some: (node, ctx, evalE) => {
+    need(node, node.args, 2);
+    const items = asList(evalE(node.args[0], ctx));
+    for (let i = 0; i < items.length; i++) {
+      if (toBoolean(applyLambda(node.args[1], items[i], i, ctx, evalE))) {
+        return bool(true);
+      }
+    }
+    return bool(false);
+  },
 };
 
+/** Inline mini-compare matching evaluator.formulaCompare — avoids a back
+ *  import. Keep the rules in sync if formulaCompare changes. */
+function compareSortKey(a: FormulaValue, b: FormulaValue): number {
+  if (a.kind === "date" && b.kind === "date") return a.value.localeCompare(b.value);
+  if (a.kind === "string" && b.kind === "string") return a.value.localeCompare(b.value);
+  const an = toNumber(a);
+  const bn = toNumber(b);
+  if (Number.isNaN(an) || Number.isNaN(bn)) return 0;
+  return an - bn;
+}
+
 export const higherOrderSigs: FnSignatureMap = {
-  map:    { args: ["list", "body"],            returns: "list", group: "list", desc: "Transform each element via lambda body" },
-  filter: { args: ["list", "body"],            returns: "list", group: "list", desc: "Keep elements where body is truthy" },
-  reduce: { args: ["list", "body", "initial"], returns: "any",  group: "list", desc: "Fold via `accumulator` ref" },
-  find:   { args: ["list", "body"],            returns: "any",  group: "list", desc: "First element where body is truthy" },
+  map:    { args: ["list", "body"],            returns: "list",    group: "list", desc: "Transform each element via lambda body" },
+  filter: { args: ["list", "body"],            returns: "list",    group: "list", desc: "Keep elements where body is truthy" },
+  reduce: { args: ["list", "body", "initial"], returns: "any",     group: "list", desc: "Fold via `accumulator` ref" },
+  find:   { args: ["list", "body"],            returns: "any",     group: "list", desc: "First element where body is truthy" },
+  sort:   { args: ["list", "body"],            returns: "list",    group: "list", desc: "Sort ascending by sort-key computed from body" },
+  every:  { args: ["list", "body"],            returns: "boolean", group: "list", desc: "True iff body is truthy for all elements" },
+  some:   { args: ["list", "body"],            returns: "boolean", group: "list", desc: "True iff body is truthy for at least one element" },
 };
