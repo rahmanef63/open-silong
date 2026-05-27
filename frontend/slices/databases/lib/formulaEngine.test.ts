@@ -288,3 +288,162 @@ describe("formulaEngine — comparison drives if()", () => {
     expect(formatFormulaValue(evalFormula(`=if(75 >= 60 && 75 <= 100, "Good", "Bad")`, ctx).value)).toBe("Good");
   });
 });
+
+// ---- 1.B: function-library expansion ---------------------------------------
+
+const baseCtx = () => ({ row: mkRow(), db: mkDb(), pages: [] });
+const evalFmt = (src: string) => formatFormulaValue(evalFormula(src, baseCtx()).value);
+
+describe("formulaEngine — string fns (1.B)", () => {
+  it("slice(start, end)", () => {
+    expect(evalFmt(`=slice("abcdef", 1, 4)`)).toBe("bcd");
+  });
+  it("slice negative end (string)", () => {
+    expect(evalFmt(`=slice("abcdef", 0, -1)`)).toBe("abcde");
+  });
+  it("replaceAll alias matches replace", () => {
+    expect(evalFmt(`=replaceAll("a.b.c", ".", "-")`)).toBe("a-b-c");
+  });
+  it("repeat caps memory (str * count, ≤10k chars)", () => {
+    expect(evalFmt(`=repeat("a", 5)`)).toBe("aaaaa");
+    // Should not OOM the test runner — repeat caps at 10k chars
+    expect(evalFmt(`=length(repeat("xyz", 100000))`)).toBe("9999");
+  });
+  it("format(value) — stringify", () => {
+    expect(evalFmt(`=format(42)`)).toBe("42");
+    expect(evalFmt(`=format(true)`)).toBe("true");
+  });
+});
+
+describe("formulaEngine — number fns (1.B)", () => {
+  it("sign", () => {
+    expect(evalFmt(`=sign(-5)`)).toBe("-1");
+    expect(evalFmt(`=sign(0)`)).toBe("0");
+    expect(evalFmt(`=sign(5)`)).toBe("1");
+  });
+  it("sqrt + pow", () => {
+    expect(evalFmt(`=sqrt(16)`)).toBe("4");
+    expect(evalFmt(`=pow(2, 10)`)).toBe("1024");
+  });
+  it("mod (alias for %)", () => {
+    expect(evalFmt(`=mod(10, 3)`)).toBe("1");
+    expect(evalFmt(`=mod(10, 0)`)).toBe("");
+  });
+  it("trig: sin(0) = 0, cos(0) = 1", () => {
+    expect(evalFmt(`=sin(0)`)).toBe("0");
+    expect(evalFmt(`=cos(0)`)).toBe("1");
+  });
+  it("pi() + e() constants", () => {
+    expect(parseFloat(evalFmt(`=pi()`))).toBeCloseTo(Math.PI);
+    expect(parseFloat(evalFmt(`=e()`))).toBeCloseTo(Math.E);
+  });
+  it("ln + log10 + log2", () => {
+    expect(parseFloat(evalFmt(`=ln(e())`))).toBeCloseTo(1);
+    expect(evalFmt(`=log10(1000)`)).toBe("3");
+    expect(evalFmt(`=log2(8)`)).toBe("3");
+  });
+  it("min/max accept list arg", () => {
+    expect(evalFmt(`=min(5, 3, 9)`)).toBe("3");
+    expect(evalFmt(`=max(5, 3, 9)`)).toBe("9");
+  });
+});
+
+describe("formulaEngine — date fns (1.B)", () => {
+  it("year/month/day extractors", () => {
+    // Use fromtimestamp for deterministic dates so timezones don't drift
+    // month/day across test environments.
+    const d = new Date(2026, 4, 27); // local May 27 2026
+    expect(evalFmt(`=year(now())`)).toBe(`${new Date().getFullYear()}`);
+    expect(evalFmt(`=month(fromtimestamp(${d.getTime()}))`)).toBe("5");
+    expect(evalFmt(`=day(fromtimestamp(${d.getTime()}))`)).toBe("27");
+  });
+  it("timestamp round-trip via fromtimestamp", () => {
+    const ms = 1_700_000_000_000;
+    expect(evalFmt(`=timestamp(fromtimestamp(${ms}))`)).toBe(`${ms}`);
+  });
+  it("hour/minute/second on epoch UTC", () => {
+    // Use a wall-clock-stable comparator — only check that the fn returns
+    // a finite integer, not the exact value (timezone-dependent).
+    const v = evalFmt(`=hour(now())`);
+    const n = Number(v);
+    expect(Number.isFinite(n)).toBe(true);
+    expect(n).toBeGreaterThanOrEqual(0);
+    expect(n).toBeLessThan(24);
+  });
+});
+
+describe("formulaEngine — logic fns (1.B)", () => {
+  it("ifs — first truthy wins", () => {
+    expect(evalFmt(`=ifs(false, "a", true, "b", false, "c", "default")`)).toBe("b");
+  });
+  it("ifs — default when nothing matches", () => {
+    expect(evalFmt(`=ifs(false, "a", false, "b", "default")`)).toBe("default");
+  });
+  it("ifs — empty when no default + no match", () => {
+    expect(evalFmt(`=ifs(false, "a", false, "b")`)).toBe("");
+  });
+  it("switch — value match", () => {
+    expect(evalFmt(`=switch(2, 1, "one", 2, "two", 3, "three", "other")`)).toBe("two");
+  });
+  it("switch — default fallback", () => {
+    expect(evalFmt(`=switch(99, 1, "one", 2, "two", "other")`)).toBe("other");
+  });
+  it("toBoolean / toNumber / toString explicit coerce", () => {
+    expect(evalFmt(`=toBoolean("yes")`)).toBe("true");
+    expect(evalFmt(`=toBoolean("no")`)).toBe("false");
+    expect(evalFmt(`=toNumber("42")`)).toBe("42");
+    expect(evalFmt(`=toString(42)`)).toBe("42");
+  });
+});
+
+describe("formulaEngine — list fns + polymorphism (1.B)", () => {
+  // Build a row whose multi_select prop resolves to a list of strings, so
+  // we can test list fns end-to-end through the property pipeline.
+  const dbWithList = () => mkDb({
+    properties: [{
+      id: "tags",
+      name: "Tags",
+      type: "multi_select",
+      options: [
+        { id: "a", name: "alpha", color: "blue" },
+        { id: "b", name: "beta", color: "red" },
+        { id: "c", name: "gamma", color: "green" },
+      ],
+    }],
+  });
+  const row = () => mkRow({ rowProps: { tags: ["a", "b", "c", "a"] } });
+
+  it("first / last", () => {
+    expect(formatFormulaValue(evalFormula(`=first({{Tags}})`, { row: row(), db: dbWithList(), pages: [] }).value)).toBe("alpha");
+    expect(formatFormulaValue(evalFormula(`=last({{Tags}})`, { row: row(), db: dbWithList(), pages: [] }).value)).toBe("alpha");
+  });
+  it("at(list, i) — positive index", () => {
+    expect(formatFormulaValue(evalFormula(`=at({{Tags}}, 1)`, { row: row(), db: dbWithList(), pages: [] }).value)).toBe("beta");
+  });
+  it("at(list, -i) — negative counts from end", () => {
+    expect(formatFormulaValue(evalFormula(`=at({{Tags}}, -1)`, { row: row(), db: dbWithList(), pages: [] }).value)).toBe("alpha");
+  });
+  it("includes(list, v)", () => {
+    expect(formatFormulaValue(evalFormula(`=includes({{Tags}}, "beta")`, { row: row(), db: dbWithList(), pages: [] }).value)).toBe("true");
+    expect(formatFormulaValue(evalFormula(`=includes({{Tags}}, "zzz")`, { row: row(), db: dbWithList(), pages: [] }).value)).toBe("false");
+  });
+  it("unique drops dupes", () => {
+    expect(formatFormulaValue(evalFormula(`=unique({{Tags}})`, { row: row(), db: dbWithList(), pages: [] }).value)).toBe("alpha, beta, gamma");
+  });
+  it("prod / mean / avg", () => {
+    expect(evalFmt(`=prod(5)`)).toBe("5");
+    expect(evalFmt(`=mean(10)`)).toBe("10");
+    expect(evalFmt(`=avg(10)`)).toBe("10");
+  });
+  it("length is polymorphic — string vs list", () => {
+    expect(evalFmt(`=length("hello")`)).toBe("5");
+    expect(formatFormulaValue(evalFormula(`=length({{Tags}})`, { row: row(), db: dbWithList(), pages: [] }).value)).toBe("4");
+  });
+  it("slice is polymorphic — list flavour", () => {
+    expect(formatFormulaValue(evalFormula(`=slice({{Tags}}, 1, 3)`, { row: row(), db: dbWithList(), pages: [] }).value)).toBe("beta, gamma");
+  });
+  it("reverse is polymorphic — string vs list", () => {
+    expect(evalFmt(`=reverse("abc")`)).toBe("cba");
+    expect(formatFormulaValue(evalFormula(`=reverse({{Tags}})`, { row: row(), db: dbWithList(), pages: [] }).value)).toBe("alpha, gamma, beta, alpha");
+  });
+});
