@@ -152,6 +152,18 @@ export const FormulaExpressionEditor = forwardRef<FormulaExpressionEditorRef, Fo
       setCaret(el.selectionStart ?? 0);
     };
 
+    // Error-overlay scroll sync — mirror has to track the input so the
+    // squiggle stays aligned when the text scrolls horizontally (input) or
+    // vertically (textarea).
+    const mirrorRef = useRef<HTMLDivElement | null>(null);
+    const syncScroll = () => {
+      const el = inputRef.current;
+      const mirror = mirrorRef.current;
+      if (!el || !mirror) return;
+      mirror.scrollLeft = el.scrollLeft;
+      mirror.scrollTop = el.scrollTop;
+    };
+
     const baseInputCls = cn(
       "w-full rounded-md border bg-background px-2 font-mono text-xs outline-none",
       multiline ? "min-h-0 py-1" : "h-8",
@@ -159,8 +171,48 @@ export const FormulaExpressionEditor = forwardRef<FormulaExpressionEditorRef, Fo
       className,
     );
 
+    // Mirror gets identical box metrics so character positions line up. We
+    // strip border/ring (they'd double the layout) and force background
+    // transparent so the input shows through underneath. Text is
+    // transparent — only the squiggle <span> paints.
+    const mirrorCls = cn(
+      "pointer-events-none absolute inset-0 overflow-hidden rounded-md px-2 font-mono text-xs text-transparent",
+      multiline ? "py-1 whitespace-pre-wrap break-words" : "h-8 leading-8 whitespace-pre",
+      "border border-transparent",
+    );
+
+    // Compute error-highlight slices once — split value into before/error/after.
+    const errSlices = useMemo(() => {
+      if (!error) return null;
+      const start = Math.max(0, Math.min(error.pos, value.length));
+      const end = Math.max(start + 1, Math.min(error.end ?? start + 1, value.length));
+      return {
+        before: value.slice(0, start),
+        // Force at least one character so an EOL-error still renders a mark.
+        mid: value.slice(start, end) || " ",
+        after: value.slice(end),
+      };
+    }, [value, error]);
+
     return (
       <div className="relative">
+        {/* Error-squiggle overlay — behind the input, transparent text +
+            wavy underline on the error span. `text-decoration: underline
+            wavy` is supported on all evergreen browsers. */}
+        {errSlices && (
+          <div ref={mirrorRef} aria-hidden className={mirrorCls}>
+            {errSlices.before}
+            <span style={{
+              textDecoration: "underline wavy",
+              textDecorationColor: "var(--warning, #f59e0b)",
+              textDecorationThickness: "2px",
+              textUnderlineOffset: "3px",
+            }}>
+              {errSlices.mid}
+            </span>
+            {errSlices.after}
+          </div>
+        )}
         {multiline ? (
           <textarea
             ref={(el) => { inputRef.current = el; }}
@@ -170,10 +222,11 @@ export const FormulaExpressionEditor = forwardRef<FormulaExpressionEditorRef, Fo
             onKeyUp={onSelOrChange}
             onClick={onSelOrChange}
             onFocus={onSelOrChange}
+            onScroll={syncScroll}
             onBlur={() => { setTimeout(() => setOpen(false), 100); }}
             placeholder={placeholder}
             rows={3}
-            className={baseInputCls}
+            className={cn(baseInputCls, "relative bg-transparent")}
             spellCheck={false}
           />
         ) : (
@@ -185,9 +238,10 @@ export const FormulaExpressionEditor = forwardRef<FormulaExpressionEditorRef, Fo
             onKeyUp={onSelOrChange}
             onClick={onSelOrChange}
             onFocus={onSelOrChange}
+            onScroll={syncScroll}
             onBlur={() => { setTimeout(() => setOpen(false), 100); }}
             placeholder={placeholder}
-            className={baseInputCls}
+            className={cn(baseInputCls, "relative bg-transparent")}
             spellCheck={false}
           />
         )}
