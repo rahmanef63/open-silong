@@ -1,6 +1,20 @@
 import { str, num } from "../types";
 import { toNumber, toString, formatFormulaValue } from "../coerce";
-import { need, type FnRegistry } from "./_registry";
+import { need, type FnRegistry, type FnSignatureMap } from "./_registry";
+
+export const stringSigs: FnSignatureMap = {
+  concat:     { args: ["...values"],                 returns: "string", group: "string", desc: "Join values into a single string" },
+  lower:      { args: ["text"],                      returns: "string", group: "string", desc: "Lowercase the string" },
+  upper:      { args: ["text"],                      returns: "string", group: "string", desc: "Uppercase the string" },
+  contains:   { args: ["haystack", "needle"],        returns: "boolean", group: "string", desc: "True if haystack contains needle (string)" },
+  replace:    { args: ["text", "find", "with"],      returns: "string", group: "string", desc: "Replace every match of `find` with `with`" },
+  replaceAll: { args: ["text", "find", "with"],      returns: "string", group: "string", desc: "Alias of replace (replaces all matches)" },
+  substring:  { args: ["text", "start", "length?"],  returns: "string", group: "string", desc: "Slice by start + optional length" },
+  slice:      { args: ["value", "start", "end?"],    returns: "any",    group: "string", desc: "Slice string or list (negative end allowed)" },
+  repeat:     { args: ["text", "n"],                 returns: "string", group: "string", desc: "Repeat text n times (output capped 10k chars)" },
+  format:     { args: ["value"],                     returns: "string", group: "string", desc: "Stringify any value" },
+  indexOf:    { args: ["haystack", "needle"],        returns: "number", group: "string", desc: "Position of needle, or -1" },
+};
 
 export const stringFns: FnRegistry = {
   concat: (_n, args) => str(args.map(toString).join("")),

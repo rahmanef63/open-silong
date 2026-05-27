@@ -1,6 +1,23 @@
 import { bool, list, num, str, NULL_VALUE, type FormulaValue } from "../types";
 import { isEmpty, toNumber, toString } from "../coerce";
-import { need, type FnRegistry } from "./_registry";
+import { need, type FnRegistry, type FnSignatureMap } from "./_registry";
+
+export const listSigs: FnSignatureMap = {
+  count:    { args: ["value"],            returns: "number",  group: "list", desc: "List length or 0/1 for scalar" },
+  sum:      { args: ["list"],             returns: "number",  group: "list", desc: "Sum of numeric list items" },
+  prod:     { args: ["list"],             returns: "number",  group: "list", desc: "Product of numeric list items" },
+  mean:     { args: ["list"],             returns: "number",  group: "list", desc: "Arithmetic mean" },
+  avg:      { args: ["list"],             returns: "number",  group: "list", desc: "Alias of mean" },
+  join:     { args: ["list", "sep?"],     returns: "string",  group: "list", desc: 'Join list items (default sep ", ")' },
+  length:   { args: ["value"],            returns: "number",  group: "list", desc: "Length of string or list" },
+  slice:    { args: ["value", "start", "end?"], returns: "any", group: "list", desc: "Slice string or list" },
+  reverse:  { args: ["value"],            returns: "any",     group: "list", desc: "Reverse string or list" },
+  first:    { args: ["list"],             returns: "any",     group: "list", desc: "First element" },
+  last:     { args: ["list"],             returns: "any",     group: "list", desc: "Last element" },
+  at:       { args: ["list", "i"],        returns: "any",     group: "list", desc: "Element at index i (negative ok)" },
+  includes: { args: ["list", "value"],    returns: "boolean", group: "list", desc: "True if list contains value" },
+  unique:   { args: ["list"],             returns: "list",    group: "list", desc: "Drop duplicates" },
+};
 
 /** Same-kind scalar equality — list `includes` + `indexOf` use this so a
  *  number list doesn't match a stringified search term. Mirrors the

@@ -8,6 +8,7 @@ import {
 } from "@/shared/ui/popover";
 import { Button } from "@/shared/ui/button";
 import { evaluateFormulaWithError } from "../lib/formula";
+import { FunctionPicker } from "./formula-cell/FunctionPicker";
 
 interface Props {
   db: Database;
@@ -43,6 +44,25 @@ export function FormulaCell({ db, prop, row, cellClass }: Props) {
     inputRef.current.setSelectionRange(liveResult.error.pos, liveResult.error.pos + 1);
   };
 
+  /** Insert `fnName()` at caret, then position caret BETWEEN the parens so
+   *  the user can start typing args immediately. Restores focus. */
+  const insertFunction = (name: string) => {
+    const input = inputRef.current;
+    const start = input?.selectionStart ?? draft.length;
+    const end = input?.selectionEnd ?? draft.length;
+    // If draft is empty AND fn returns a non-string, prepend `=` so it parses
+    // as expression mode. Otherwise insert raw — user can wrap in `=` if needed.
+    const needsMathPrefix = draft.trim() === "" && start === 0;
+    const insert = `${needsMathPrefix ? "=" : ""}${name}()`;
+    const next = draft.slice(0, start) + insert + draft.slice(end);
+    setDraft(next);
+    queueMicrotask(() => {
+      input?.focus();
+      const caret = start + insert.length - 1; // between the parens
+      input?.setSelectionRange(caret, caret);
+    });
+  };
+
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -60,7 +80,10 @@ export function FormulaCell({ db, prop, row, cellClass }: Props) {
           onSubmit={(e) => { e.preventDefault(); save(); }}
           className="space-y-2"
         >
-          <label className="block text-[11px] font-medium text-muted-foreground">Expression</label>
+          <div className="flex items-center justify-between gap-2">
+            <label className="block text-[11px] font-medium text-muted-foreground">Expression</label>
+            <FunctionPicker onPick={insertFunction} />
+          </div>
           <input
             ref={inputRef}
             value={draft}
@@ -88,11 +111,8 @@ export function FormulaCell({ db, prop, row, cellClass }: Props) {
           <div className="rounded-md bg-muted/50 px-2 py-1.5 text-[11px] text-muted-foreground space-y-1">
             <div>Refs: <code className="rounded bg-background px-1">{"{{title}}"}</code> · <code className="rounded bg-background px-1">{"{{Property}}"}</code></div>
             <div>Math: <code className="rounded bg-background px-1">= {"{{Score}}"} * 2</code></div>
-            <div>Logic: <code>if</code> · <code>and</code> · <code>or</code> · <code>not</code> · <code>empty</code></div>
-            <div>String: <code>concat</code> · <code>contains</code> · <code>replace</code> · <code>lower</code> · <code>upper</code> · <code>length</code> · <code>substring</code></div>
-            <div>Number: <code>round</code> · <code>floor</code> · <code>ceil</code> · <code>abs</code> · <code>min</code> · <code>max</code></div>
-            <div>Date: <code>now</code> · <code>today</code> · <code>dateAdd(d, n, "day")</code> · <code>dateSubtract</code> · <code>dateBetween</code> · <code>formatDate(d, "DD/MM/YYYY")</code></div>
-            <div>List: <code>count</code> · <code>sum</code> · <code>join(list, sep)</code></div>
+            <div>Compare: <code>==</code> <code>!=</code> <code>&lt;</code> <code>&gt;=</code> · Logic: <code>&amp;&amp;</code> <code>||</code> <code>!</code></div>
+            <div>Tip: hit the <code>fx ▾</code> button to browse all ~50 functions by group.</div>
           </div>
           <div className="flex items-center justify-between gap-2">
             <span className="min-w-0 truncate text-xs text-muted-foreground">
