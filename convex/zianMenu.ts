@@ -1,14 +1,20 @@
 import { query, mutation, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
+import { getAuthUserId } from "@convex-dev/auth/server";
 
 // Generic cross-app portal menu API. Reads from the `zianMenuItems`
 // table (legacy table name kept for schema compatibility). Useful for
 // any downstream app that wants per-portal (owner/staff/guest/…)
 // dashboard menu items served from this Convex backend.
 //
-// All reads are public (no auth gate) because menu structure is non-
-// sensitive UI config. Writes require auth (admin only by convention —
-// no enforcement yet; protect at network layer if needed).
+// Reads stay public (no auth gate) — menu structure is non-sensitive UI
+// config shared across consumer apps (superspace, ss-beta, rc-samata-dash).
+// Reads are bounded by .take(READ_LIMIT) and the portal arg is a closed
+// union so an attacker can't widen the scan or smuggle a portal label.
+// Writes (upsert / setActive / setActiveBySlug / removeBySlug) require
+// an authenticated user — anonymous mutation is rejected.
+
+const READ_LIMIT = 2000;
 
 const ALLOWED_PORTALS = [
   "owner", "manager", "staff", "guest", "resident", "security", "admin",
@@ -26,12 +32,12 @@ const PORTAL = v.union(
 
 /** Public — returns active menu items for one portal, ordered. */
 export const getMenu = query({
-  args: { portal: v.string() },
+  args: { portal: PORTAL },
   handler: async (ctx, { portal }) => {
     const items = await ctx.db
       .query("zianMenuItems")
       .withIndex("by_portal_order", (q) => q.eq("portal", portal))
-      .collect();
+      .take(READ_LIMIT);
     return items
       .filter((i) => i.active)
       .sort((a, b) => a.order - b.order)
@@ -45,7 +51,7 @@ export const getMenu = query({
 export const listPortals = query({
   args: {},
   handler: async (ctx) => {
-    const items = await ctx.db.query("zianMenuItems").collect();
+    const items = await ctx.db.query("zianMenuItems").take(READ_LIMIT);
     const set = new Set<string>();
     for (const i of items) if (i.active) set.add(i.portal);
     return Array.from(set).sort();
@@ -57,7 +63,7 @@ export const listPortals = query({
 export const getAllMenus = query({
   args: {},
   handler: async (ctx) => {
-    const items = await ctx.db.query("zianMenuItems").collect();
+    const items = await ctx.db.query("zianMenuItems").take(READ_LIMIT);
     const out: Record<string, Array<{ slug: string; label: string; icon: string; route: string; order: number; requirePermission?: string; parentSlug?: string }>> = {};
     for (const i of items) {
       if (!i.active) continue;
@@ -78,7 +84,7 @@ export const getAllMenus = query({
 export const listAllForCms = query({
   args: {},
   handler: async (ctx) => {
-    const items = await ctx.db.query("zianMenuItems").collect();
+    const items = await ctx.db.query("zianMenuItems").take(READ_LIMIT);
     return items.map((i) => ({
       portal: i.portal,
       slug: i.slug,
@@ -107,6 +113,8 @@ export const upsert = mutation({
     active: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
     const existing = await ctx.db
       .query("zianMenuItems")
       .withIndex("by_portal_slug", (q) =>
@@ -144,6 +152,8 @@ export const upsert = mutation({
 export const setActive = mutation({
   args: { id: v.id("zianMenuItems"), active: v.boolean() },
   handler: async (ctx, { id, active }) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
     await ctx.db.patch(id, { active, updatedAt: Date.now() });
   },
 });
@@ -153,6 +163,8 @@ export const setActive = mutation({
 export const setActiveBySlug = mutation({
   args: { portal: PORTAL, slug: v.string(), active: v.boolean() },
   handler: async (ctx, { portal, slug, active }) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
     const row = await ctx.db
       .query("zianMenuItems")
       .withIndex("by_portal_slug", (q) => q.eq("portal", portal).eq("slug", slug))
@@ -167,6 +179,8 @@ export const setActiveBySlug = mutation({
 export const removeBySlug = mutation({
   args: { portal: PORTAL, slug: v.string() },
   handler: async (ctx, { portal, slug }) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
     const row = await ctx.db
       .query("zianMenuItems")
       .withIndex("by_portal_slug", (q) => q.eq("portal", portal).eq("slug", slug))
