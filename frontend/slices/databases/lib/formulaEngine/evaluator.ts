@@ -6,6 +6,7 @@ import {
 import { toBoolean, toNumber, formatFormulaValue } from "./coerce";
 import { parseFormula } from "./parser";
 import { evalCall } from "./functions";
+import { higherOrderFns } from "./functions/higherOrder";
 
 /** Project a domain Page → engine-local PageEntity. Drops references to
  *  cross-slice types so the engine stays self-contained (sets up the
@@ -159,7 +160,14 @@ function evalExpr(node: ExprNode, ctx: EvalContext): FormulaValue {
       }
       return num(NaN);
     }
-    case "call": return evalCall(node, node.args.map((a) => evalExpr(a, ctx)));
+    case "call": {
+      // Higher-order fns (map/filter/reduce/find/...) must NOT pre-evaluate
+      // their lambda-position args — that would resolve `current` to NULL
+      // before the env frame is bound. Dispatch directly with raw AST args.
+      const ho = higherOrderFns[node.fn] ?? higherOrderFns[node.fn.toLowerCase()];
+      if (ho) return ho(node, ctx, evalExpr);
+      return evalCall(node, node.args.map((a) => evalExpr(a, ctx)));
+    }
     case "member": return resolveMember(evalExpr(node.object, ctx), node.member, ctx);
     // Bare lambda in non-lambda position evaluates to NULL — lambdas only
     // do useful work when consumed by a higher-order fn (1.D.2) which

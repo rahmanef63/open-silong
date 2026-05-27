@@ -6,6 +6,7 @@ import { dateFns, dateSigs } from "./date";
 import { listFns, listSigs } from "./list";
 import { logicFns, logicSigs } from "./logic";
 import { refSigs } from "./refs";
+import { higherOrderSigs } from "./higherOrder";
 
 /** Merged registry. Last spread wins on name collision — list.ts
  *  intentionally overrides string.ts for `length`/`slice`/`reverse` so
@@ -34,6 +35,7 @@ export const SIGNATURES: Record<string, FnSignature> = {
   ...logicSigs,
   ...listSigs,
   ...refSigs,
+  ...higherOrderSigs,
 };
 
 export function evalCall(
