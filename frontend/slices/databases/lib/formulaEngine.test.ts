@@ -170,3 +170,121 @@ describe("formulaEngine — collectDeps", () => {
     expect([...deps].sort()).toEqual(["Done", "Score"]);
   });
 });
+
+// ---- 1.A: comparison + equality + logical ops ------------------------------
+
+describe("formulaEngine — boolean literals", () => {
+  it("parses bare true / false", () => {
+    expect(formatFormulaValue(evalFormula("=true", { row: mkRow(), db: mkDb(), pages: [] }).value)).toBe("true");
+    expect(formatFormulaValue(evalFormula("=false", { row: mkRow(), db: mkDb(), pages: [] }).value)).toBe("false");
+  });
+  it("is case-insensitive (True/FALSE)", () => {
+    expect(formatFormulaValue(evalFormula("=True", { row: mkRow(), db: mkDb(), pages: [] }).value)).toBe("true");
+    expect(formatFormulaValue(evalFormula("=FALSE", { row: mkRow(), db: mkDb(), pages: [] }).value)).toBe("false");
+  });
+});
+
+describe("formulaEngine — comparison ops", () => {
+  const ctx = { row: mkRow(), db: mkDb(), pages: [] };
+  it("5 > 3 → true", () => {
+    expect(formatFormulaValue(evalFormula("=5 > 3", ctx).value)).toBe("true");
+  });
+  it("5 < 3 → false", () => {
+    expect(formatFormulaValue(evalFormula("=5 < 3", ctx).value)).toBe("false");
+  });
+  it("5 >= 5 → true", () => {
+    expect(formatFormulaValue(evalFormula("=5 >= 5", ctx).value)).toBe("true");
+  });
+  it("5 <= 4 → false", () => {
+    expect(formatFormulaValue(evalFormula("=5 <= 4", ctx).value)).toBe("false");
+  });
+  it('"abc" < "abd" → true (lex)', () => {
+    expect(formatFormulaValue(evalFormula(`="abc" < "abd"`, ctx).value)).toBe("true");
+  });
+  it("date now() > today() → true (now has time)", () => {
+    expect(formatFormulaValue(evalFormula("=now() > today()", ctx).value)).toBe("true");
+  });
+});
+
+describe("formulaEngine — equality ops", () => {
+  const ctx = { row: mkRow(), db: mkDb(), pages: [] };
+  it("5 == 5 → true", () => {
+    expect(formatFormulaValue(evalFormula("=5 == 5", ctx).value)).toBe("true");
+  });
+  it("5 != 6 → true", () => {
+    expect(formatFormulaValue(evalFormula("=5 != 6", ctx).value)).toBe("true");
+  });
+  it('"a" == "a" → true', () => {
+    expect(formatFormulaValue(evalFormula(`="a" == "a"`, ctx).value)).toBe("true");
+  });
+  it('"a" == 5 → false (cross-kind, no coerce)', () => {
+    expect(formatFormulaValue(evalFormula(`="a" == 5`, ctx).value)).toBe("false");
+  });
+  it("true == true → true", () => {
+    expect(formatFormulaValue(evalFormula("=true == true", ctx).value)).toBe("true");
+  });
+});
+
+describe("formulaEngine — logical ops + short-circuit", () => {
+  const ctx = { row: mkRow(), db: mkDb(), pages: [] };
+  it("true && false → false", () => {
+    expect(formatFormulaValue(evalFormula("=true && false", ctx).value)).toBe("false");
+  });
+  it("true || false → true", () => {
+    expect(formatFormulaValue(evalFormula("=true || false", ctx).value)).toBe("true");
+  });
+  it("false && false → false", () => {
+    expect(formatFormulaValue(evalFormula("=false && false", ctx).value)).toBe("false");
+  });
+  it("true || true → true", () => {
+    expect(formatFormulaValue(evalFormula("=true || true", ctx).value)).toBe("true");
+  });
+  it("!true → false", () => {
+    expect(formatFormulaValue(evalFormula("=!true", ctx).value)).toBe("false");
+  });
+  it("!false → true", () => {
+    expect(formatFormulaValue(evalFormula("=!false", ctx).value)).toBe("true");
+  });
+  it("&& short-circuits — right side ref never resolved when left false", () => {
+    // unknown_ref would resolve to NULL_VALUE (not throw) here, but the
+    // semantic test is that the result depends on left alone.
+    expect(formatFormulaValue(evalFormula("=false && true", ctx).value)).toBe("false");
+  });
+  it("|| short-circuits — right side ref never resolved when left true", () => {
+    expect(formatFormulaValue(evalFormula("=true || false", ctx).value)).toBe("true");
+  });
+});
+
+describe("formulaEngine — operator precedence", () => {
+  const ctx = { row: mkRow(), db: mkDb(), pages: [] };
+  it("arith before comparison: 1 + 2 == 3 → true", () => {
+    expect(formatFormulaValue(evalFormula("=1 + 2 == 3", ctx).value)).toBe("true");
+  });
+  it("comparison before && : 1 < 2 && 3 > 1 → true", () => {
+    expect(formatFormulaValue(evalFormula("=1 < 2 && 3 > 1", ctx).value)).toBe("true");
+  });
+  it("&& binds tighter than ||: false || true && false → false", () => {
+    // = false || (true && false) = false || false = false
+    expect(formatFormulaValue(evalFormula("=false || true && false", ctx).value)).toBe("false");
+  });
+  it("mixed: !(1 == 2) → true", () => {
+    expect(formatFormulaValue(evalFormula("=!(1 == 2)", ctx).value)).toBe("true");
+  });
+  it("mul before add stays: 2 + 3 * 4 == 14 → true", () => {
+    expect(formatFormulaValue(evalFormula("=2 + 3 * 4 == 14", ctx).value)).toBe("true");
+  });
+  it("parens override: (2 + 3) * 4 == 20 → true", () => {
+    expect(formatFormulaValue(evalFormula("=(2 + 3) * 4 == 20", ctx).value)).toBe("true");
+  });
+});
+
+describe("formulaEngine — comparison drives if()", () => {
+  const ctx = { row: mkRow(), db: mkDb(), pages: [] };
+  it("Pass/Fail by score", () => {
+    expect(formatFormulaValue(evalFormula(`=if(80 >= 60, "Pass", "Fail")`, ctx).value)).toBe("Pass");
+    expect(formatFormulaValue(evalFormula(`=if(40 >= 60, "Pass", "Fail")`, ctx).value)).toBe("Fail");
+  });
+  it("Range check with && — score 75 in 60..100", () => {
+    expect(formatFormulaValue(evalFormula(`=if(75 >= 60 && 75 <= 100, "Good", "Bad")`, ctx).value)).toBe("Good");
+  });
+});

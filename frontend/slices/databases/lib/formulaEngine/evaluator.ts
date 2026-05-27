@@ -3,9 +3,40 @@ import {
   bool, date, list, num, str, NULL_VALUE,
   type ExprNode, type FormulaError, type FormulaValue, type Node,
 } from "./types";
-import { toNumber, formatFormulaValue } from "./coerce";
+import { toBoolean, toNumber, formatFormulaValue } from "./coerce";
 import { parseFormula } from "./parser";
 import { evalCall } from "./functions";
+
+/** Same-kind value equality. Cross-kind compares always false (Notion
+ *  semantics — `1 == "1"` is false, not coerced). `null == null` is true,
+ *  `null == anything-else` is false. Lists compare element-wise. */
+function formulaEqual(a: FormulaValue, b: FormulaValue): boolean {
+  if (a.kind === "null" && b.kind === "null") return true;
+  if (a.kind === "null" || b.kind === "null") return false;
+  if (a.kind !== b.kind) return false;
+  if (a.kind === "list" && b.kind === "list") {
+    if (a.value.length !== b.value.length) return false;
+    return a.value.every((v, i) => formulaEqual(v, b.value[i]));
+  }
+  // Remaining kinds (string/number/boolean/date) all carry a `value` field
+  // and are scalar — narrow via the discriminant.
+  return (a as { value: unknown }).value === (b as { value: unknown }).value;
+}
+
+/** Ordering for `<` `<=` `>` `>=`. Date/date and string/string compare
+ *  lexicographically (ISO 8601 dates sort chronologically by lex). Mixed
+ *  or numeric types coerce to number — NaN-safe (NaN compares neither way,
+ *  so we treat as 0-difference to avoid runtime errors). */
+function formulaCompare(a: FormulaValue, b: FormulaValue): number {
+  if (a.kind === "date" && b.kind === "date") return a.value.localeCompare(b.value);
+  if (a.kind === "string" && b.kind === "string") return a.value.localeCompare(b.value);
+  const an = toNumber(a);
+  const bn = toNumber(b);
+  if (Number.isNaN(an) || Number.isNaN(bn)) return 0;
+  if (an < bn) return -1;
+  if (an > bn) return 1;
+  return 0;
+}
 
 export interface EvalContext {
   row: Page;
@@ -55,14 +86,45 @@ function evalExpr(node: ExprNode, ctx: EvalContext): FormulaValue {
   switch (node.kind) {
     case "num": return num(node.value);
     case "str": return str(node.value);
+    case "bool": return bool(node.value);
     case "ref": return resolveRef(node.name, ctx, node.pos);
     case "unary": {
+      if (node.op === "!") return bool(!toBoolean(evalExpr(node.arg, ctx)));
       const v = toNumber(evalExpr(node.arg, ctx));
       return num(node.op === "-" ? -v : v);
     }
     case "binop": {
-      const l = toNumber(evalExpr(node.left, ctx));
-      const r = toNumber(evalExpr(node.right, ctx));
+      // Short-circuit logical ops first — eval right side only when needed.
+      // Both sides coerce to boolean (Notion returns bool, not the truthy
+      // operand value like JS does). Short-circuit also means a broken
+      // right-side ref doesn't throw when left already decides the result.
+      if (node.op === "&&") {
+        const lv = evalExpr(node.left, ctx);
+        if (!toBoolean(lv)) return bool(false);
+        return bool(toBoolean(evalExpr(node.right, ctx)));
+      }
+      if (node.op === "||") {
+        const lv = evalExpr(node.left, ctx);
+        if (toBoolean(lv)) return bool(true);
+        return bool(toBoolean(evalExpr(node.right, ctx)));
+      }
+      // All non-short-circuit ops need both sides evaluated.
+      const lv = evalExpr(node.left, ctx);
+      const rv = evalExpr(node.right, ctx);
+      if (node.op === "==") return bool(formulaEqual(lv, rv));
+      if (node.op === "!=") return bool(!formulaEqual(lv, rv));
+      if (node.op === ">" || node.op === "<" || node.op === ">=" || node.op === "<=") {
+        const cmp = formulaCompare(lv, rv);
+        switch (node.op) {
+          case ">":  return bool(cmp > 0);
+          case "<":  return bool(cmp < 0);
+          case ">=": return bool(cmp >= 0);
+          case "<=": return bool(cmp <= 0);
+        }
+      }
+      // Arithmetic — coerce both sides to number.
+      const l = toNumber(lv);
+      const r = toNumber(rv);
       switch (node.op) {
         case "+": return num(l + r);
         case "-": return num(l - r);
