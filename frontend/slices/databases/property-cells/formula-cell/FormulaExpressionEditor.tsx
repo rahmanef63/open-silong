@@ -4,25 +4,11 @@ import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState, 
 import { AlertTriangle } from "lucide-react";
 import type { Database } from "@/shared/types/domain";
 import { cn } from "@/shared/lib/utils";
-import {
-  SIGNATURES, listFunctionNames, getSignature,
-} from "../../lib/formulaEngine/functions";
+import { getSignature } from "../../lib/formulaEngine/functions";
 import type { FormulaError } from "../../lib/formulaEngine/types";
-import { getTokenAt, propNeedsClose, type Token } from "./tokenize";
+import { getTokenAt, type Token } from "./tokenize";
 import { findEnclosingCall } from "./enclosingCall";
-
-/** Suggestion presented in the dropdown. `insert` is the literal text
- *  that replaces `[token.start .. caret]`. Optional `caretOffset`
- *  positions the caret inside the insert (e.g. between fn parens). */
-interface Suggestion {
-  label: string;
-  insert: string;
-  /** Cursor position relative to `start + insert.length` after insert.
-   *  Defaults to 0 (end of insert). */
-  caretOffset?: number;
-  /** Secondary line — fn signature, prop type, etc. */
-  detail?: string;
-}
+import { buildSuggestions, type Suggestion } from "./suggestions";
 
 const MAX_ROWS = 8;
 
@@ -322,47 +308,6 @@ export const FormulaExpressionEditor = forwardRef<FormulaExpressionEditorRef, Fo
     );
   },
 );
-
-/** Build the suggestion list for the current token. Pure — split out for
- *  testability + memo stability. */
-function buildSuggestions(token: Token, value: string, caret: number, db: Database): Suggestion[] {
-  if (token.kind === "prop") {
-    const lc = token.prefix.toLowerCase();
-    const includeClose = propNeedsClose(value, caret);
-    const out: Suggestion[] = [];
-    // Built-in `title` ref — always available.
-    if ("title".startsWith(lc)) {
-      out.push({ label: "title", insert: `title${includeClose ? "}}" : ""}`, detail: "row title" });
-    }
-    for (const p of db.properties) {
-      if (!p.name.toLowerCase().startsWith(lc)) continue;
-      out.push({
-        label: p.name,
-        insert: `${p.name}${includeClose ? "}}" : ""}`,
-        detail: p.type,
-      });
-    }
-    return out;
-  }
-
-  if (token.kind === "fn") {
-    const lc = token.prefix.toLowerCase();
-    const names = listFunctionNames();
-    const matches = names.filter((n) => n.toLowerCase().startsWith(lc));
-    return matches.map((name) => {
-      const sig = SIGNATURES[name];
-      // Insert `fnName()` with caret BETWEEN the parens (offset -1 from end).
-      return {
-        label: name,
-        insert: `${name}()`,
-        caretOffset: -1,
-        detail: sig ? `(${sig.args.join(", ")}) → ${sig.returns}` : undefined,
-      };
-    });
-  }
-
-  return [];
-}
 
 // Internal: ref-style sigil used in early dev for testability hooks.
 // Suppress unused-import lint without exposing a public type.
