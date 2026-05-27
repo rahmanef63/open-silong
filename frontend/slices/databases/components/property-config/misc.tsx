@@ -14,12 +14,15 @@ export function FormulaConfig({ db, prop, updateProperty }: {
   const value = prop.formulaExpression ?? "";
 
   const insertFunction = (name: string) => {
+    const isProp = name === "prop";
+    const tail = isProp ? `${name}("")` : `${name}()`;
+    const caretOffset = isProp ? -2 : -1; // inside the quotes vs between parens
     if (value.trim() === "") {
-      updateProperty(db.id, prop.id, { formulaExpression: `=${name}()` });
-      queueMicrotask(() => editorRef.current?.setCaret(2 + name.length));
+      updateProperty(db.id, prop.id, { formulaExpression: `=${tail}` });
+      queueMicrotask(() => editorRef.current?.setCaret(1 + tail.length + caretOffset));
       return;
     }
-    editorRef.current?.insertAtCaret(`${name}()`, -1);
+    editorRef.current?.insertAtCaret(tail, caretOffset);
   };
 
   return (

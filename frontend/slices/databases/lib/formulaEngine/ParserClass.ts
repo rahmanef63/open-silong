@@ -149,6 +149,25 @@ export class Parser {
   }
 
   parsePrimary(): ExprNode {
+    let node = this.parsePrimaryBase();
+    // Postfix `.ident` chain — left-associative. Only consume `.` when the
+    // NEXT char is an ident start, so number literals like `.5` aren't
+    // accidentally treated as member access. Member access works on any
+    // primary (ref / call / paren expr / even literal), but only resolves
+    // to a real value when the target is a page entity (or list of pages).
+    while (true) {
+      this.skipWS();
+      if (this.peek() !== "." || !/[A-Za-z_]/.test(this.src[this.pos + 1] ?? "")) break;
+      const dotPos = this.pos;
+      this.advance(); // consume `.`
+      const member = this.parseIdent();
+      if (!member) throw this.err("Expected identifier after '.'", dotPos);
+      node = { kind: "member", object: node, member, pos: dotPos };
+    }
+    return node;
+  }
+
+  parsePrimaryBase(): ExprNode {
     this.skipWS();
     const pos = this.pos;
     if (this.atEnd()) throw this.err("Unexpected end of expression", pos);
@@ -172,10 +191,38 @@ export class Parser {
       if (lc === "true") return { kind: "bool", value: true, pos };
       if (lc === "false") return { kind: "bool", value: false, pos };
       this.skipWS();
-      if (this.peek() === "(") return this.parseCallTail(ident, pos);
+      if (this.peek() === "(") {
+        // Notion-style `prop("name")` — special-case BEFORE generic call
+        // dispatch so the result lands as a ref node (not a call), which
+        // means it shares `collectDeps` + dependency invalidation +
+        // member-access chaining with the `{{name}}` template form.
+        // Strict: a bare ident `prop` without `(` is still just a "fn name
+        // missing its `(`" error from the existing branch — no implicit
+        // variable resolution.
+        if (lc === "prop") return this.parsePropCall(pos);
+        return this.parseCallTail(ident, pos);
+      }
       throw this.err(`Expected '(' after function name '${ident}'`, this.pos);
     }
     throw this.err(`Unexpected character '${ch}'`, pos);
+  }
+
+  /** Parse `prop("string-literal")` → ref node. Only a string literal is
+   *  accepted (no expressions / no idents) — keeps the form unambiguous
+   *  and matches Notion's behaviour. */
+  parsePropCall(pos: number): ExprNode {
+    this.expect("(");
+    this.skipWS();
+    const ch = this.peek();
+    if (ch !== '"' && ch !== "'") {
+      throw this.err(`prop() requires a string literal property name`, this.pos);
+    }
+    const strNode = this.parseString();
+    this.skipWS();
+    this.expect(")");
+    // strNode is always { kind: "str", value, pos }; narrow + repackage.
+    const name = (strNode as { kind: "str"; value: string }).value;
+    return { kind: "ref", name, pos };
   }
 
   parseString(): ExprNode {

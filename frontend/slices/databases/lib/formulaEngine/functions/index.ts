@@ -5,6 +5,7 @@ import { numberFns, numberSigs } from "./number";
 import { dateFns, dateSigs } from "./date";
 import { listFns, listSigs } from "./list";
 import { logicFns, logicSigs } from "./logic";
+import { refSigs } from "./refs";
 
 /** Merged registry. Last spread wins on name collision — list.ts
  *  intentionally overrides string.ts for `length`/`slice`/`reverse` so
@@ -23,13 +24,16 @@ const REGISTRY: Record<string, (
 
 /** Display metadata — same merge order as REGISTRY so a fn's signature
  *  always matches its handler. Editor (1.F) reads this for autocomplete,
- *  function picker, signature hints. Runtime never touches it. */
+ *  function picker, signature hints. Runtime never touches it.
+ *  `refSigs` adds parser-level pseudo-fns (prop) — present here only so
+ *  the picker can suggest them; the runtime dispatcher never sees them. */
 export const SIGNATURES: Record<string, FnSignature> = {
   ...stringSigs,
   ...numberSigs,
   ...dateSigs,
   ...logicSigs,
   ...listSigs,
+  ...refSigs,
 };
 
 export function evalCall(
@@ -55,7 +59,7 @@ export function listFunctionNames(): string[] {
 /** Group → ordered name list for the picker. */
 export function functionsByGroup(): Record<FnGroup, string[]> {
   const out: Record<FnGroup, string[]> = {
-    string: [], number: [], date: [], list: [], logic: [],
+    ref: [], string: [], number: [], date: [], list: [], logic: [],
   };
   for (const [name, sig] of Object.entries(SIGNATURES)) {
     out[sig.group].push(name);

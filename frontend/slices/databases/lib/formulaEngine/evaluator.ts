@@ -1,15 +1,29 @@
 import type { Database, Page, Property, PropertyValue } from "@/shared/types/domain";
 import {
-  bool, date, list, num, str, NULL_VALUE,
-  type ExprNode, type FormulaError, type FormulaValue, type Node,
+  bool, date, list, num, page as pageVal, str, NULL_VALUE,
+  type ExprNode, type FormulaError, type FormulaValue, type Node, type PageEntity,
 } from "./types";
 import { toBoolean, toNumber, formatFormulaValue } from "./coerce";
 import { parseFormula } from "./parser";
 import { evalCall } from "./functions";
 
+/** Project a domain Page → engine-local PageEntity. Drops references to
+ *  cross-slice types so the engine stays self-contained (sets up the
+ *  rahman-shared extract in 1.G). */
+function toEntity(p: Page): PageEntity {
+  return {
+    id: p.id,
+    title: p.title,
+    icon: p.icon,
+    rowOfDatabaseId: p.rowOfDatabaseId,
+    rowProps: p.rowProps,
+  };
+}
+
 /** Same-kind value equality. Cross-kind compares always false (Notion
  *  semantics — `1 == "1"` is false, not coerced). `null == null` is true,
- *  `null == anything-else` is false. Lists compare element-wise. */
+ *  `null == anything-else` is false. Lists compare element-wise. Pages
+ *  compare by id (entity identity). */
 function formulaEqual(a: FormulaValue, b: FormulaValue): boolean {
   if (a.kind === "null" && b.kind === "null") return true;
   if (a.kind === "null" || b.kind === "null") return false;
@@ -18,6 +32,7 @@ function formulaEqual(a: FormulaValue, b: FormulaValue): boolean {
     if (a.value.length !== b.value.length) return false;
     return a.value.every((v, i) => formulaEqual(v, b.value[i]));
   }
+  if (a.kind === "page" && b.kind === "page") return a.value.id === b.value.id;
   // Remaining kinds (string/number/boolean/date) all carry a `value` field
   // and are scalar — narrow via the discriminant.
   return (a as { value: unknown }).value === (b as { value: unknown }).value;
@@ -42,6 +57,10 @@ export interface EvalContext {
   row: Page;
   db: Database;
   pages: Page[];
+  /** Optional — every workspace database. Enables cross-db drilldown via
+   *  `prop("Owner").<custom>` when the relation target belongs to another
+   *  database. When omitted, drilldown is limited to `ctx.db.properties`. */
+  databases?: Database[];
   /** Visited keys "rowId:propId" — circular-dependency guard. */
   visited?: Set<string>;
   /** Memoization for repeated formulas across the same tree. */
@@ -135,7 +154,47 @@ function evalExpr(node: ExprNode, ctx: EvalContext): FormulaValue {
       return num(NaN);
     }
     case "call": return evalCall(node, node.args.map((a) => evalExpr(a, ctx)));
+    case "member": return resolveMember(evalExpr(node.object, ctx), node.member, ctx);
   }
+}
+
+/** Drill into a page entity (or list of pages) via `.member` access.
+ *  Built-in fields (title / icon / id) take priority; otherwise we walk
+ *  the page's database property schema. Cross-db drilldown needs
+ *  ctx.databases populated; otherwise we only see ctx.db. Returns
+ *  NULL_VALUE for any other object kind (scalar primitives have no
+ *  members in Notion's model). */
+function resolveMember(obj: FormulaValue, member: string, ctx: EvalContext): FormulaValue {
+  if (obj.kind === "null") return NULL_VALUE;
+  // List → map member access across each element. Mirrors Notion's
+  // automatic-list behaviour on relation prop drilldown.
+  if (obj.kind === "list") {
+    return list(obj.value.map((v) => resolveMember(v, member, ctx)));
+  }
+  if (obj.kind === "page") {
+    const lc = member.toLowerCase();
+    if (lc === "title" || lc === "name") return str(obj.value.title || "");
+    if (lc === "icon") return str(obj.value.icon || "");
+    if (lc === "id") return str(obj.value.id);
+    // Look up user-defined property by id-or-name in the page's database.
+    const targetDb = (ctx.databases ?? [ctx.db]).find(
+      (d) => d.id === obj.value.rowOfDatabaseId,
+    );
+    if (!targetDb) return NULL_VALUE;
+    const prop = targetDb.properties.find(
+      (p) => p.id === member || p.name.toLowerCase() === lc,
+    );
+    if (!prop) return NULL_VALUE;
+    // Synthesize a transient row context so any recursive lookups (e.g.
+    // member access on a formula prop in the target page) evaluate against
+    // the right row. We DON'T enter the formula re-eval branch here —
+    // member access just unwraps stored values.
+    const target = ctx.pages.find((p) => p.id === obj.value.id);
+    if (!target) return NULL_VALUE;
+    return propertyValueToFormulaValue(target.rowProps?.[prop.id], prop, ctx);
+  }
+  // Scalar kinds (string / number / boolean / date) have no members.
+  return NULL_VALUE;
 }
 
 function resolveRef(name: string, ctx: EvalContext, pos: number): FormulaValue {
@@ -196,13 +255,18 @@ function propertyValueToFormulaValue(
       return list(ids.map((id) => str(prop.options?.find((o) => o.id === id)?.name ?? id)));
     }
     case "relation": {
+      // Resolve to list of page ENTITIES so `.member` drilldown works
+      // (`prop("Owner").email`). Back-compat preserved: `toString(page)`
+      // returns title, so `concat(prop("Owner"))` and friends keep printing
+      // titles unchanged.
       const ids = Array.isArray(v) ? v : [];
-      return list(
-        ids.map((id) => {
-          const p = ctx.pages.find((pg) => pg.id === id && !pg.trashed);
-          return str(p?.title || "Untitled");
-        }),
-      );
+      const entries: FormulaValue[] = [];
+      for (const id of ids) {
+        const p = ctx.pages.find((pg) => pg.id === id && !pg.trashed);
+        if (p) entries.push(pageVal(toEntity(p)));
+        else entries.push(pageVal({ id: String(id), title: "Untitled", icon: "" }));
+      }
+      return list(entries);
     }
     case "files": {
       const items = Array.isArray(v) ? v : [];

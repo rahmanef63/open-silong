@@ -45,17 +45,19 @@ export function FormulaCell({ db, prop, row, cellClass }: Props) {
   };
 
   /** Picker click → insert `fnName()` via the editor's caret-aware splice.
-   *  If draft is currently empty, prepend `=` so the parser enters math mode
-   *  and the function call evaluates instead of being treated as template text. */
+   *  Special-case `prop` so it inserts `prop("")` with caret BETWEEN the
+   *  quotes — its arg is always a string literal, not an arbitrary expr.
+   *  Empty-draft case prepends `=` so the parser enters math mode. */
   const insertFunction = (name: string) => {
+    const isProp = name === "prop";
+    const tail = isProp ? `${name}("")` : `${name}()`;
+    const caretOffset = isProp ? -2 : -1; // inside the quotes vs between parens
     if (draft.trim() === "") {
-      // Replace whole draft so the `=` prefix sits at the start.
-      setDraft(`=${name}()`);
-      // Position caret between parens after state flush.
-      queueMicrotask(() => editorRef.current?.setCaret(2 + name.length));
+      setDraft(`=${tail}`);
+      queueMicrotask(() => editorRef.current?.setCaret(1 + tail.length + caretOffset));
       return;
     }
-    editorRef.current?.insertAtCaret(`${name}()`, -1);
+    editorRef.current?.insertAtCaret(tail, caretOffset);
   };
 
   return (

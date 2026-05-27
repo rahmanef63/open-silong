@@ -2,13 +2,32 @@
  * Typed values
  * ============================================================ */
 
+/** Minimal page projection carried inside the engine. Lives here (not in
+ *  domain types) so the engine stays self-contained for the rahman-shared
+ *  extract planned in 1.G. Drilldown (e.g. `prop("Owner").email`) needs
+ *  the page's id + database membership + raw rowProps so the member
+ *  resolver can re-enter `propertyValueToFormulaValue` for any user prop. */
+export interface PageEntity {
+  id: string;
+  title: string;
+  icon: string;
+  /** When the page is a row of a database, the schema lookup target. */
+  rowOfDatabaseId?: string;
+  rowProps?: Record<string, unknown>;
+}
+
 export type FormulaValue =
   | { kind: "string"; value: string }
   | { kind: "number"; value: number }
   | { kind: "boolean"; value: boolean }
   | { kind: "date"; value: string }
   | { kind: "null" }
-  | { kind: "list"; value: FormulaValue[] };
+  | { kind: "list"; value: FormulaValue[] }
+  /** Relation / sub-item targets resolve to this so `.member` access can
+   *  drill into the underlying page's properties. `toString` returns the
+   *  page title, so existing `concat(prop("Owner"))`-style formulas keep
+   *  printing names unchanged. */
+  | { kind: "page"; value: PageEntity };
 
 export const NULL_VALUE: FormulaValue = { kind: "null" };
 export const str = (v: string): FormulaValue => ({ kind: "string", value: v });
@@ -16,6 +35,7 @@ export const num = (v: number): FormulaValue => ({ kind: "number", value: v });
 export const bool = (v: boolean): FormulaValue => ({ kind: "boolean", value: v });
 export const date = (v: string): FormulaValue => ({ kind: "date", value: v });
 export const list = (v: FormulaValue[]): FormulaValue => ({ kind: "list", value: v });
+export const page = (v: PageEntity): FormulaValue => ({ kind: "page", value: v });
 
 /* ============================================================
  * AST
@@ -37,7 +57,12 @@ export type ExprNode =
   | { kind: "ref"; name: string; pos: number }
   | { kind: "call"; fn: string; args: ExprNode[]; pos: number }
   | { kind: "binop"; op: BinOp; left: ExprNode; right: ExprNode; pos: number }
-  | { kind: "unary"; op: "-" | "+" | "!"; arg: ExprNode; pos: number };
+  | { kind: "unary"; op: "-" | "+" | "!"; arg: ExprNode; pos: number }
+  /** Postfix `.ident` access chain — drills into a page entity's built-in
+   *  field (title / icon / id) or a user-defined property by name. Lists
+   *  of pages map the access over each element. Pure scalars resolve to
+   *  NULL. Built by the parser as a left-associative chain after primary. */
+  | { kind: "member"; object: ExprNode; member: string; pos: number };
 
 export type BinOp =
   // Arithmetic
