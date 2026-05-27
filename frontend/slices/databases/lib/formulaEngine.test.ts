@@ -706,3 +706,106 @@ describe("formulaEngine — lambda eval + env stack (1.D.1)", () => {
     expect(formatFormulaValue(evalFormula("={{Score}}", ctx).value)).toBe("99");
   });
 });
+
+// ---- 1.D.2: map / filter / reduce / find ----------------------------------
+
+describe("formulaEngine — higher-order fns (1.D.2)", () => {
+  // Multi-select fixture — easier than relations for list-mapping tests.
+  const dbTags = mkDb({
+    properties: [{
+      id: "tags", name: "Tags", type: "multi_select",
+      options: [
+        { id: "a", name: "alpha", color: "blue" },
+        { id: "b", name: "beta", color: "red" },
+        { id: "c", name: "gamma", color: "green" },
+      ],
+    }],
+  });
+  const rowTags = (ids: string[]) => mkRow({ rowProps: { tags: ids } });
+  const ctxTags = (ids: string[]) => ({ row: rowTags(ids), db: dbTags, pages: [] });
+
+  // ── map ───────────────────────────────────────────────────────────
+  it("map(list, explicit lambda) — uppercase each tag", () => {
+    expect(formatFormulaValue(evalFormula(`=map(prop("Tags"), (current) => upper(current))`, ctxTags(["a", "b", "c"])).value))
+      .toBe("ALPHA, BETA, GAMMA");
+  });
+
+  it("map(list, implicit `current`) — bare expr body", () => {
+    expect(formatFormulaValue(evalFormula(`=map(prop("Tags"), upper(current))`, ctxTags(["a", "b"])).value))
+      .toBe("ALPHA, BETA");
+  });
+
+  it("map sees iteration `index`", () => {
+    expect(formatFormulaValue(evalFormula(`=map(prop("Tags"), concat(index, ":", current))`, ctxTags(["a", "b", "c"])).value))
+      .toBe("0:alpha, 1:beta, 2:gamma");
+  });
+
+  it("map on empty list returns empty list", () => {
+    expect(formatFormulaValue(evalFormula(`=map(prop("Tags"), upper(current))`, ctxTags([])).value))
+      .toBe("");
+  });
+
+  it("map on scalar wraps as single-element list (Notion auto-list)", () => {
+    // title is a scalar string — map should still produce a 1-elem list.
+    expect(formatFormulaValue(evalFormula(`=map(prop("title"), upper(current))`, { row: mkRow({ title: "hello" }), db: mkDb(), pages: [] }).value))
+      .toBe("HELLO");
+  });
+
+  // ── filter ───────────────────────────────────────────────────────
+  it("filter keeps elements where body is truthy", () => {
+    expect(formatFormulaValue(evalFormula(`=filter(prop("Tags"), current != "beta")`, ctxTags(["a", "b", "c"])).value))
+      .toBe("alpha, gamma");
+  });
+
+  it("filter on all-false → empty list", () => {
+    expect(formatFormulaValue(evalFormula(`=filter(prop("Tags"), false)`, ctxTags(["a", "b"])).value))
+      .toBe("");
+  });
+
+  // ── reduce ───────────────────────────────────────────────────────
+  it("reduce with accumulator concatenation", () => {
+    expect(formatFormulaValue(evalFormula(`=reduce(prop("Tags"), concat(accumulator, current), "")`, ctxTags(["a", "b", "c"])).value))
+      .toBe("alphabetagamma");
+  });
+
+  it("reduce numeric sum via accumulator", () => {
+    // Build via map(toNumber) on indexes then reduce.
+    expect(formatFormulaValue(evalFormula(`=reduce(prop("Tags"), accumulator + 1, 0)`, ctxTags(["a", "b", "c", "a"])).value))
+      .toBe("4");
+  });
+
+  it("reduce on empty list returns initial", () => {
+    expect(formatFormulaValue(evalFormula(`=reduce(prop("Tags"), accumulator + 1, 7)`, ctxTags([])).value))
+      .toBe("7");
+  });
+
+  // ── find ─────────────────────────────────────────────────────────
+  it("find returns first matching element", () => {
+    expect(formatFormulaValue(evalFormula(`=find(prop("Tags"), current == "beta")`, ctxTags(["a", "b", "c"])).value))
+      .toBe("beta");
+  });
+
+  it("find returns null when no match", () => {
+    expect(formatFormulaValue(evalFormula(`=find(prop("Tags"), current == "zzz")`, ctxTags(["a", "b", "c"])).value))
+      .toBe("");
+  });
+
+  // ── composition + env isolation ──────────────────────────────────
+  it("nested map → filter pipeline", () => {
+    // Uppercase then keep only strings shorter than 5 chars
+    expect(formatFormulaValue(evalFormula(`=filter(map(prop("Tags"), upper(current)), length(current) < 5)`, ctxTags(["a", "b", "c"])).value))
+      .toBe("BETA");
+  });
+
+  it("env stack is per-iteration — outer current isn't leaked", () => {
+    // Outer map binds current=alpha; inner length() doesn't see "current"
+    // as anything but its own scalar arg.
+    expect(formatFormulaValue(evalFormula(`=map(prop("Tags"), length(current))`, ctxTags(["a", "b", "c"])).value))
+      .toBe("5, 4, 5");
+  });
+
+  it("higher-order with no args throws clean arity error", () => {
+    const r = evalFormula(`=map()`, { row: mkRow(), db: mkDb(), pages: [] });
+    expect(r.error?.message).toMatch(/needs 2 argument/);
+  });
+});
