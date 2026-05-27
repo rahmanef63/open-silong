@@ -1,4 +1,4 @@
-import { mutation, query } from "./_generated/server";
+import { mutation, query, type MutationCtx } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
@@ -26,21 +26,23 @@ function emptyBlock() {
  *  workspace if the doc is workspace-stamped, otherwise the viewer's
  *  legacy by_user pool. Used by the descendant-walking mutations
  *  (trash / restore / permanentlyDelete) so subpages created by other
- *  members get included. */
+ *  members get included. Bare .collect() here is INTENTIONAL — capping
+ *  would silently leave orphan subpages in a cascade. The real fix is
+ *  pagination of the cascade itself (cycle 8 follow-up). */
 async function collectScopedPages(
-  ctx: { db: any },
+  ctx: MutationCtx,
   userId: Id<"users">,
   workspaceId: Id<"workspaces"> | undefined,
 ) {
   if (workspaceId) {
     return await ctx.db
       .query("pages")
-      .withIndex("by_workspace", (q: any) => q.eq("workspaceId", workspaceId))
+      .withIndex("by_workspace", (q) => q.eq("workspaceId", workspaceId))
       .collect();
   }
   return await ctx.db
     .query("pages")
-    .withIndex("by_user", (q: any) => q.eq("userId", userId))
+    .withIndex("by_user", (q) => q.eq("userId", userId))
     .collect();
 }
 
@@ -273,7 +275,13 @@ export const create = mutation({
       updatedAt: now,
     });
     // Fire-and-forget webhook fan-out — no await blocks the caller.
-    await ctx.scheduler.runAfter(0, internal.webhooks.deliver.run, {
+    // `as any` on internal.webhooks.deliver: convex codegen FilterApi for
+    // the `internal` surface drops internalAction refs in some module shapes
+    // (see webhooks/deliver.ts — query+mutation+action mixed module),
+    // leaving only `listEnabledForOwner` + `recordDelivery` visible to tsc
+    // even though the runtime ref resolves correctly. Tracked for codegen
+    // bug report; cast keeps `pnpm typecheck` green.
+    await ctx.scheduler.runAfter(0, (internal.webhooks.deliver as any).run, {
       ownerId: userId,
       event: "page.created",
       payload: { pageId, title: args.title ?? "", parentId: args.parentId },
@@ -339,7 +347,7 @@ export const update = mutation({
       updatedAt: Date.now(),
     });
     if (touchesContent) {
-      await ctx.scheduler.runAfter(0, internal.webhooks.deliver.run, {
+      await ctx.scheduler.runAfter(0, (internal.webhooks.deliver as any).run, {
         ownerId: userId,
         event: "page.updated",
         payload: {
@@ -379,7 +387,7 @@ export const trash = mutation({
     for (const id of ids) {
       await ctx.db.patch(id as Id<"pages">, { trashed: true, updatedAt: now });
     }
-    await ctx.scheduler.runAfter(0, internal.webhooks.deliver.run, {
+    await ctx.scheduler.runAfter(0, (internal.webhooks.deliver as any).run, {
       ownerId: userId,
       event: "page.deleted",
       payload: { pageId: args.pageId, title: page.title, soft: true, cascadeCount: ids.length },
@@ -416,11 +424,13 @@ export const permanentlyDelete = mutation({
       // deleted (snapshots are author-owned, no by_workspace index yet).
       // Other members' snapshots become orphaned; session-2 snapshot scoping
       // will fix the leak.
-      const snaps = await ctx.db.query("snapshots").withIndex("by_user_page", (q) => q.eq("userId", userId).eq("pageId", id as Id<"pages">)).collect();
+      // Snapshot count is bounded server-side to COUNT_CAPS.snapshotsPerPage (50);
+      // take(100) leaves slack for legacy rows that pre-dated the cap.
+      const snaps = await ctx.db.query("snapshots").withIndex("by_user_page", (q) => q.eq("userId", userId).eq("pageId", id as Id<"pages">)).take(100);
       for (const s of snaps) await ctx.db.delete(s._id);
       await ctx.db.delete(id as Id<"pages">);
     }
-    await ctx.scheduler.runAfter(0, internal.webhooks.deliver.run, {
+    await ctx.scheduler.runAfter(0, (internal.webhooks.deliver as any).run, {
       ownerId: userId,
       event: "page.deleted",
       payload: { pageId: args.pageId, title: page.title, soft: false, cascadeCount: ids.length },

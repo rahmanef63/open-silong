@@ -98,6 +98,16 @@ export const COUNT_CAPS = {
    *  >300 recent notifications worth showing. Beyond that, pagination
    *  would be the next step. */
   notificationScan:     300,
+  /** Hot-path scan caps — every dashboard read flows through
+   *  pagesInActiveWorkspace / databasesInActiveWorkspace; bound the
+   *  per-workspace index walk so a runaway workspace doesn't OOM
+   *  the query handler. Real fix is pagination on the listMeta call. */
+  pagesPerWorkspaceScan:     5_000,
+  databasesPerWorkspaceScan: 1_000,
+  /** Workspace-switcher feeds — `listMyWorkspaces` membership rows + the
+   *  by_user owned-workspace probe in `ensurePersonalWorkspace`. */
+  workspacesPerUserScan:     50,
+  workspaceMembersScan:      500,
 } as const;
 
 // ─── Time windows ─────────────────────────────────────────────────
