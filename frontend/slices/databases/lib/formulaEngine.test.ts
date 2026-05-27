@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import type { Database, Page } from "@/shared/types/domain";
-import { evalFormula, formatFormulaValue, parseFormula, collectDeps } from "./formulaEngine";
+import { evalFormula, formatFormulaValue, parseFormula, collectDeps, num as nv, str as sv } from "./formulaEngine";
 
 const mkRow = (overrides: Partial<Page> = {}): Page => ({
   id: "row1",
@@ -577,5 +577,132 @@ describe("formulaEngine — member access (1.C)", () => {
     // length() on the list returns list size, not string length.
     expect(formatFormulaValue(evalFormula(`=length(prop("Owner").title)`, ctx(task(["alice"]))).value)).toBe("1");
     expect(formatFormulaValue(evalFormula(`=length(prop("Owner").title)`, ctx(task(["alice", "bob"]))).value)).toBe("2");
+  });
+});
+
+// ---- 1.D.1: lambda AST + parser + env-aware resolveRef --------------------
+
+describe("formulaEngine — lambda parser (1.D.1)", () => {
+  it("`name => body` parses as lambda with single param", () => {
+    const p = parseFormula("=current => current + 1");
+    expect(p.ast).toBeTruthy();
+    expect(p.ast!.kind).toBe("math");
+    const expr = (p.ast as { kind: "math"; expr: { kind: string } }).expr;
+    expect(expr.kind).toBe("lambda");
+    const lam = expr as { kind: "lambda"; params: string[]; body: { kind: string } };
+    expect(lam.params).toEqual(["current"]);
+    expect(lam.body.kind).toBe("binop");
+  });
+
+  it("`(current, index) => current + index` parses as 2-param lambda", () => {
+    // Multi-param lambdas only practical with whitelisted bare idents —
+    // the body parser rejects non-whitelisted refs ("Expected '(' after
+    // function name 'a'"), so `(a, b) => a + b` naturally fails. This
+    // matches Notion's model: lambdas always bind reserved names like
+    // `current` + `index`, never arbitrary user-chosen variables.
+    const p = parseFormula("=(current, index) => current + index");
+    expect(p.error).toBeUndefined();
+    const expr = (p.ast as { kind: "math"; expr: { kind: string; params?: string[] } }).expr;
+    expect(expr.kind).toBe("lambda");
+    expect((expr as { params: string[] }).params).toEqual(["current", "index"]);
+  });
+
+  it("`(a, b) => a + b` errors at body parse (non-whitelisted bare ident)", () => {
+    const r = evalFormula("=(a, b) => a + b", { row: mkRow(), db: mkDb(), pages: [] });
+    expect(r.error?.message).toMatch(/expected '\('/i);
+  });
+
+  it("`() => 5` parses as zero-arg lambda", () => {
+    const p = parseFormula("=() => 5");
+    const expr = (p.ast as { kind: "math"; expr: { kind: string; params?: string[] } }).expr;
+    expect(expr.kind).toBe("lambda");
+    expect((expr as { params: string[] }).params).toEqual([]);
+  });
+
+  it("`(5 + 3)` is paren expr, NOT lambda (lookahead restores)", () => {
+    const p = parseFormula("=(5 + 3)");
+    const expr = (p.ast as { kind: "math"; expr: { kind: string } }).expr;
+    // Should be a binop, not lambda
+    expect(expr.kind).toBe("binop");
+  });
+
+  it("`(current)` is paren expr containing bare lambda-builtin ref", () => {
+    const p = parseFormula("=(current)");
+    const expr = (p.ast as { kind: "math"; expr: { kind: string; name?: string } }).expr;
+    expect(expr.kind).toBe("ref");
+    expect((expr as { name: string }).name).toBe("current");
+  });
+
+  it("bare `current` outside any call parses as ref (whitelisted)", () => {
+    const p = parseFormula("=current");
+    const expr = (p.ast as { kind: "math"; expr: { kind: string; name?: string } }).expr;
+    expect(expr.kind).toBe("ref");
+    expect((expr as { name: string }).name).toBe("current");
+  });
+
+  it("bare `index` and `accumulator` also whitelisted", () => {
+    const e1 = parseFormula("=index").ast as { kind: "math"; expr: { kind: string } };
+    const e2 = parseFormula("=accumulator").ast as { kind: "math"; expr: { kind: string } };
+    expect(e1.expr.kind).toBe("ref");
+    expect(e2.expr.kind).toBe("ref");
+  });
+
+  it("unrecognised bare ident still errors (no implicit ref fallback)", () => {
+    const r = evalFormula("=foo", { row: mkRow(), db: mkDb(), pages: [] });
+    expect(r.error?.message).toMatch(/expected '\('/i);
+  });
+});
+
+describe("formulaEngine — lambda eval + env stack (1.D.1)", () => {
+  const baseCtx = () => ({ row: mkRow(), db: mkDb(), pages: [] });
+
+  it("bare lambda evaluates to null (only useful inside higher-order fn)", () => {
+    expect(formatFormulaValue(evalFormula("=current => current + 1", baseCtx()).value)).toBe("");
+  });
+
+  it("`current` without env binds resolves to null (toNumber → 0 in math)", () => {
+    // resolveRef returns NULL; toNumber(NULL) = 0 in coerce.ts.
+    expect(formatFormulaValue(evalFormula("=current + 5", baseCtx()).value)).toBe("5");
+  });
+
+  it("env-stack injection — `current` resolves to bound value", () => {
+    const ctx = { ...baseCtx(), envStack: [{ current: nv(42) }] };
+    expect(formatFormulaValue(evalFormula("=current", ctx).value)).toBe("42");
+    expect(formatFormulaValue(evalFormula("=current * 2", ctx).value)).toBe("84");
+  });
+
+  it("innermost env frame wins on shadowing", () => {
+    const ctx = {
+      ...baseCtx(),
+      envStack: [{ current: nv(1) }, { current: nv(2) }, { current: nv(3) }],
+    };
+    expect(formatFormulaValue(evalFormula("=current", ctx).value)).toBe("3");
+  });
+
+  it("env-stack lookup is case-insensitive (matches resolveRef contract)", () => {
+    const ctx = { ...baseCtx(), envStack: [{ current: sv("hello") }] };
+    expect(formatFormulaValue(evalFormula("=CURRENT", ctx).value)).toBe("hello");
+    expect(formatFormulaValue(evalFormula("=Current", ctx).value)).toBe("hello");
+  });
+
+  it("env-stack shadows property of same name", () => {
+    // Property "current" exists; env-stack frame wins.
+    const db = mkDb({ properties: [{ id: "current", name: "current", type: "text" }] });
+    const ctx = {
+      row: mkRow({ rowProps: { current: "from-prop" } }),
+      db, pages: [],
+      envStack: [{ current: sv("from-env") }],
+    };
+    expect(formatFormulaValue(evalFormula("=current", ctx).value)).toBe("from-env");
+  });
+
+  it("falls through to property lookup when env-stack lacks the name", () => {
+    const db = mkDb({ properties: [{ id: "score", name: "Score", type: "number" }] });
+    const ctx = {
+      row: mkRow({ rowProps: { score: 99 } }),
+      db, pages: [],
+      envStack: [{ current: nv(1) }], // no "score" key
+    };
+    expect(formatFormulaValue(evalFormula("={{Score}}", ctx).value)).toBe("99");
   });
 });

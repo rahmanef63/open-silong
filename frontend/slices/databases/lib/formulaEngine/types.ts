@@ -62,7 +62,12 @@ export type ExprNode =
    *  field (title / icon / id) or a user-defined property by name. Lists
    *  of pages map the access over each element. Pure scalars resolve to
    *  NULL. Built by the parser as a left-associative chain after primary. */
-  | { kind: "member"; object: ExprNode; member: string; pos: number };
+  | { kind: "member"; object: ExprNode; member: string; pos: number }
+  /** Arrow lambda — `name => body` or `(a, b) => body`. Only meaningful
+   *  when passed as an arg to a higher-order fn (map/filter/reduce/etc);
+   *  outside that context it evaluates to NULL. Body is parsed via the
+   *  full expression precedence ladder so it can carry any subexpression. */
+  | { kind: "lambda"; params: string[]; body: ExprNode; pos: number };
 
 export type BinOp =
   // Arithmetic
