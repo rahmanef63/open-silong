@@ -1,31 +1,25 @@
 import { useRef } from "react";
 import type { Database, Property } from "@/shared/types/domain";
 import { Input } from "@/shared/ui/input";
-import { Textarea } from "@/shared/ui/textarea";
 import { Label } from "./atoms";
 import { FunctionPicker } from "../../property-cells/formula-cell/FunctionPicker";
+import { FormulaExpressionEditor, type FormulaExpressionEditorRef } from "../../property-cells/formula-cell/FormulaExpressionEditor";
 
 export function FormulaConfig({ db, prop, updateProperty }: {
   db: Database;
   prop: Property;
   updateProperty: (dbId: string, propId: string, patch: Partial<Property>) => void;
 }) {
-  const taRef = useRef<HTMLTextAreaElement | null>(null);
+  const editorRef = useRef<FormulaExpressionEditorRef | null>(null);
   const value = prop.formulaExpression ?? "";
 
   const insertFunction = (name: string) => {
-    const ta = taRef.current;
-    const start = ta?.selectionStart ?? value.length;
-    const end = ta?.selectionEnd ?? value.length;
-    const needsMathPrefix = value.trim() === "" && start === 0;
-    const insert = `${needsMathPrefix ? "=" : ""}${name}()`;
-    const next = value.slice(0, start) + insert + value.slice(end);
-    updateProperty(db.id, prop.id, { formulaExpression: next });
-    queueMicrotask(() => {
-      ta?.focus();
-      const caret = start + insert.length - 1;
-      ta?.setSelectionRange(caret, caret);
-    });
+    if (value.trim() === "") {
+      updateProperty(db.id, prop.id, { formulaExpression: `=${name}()` });
+      queueMicrotask(() => editorRef.current?.setCaret(2 + name.length));
+      return;
+    }
+    editorRef.current?.insertAtCaret(`${name}()`, -1);
   };
 
   return (
@@ -34,16 +28,17 @@ export function FormulaConfig({ db, prop, updateProperty }: {
         <Label>Expression</Label>
         <FunctionPicker onPick={insertFunction} />
       </div>
-      <Textarea
-        ref={taRef}
+      <FormulaExpressionEditor
+        ref={editorRef}
         value={value}
-        onChange={(e) => updateProperty(db.id, prop.id, { formulaExpression: e.target.value })}
+        onChange={(next) => updateProperty(db.id, prop.id, { formulaExpression: next })}
+        db={db}
+        multiline
         placeholder='{{title}} or =round({{Price}} * 1.1, 2)'
-        rows={3}
-        className="mt-1 min-h-0 px-2 py-1 font-mono text-xs"
+        className="mt-1"
       />
       <p className="mt-1 text-[11px] text-muted-foreground">
-        ~50 functions across string/number/date/list/logic — open the <code>fx ▾</code> picker to browse.
+        Type to autocomplete · <code>fx ▾</code> picker shows all ~50 functions grouped.
       </p>
     </div>
   );
