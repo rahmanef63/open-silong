@@ -1,6 +1,24 @@
 import { bool, num, str, NULL_VALUE, type FormulaValue } from "../types";
 import { isEmpty, toBoolean, toNumber, toString } from "../coerce";
-import { need, type FnRegistry } from "./_registry";
+import { need, type FnRegistry, type FnSignatureMap } from "./_registry";
+
+// Keys `toString` / `toNumber` collide with Object.prototype on a plain
+// `Record<string, X>`, breaking the union literal widening for those rows.
+// Per-row `as const` on the literal-typed fields sidesteps the collision
+// without forcing readonly on the array fields.
+const G = "logic" as const;
+export const logicSigs: FnSignatureMap = {
+  if:        { args: ["cond", "thenVal", "elseVal?"],               returns: "any" as const,     group: G, desc: "Conditional value" },
+  ifs:       { args: ["cond1", "val1", "...", "default?"],          returns: "any" as const,     group: G, desc: "Chained if/elseif — first truthy cond wins" },
+  switch:    { args: ["value", "case1", "val1", "...", "default?"], returns: "any" as const,     group: G, desc: "Match value against cases" },
+  and:       { args: ["...values"],                                 returns: "boolean" as const, group: G, desc: "True if every value is truthy" },
+  or:        { args: ["...values"],                                 returns: "boolean" as const, group: G, desc: "True if any value is truthy" },
+  not:       { args: ["value"],                                     returns: "boolean" as const, group: G, desc: "Negate boolean coerce" },
+  empty:     { args: ["value"],                                     returns: "boolean" as const, group: G, desc: "True if null, empty string, or empty list" },
+  toBoolean: { args: ["value"],                                     returns: "boolean" as const, group: G, desc: "Coerce to boolean" },
+  toNumber:  { args: ["value"],                                     returns: "number" as const,  group: G, desc: "Coerce to number" },
+  toString:  { args: ["value"],                                     returns: "string" as const,  group: G, desc: "Coerce to string" },
+};
 
 export const logicFns: FnRegistry = {
   if: (n, args) => {

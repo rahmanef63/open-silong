@@ -1,6 +1,28 @@
 import { num } from "../types";
 import { toNumber } from "../coerce";
-import { need, type FnRegistry } from "./_registry";
+import { need, type FnRegistry, type FnSignatureMap } from "./_registry";
+
+export const numberSigs: FnSignatureMap = {
+  round:  { args: ["n"],          returns: "number", group: "number", desc: "Nearest integer" },
+  floor:  { args: ["n"],          returns: "number", group: "number", desc: "Round down" },
+  ceil:   { args: ["n"],          returns: "number", group: "number", desc: "Round up" },
+  abs:    { args: ["n"],          returns: "number", group: "number", desc: "Absolute value" },
+  sign:   { args: ["n"],          returns: "number", group: "number", desc: "-1, 0, or 1" },
+  sqrt:   { args: ["n"],          returns: "number", group: "number", desc: "Square root" },
+  exp:    { args: ["n"],          returns: "number", group: "number", desc: "e raised to n" },
+  ln:     { args: ["n"],          returns: "number", group: "number", desc: "Natural log" },
+  log10:  { args: ["n"],          returns: "number", group: "number", desc: "Base-10 log" },
+  log2:   { args: ["n"],          returns: "number", group: "number", desc: "Base-2 log" },
+  sin:    { args: ["radians"],    returns: "number", group: "number", desc: "Sine" },
+  cos:    { args: ["radians"],    returns: "number", group: "number", desc: "Cosine" },
+  tan:    { args: ["radians"],    returns: "number", group: "number", desc: "Tangent" },
+  pow:    { args: ["base", "exp"], returns: "number", group: "number", desc: "base raised to exp" },
+  mod:    { args: ["a", "b"],     returns: "number", group: "number", desc: "Remainder of a / b" },
+  min:    { args: ["...values"],  returns: "number", group: "number", desc: "Smallest (vararg or list)" },
+  max:    { args: ["...values"],  returns: "number", group: "number", desc: "Largest (vararg or list)" },
+  pi:     { args: [],             returns: "number", group: "number", desc: "Math.PI" },
+  e:      { args: [],             returns: "number", group: "number", desc: "Math.E" },
+};
 
 /** Wrap a 1-arg Math.* for the registry. */
 const m1 = (fn: (x: number) => number) =>

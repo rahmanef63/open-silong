@@ -1,7 +1,24 @@
 import { date, num, str, NULL_VALUE } from "../types";
 import { toDate, toNumber, toString } from "../coerce";
 import { addUnit, diffUnit, formatDate } from "../dateUtils";
-import { need, type FnRegistry } from "./_registry";
+import { need, type FnRegistry, type FnSignatureMap } from "./_registry";
+
+export const dateSigs: FnSignatureMap = {
+  now:           { args: [],                              returns: "date",   group: "date", desc: "Current timestamp" },
+  today:         { args: [],                              returns: "date",   group: "date", desc: "Today's date (no time)" },
+  dateAdd:       { args: ["d", "n", "unit"],              returns: "date",   group: "date", desc: 'Add n units to d (unit: "day"|"month"|"year"|...)' },
+  dateSubtract:  { args: ["d", "n", "unit"],              returns: "date",   group: "date", desc: "Subtract n units from d" },
+  dateBetween:   { args: ["a", "b", "unit"],              returns: "number", group: "date", desc: "Distance a→b in unit" },
+  formatDate:    { args: ["d", "pattern"],                returns: "string", group: "date", desc: 'Format d via tokens like "YYYY-MM-DD"' },
+  year:          { args: ["d"],                           returns: "number", group: "date", desc: "Year of d" },
+  month:         { args: ["d"],                           returns: "number", group: "date", desc: "Month of d (1–12)" },
+  day:           { args: ["d"],                           returns: "number", group: "date", desc: "Day of month (1–31)" },
+  hour:          { args: ["d"],                           returns: "number", group: "date", desc: "Hour (0–23)" },
+  minute:        { args: ["d"],                           returns: "number", group: "date", desc: "Minute (0–59)" },
+  second:        { args: ["d"],                           returns: "number", group: "date", desc: "Second (0–59)" },
+  timestamp:     { args: ["d"],                           returns: "number", group: "date", desc: "Epoch ms" },
+  fromTimestamp: { args: ["ms"],                          returns: "date",   group: "date", desc: "Date from epoch ms" },
+};
 
 /** Coerce arg → Date; null bubbles to NULL_VALUE numeric extraction (NaN). */
 function dateOrNull(arg: ReturnType<typeof toDate>) {
