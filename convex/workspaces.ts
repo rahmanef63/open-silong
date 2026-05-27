@@ -11,6 +11,7 @@ import {
   requireWorkspaceMember,
   slugifyWorkspaceName,
 } from "./_shared/workspace";
+import { COUNT_CAPS } from "./_shared/limits";
 import { rateLimit } from "./_shared/rateLimit";
 
 const NAME_MAX = 60;
@@ -74,7 +75,7 @@ export const members = query({
     const rows = await ctx.db
       .query("workspaceMembers")
       .withIndex("by_workspace", (q) => q.eq("workspaceId", workspaceId))
-      .collect();
+      .take(COUNT_CAPS.workspaceMembersScan);
     return await Promise.all(
       rows.map(async (m) => {
         const u = await ctx.db.get(m.userId);

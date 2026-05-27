@@ -1,6 +1,7 @@
 import type { MutationCtx, QueryCtx } from "../_generated/server";
 import type { Doc, Id } from "../_generated/dataModel";
 import { requireAuth } from "./auth";
+import { COUNT_CAPS } from "./limits";
 import { seedWelcomeContent } from "./seedWelcomeContent";
 
 const FORBIDDEN = "Tidak berwenang";
@@ -45,7 +46,7 @@ export async function ensurePersonalWorkspace(
   const owned = await ctx.db
     .query("workspaces")
     .withIndex("by_user", (q) => q.eq("userId", userId))
-    .collect();
+    .take(COUNT_CAPS.workspacesPerUserScan);
 
   let personal = owned.find((w) => w.isPersonal === true) ?? owned[0];
 
@@ -111,7 +112,7 @@ export async function readPersonalWorkspace(
   const owned = await ctx.db
     .query("workspaces")
     .withIndex("by_user", (q) => q.eq("userId", userId))
-    .collect();
+    .take(COUNT_CAPS.workspacesPerUserScan);
   return owned.find((w) => w.isPersonal === true) ?? owned[0] ?? null;
 }
 
@@ -199,7 +200,7 @@ export async function listMyWorkspaces(
   const memberships = await ctx.db
     .query("workspaceMembers")
     .withIndex("by_user", (q) => q.eq("userId", userId))
-    .collect();
+    .take(COUNT_CAPS.workspacesPerUserScan * 4);
   const docs = await Promise.all(
     memberships.map(async (m) => {
       const ws = await ctx.db.get(m.workspaceId);
@@ -242,14 +243,14 @@ export async function pagesInActiveWorkspace(
   const byWs = await ctx.db
     .query("pages")
     .withIndex("by_workspace", (q) => q.eq("workspaceId", active._id))
-    .collect();
+    .take(COUNT_CAPS.pagesPerWorkspaceScan);
   if (!active.isPersonal || (active.ownerId ?? active.userId) !== userId) {
     return byWs;
   }
   const byUser = await ctx.db
     .query("pages")
     .withIndex("by_user", (q) => q.eq("userId", userId))
-    .collect();
+    .take(COUNT_CAPS.pagesPerWorkspaceScan);
   const legacy = byUser.filter((p) => !p.workspaceId);
   if (legacy.length === 0) return byWs;
   const seen = new Set(byWs.map((p) => p._id));
@@ -270,14 +271,14 @@ export async function databasesInActiveWorkspace(
   const byWs = await ctx.db
     .query("databases")
     .withIndex("by_workspace", (q) => q.eq("workspaceId", active._id))
-    .collect();
+    .take(COUNT_CAPS.databasesPerWorkspaceScan);
   if (!active.isPersonal || (active.ownerId ?? active.userId) !== userId) {
     return byWs;
   }
   const byUser = await ctx.db
     .query("databases")
     .withIndex("by_user", (q) => q.eq("userId", userId))
-    .collect();
+    .take(COUNT_CAPS.databasesPerWorkspaceScan);
   const legacy = byUser.filter((d) => !d.workspaceId);
   if (legacy.length === 0) return byWs;
   const seen = new Set(byWs.map((d) => d._id));
