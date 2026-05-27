@@ -9,6 +9,7 @@ import {
 import { Button } from "@/shared/ui/button";
 import { evaluateFormulaWithError } from "../lib/formula";
 import { FunctionPicker } from "./formula-cell/FunctionPicker";
+import { FormulaExpressionEditor, type FormulaExpressionEditorRef } from "./formula-cell/FormulaExpressionEditor";
 
 interface Props {
   db: Database;
@@ -21,7 +22,7 @@ export function FormulaCell({ db, prop, row, cellClass }: Props) {
   const { pages, updateProperty } = useDbAdapter();
   const expression = prop.formulaExpression ?? "{{title}}";
   const [draft, setDraft] = useState(expression);
-  const inputRef = useRef<HTMLInputElement | null>(null);
+  const editorRef = useRef<FormulaExpressionEditorRef | null>(null);
 
   // Live re-eval of the draft so users see errors as they type.
   const liveResult = useMemo(
@@ -39,28 +40,22 @@ export function FormulaCell({ db, prop, row, cellClass }: Props) {
   };
 
   const jumpToErrorPos = () => {
-    if (!liveResult.error || !inputRef.current) return;
-    inputRef.current.focus();
-    inputRef.current.setSelectionRange(liveResult.error.pos, liveResult.error.pos + 1);
+    if (!liveResult.error) return;
+    editorRef.current?.setCaret(liveResult.error.pos, liveResult.error.pos + 1);
   };
 
-  /** Insert `fnName()` at caret, then position caret BETWEEN the parens so
-   *  the user can start typing args immediately. Restores focus. */
+  /** Picker click → insert `fnName()` via the editor's caret-aware splice.
+   *  If draft is currently empty, prepend `=` so the parser enters math mode
+   *  and the function call evaluates instead of being treated as template text. */
   const insertFunction = (name: string) => {
-    const input = inputRef.current;
-    const start = input?.selectionStart ?? draft.length;
-    const end = input?.selectionEnd ?? draft.length;
-    // If draft is empty AND fn returns a non-string, prepend `=` so it parses
-    // as expression mode. Otherwise insert raw — user can wrap in `=` if needed.
-    const needsMathPrefix = draft.trim() === "" && start === 0;
-    const insert = `${needsMathPrefix ? "=" : ""}${name}()`;
-    const next = draft.slice(0, start) + insert + draft.slice(end);
-    setDraft(next);
-    queueMicrotask(() => {
-      input?.focus();
-      const caret = start + insert.length - 1; // between the parens
-      input?.setSelectionRange(caret, caret);
-    });
+    if (draft.trim() === "") {
+      // Replace whole draft so the `=` prefix sits at the start.
+      setDraft(`=${name}()`);
+      // Position caret between parens after state flush.
+      queueMicrotask(() => editorRef.current?.setCaret(2 + name.length));
+      return;
+    }
+    editorRef.current?.insertAtCaret(`${name}()`, -1);
   };
 
   return (
@@ -84,15 +79,14 @@ export function FormulaCell({ db, prop, row, cellClass }: Props) {
             <label className="block text-[11px] font-medium text-muted-foreground">Expression</label>
             <FunctionPicker onPick={insertFunction} />
           </div>
-          <input
-            ref={inputRef}
+          <FormulaExpressionEditor
+            ref={editorRef}
             value={draft}
-            onChange={(e) => setDraft(e.target.value)}
+            onChange={setDraft}
+            db={db}
+            error={liveResult.error ?? null}
+            onEnterSubmit={save}
             placeholder="{{title}}"
-            className={cn(
-              "h-8 w-full rounded-md border bg-background px-2 font-mono text-xs outline-none",
-              liveResult.error ? "border-warning/60 ring-1 ring-warning/30" : "border-border",
-            )}
           />
           {liveResult.error && (
             <Button
@@ -103,8 +97,7 @@ export function FormulaCell({ db, prop, row, cellClass }: Props) {
             >
               <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
               <span>
-                {liveResult.error.message}
-                <span className="text-warning/70"> · pos {liveResult.error.pos} (click to jump)</span>
+                Jump to position {liveResult.error.pos}
               </span>
             </Button>
           )}
@@ -112,7 +105,7 @@ export function FormulaCell({ db, prop, row, cellClass }: Props) {
             <div>Refs: <code className="rounded bg-background px-1">{"{{title}}"}</code> · <code className="rounded bg-background px-1">{"{{Property}}"}</code></div>
             <div>Math: <code className="rounded bg-background px-1">= {"{{Score}}"} * 2</code></div>
             <div>Compare: <code>==</code> <code>!=</code> <code>&lt;</code> <code>&gt;=</code> · Logic: <code>&amp;&amp;</code> <code>||</code> <code>!</code></div>
-            <div>Tip: hit the <code>fx ▾</code> button to browse all ~50 functions by group.</div>
+            <div>Tip: type to autocomplete · <code>fx ▾</code> for full list.</div>
           </div>
           <div className="flex items-center justify-between gap-2">
             <span className="min-w-0 truncate text-xs text-muted-foreground">
