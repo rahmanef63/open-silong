@@ -169,6 +169,13 @@ function compareSortKey(a: FormulaValue, b: FormulaValue): number {
   return an - bn;
 }
 
+/** Set of higher-order fn names (lowercased) — used by the editor
+ *  (1.F + 1.D.4) to surface lambda-only refs (current/index/accumulator)
+ *  in autocomplete when the caret sits inside one of these bodies. */
+export const HIGHER_ORDER_NAMES = new Set(Object.keys({
+  map: 1, filter: 1, reduce: 1, find: 1, sort: 1, every: 1, some: 1,
+}));
+
 export const higherOrderSigs: FnSignatureMap = {
   map:    { args: ["list", "body"],            returns: "list",    group: "list", desc: "Transform each element via lambda body" },
   filter: { args: ["list", "body"],            returns: "list",    group: "list", desc: "Keep elements where body is truthy" },
