@@ -5,10 +5,11 @@ import { AlertTriangle } from "lucide-react";
 import type { Database } from "@/shared/types/domain";
 import { cn } from "@/shared/lib/utils";
 import {
-  SIGNATURES, listFunctionNames,
+  SIGNATURES, listFunctionNames, getSignature,
 } from "../../lib/formulaEngine/functions";
 import type { FormulaError } from "../../lib/formulaEngine/types";
 import { getTokenAt, propNeedsClose, type Token } from "./tokenize";
+import { findEnclosingCall } from "./enclosingCall";
 
 /** Suggestion presented in the dropdown. `insert` is the literal text
  *  that replaces `[token.start .. caret]`. Optional `caretOffset`
@@ -85,6 +86,17 @@ export const FormulaExpressionEditor = forwardRef<FormulaExpressionEditorRef, Fo
     // Derive token + suggestions from value + caret.
     const token: Token = useMemo(() => getTokenAt(value, caret), [value, caret]);
     const suggestions: Suggestion[] = useMemo(() => buildSuggestions(token, value, caret, db), [token, value, caret, db]);
+
+    // Signature hint — show when caret sits inside a fn(...) call and the
+    // fn name resolves to a known signature. Hidden when the autocomplete
+    // dropdown is open (same screen real-estate; dropdown wins).
+    const sigHint = useMemo(() => {
+      const call = findEnclosingCall(value, caret);
+      if (!call) return null;
+      const sig = getSignature(call.fnName);
+      if (!sig) return null;
+      return { name: call.fnName, sig, argIndex: call.argIndex };
+    }, [value, caret]);
 
     // Auto-close dropdown when no suggestions OR prefix evaporates.
     useEffect(() => {
@@ -178,6 +190,36 @@ export const FormulaExpressionEditor = forwardRef<FormulaExpressionEditorRef, Fo
             className={baseInputCls}
             spellCheck={false}
           />
+        )}
+
+        {sigHint && !(open && suggestions.length > 0) && (
+          <div className="pointer-events-none absolute left-0 right-0 top-full z-40 mt-1 rounded-md border border-border bg-popover px-2 py-1 font-mono text-[10px] text-popover-foreground shadow-sm">
+            <span className="text-foreground">{sigHint.name}(</span>
+            {sigHint.sig.args.length === 0 ? (
+              <span className="text-muted-foreground">no args</span>
+            ) : (
+              sigHint.sig.args.map((argName, i) => {
+                // Variadic ("...x") collects every trailing arg under one slot,
+                // so any current-arg ≥ the variadic index counts as active.
+                const isVariadic = argName.startsWith("...");
+                const isActive = isVariadic
+                  ? sigHint.argIndex >= i
+                  : i === sigHint.argIndex;
+                return (
+                  <span key={`${argName}-${i}`}>
+                    <span className={cn(
+                      isActive ? "font-bold text-foreground underline decoration-foreground/40 underline-offset-4" : "text-muted-foreground",
+                    )}>
+                      {argName}
+                    </span>
+                    {i < sigHint.sig.args.length - 1 && <span className="text-muted-foreground">, </span>}
+                  </span>
+                );
+              })
+            )}
+            <span className="text-foreground">) → </span>
+            <span className="text-muted-foreground">{sigHint.sig.returns}</span>
+          </div>
         )}
 
         {open && suggestions.length > 0 && (
