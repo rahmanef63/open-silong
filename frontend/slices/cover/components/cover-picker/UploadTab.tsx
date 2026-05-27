@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useRef } from "react";
 import { Loader2, Upload as UploadIcon } from "lucide-react";
 import { toast } from "sonner";
@@ -66,10 +67,14 @@ export function UploadTab({ onPick }: Props) {
 
       {preview && (
         <div className="space-y-2">
-          <div className="overflow-hidden rounded-md border border-border bg-card">
-            <img
+          <div className="relative overflow-hidden rounded-md border border-border bg-card">
+            {/* blob: URL from local File — next/image needs unoptimized for non-http(s) sources */}
+            <Image
               src={preview.url}
               alt="preview"
+              width={600}
+              height={192}
+              unoptimized
               className="block max-h-48 w-full object-cover"
             />
           </div>

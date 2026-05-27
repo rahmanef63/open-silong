@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { useMemo } from "react";
 import { FileText, Rows3, Database } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
@@ -86,12 +87,14 @@ export function TemplateCard({
     >
       <div className={cn("relative h-32 grid place-items-center overflow-hidden", !hero && "bg-gradient-to-br", !hero && bg)}>
         {hero ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          // Admin-curated template hero — arbitrary host, skip optimization.
+          <Image
             src={hero}
             alt=""
-            loading="lazy"
-            className="absolute inset-0 h-full w-full object-cover transition-transform group-hover:scale-105"
+            fill
+            unoptimized
+            sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+            className="object-cover transition-transform group-hover:scale-105"
           />
         ) : (
           <div className={cn("text-5xl leading-none drop-shadow-sm", fg)}>
@@ -148,12 +151,13 @@ export function FeaturedBanner({
       </div>
       {hero ? (
         <div className="relative w-44 shrink-0 overflow-hidden">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src={hero}
             alt=""
-            loading="lazy"
-            className="absolute inset-0 h-full w-full object-cover transition-transform group-hover:scale-105"
+            fill
+            unoptimized
+            sizes="176px"
+            className="object-cover transition-transform group-hover:scale-105"
           />
         </div>
       ) : (
