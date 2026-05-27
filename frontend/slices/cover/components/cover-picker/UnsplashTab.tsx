@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import { useAction } from "convex/react";
 import { Loader2, Search } from "lucide-react";
@@ -106,7 +107,14 @@ export function UnsplashTab({ onPick }: Props) {
               title={`Photo by ${p.photographer}`}
               className="group relative overflow-hidden rounded-md border border-border/40 transition hover:border-foreground"
             >
-              <img src={p.thumb} alt={p.alt} loading="lazy" decoding="async" className="block aspect-[5/3] w-full object-cover" />
+              <Image
+                src={p.thumb}
+                alt={p.alt}
+                width={400}
+                height={240}
+                sizes="(min-width: 768px) 25vw, (min-width: 640px) 33vw, 50vw"
+                className="block aspect-[5/3] w-full object-cover"
+              />
               <span className="absolute inset-x-0 bottom-0 truncate bg-foreground/60 px-1.5 py-0.5 text-[10px] text-background opacity-0 transition group-hover:opacity-100">
                 {p.photographer}
               </span>

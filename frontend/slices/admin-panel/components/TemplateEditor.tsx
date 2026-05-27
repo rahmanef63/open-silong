@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { Sparkles } from "lucide-react";
@@ -180,8 +181,9 @@ export function TemplateEditor({ templateId, onClose }: Props) {
                 className="flex-1 font-mono text-xs"
               />
               {url && /^https?:\/\//i.test(url) && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={url} alt="" loading="lazy" decoding="async" className="h-8 w-12 rounded border border-border object-cover bg-muted/20" />
+                // Admin-pasted arbitrary remote URL — not on next.config remotePatterns
+                // allowlist, so `unoptimized` skips the Image Optimization route.
+                <Image src={url} alt="" width={48} height={32} unoptimized className="h-8 w-12 rounded border border-border object-cover bg-muted/20" />
               )}
               <Button
                 type="button"

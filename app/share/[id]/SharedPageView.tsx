@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import katex from "katex";
 import "katex/dist/katex.min.css";
@@ -136,18 +137,21 @@ function ReadBlock({ block }: { block: Block }) {
       const alignCls =
         block.align === "left" ? "mr-auto" :
         block.align === "right" ? "ml-auto" : "mx-auto";
-      // External user-pasted urls — keep as <img> with referrerpolicy
-      // tightening; CSP img-src already enforced at the edge.
+      // External user-pasted URLs — arbitrary host, skip optimization.
+      // `unoptimized` passes the src through unchanged so the existing
+      // CSP img-src + referrerPolicy stance still applies at the edge.
       return (
         <figure className="py-2">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src={block.url}
             alt={block.caption ?? ""}
-            style={widthStyle}
+            width={0}
+            height={0}
+            unoptimized
+            sizes="100vw"
+            style={{ ...widthStyle, height: "auto" }}
             className={`block rounded-md border border-border ${alignCls}`}
             referrerPolicy="no-referrer"
-            loading="lazy"
           />
           {block.caption && (
             <figcaption className="mt-1 text-center text-xs text-muted-foreground">

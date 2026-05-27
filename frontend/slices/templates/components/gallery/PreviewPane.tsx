@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { ChevronRight, Images as ImagesIcon } from "lucide-react";
 import { DynamicIcon } from "@/shared/components/icon-picker";
 import { Button } from "@/shared/ui/button";
@@ -65,7 +66,6 @@ export function PreviewPane({
                 <AccordionContent className="px-4 pb-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {selected.images.map((url, i) => (
-                      // eslint-disable-next-line @next/next/no-img-element
                       <a
                         key={i}
                         href={url}
@@ -73,11 +73,17 @@ export function PreviewPane({
                         rel="noopener noreferrer"
                         className="block rounded-md border border-border overflow-hidden bg-muted/20 hover:border-foreground/40 transition-colors"
                       >
-                        <img
+                        {/* Admin-curated screenshot URLs — arbitrary host, skip optimization.
+                            width=0/height=0 + style preserves natural aspect under max-h cap. */}
+                        <Image
                           src={url}
                           alt={`${selected.name} screenshot ${i + 1}`}
-                          loading="lazy"
-                          className="block w-full h-auto max-h-[420px] object-contain bg-background"
+                          width={0}
+                          height={0}
+                          unoptimized
+                          sizes="50vw"
+                          style={{ width: "100%", height: "auto", maxHeight: 420 }}
+                          className="block object-contain bg-background"
                         />
                       </a>
                     ))}
