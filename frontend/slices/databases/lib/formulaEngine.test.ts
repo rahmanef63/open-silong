@@ -896,3 +896,124 @@ describe("formulaEngine — sort + every + some (1.D.3)", () => {
     ).value)).toBe("true");
   });
 });
+
+// ---- 1.H: rollup ↔ formula bridge -----------------------------------------
+
+describe("formulaEngine — rollup-in-formula (1.H)", () => {
+  // Items db with a numeric `price` + checkbox `paid` + date `dueDate`
+  const itemsDb = mkDb({
+    id: "items",
+    properties: [
+      { id: "price",    name: "Price",    type: "number" },
+      { id: "paid",     name: "Paid",     type: "checkbox" },
+      { id: "dueDate",  name: "DueDate",  type: "date" },
+    ],
+  });
+  const item1 = mkRow({ id: "i1", title: "Item 1", rowOfDatabaseId: "items", rowProps: { price: 10, paid: true,  dueDate: { date: "2026-01-15" } } });
+  const item2 = mkRow({ id: "i2", title: "Item 2", rowOfDatabaseId: "items", rowProps: { price: 20, paid: false, dueDate: { date: "2026-03-20" } } });
+  const item3 = mkRow({ id: "i3", title: "Item 3", rowOfDatabaseId: "items", rowProps: { price: 30, paid: true,  dueDate: { date: "2026-02-05" } } });
+
+  // Orders db with a relation → items and several rollup variants.
+  const mkOrdersDb = (extra: Array<Record<string, unknown>> = []) => mkDb({
+    id: "orders",
+    properties: [
+      { id: "items", name: "Items", type: "relation", relationDatabaseId: "items" },
+      ...extra,
+    ] as never,
+  });
+
+  const orderCtx = (rollupProps: Array<Record<string, unknown>>, itemIds: string[] = ["i1", "i2", "i3"]) => {
+    const db = mkOrdersDb(rollupProps);
+    const order = mkRow({ id: "o1", title: "Order", rowOfDatabaseId: "orders", rowProps: { items: itemIds } });
+    return {
+      row: order, db,
+      pages: [item1, item2, item3, order],
+      databases: [itemsDb, db],
+    };
+  };
+
+  it("sum aggregate — usable in math", () => {
+    const ctx = orderCtx([{ id: "total", name: "Total", type: "rollup",
+      rollupRelationPropertyId: "items", rollupTargetPropertyId: "price", rollupAggregate: "sum" }]);
+    expect(formatFormulaValue(evalFormula(`=prop("Total")`, ctx).value)).toBe("60");
+    // 60 * 1.1 — V8 may or may not preserve IEEE-754 imprecision; assert
+    // closeness rather than exact representation.
+    const out = parseFloat(formatFormulaValue(evalFormula(`=prop("Total") * 1.1`, ctx).value));
+    expect(out).toBeCloseTo(66, 4);
+  });
+
+  it("count aggregate — independent of target prop", () => {
+    const ctx = orderCtx([{ id: "n", name: "Count", type: "rollup",
+      rollupRelationPropertyId: "items", rollupAggregate: "count" }]);
+    expect(formatFormulaValue(evalFormula(`=prop("Count")`, ctx).value)).toBe("3");
+  });
+
+  it("avg / min / max numeric aggregates", () => {
+    const ctx = orderCtx([
+      { id: "avg",  name: "Avg",  type: "rollup", rollupRelationPropertyId: "items", rollupTargetPropertyId: "price", rollupAggregate: "avg" },
+      { id: "min",  name: "Min",  type: "rollup", rollupRelationPropertyId: "items", rollupTargetPropertyId: "price", rollupAggregate: "min" },
+      { id: "max",  name: "Max",  type: "rollup", rollupRelationPropertyId: "items", rollupTargetPropertyId: "price", rollupAggregate: "max" },
+    ]);
+    expect(formatFormulaValue(evalFormula(`=prop("Avg")`, ctx).value)).toBe("20");
+    expect(formatFormulaValue(evalFormula(`=prop("Min")`, ctx).value)).toBe("10");
+    expect(formatFormulaValue(evalFormula(`=prop("Max")`, ctx).value)).toBe("30");
+  });
+
+  it("count_unique — distinct target values", () => {
+    const ctx = orderCtx([{ id: "u", name: "Unique", type: "rollup",
+      rollupRelationPropertyId: "items", rollupTargetPropertyId: "price", rollupAggregate: "count_unique" }]);
+    expect(formatFormulaValue(evalFormula(`=prop("Unique")`, ctx).value)).toBe("3");
+  });
+
+  it("checked + percent_checked over checkbox target", () => {
+    const ctx = orderCtx([
+      { id: "chk",  name: "PaidCnt", type: "rollup", rollupRelationPropertyId: "items", rollupTargetPropertyId: "paid", rollupAggregate: "checked" },
+      { id: "pct",  name: "PaidPct", type: "rollup", rollupRelationPropertyId: "items", rollupTargetPropertyId: "paid", rollupAggregate: "percent_checked" },
+    ]);
+    // 2 of 3 paid → checked=2, pct=66.666…
+    expect(formatFormulaValue(evalFormula(`=prop("PaidCnt")`, ctx).value)).toBe("2");
+    expect(formatFormulaValue(evalFormula(`=round(prop("PaidPct"))`, ctx).value)).toBe("67");
+  });
+
+  it("values aggregate → list (composable with map/filter/sum)", () => {
+    const ctx = orderCtx([{ id: "vals", name: "Prices", type: "rollup",
+      rollupRelationPropertyId: "items", rollupTargetPropertyId: "price", rollupAggregate: "values" }]);
+    // Pipe rollup list → sum() in a formula
+    expect(formatFormulaValue(evalFormula(`=sum(prop("Prices"))`, ctx).value)).toBe("60");
+    expect(formatFormulaValue(evalFormula(`=count(prop("Prices"))`, ctx).value)).toBe("3");
+  });
+
+  it("earliest / latest date aggregates", () => {
+    const ctx = orderCtx([
+      { id: "e", name: "First", type: "rollup", rollupRelationPropertyId: "items", rollupTargetPropertyId: "dueDate", rollupAggregate: "earliest" },
+      { id: "l", name: "Last",  type: "rollup", rollupRelationPropertyId: "items", rollupTargetPropertyId: "dueDate", rollupAggregate: "latest" },
+    ]);
+    expect(formatFormulaValue(evalFormula(`=prop("First")`, ctx).value)).toBe("2026-01-15");
+    expect(formatFormulaValue(evalFormula(`=prop("Last")`, ctx).value)).toBe("2026-03-20");
+  });
+
+  it("empty linked list — sum returns null (toNumber → 0 in math)", () => {
+    const ctx = orderCtx(
+      [{ id: "total", name: "Total", type: "rollup",
+        rollupRelationPropertyId: "items", rollupTargetPropertyId: "price", rollupAggregate: "sum" }],
+      [], // no items linked
+    );
+    expect(formatFormulaValue(evalFormula(`=prop("Total")`, ctx).value)).toBe("");
+    // Null + 5 → 0 + 5 → 5 (toNumber coerce in arithmetic)
+    expect(formatFormulaValue(evalFormula(`=prop("Total") + 5`, ctx).value)).toBe("5");
+  });
+
+  it("rollup with no configured relation → null", () => {
+    // Build a rollup that points at a non-existent relation prop id
+    const ctx = orderCtx([{ id: "bad", name: "Bad", type: "rollup",
+      rollupRelationPropertyId: "no-such-rel", rollupTargetPropertyId: "price", rollupAggregate: "sum" }]);
+    expect(formatFormulaValue(evalFormula(`=prop("Bad")`, ctx).value)).toBe("");
+  });
+
+  it("composes with higher-order — filter then sum of rollup result", () => {
+    const ctx = orderCtx([{ id: "vals", name: "Prices", type: "rollup",
+      rollupRelationPropertyId: "items", rollupTargetPropertyId: "price", rollupAggregate: "values" }]);
+    // Sum only prices ≥ 20: filter(rollup, current >= 20) → [20, 30] → sum 50
+    expect(formatFormulaValue(evalFormula(`=sum(filter(prop("Prices"), current >= 20))`, ctx).value)).toBe("50");
+  });
+});

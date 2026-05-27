@@ -176,6 +176,106 @@ function evalExpr(node: ExprNode, ctx: EvalContext): FormulaValue {
   }
 }
 
+/** Compute a rollup property's value typed for formula consumption.
+ *  Mirrors the aggregate set in `lib/formula.ts::computeRollup` (which
+ *  produces a display string) but returns FormulaValue so downstream
+ *  math/compare/format ops work. ctx.databases enables cross-db target
+ *  lookup; falls back to ctx.db when not provided.
+ *
+ *  Aggregates:
+ *    count           → num(linkedPages.length)
+ *    count_unique    → num(unique target values)
+ *    sum / avg /
+ *    min / max       → num — numeric coerce of target values; NULL when empty
+ *    checked         → num(linkedPages where target === true)
+ *    percent_checked → num(0..100) — matches the visual cell
+ *    values          → list of target values (FormulaValue per item)
+ *    earliest /
+ *    latest          → date — sort target dates lexicographically
+ *  Returns NULL_VALUE when relation/target prop is missing or list is empty
+ *  in a way that has no sensible aggregate. */
+function computeRollupValue(prop: Property, ctx: EvalContext): FormulaValue {
+  const relationProps = ctx.db.properties.filter((p) => p.type === "relation");
+  const relationProp = prop.rollupRelationPropertyId
+    ? relationProps.find((p) => p.id === prop.rollupRelationPropertyId)
+    : relationProps[0];
+  if (!relationProp) return NULL_VALUE;
+
+  const linkedIds = Array.isArray(ctx.row.rowProps?.[relationProp.id])
+    ? (ctx.row.rowProps?.[relationProp.id] as string[])
+    : [];
+  const linkedPages = linkedIds
+    .map((id) => ctx.pages.find((p) => p.id === id))
+    .filter((p): p is Page => !!p && !p.trashed);
+
+  const targetDb = (ctx.databases ?? [ctx.db]).find(
+    (d) => d.id === relationProp.relationDatabaseId,
+  ) ?? ctx.db;
+  const targetProp = prop.rollupTargetPropertyId
+    ? targetDb.properties.find((p) => p.id === prop.rollupTargetPropertyId)
+    : undefined;
+
+  const aggregate = prop.rollupAggregate ?? "count";
+  const total = linkedPages.length;
+
+  if (aggregate === "count") return num(total);
+
+  // Source values (typed) — target prop value per linked page, or the
+  // page title when no target prop is configured.
+  const targetCtx: EvalContext = targetProp
+    ? { ...ctx, db: targetDb }
+    : ctx;
+  const sourceValues: FormulaValue[] = linkedPages.map((p) => {
+    if (!targetProp) return str(p.title || "Untitled");
+    return propertyValueToFormulaValue(p.rowProps?.[targetProp.id] as PropertyValue | undefined, targetProp, targetCtx);
+  });
+
+  if (aggregate === "values") return list(sourceValues);
+
+  if (aggregate === "count_unique") {
+    const seen = new Set<string>();
+    for (const v of sourceValues) {
+      const key = formatFormulaValue(v).toLowerCase();
+      if (key !== "") seen.add(key);
+    }
+    return num(seen.size);
+  }
+
+  if (aggregate === "checked") {
+    if (!targetProp) return num(0);
+    return num(linkedPages.filter((p) => p.rowProps?.[targetProp.id] === true).length);
+  }
+
+  if (aggregate === "percent_checked") {
+    if (!targetProp || total === 0) return num(0);
+    const checked = linkedPages.filter((p) => p.rowProps?.[targetProp.id] === true).length;
+    return num((checked / total) * 100);
+  }
+
+  if (aggregate === "sum" || aggregate === "avg" || aggregate === "min" || aggregate === "max") {
+    const nums = sourceValues.map(toNumber).filter(Number.isFinite);
+    if (nums.length === 0) return NULL_VALUE;
+    if (aggregate === "sum") return num(nums.reduce((a, b) => a + b, 0));
+    if (aggregate === "avg") return num(nums.reduce((a, b) => a + b, 0) / nums.length);
+    if (aggregate === "min") return num(Math.min(...nums));
+    return num(Math.max(...nums));
+  }
+
+  if (aggregate === "earliest" || aggregate === "latest") {
+    // Target prop value shape for "date" is `{ date: string }`; we already
+    // unwrapped via propertyValueToFormulaValue, so sourceValues entries
+    // are `date` kind when the target was a date prop.
+    const isoDates = sourceValues
+      .filter((v): v is { kind: "date"; value: string } => v.kind === "date")
+      .map((v) => v.value)
+      .sort();
+    if (isoDates.length === 0) return NULL_VALUE;
+    return date(aggregate === "earliest" ? isoDates[0] : isoDates[isoDates.length - 1]);
+  }
+
+  return NULL_VALUE;
+}
+
 /** Drill into a page entity (or list of pages) via `.member` access.
  *  Built-in fields (title / icon / id) take priority; otherwise we walk
  *  the page's database property schema. Cross-db drilldown needs
@@ -262,6 +362,11 @@ function propertyValueToFormulaValue(
   prop: Property,
   ctx: EvalContext,
 ): FormulaValue {
+  // Rollup is computed (not stored) — handle BEFORE the early-return so
+  // an undefined `v` doesn't short-circuit. Bridge to the formula engine
+  // returns a typed FormulaValue so `prop("Total") * 1.1` and friends
+  // work without re-parsing rollup output strings.
+  if (prop.type === "rollup") return computeRollupValue(prop, ctx);
   if (v === undefined || v === null || v === "") return NULL_VALUE;
   switch (prop.type) {
     case "number":
