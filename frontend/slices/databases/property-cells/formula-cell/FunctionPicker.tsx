@@ -16,6 +16,7 @@ import type { FnGroup } from "../../lib/formulaEngine/functions/_registry";
 /** Tag color per group — semantic over arbitrary so the picker reads at
  *  a glance. Theme tokens only (no hex per CLAUDE.md). */
 const GROUP_TAG: Record<FnGroup, string> = {
+  ref:    "bg-cyan-500/10 text-cyan-700 dark:text-cyan-300",
   string: "bg-blue-500/10 text-blue-700 dark:text-blue-300",
   number: "bg-amber-500/10 text-amber-700 dark:text-amber-300",
   date:   "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
@@ -48,7 +49,7 @@ export function FunctionPicker({ onPick, trigger }: FunctionPickerProps) {
     const q = query.trim().toLowerCase();
     if (!q) return groups;
     const out: Record<FnGroup, string[]> = {
-      string: [], number: [], date: [], list: [], logic: [],
+      ref: [], string: [], number: [], date: [], list: [], logic: [],
     };
     for (const [g, names] of Object.entries(groups) as Array<[FnGroup, string[]]>) {
       out[g] = names.filter((n) => {

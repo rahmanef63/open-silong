@@ -8,6 +8,9 @@ export function toString(v: FormulaValue): string {
     case "date": return v.value;
     case "null": return "";
     case "list": return v.value.map(toString).join(", ");
+    // Page → title — keeps `concat(prop("Owner"))` printing names without
+    // forcing every caller to remember to `.title` first.
+    case "page": return v.value.title || "Untitled";
   }
 }
 
@@ -19,6 +22,7 @@ export function toNumber(v: FormulaValue): number {
     case "date": return new Date(v.value).getTime();
     case "null": return 0;
     case "list": return v.value.length;
+    case "page": return NaN;
   }
 }
 
@@ -33,6 +37,8 @@ export function toBoolean(v: FormulaValue): boolean {
     case "date": return v.value !== "";
     case "null": return false;
     case "list": return v.value.length > 0;
+    // A page entity exists by virtue of being constructed — truthy.
+    case "page": return true;
   }
 }
 

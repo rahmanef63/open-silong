@@ -447,3 +447,135 @@ describe("formulaEngine — list fns + polymorphism (1.B)", () => {
     expect(formatFormulaValue(evalFormula(`=reverse({{Tags}})`, { row: row(), db: dbWithList(), pages: [] }).value)).toBe("alpha, gamma, beta, alpha");
   });
 });
+
+// ---- 1.C: prop() syntax + relation drilldown ------------------------------
+
+describe("formulaEngine — prop() syntax (1.C)", () => {
+  it("prop(\"title\") equivalent to {{title}}", () => {
+    const ctx = { row: mkRow({ title: "Hello World" }), db: mkDb(), pages: [] };
+    const a = formatFormulaValue(evalFormula(`=prop("title")`, ctx).value);
+    const b = formatFormulaValue(evalFormula(`={{title}}`, ctx).value);
+    expect(a).toBe("Hello World");
+    expect(a).toBe(b);
+  });
+
+  it("works inside math expressions", () => {
+    const db = mkDb({ properties: [{ id: "score", name: "Score", type: "number" }] });
+    const ctx = { row: mkRow({ rowProps: { score: 5 } }), db, pages: [] };
+    expect(formatFormulaValue(evalFormula(`=prop("Score") + 1`, ctx).value)).toBe("6");
+  });
+
+  it("prop() without args throws (strict — string literal required)", () => {
+    const r = evalFormula(`=prop()`, { row: mkRow(), db: mkDb(), pages: [] });
+    expect(r.error?.message).toMatch(/string literal/i);
+  });
+
+  it("prop(5) throws (number is not a string literal)", () => {
+    const r = evalFormula(`=prop(5)`, { row: mkRow(), db: mkDb(), pages: [] });
+    expect(r.error?.message).toMatch(/string literal/i);
+  });
+
+  it("prop(someName) throws — bare ident NOT allowed (no variable fallback)", () => {
+    const r = evalFormula(`=prop(someName)`, { row: mkRow(), db: mkDb(), pages: [] });
+    expect(r.error?.message).toMatch(/string literal/i);
+  });
+
+  it("bare `prop` (no parens) still errors as missing call paren", () => {
+    const r = evalFormula(`=prop + 1`, { row: mkRow(), db: mkDb(), pages: [] });
+    // The new strict path keeps the legacy "expected '('" error — `prop`
+    // alone is treated as just any fn name missing its argument list.
+    expect(r.error?.message).toMatch(/\(/);
+  });
+});
+
+describe("formulaEngine — member access (1.C)", () => {
+  // peopleDb + alice/bob fixture so we can test `.email` drilldown across dbs.
+  const peopleDb = mkDb({
+    id: "people",
+    name: "People",
+    properties: [
+      { id: "email", name: "Email", type: "email" },
+      { id: "team",  name: "Team",  type: "text" },
+    ],
+  });
+  const alice = mkRow({
+    id: "alice", title: "Alice", icon: "👤",
+    rowOfDatabaseId: "people",
+    rowProps: { email: "alice@example.com", team: "Eng" },
+  });
+  const bob = mkRow({
+    id: "bob", title: "Bob", icon: "👤",
+    rowOfDatabaseId: "people",
+    rowProps: { email: "bob@example.com", team: "Design" },
+  });
+
+  const mainDb = mkDb({
+    id: "main",
+    properties: [{ id: "owner", name: "Owner", type: "relation" }],
+  });
+  const task = (ownerIds: string[]) => mkRow({
+    id: "task", title: "Build", rowOfDatabaseId: "main",
+    rowProps: { owner: ownerIds },
+  });
+  const ctx = (row: ReturnType<typeof task>) => ({
+    row, db: mainDb, pages: [alice, bob, row], databases: [peopleDb, mainDb],
+  });
+
+  it(".title resolves to related page's title", () => {
+    expect(formatFormulaValue(evalFormula(`=prop("Owner").title`, ctx(task(["alice"]))).value)).toBe("Alice");
+  });
+
+  it(".icon resolves to icon", () => {
+    expect(formatFormulaValue(evalFormula(`=prop("Owner").icon`, ctx(task(["alice"]))).value)).toBe("👤");
+  });
+
+  it(".id resolves to page id", () => {
+    expect(formatFormulaValue(evalFormula(`=prop("Owner").id`, ctx(task(["alice"]))).value)).toBe("alice");
+  });
+
+  it("custom property drilldown — cross-db lookup via ctx.databases", () => {
+    expect(formatFormulaValue(evalFormula(`=prop("Owner").Email`, ctx(task(["alice"]))).value)).toBe("alice@example.com");
+    expect(formatFormulaValue(evalFormula(`=prop("Owner").Team`, ctx(task(["alice"]))).value)).toBe("Eng");
+  });
+
+  it("multi-relation: member access maps across the list", () => {
+    expect(formatFormulaValue(evalFormula(`=prop("Owner").Email`, ctx(task(["alice", "bob"]))).value)).toBe("alice@example.com, bob@example.com");
+  });
+
+  it("missing property name returns null/empty", () => {
+    expect(formatFormulaValue(evalFormula(`=prop("Owner").NoSuch`, ctx(task(["alice"]))).value)).toBe("");
+  });
+
+  it("member access on scalar string is null", () => {
+    const r = evalFormula(`="hi".foo`, { row: mkRow(), db: mkDb(), pages: [] });
+    expect(formatFormulaValue(r.value)).toBe("");
+  });
+
+  it("member access on null is null", () => {
+    expect(formatFormulaValue(evalFormula(`=prop("NoRel").x`, ctx(task([]))).value)).toBe("");
+  });
+
+  it("dual syntax — {{Owner}} matches prop(\"Owner\") output (relation)", () => {
+    const r1 = formatFormulaValue(evalFormula(`={{Owner}}`, ctx(task(["alice", "bob"]))).value);
+    const r2 = formatFormulaValue(evalFormula(`=prop("Owner")`, ctx(task(["alice", "bob"]))).value);
+    expect(r1).toBe(r2);
+    expect(r1).toBe("Alice, Bob");
+  });
+
+  it("back-compat — concat(prop(\"Owner\")) still prints titles", () => {
+    expect(formatFormulaValue(evalFormula(`=concat(prop("Owner"))`, ctx(task(["alice", "bob"]))).value)).toBe("Alice, Bob");
+  });
+
+  it("member chain works on title via first() — unwrap single-list to scalar", () => {
+    // Relation drilldown ALWAYS produces a list (mirrors Notion semantics).
+    // To get a scalar string for `length()`, unwrap with first().
+    expect(formatFormulaValue(evalFormula(`=length(first(prop("Owner")).title)`, ctx(task(["alice"]))).value)).toBe("5");
+  });
+
+  it("relation drilldown is list-shaped even for single owner", () => {
+    // Documents the rule: .title on a list-of-pages stays list-of-strings.
+    // length() on the list returns list size, not string length.
+    expect(formatFormulaValue(evalFormula(`=length(prop("Owner").title)`, ctx(task(["alice"]))).value)).toBe("1");
+    expect(formatFormulaValue(evalFormula(`=length(prop("Owner").title)`, ctx(task(["alice", "bob"]))).value)).toBe("2");
+  });
+});

@@ -11,7 +11,7 @@ export type FnRegistry = Record<string, FnHandler>;
 /** Surface metadata — drives editor autocomplete, function picker, signature
  *  hints. Lives next to each domain's handlers so a new fn lands sigs +
  *  impl in one diff. Display-only; runtime never reads this. */
-export type FnGroup = "string" | "number" | "date" | "list" | "logic";
+export type FnGroup = "string" | "number" | "date" | "list" | "logic" | "ref";
 export type FnReturns =
   | "string" | "number" | "boolean" | "date" | "list" | "any";
 
