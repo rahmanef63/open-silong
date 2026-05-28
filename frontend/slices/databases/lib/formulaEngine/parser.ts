@@ -6,6 +6,10 @@ function shiftPositions(node: ExprNode, offset: number): ExprNode {
     if (n.kind === "call") return { ...n, pos: n.pos + offset, args: n.args.map(shift) };
     if (n.kind === "binop") return { ...n, pos: n.pos + offset, left: shift(n.left), right: shift(n.right) };
     if (n.kind === "unary") return { ...n, pos: n.pos + offset, arg: shift(n.arg) };
+    // member + lambda carry child nodes too — recurse so error positions
+    // inside `prop("X").Y` / `map(L, body)` stay aligned in `=`-form.
+    if (n.kind === "member") return { ...n, pos: n.pos + offset, object: shift(n.object) };
+    if (n.kind === "lambda") return { ...n, pos: n.pos + offset, body: shift(n.body) };
     return { ...n, pos: n.pos + offset };
   };
   return shift(node);
