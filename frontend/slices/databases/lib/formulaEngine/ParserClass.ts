@@ -1,11 +1,10 @@
-import type { BinOp, ExprNode, FormulaError } from "./types";
+import type { ExprNode, FormulaError } from "./types";
+import { parseOr, parsePrimaryBase } from "./ParserClass-ops";
 
-/** Reserved bare-ident refs — usable anywhere in expression position
- *  without `(`. Resolve via the eval-time env stack (set by higher-order
- *  fns like map/filter); outside a lambda context they fall through to
- *  property lookup (case-insensitive) and ultimately NULL. */
-const LAMBDA_BUILTINS = new Set(["current", "index", "accumulator"]);
-
+/** Recursive-descent parser. The precedence ladder + primary dispatch
+ *  live in ParserClass-ops.ts as free functions (kept here would push
+ *  this file past the 200-LOC cap); this class owns the cursor
+ *  primitives + leaf/literal parsers they call back into. */
 export class Parser {
   pos = 0;
   constructor(public src: string) {}
@@ -28,134 +27,13 @@ export class Parser {
     if (!this.match(s)) throw this.err(`Expected '${s}'`);
   }
 
-  /** Entry point. Precedence ladder (lowest → highest):
-   *    parseExpr → parseOr → parseAnd → parseEquality → parseComparison
-   *      → parseAddSub → parseMulDiv → parseUnary → parsePrimary
-   *  Each layer only recurses into the next tighter layer, then loops
-   *  consuming same-precedence operators left-associatively. `&&` / `||`
-   *  short-circuit at EVAL time (evaluator.ts), not here. */
+  /** Entry point — delegates to the precedence ladder. */
   parseExpr(): ExprNode {
-    return this.parseOr();
-  }
-
-  parseOr(): ExprNode {
-    let left = this.parseAnd();
-    while (true) {
-      this.skipWS();
-      if (this.src.startsWith("||", this.pos)) {
-        const pos = this.pos;
-        this.pos += 2;
-        const right = this.parseAnd();
-        left = { kind: "binop", op: "||", left, right, pos };
-      } else break;
-    }
-    return left;
-  }
-
-  parseAnd(): ExprNode {
-    let left = this.parseEquality();
-    while (true) {
-      this.skipWS();
-      if (this.src.startsWith("&&", this.pos)) {
-        const pos = this.pos;
-        this.pos += 2;
-        const right = this.parseEquality();
-        left = { kind: "binop", op: "&&", left, right, pos };
-      } else break;
-    }
-    return left;
-  }
-
-  parseEquality(): ExprNode {
-    let left = this.parseComparison();
-    while (true) {
-      this.skipWS();
-      let op: "==" | "!=" | null = null;
-      if (this.src.startsWith("==", this.pos)) op = "==";
-      else if (this.src.startsWith("!=", this.pos)) op = "!=";
-      if (!op) break;
-      const pos = this.pos;
-      this.pos += 2;
-      const right = this.parseComparison();
-      left = { kind: "binop", op, left, right, pos };
-    }
-    return left;
-  }
-
-  parseComparison(): ExprNode {
-    let left = this.parseAddSub();
-    while (true) {
-      this.skipWS();
-      // Check 2-char ops first to avoid `>=` parsing as `>` then `=`.
-      let op: ">=" | "<=" | ">" | "<" | null = null;
-      let advance = 1;
-      if (this.src.startsWith(">=", this.pos)) { op = ">="; advance = 2; }
-      else if (this.src.startsWith("<=", this.pos)) { op = "<="; advance = 2; }
-      else if (this.peek() === ">") op = ">";
-      else if (this.peek() === "<") op = "<";
-      if (!op) break;
-      const pos = this.pos;
-      this.pos += advance;
-      const right = this.parseAddSub();
-      left = { kind: "binop", op, left, right, pos };
-    }
-    return left;
-  }
-
-  parseAddSub(): ExprNode {
-    let left = this.parseMulDiv();
-    while (true) {
-      this.skipWS();
-      const ch = this.peek();
-      if (ch === "+" || ch === "-") {
-        const pos = this.pos;
-        this.advance();
-        const right = this.parseMulDiv();
-        left = { kind: "binop", op: ch as BinOp, left, right, pos };
-      } else break;
-    }
-    return left;
-  }
-
-  parseMulDiv(): ExprNode {
-    let left = this.parseUnary();
-    while (true) {
-      this.skipWS();
-      const ch = this.peek();
-      if (ch === "*" || ch === "/" || ch === "%") {
-        const pos = this.pos;
-        this.advance();
-        const right = this.parseUnary();
-        left = { kind: "binop", op: ch as BinOp, left, right, pos };
-      } else break;
-    }
-    return left;
-  }
-
-  parseUnary(): ExprNode {
-    this.skipWS();
-    const ch = this.peek();
-    if (ch === "-" || ch === "+") {
-      const pos = this.pos;
-      this.advance();
-      const arg = this.parseUnary();
-      return { kind: "unary", op: ch as "-" | "+", arg, pos };
-    }
-    // `!` is unary-not — but ONLY when NOT the start of `!=`. The
-    // equality-op `!=` is matched higher up in parseEquality; if we see
-    // `!=` here we leave it alone (returning the primary to the parent
-    // loop, which will then see `!=` as the next op).
-    if (ch === "!" && this.src[this.pos + 1] !== "=") {
-      const pos = this.pos;
-      this.advance();
-      const arg = this.parseUnary();
-      return { kind: "unary", op: "!", arg, pos };
-    }
-    return this.parsePrimary();
+    return parseOr(this);
   }
 
   parsePrimary(): ExprNode {
-    let node = this.parsePrimaryBase();
+    let node = parsePrimaryBase(this);
     // Postfix `.ident` chain — left-associative. Only consume `.` when the
     // NEXT char is an ident start, so number literals like `.5` aren't
     // accidentally treated as member access. Member access works on any
@@ -171,68 +49,6 @@ export class Parser {
       node = { kind: "member", object: node, member, pos: dotPos };
     }
     return node;
-  }
-
-  parsePrimaryBase(): ExprNode {
-    this.skipWS();
-    const pos = this.pos;
-    if (this.atEnd()) throw this.err("Unexpected end of expression", pos);
-    const ch = this.peek();
-
-    if (ch === "(") {
-      // Could be either:
-      //   (a) `(ident, …) => body`  — lambda
-      //   (b) `(expr)`                — paren group
-      // Try (a) via a non-consuming lookahead; only commit if we find `=>`.
-      const lambdaParams = this.tryParseLambdaParams();
-      if (lambdaParams) {
-        // tryParseLambdaParams left pos at `=>`; consume it now.
-        this.pos += 2;
-        const body = this.parseExpr();
-        return { kind: "lambda", params: lambdaParams, body, pos };
-      }
-      this.advance(); // consume `(`
-      const expr = this.parseExpr();
-      this.expect(")");
-      return expr;
-    }
-    if (ch === '"' || ch === "'") return this.parseString();
-    if (this.src.startsWith("{{", this.pos)) return this.parsePropRef();
-    if (/[0-9.]/.test(ch)) return this.parseNumber();
-
-    if (/[a-zA-Z_]/.test(ch)) {
-      const ident = this.parseIdent();
-      // Boolean literals — recognised case-insensitively to match the
-      // function-name lowering applied in parseCallTail.
-      const lc = ident.toLowerCase();
-      if (lc === "true") return { kind: "bool", value: true, pos };
-      if (lc === "false") return { kind: "bool", value: false, pos };
-      this.skipWS();
-      // Bare arrow shorthand: `name => body`. Checked BEFORE the fn-call
-      // dispatch so `current => current + 1` doesn't try to enter
-      // parseCallTail with name "current".
-      if (this.src.startsWith("=>", this.pos)) {
-        this.pos += 2;
-        const body = this.parseExpr();
-        return { kind: "lambda", params: [ident], body, pos };
-      }
-      if (this.peek() === "(") {
-        // Notion-style `prop("name")` — special-case BEFORE generic call
-        // dispatch so the result lands as a ref node (not a call), which
-        // means it shares `collectDeps` + dependency invalidation +
-        // member-access chaining with the `{{name}}` template form.
-        // Strict: a bare ident `prop` without `(` is still just a "fn name
-        // missing its `(`" error from the existing branch — no implicit
-        // variable resolution.
-        if (lc === "prop") return this.parsePropCall(pos);
-        return this.parseCallTail(ident, pos);
-      }
-      // Reserved bare-ident lambda variables — parse as ref nodes so the
-      // env-stack resolver can bind them at iteration time.
-      if (LAMBDA_BUILTINS.has(lc)) return { kind: "ref", name: ident, pos };
-      throw this.err(`Expected '(' after function name '${ident}'`, this.pos);
-    }
-    throw this.err(`Unexpected character '${ch}'`, pos);
   }
 
   /** Lookahead: is the next chunk `(ident, …) => …`? Returns the params on
