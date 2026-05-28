@@ -70,7 +70,9 @@ export async function decryptApiKey(stored: string): Promise<string> {
       "AI key is encrypted but AI_KEY_ENCRYPTION_SECRET is not set on the Convex backend — set it and redeploy, or clear + re-enter the key.",
     );
   }
-  const [, ivB64, ctB64] = stored.split(":");
+  // Envelope is `enc:v1:<iv>:<ct>`, so split(":") yields
+  // ["enc", "v1", <iv>, <ct>] — skip BOTH prefix segments, not just one.
+  const [, , ivB64, ctB64] = stored.split(":");
   if (!ivB64 || !ctB64) throw new Error("Malformed encrypted AI key envelope");
   const key = await deriveKey(secret);
   const plain = await crypto.subtle.decrypt(
