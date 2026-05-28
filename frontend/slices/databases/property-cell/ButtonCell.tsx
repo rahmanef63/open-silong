@@ -1,22 +1,33 @@
 import type { Page, Property } from "@/shared/types/domain";
 import { Button } from "@/shared/ui/button";
+import { ROUTES_ABS } from "@/shared/lib/routes";
+import { useDbAdapter } from "../lib/useDbAdapter";
+import { runButtonActions } from "./buttonActions";
 
 export function ButtonCell({ prop, row }: { prop: Property; row: Page }) {
+  const { setRowValue } = useDbAdapter();
   const label = prop.buttonLabel || "Run";
   const actions = prop.buttonActions ?? [];
+
   const onClick = () => {
-    for (const a of actions) {
-      if (a.kind === "open_url") {
-        if (typeof window !== "undefined") window.open(a.url, "_blank", "noopener,noreferrer");
-      } else if (a.kind === "open_page") {
-        if (typeof window !== "undefined") window.location.href = `/dashboard/p/${a.pageId}`;
-      } else if (a.kind === "show_confirmation") {
-        if (typeof window !== "undefined") window.alert(a.message);
-      }
-      // edit_property action runner: requires store ref; deferred.
-      void row;
-    }
+    runButtonActions(actions, {
+      openUrl: (url) => {
+        if (typeof window !== "undefined") window.open(url, "_blank", "noopener,noreferrer");
+      },
+      openPage: (pageId) => {
+        if (typeof window !== "undefined") window.location.href = ROUTES_ABS.page(pageId);
+      },
+      confirm: (message) => (typeof window === "undefined" ? true : window.confirm(message)),
+      editProperty: (propId, value) => {
+        // edit_property targets THIS row's property. Needs the row's home
+        // database; rows outside a database (no rowOfDatabaseId) no-op.
+        if (row.rowOfDatabaseId) {
+          void setRowValue(row.rowOfDatabaseId, row.id, propId, value);
+        }
+      },
+    });
   };
+
   return (
     <Button
       variant="outline"
