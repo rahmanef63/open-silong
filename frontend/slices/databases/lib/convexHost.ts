@@ -13,6 +13,11 @@
  * and signal an API tweak BEFORE we lock in npm publish.
  */
 
+// This IS the Convex-shape host adapter; Doc<"pages"> / Doc<"databases">
+// are the whole point. The NotionAdapter rule targets UI code; this file
+// moves to convex/features/formulas/host.ts post-publish (1.G.2 step A)
+// where the import is native. Type-only, so erased at compile.
+// eslint-disable-next-line no-restricted-imports
 import type { Doc } from "@convex/_generated/dataModel";
 import {
   bool, date, list, num, page as pageVal, str, NULL_VALUE,
