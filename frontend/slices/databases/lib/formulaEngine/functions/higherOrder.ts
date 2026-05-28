@@ -23,12 +23,14 @@ import type { FnSignatureMap } from "./_registry";
  *  reduce). Explicit param NAMES are ALSO bound by position — useful
  *  if the user picks a different reserved name like `index` first. */
 
-type EvalExprFn = (n: ExprNode, ctx: EvalContext) => FormulaValue;
-
-export type HigherOrderHandler = (
+/** Handler signature is generic over the host's type params — same shape
+ *  the evaluator uses. Concrete params are inferred per call so the
+ *  handler stays domain-agnostic while passing a fully-typed ctx down to
+ *  any nested evalExpr calls. */
+export type HigherOrderHandler = <TP, TV, TPg, TDb>(
   node: { fn: string; args: ExprNode[]; pos: number },
-  ctx: EvalContext,
-  evalExpr: EvalExprFn,
+  ctx: EvalContext<TP, TV, TPg, TDb>,
+  evalExpr: (n: ExprNode, ctx: EvalContext<TP, TV, TPg, TDb>) => FormulaValue,
 ) => FormulaValue;
 
 function need(
@@ -48,12 +50,12 @@ function asList(v: FormulaValue): FormulaValue[] {
 /** Build a per-iteration env frame, evaluate the body. Lambda-AST bodies
  *  unwrap; bare-expr bodies eval as-is — both see the same frame via
  *  envStack lookup in resolveRef. */
-function applyLambda(
+function applyLambda<TP, TV, TPg, TDb>(
   arg: ExprNode,
   current: FormulaValue,
   index: number,
-  ctx: EvalContext,
-  evalExpr: EvalExprFn,
+  ctx: EvalContext<TP, TV, TPg, TDb>,
+  evalExpr: (n: ExprNode, ctx: EvalContext<TP, TV, TPg, TDb>) => FormulaValue,
   extra?: Record<string, FormulaValue>,
 ): FormulaValue {
   const frame: Record<string, FormulaValue> = {
