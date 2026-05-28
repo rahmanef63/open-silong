@@ -1,4 +1,4 @@
-import { mutation, query } from "./_generated/server";
+import { mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { getActiveWorkspaceMutation, readActiveWorkspace } from "./_shared/workspace";
@@ -44,17 +44,17 @@ export const push = mutation({
  *  workspace, also accepts the legacy unscoped row (workspaceId === undefined)
  *  and returns it so users don't lose history when the schema migrated. */
 async function findRecentRow(
-  ctx: { db: { query: (table: "recents") => any } },
+  ctx: QueryCtx | MutationCtx,
   userId: Id<"users">,
   workspaceId: Id<"workspaces">,
   isPersonal: boolean,
 ) {
   const owned = await ctx.db
     .query("recents")
-    .withIndex("by_user", (q: any) => q.eq("userId", userId))
+    .withIndex("by_user", (q) => q.eq("userId", userId))
     .take(COUNT_CAPS.recentsScan);
-  const explicit = owned.find((r: any) => r.workspaceId === workspaceId);
+  const explicit = owned.find((r) => r.workspaceId === workspaceId);
   if (explicit) return explicit;
-  if (isPersonal) return owned.find((r: any) => !r.workspaceId) ?? null;
+  if (isPersonal) return owned.find((r) => !r.workspaceId) ?? null;
   return null;
 }

@@ -85,9 +85,11 @@ export const setUserAIModelOverride = mutation({
     const model = args.model.trim();
     if (!model) throw new Error("Model is required");
 
+    // @convex-dev/auth's users table ships an "email" index — use it
+    // instead of a full-table .filter() scan (was O(all users)).
     const user = await ctx.db
       .query("users")
-      .filter((q) => q.eq(q.field("email"), email))
+      .withIndex("email", (q) => q.eq("email", email))
       .first();
     if (!user) throw new Error(`No user with email ${email}`);
 
