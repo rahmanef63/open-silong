@@ -137,6 +137,10 @@ export default defineSchema({
     .index("by_workspace", ["workspaceId"])
     .index("by_workspace_parent", ["workspaceId", "parentId"])
     .index("by_share_slug", ["shareSlug"])
+    // Powers `pages.listPublicForSitemap` (anon endpoint) without scanning
+    // every page doc — walks only the search-indexable bucket. shareIndexable
+    // is optional; undefined rows sort outside the `=== true` range.
+    .index("by_share_indexable", ["shareIndexable"])
     // Powers the daily trash purge cron without a full table scan.
     // Read: q.eq("trashed", true).lt("updatedAt", cutoff).
     .index("by_trashed_updated", ["trashed", "updatedAt"])
