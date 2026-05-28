@@ -8,6 +8,11 @@ import { Id } from "./_generated/dataModel";
 import { buildSearchText } from "./features/search/lib";
 import { collectDescendantsFromDocs } from "./_shared/pageTree";
 import { regenAllBlockIds, findDuplicateBlockId, type BlockLike } from "./_shared/blocks";
+import {
+  addBlockToArray, replaceBlockInArray, duplicateBlockInArray,
+  insertBlocksAfterAnchor, updateBlockInArray, deleteBlockFromArray,
+  reorderBlocksInArray, type BlockLike as BlockOpLike,
+} from "./_shared/blockOps";
 import { CHAR_CAPS, COUNT_CAPS, RATE_LIMITS, SHARE_SLUG_RE } from "./_shared/limits";
 import { markdownToBlocks } from "./_shared/markdown";
 import {
@@ -486,16 +491,10 @@ export const addBlock = mutation({
     init: v.optional(v.any()),
   },
   handler: async (ctx, args) => {
-    const { userId, doc: page } = await requireWorkspaceAccess(ctx, "pages", args.pageId as Id<"pages">, { write: true });
-    const newId = uid();
-    const blocks = [...page.blocks];
-    blocks.splice(args.afterIndex + 1, 0, {
-      id: newId,
-      type: args.type ?? "paragraph",
-      text: "",
-      checked: args.type === "todo" ? false : undefined,
-      ...(args.init ?? {}),
-    });
+    const { doc: page } = await requireWorkspaceAccess(ctx, "pages", args.pageId as Id<"pages">, { write: true });
+    const { blocks, newId } = addBlockToArray(
+      page.blocks as BlockOpLike[], args.afterIndex, args.type, args.init, uid,
+    );
     await ctx.db.patch(args.pageId as Id<"pages">, {
       blocks,
       searchText: buildSearchText(page.title, blocks),
@@ -545,11 +544,8 @@ export const replaceBlockById = mutation({
   },
   handler: async (ctx, args) => {
     const { doc: page } = await requireWorkspaceAccess(ctx, "pages", args.pageId as Id<"pages">, { write: true });
-    const cur = page.blocks as Array<{ id: string }>;
-    const idx = cur.findIndex((b) => b.id === args.blockId);
-    if (idx < 0) throw new Error("Block not found");
-    // Preserve the existing id on the replacement.
-    const blocks = [...cur.slice(0, idx), { ...args.nextBlock, id: args.blockId }, ...cur.slice(idx + 1)];
+    const blocks = replaceBlockInArray(page.blocks as BlockOpLike[], args.blockId, args.nextBlock);
+    if (!blocks) throw new Error("Block not found");
     await ctx.db.patch(args.pageId as Id<"pages">, {
       blocks,
       searchText: buildSearchText(page.title, blocks),
@@ -564,19 +560,15 @@ export const duplicateBlockById = mutation({
   args: { pageId: v.id("pages"), blockId: v.string() },
   handler: async (ctx, args) => {
     const { doc: page } = await requireWorkspaceAccess(ctx, "pages", args.pageId as Id<"pages">, { write: true });
-    const cur = page.blocks as Array<{ id: string }>;
-    const idx = cur.findIndex((b) => b.id === args.blockId);
-    if (idx < 0) throw new Error("Block not found");
-    const newId = uid();
-    const dup = { ...cur[idx], id: newId };
-    const blocks = [...cur.slice(0, idx + 1), dup, ...cur.slice(idx + 1)];
-    if (blocks.length > COUNT_CAPS.blocksPerPage) throw new Error(`Page exceeds block cap (${COUNT_CAPS.blocksPerPage})`);
+    const dup = duplicateBlockInArray(page.blocks as BlockOpLike[], args.blockId, uid);
+    if (!dup) throw new Error("Block not found");
+    if (dup.blocks.length > COUNT_CAPS.blocksPerPage) throw new Error(`Page exceeds block cap (${COUNT_CAPS.blocksPerPage})`);
     await ctx.db.patch(args.pageId as Id<"pages">, {
-      blocks,
-      searchText: buildSearchText(page.title, blocks),
+      blocks: dup.blocks,
+      searchText: buildSearchText(page.title, dup.blocks),
       updatedAt: Date.now(),
     });
-    return newId;
+    return dup.newId;
   },
 });
 
@@ -600,23 +592,10 @@ export const insertBlocksAfter = mutation({
   },
   handler: async (ctx, args) => {
     const { doc: page } = await requireWorkspaceAccess(ctx, "pages", args.pageId as Id<"pages">, { write: true });
-    const cur = page.blocks as Array<{ id: string; layoutGroup?: string; layoutCol?: number }>;
-    const idx = cur.findIndex((b) => b.id === args.anchorBlockId);
-    if (idx < 0) throw new Error("Anchor block not found");
-    const anchor = cur[idx];
-    // Inherit layout stamps from the anchor when incoming blocks
-    // don't already carry their own.
-    const stamped = args.blocks.map((b) => {
-      const out = { ...b };
-      if (out.layoutGroup == null && anchor.layoutGroup != null) {
-        out.layoutGroup = anchor.layoutGroup;
-        out.layoutCol = anchor.layoutCol;
-      }
-      return out;
-    });
-    const blocks = args.replaceAnchor
-      ? [...cur.slice(0, idx), ...stamped, ...cur.slice(idx + 1)]
-      : [...cur.slice(0, idx + 1), ...stamped, ...cur.slice(idx + 1)];
+    const blocks = insertBlocksAfterAnchor(
+      page.blocks as BlockOpLike[], args.anchorBlockId, args.blocks as BlockOpLike[], !!args.replaceAnchor,
+    );
+    if (!blocks) throw new Error("Anchor block not found");
     if (blocks.length > COUNT_CAPS.blocksPerPage) throw new Error(`Page exceeds block cap (${COUNT_CAPS.blocksPerPage})`);
     await ctx.db.patch(args.pageId as Id<"pages">, {
       blocks,
@@ -634,10 +613,8 @@ export const insertBlocksAfter = mutation({
 export const updateBlock = mutation({
   args: { pageId: v.id("pages"), blockId: v.string(), patch: v.any() },
   handler: async (ctx, args) => {
-    const { userId, doc: page } = await requireWorkspaceAccess(ctx, "pages", args.pageId as Id<"pages">, { write: true });
-    const blocks = page.blocks.map((b: any) =>
-      b.id === args.blockId ? { ...b, ...args.patch } : b
-    );
+    const { doc: page } = await requireWorkspaceAccess(ctx, "pages", args.pageId as Id<"pages">, { write: true });
+    const blocks = updateBlockInArray(page.blocks as BlockOpLike[], args.blockId, args.patch);
     // Only rebuild searchText when the patch touches text-bearing fields.
     // Toggle/reorder/style-only patches skip the O(blocks) string build.
     const TEXT_FIELDS = ["text", "type", "lang", "caption"];
@@ -656,9 +633,8 @@ export const updateBlock = mutation({
 export const deleteBlock = mutation({
   args: { pageId: v.id("pages"), blockId: v.string() },
   handler: async (ctx, args) => {
-    const { userId, doc: page } = await requireWorkspaceAccess(ctx, "pages", args.pageId as Id<"pages">, { write: true });
-    let blocks = page.blocks.filter((b: any) => b.id !== args.blockId);
-    if (!blocks.length) blocks = [emptyBlock()];
+    const { doc: page } = await requireWorkspaceAccess(ctx, "pages", args.pageId as Id<"pages">, { write: true });
+    const blocks = deleteBlockFromArray(page.blocks as BlockOpLike[], args.blockId, uid);
     await ctx.db.patch(args.pageId as Id<"pages">, {
       blocks,
       searchText: buildSearchText(page.title, blocks),
@@ -673,9 +649,8 @@ export const deleteBlock = mutation({
 export const reorderBlocks = mutation({
   args: { pageId: v.id("pages"), orderedIds: v.array(v.string()) },
   handler: async (ctx, args) => {
-    const { userId, doc: page } = await requireWorkspaceAccess(ctx, "pages", args.pageId as Id<"pages">, { write: true });
-    const map = new Map(page.blocks.map((b: any) => [b.id, b]));
-    const blocks = args.orderedIds.map((id) => map.get(id)).filter(Boolean);
+    const { doc: page } = await requireWorkspaceAccess(ctx, "pages", args.pageId as Id<"pages">, { write: true });
+    const blocks = reorderBlocksInArray(page.blocks as BlockOpLike[], args.orderedIds);
     await ctx.db.patch(args.pageId as Id<"pages">, {
       blocks,
       // searchText unchanged — reorder doesn't change set of words
