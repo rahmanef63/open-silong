@@ -97,10 +97,10 @@ export function TimelineView({ db, view, rows, onOpenRow, writeView }: Props) {
   return (
     <div className="p-3 overflow-x-auto">
       <div className="flex items-center gap-2 mb-3">
-        <Button variant="ghost" size="icon" onClick={() => setStartOffset((o) => o - 4)} className="h-auto w-auto p-1 text-muted-foreground">
+        <Button aria-label="Previous weeks" variant="ghost" size="icon" onClick={() => setStartOffset((o) => o - 4)} className="h-auto w-auto p-1 text-muted-foreground">
           <ChevronLeft className="h-4 w-4" />
         </Button>
-        <Button variant="ghost" size="icon" onClick={() => setStartOffset((o) => o + 4)} className="h-auto w-auto p-1 text-muted-foreground">
+        <Button aria-label="Next weeks" variant="ghost" size="icon" onClick={() => setStartOffset((o) => o + 4)} className="h-auto w-auto p-1 text-muted-foreground">
           <ChevronRight className="h-4 w-4" />
         </Button>
         {startOffset !== 0 && (
