@@ -136,6 +136,9 @@ export default defineSchema({
     .index("by_user_parent", ["userId", "parentId"])
     .index("by_workspace", ["workspaceId"])
     .index("by_workspace_parent", ["workspaceId", "parentId"])
+    // Powers `sites.workspaceDirectory` (anon /site/[ws]) — walks only the
+    // (workspace, public) bucket instead of scanning the whole workspace.
+    .index("by_workspace_public", ["workspaceId", "isPublic"])
     .index("by_share_slug", ["shareSlug"])
     // Powers `pages.listPublicForSitemap` (anon endpoint) without scanning
     // every page doc — walks only the search-indexable bucket. shareIndexable
