@@ -41,10 +41,11 @@ export function getCaretOffset(host: HTMLElement): number {
     }
   }
 
-  for (let i = 0; i < host.childNodes.length; i++) {
-    if (done) break;
-    visit(host.childNodes[i]);
-  }
+  // Anchor the walk at `host` itself: a selection whose startContainer IS
+  // the host element (empty node, or caret beside a direct-child <br>) must
+  // hit the element-anchor branch above. Iterating children directly would
+  // never match `stop === host`, so it would miscount to the full length.
+  visit(host);
   return offset;
 }
 

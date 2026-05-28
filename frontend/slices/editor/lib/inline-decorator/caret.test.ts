@@ -102,3 +102,25 @@ describe("setCaretAtOffset → getCaretOffset round-trip", () => {
     expect(getCaretOffset(host)).toBe(2);
   });
 });
+
+describe("element/host-anchored selections", () => {
+  it("handles a caret anchored on the host element (offset = child index)", () => {
+    host.innerHTML = "<br>x"; // children: [br, text "x"]
+    selectInText(host, 0); // before the br → offset 0
+    expect(getCaretOffset(host)).toBe(0);
+    selectInText(host, 1); // after the br, before "x" → offset 1
+    expect(getCaretOffset(host)).toBe(1);
+  });
+
+  it("handles a caret anchored on a nested element", () => {
+    host.innerHTML = "x<b>y</b>";
+    selectInText(host.querySelector("b")!, 0); // before 'y' → offset 1
+    expect(getCaretOffset(host)).toBe(1);
+  });
+
+  it("returns 0 for a caret in an empty host", () => {
+    host.innerHTML = "";
+    selectInText(host, 0);
+    expect(getCaretOffset(host)).toBe(0);
+  });
+});
