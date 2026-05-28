@@ -44,3 +44,6 @@ export { HIGHER_ORDER_NAMES } from "./functions/higherOrder";
 
 // Dep walker — for editor invalidation tracking
 export { collectDeps } from "./deps";
+
+// Static return-type inference — editor return-type pill (1.E)
+export { inferType } from "./typeCheck";

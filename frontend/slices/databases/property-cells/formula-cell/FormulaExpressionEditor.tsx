@@ -5,6 +5,8 @@ import { AlertTriangle } from "lucide-react";
 import type { Database } from "@/shared/types/domain";
 import { cn } from "@/shared/lib/utils";
 import { getSignature } from "../../lib/formulaEngine/functions";
+import { parseFormula } from "../../lib/formulaEngine/parser";
+import { inferType } from "../../lib/formulaEngine/typeCheck";
 import type { FormulaError } from "../../lib/formulaEngine/types";
 import { getTokenAt, type Token } from "./tokenize";
 import { findEnclosingCall } from "./enclosingCall";
@@ -72,6 +74,17 @@ export const FormulaExpressionEditor = forwardRef<FormulaExpressionEditorRef, Fo
     // Derive token + suggestions from value + caret.
     const token: Token = useMemo(() => getTokenAt(value, caret), [value, caret]);
     const suggestions: Suggestion[] = useMemo(() => buildSuggestions(token, value, caret, db), [token, value, caret, db]);
+
+    // Static return-type inference (1.E) — drives the type pill. Computed
+    // from the parsed AST, independent of eval. "any" + empty input are
+    // suppressed (no pill worth showing).
+    const returnType = useMemo(() => {
+      if (!value.trim()) return null;
+      const parsed = parseFormula(value);
+      if (!parsed.ast) return null;
+      const t = inferType(parsed.ast);
+      return t === "any" ? null : t;
+    }, [value]);
 
     // Signature hint — show when caret sits inside a fn(...) call and the
     // fn name resolves to a known signature. Hidden when the autocomplete
@@ -301,6 +314,16 @@ export const FormulaExpressionEditor = forwardRef<FormulaExpressionEditorRef, Fo
             <span>
               {error.message}
               <span className="text-warning/70"> · pos {error.pos}</span>
+            </span>
+          </div>
+        )}
+
+        {/* Return-type pill (1.E) — static inference; hidden on error or when
+            the type can't be pinned down ("any"). */}
+        {!error && returnType && (
+          <div className="mt-1 flex items-center gap-1 text-[10px] text-muted-foreground">
+            <span className="rounded bg-muted px-1.5 py-0.5 font-mono">
+              → {returnType}
             </span>
           </div>
         )}
