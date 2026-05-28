@@ -4,6 +4,7 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { requireAuth } from "./_shared/auth";
 import { ensurePersonalWorkspace, requireWorkspaceMember } from "./_shared/workspace";
 import { rateLimit } from "./_shared/rateLimit";
+import { COUNT_CAPS } from "./_shared/limits";
 
 const EXPIRY_MS = 14 * 24 * 60 * 60 * 1000;
 
@@ -147,7 +148,7 @@ export const listForWorkspace = query({
     const rows = await ctx.db
       .query("workspaceInvites")
       .withIndex("by_workspace", (q) => q.eq("workspaceId", workspaceId))
-      .collect();
+      .take(COUNT_CAPS.invitesScan);
     const now = Date.now();
     return rows.map((r) => ({
       _id: r._id,

@@ -108,6 +108,14 @@ export const COUNT_CAPS = {
    *  by_user owned-workspace probe in `ensurePersonalWorkspace`. */
   workspacesPerUserScan:     50,
   workspaceMembersScan:      500,
+  /** Per-user/-workspace read-path caps (by_user / by_workspace index
+   *  walks). All naturally small; the cap is a runaway guard, not a
+   *  product limit. Bump here if any becomes a real ceiling. */
+  recentsScan:               1_000,
+  webhookEndpointsScan:      200,
+  templatesScan:             1_000,
+  invitesScan:               500,
+  mcpTokensScan:             200,
 } as const;
 
 // ─── Time windows ─────────────────────────────────────────────────

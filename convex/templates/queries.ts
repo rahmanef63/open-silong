@@ -2,6 +2,7 @@ import { query } from "../_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { requireAdminQuery } from "../_shared/auth";
+import { COUNT_CAPS } from "../_shared/limits";
 
 /** User-facing: only published templates. Returns metadata, no full JSON. */
 export const listPublished = query({
@@ -12,7 +13,7 @@ export const listPublished = query({
     const docs = await ctx.db
       .query("pageTemplates")
       .withIndex("by_published", (q) => q.eq("isPublished", true))
-      .collect();
+      .take(COUNT_CAPS.templatesScan);
     return docs.map((d) => ({
       _id: d._id,
       name: d.name,
