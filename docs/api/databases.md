@@ -339,11 +339,12 @@ re-running mirror on import or accept eventual inconsistency.
 Aggregates for rollup: `count`, `count_unique`, `values`, `sum`, `avg`,
 `min`, `max`, `earliest`, `latest`, `checked`, `percent_checked`.
 
-Formula functions: `if / and / or / not / empty / concat / contains /
-replace / lower / upper / length / substring / round / floor / ceil /
-abs / min / max / now / today / dateAdd / dateSubtract / dateBetween /
-formatDate / count / sum / join`. See
-`frontend/slices/databases/lib/formulaEngine.ts` (21 unit tests).
+Formulas: ~50 functions across string/number/date/list/logic groups +
+operators (`== != < <= > >= && || !`), lambdas (`map`/`filter`/`reduce`/
+`sort`/`find`/`every`/`some`), `prop()` refs, relation drilldown, and
+rollup-in-formula. Full language reference: **[docs/api/formulas.md](./formulas.md)**.
+Engine: `frontend/slices/databases/lib/formulaEngine/` (200+ unit +
+property-based tests).
 
 ---
 
