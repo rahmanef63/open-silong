@@ -4,9 +4,9 @@
 
 /** Minimal page projection carried inside the engine. Lives here (not in
  *  domain types) so the engine stays self-contained for the rahman-shared
- *  extract planned in 1.G. Drilldown (e.g. `prop("Owner").email`) needs
- *  the page's id + database membership + raw rowProps so the member
- *  resolver can re-enter `propertyValueToFormulaValue` for any user prop. */
+ *  extract (1.G). Drilldown (e.g. `prop("Owner").email`) needs the page's
+ *  id + database membership + raw rowProps so member-access can re-enter
+ *  the host's `resolvePropertyValue` for any user prop. */
 export interface PageEntity {
   id: string;
   title: string;
