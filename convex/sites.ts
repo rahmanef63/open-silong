@@ -24,13 +24,16 @@ export const workspaceDirectory = query({
       .unique();
     if (!ws) return null;
 
+    // Walk only the (workspace, public) bucket via the composite index —
+    // previously scanned up to MAX_LISTED of ALL workspace pages then
+    // filtered, which could omit public pages in a large workspace.
     const pages = await ctx.db
       .query("pages")
-      .withIndex("by_workspace", (q) => q.eq("workspaceId", ws._id))
+      .withIndex("by_workspace_public", (q) => q.eq("workspaceId", ws._id).eq("isPublic", true))
       .take(MAX_LISTED);
 
     const publicPages = pages
-      .filter((p) => p.isPublic === true && !p.trashed)
+      .filter((p) => !p.trashed)
       .map((p) => ({
         id: p._id,
         title: p.title,
