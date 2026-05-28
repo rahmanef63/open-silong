@@ -80,7 +80,7 @@ export function NotionDatabase({
                 ))}
                 {!readOnly && onRowRemove && (
                   <td className="px-2">
-                    <Button variant="ghost" size="icon" onClick={() => onRowRemove(r.id)} className="h-5 w-5 text-muted-foreground/40 opacity-0 group-hover:opacity-100 hover:text-destructive"><Trash2 className="h-3 w-3" /></Button>
+                    <Button aria-label="Delete row" variant="ghost" size="icon" onClick={() => onRowRemove(r.id)} className="h-5 w-5 text-muted-foreground/40 opacity-0 group-hover:opacity-100 hover:text-destructive"><Trash2 className="h-3 w-3" /></Button>
                   </td>
                 )}
               </tr>

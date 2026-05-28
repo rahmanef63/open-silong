@@ -68,10 +68,10 @@ export function NotionProperty({
           <span className="flex-1 truncate">{prop.name}</span>
         )}
         {!hideSchemaControls && onSchemaChange && !editingName && (
-          <Button variant="ghost" size="icon" onClick={() => setEditingName(true)} className="h-4 w-4 text-muted-foreground/60 hover:text-foreground"><Pencil className="h-3 w-3" /></Button>
+          <Button aria-label="Rename property" variant="ghost" size="icon" onClick={() => setEditingName(true)} className="h-4 w-4 text-muted-foreground/60 hover:text-foreground"><Pencil className="h-3 w-3" /></Button>
         )}
         {!hideSchemaControls && onSchemaRemove && (
-          <Button variant="ghost" size="icon" onClick={onSchemaRemove} className="h-4 w-4 text-muted-foreground/60 hover:text-destructive"><Trash2 className="h-3 w-3" /></Button>
+          <Button aria-label="Delete property" variant="ghost" size="icon" onClick={onSchemaRemove} className="h-4 w-4 text-muted-foreground/60 hover:text-destructive"><Trash2 className="h-3 w-3" /></Button>
         )}
       </div>
       <div className="flex-1">{renderValue(prop, value, ro, onChange)}</div>
