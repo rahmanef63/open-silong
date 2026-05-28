@@ -1,5 +1,6 @@
 import { query } from "../_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { COUNT_CAPS } from "../_shared/limits";
 
 export const listMine = query({
   args: {},
@@ -9,7 +10,7 @@ export const listMine = query({
     const rows = await ctx.db
       .query("webhookEndpoints")
       .withIndex("by_user", (q) => q.eq("userId", userId))
-      .collect();
+      .take(COUNT_CAPS.webhookEndpointsScan);
     // Strip `secret` — only shown once at create-time.
     return rows.map((r) => ({
       id: r._id,

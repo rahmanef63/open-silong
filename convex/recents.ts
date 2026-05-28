@@ -2,6 +2,7 @@ import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { getActiveWorkspaceMutation, readActiveWorkspace } from "./_shared/workspace";
+import { COUNT_CAPS } from "./_shared/limits";
 import type { Id } from "./_generated/dataModel";
 
 const CAP = 20;
@@ -51,7 +52,7 @@ async function findRecentRow(
   const owned = await ctx.db
     .query("recents")
     .withIndex("by_user", (q: any) => q.eq("userId", userId))
-    .collect();
+    .take(COUNT_CAPS.recentsScan);
   const explicit = owned.find((r: any) => r.workspaceId === workspaceId);
   if (explicit) return explicit;
   if (isPersonal) return owned.find((r: any) => !r.workspaceId) ?? null;

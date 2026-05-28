@@ -11,6 +11,7 @@
 import { v } from "convex/values";
 import { internalAction, internalMutation, internalQuery } from "../_generated/server";
 import { internal } from "../_generated/api";
+import { COUNT_CAPS } from "../_shared/limits";
 
 const TIMEOUT_MS = 5000;
 
@@ -86,7 +87,7 @@ export const listEnabledForOwner = internalQuery({
     const rows = await ctx.db
       .query("webhookEndpoints")
       .withIndex("by_user", (q) => q.eq("userId", ownerId))
-      .collect();
+      .take(COUNT_CAPS.webhookEndpointsScan);
     return rows.filter((r) => r.enabled);
   },
 });

@@ -43,7 +43,7 @@ export const listPages = internalQuery({
     const all = await ctx.db
       .query("pages")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
-      .collect();
+      .take(COUNT_CAPS.pagesPerWorkspaceScan);
     const filtered = all.filter((p) => {
       if (!args.includeTrashed && p.trashed) return false;
       if (args.parentId !== undefined && p.parentId !== args.parentId) return false;
@@ -60,7 +60,7 @@ export const listPages = internalQuery({
 export const listDatabases = internalQuery({
   args: { userId: v.id("users") },
   handler: async (ctx, args) => {
-    return await ctx.db.query("databases").withIndex("by_user", (q) => q.eq("userId", args.userId)).collect();
+    return await ctx.db.query("databases").withIndex("by_user", (q) => q.eq("userId", args.userId)).take(COUNT_CAPS.databasesPerWorkspaceScan);
   },
 });
 

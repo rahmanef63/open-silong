@@ -8,6 +8,7 @@ import {
 } from "../_generated/server";
 import { requireAuth } from "../_shared/auth";
 import { sha256Hex, generateMcpToken } from "../_shared/hash";
+import { COUNT_CAPS } from "../_shared/limits";
 
 const MAX_TOKENS_PER_USER = 10;
 
@@ -20,7 +21,7 @@ export const issue = mutation({
     const existing = await ctx.db
       .query("mcpTokens")
       .withIndex("by_user", (q) => q.eq("userId", userId))
-      .collect();
+      .take(COUNT_CAPS.mcpTokensScan);
     const live = existing.filter((t) => !t.revoked).length;
     if (live >= MAX_TOKENS_PER_USER) {
       throw new Error(`Maks ${MAX_TOKENS_PER_USER} token aktif per user`);
@@ -58,7 +59,7 @@ export const listMine = query({
     const rows = await ctx.db
       .query("mcpTokens")
       .withIndex("by_user", (q) => q.eq("userId", userId))
-      .collect();
+      .take(COUNT_CAPS.mcpTokensScan);
     return rows
       .map((r) => ({
         id: r._id,
