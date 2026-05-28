@@ -21,7 +21,7 @@ export {
   toString, toNumber, toBoolean, toDate, isEmpty, formatFormulaValue,
   parseFormula, evalFormulaCore,
   SIGNATURES, listFunctionNames, functionsByGroup, getSignature, canonicalFunctionName,
-  HIGHER_ORDER_NAMES, collectDeps,
+  HIGHER_ORDER_NAMES, collectDeps, inferType,
 } from "./formulaEngine/index";
 
 // Silong-bound `evalFormula` — accepts partial ctx + auto-injects silongHost.
