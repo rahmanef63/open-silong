@@ -142,13 +142,18 @@ export const list = query({
 export const listPublicForSitemap = query({
   args: {},
   handler: async (ctx) => {
-    // No userId scope — sitemap should expose all public-published pages.
-    // Keep the projection tight; trashed pages never make it through.
-    const docs = await ctx.db.query("pages").take(2_000);
+    // No userId scope — sitemap exposes all public + search-indexable pages.
+    // Walk ONLY the by_share_indexable bucket (not the whole table); the
+    // residual isPublic/!trashed guard stays in-memory since those aren't
+    // in this index. Bounded at the sitemap row cap.
+    const docs = await ctx.db
+      .query("pages")
+      .withIndex("by_share_indexable", (q) => q.eq("shareIndexable", true))
+      .take(COUNT_CAPS.sitemapScanRows);
     return docs
-      .filter((d) => d.isPublic && !d.trashed && d.shareIndexable === true)
+      .filter((d) => d.isPublic && !d.trashed)
       .map((d) => ({ id: d._id as string, slug: d.shareSlug, updatedAt: d.updatedAt }))
-      .slice(0, 1_000);
+      .slice(0, COUNT_CAPS.sitemapMaxRows);
   },
 });
 
