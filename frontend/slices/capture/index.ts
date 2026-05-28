@@ -1,21 +1,21 @@
 /** Quick Capture slice (Phase 2 — capture loop foundation).
  *
- *  STATUS: branch scaffold (feat/phase2-quick-capture). Pure parse +
- *  target-resolution logic is complete + tested; the QuickCaptureDialog
- *  shell renders. NOT yet wired into the app — see WIRING below.
+ *  STATUS: branch (feat/phase2-quick-capture). Pure core + the
+ *  orchestration runner + the React hook are complete + tested; the
+ *  QuickCaptureDialog shell renders. The full feature is now a 2-line
+ *  mount — see WIRING. NOT pushed to main (awaiting review).
  *
- *  WIRING (consumer's remaining work, ~1 screen):
- *   1. Mount <QuickCaptureDialog open onOpenChange onCapture> somewhere
- *      global (dashboard layout).
- *   2. onCapture(input): call the create-page mutation with
- *      resolveCaptureTarget(prefs).parentId as parent, input.title as
- *      title, markdownToBlocks(input.body) as blocks; then navigate to
- *      the new page (or toast "captured").
- *   3. Open trigger: add a command-palette entry ("Quick capture") +
- *      a global Cmd/Ctrl+Shift+N keybinding that flips `open`.
- *   4. (later) the web clipper / share-target / email-in capture paths
- *      reuse parseCaptureInput + resolveCaptureTarget — same core.
+ *  WIRING (the only remaining step — mount + a trigger):
+ *    function GlobalCapture() {
+ *      const { open, setOpen, capture } = useQuickCapture(prefs);
+ *      // bind a Cmd/Ctrl+Shift+N keydown → setOpen(true), and/or add a
+ *      // command-palette entry that calls setOpen(true)
+ *      return <QuickCaptureDialog open={open} onOpenChange={setOpen} onCapture={capture} />;
+ *    }
+ *  Mount <GlobalCapture/> once in the dashboard layout.
  *
+ *  Later capture paths (web clipper / share-target / email-in) reuse
+ *  parseCaptureInput + resolveCaptureTarget + runCapture — same core.
  *  Engine-independent: no formula-engine dependency. */
 
 export type {
@@ -24,4 +24,6 @@ export type {
 export {
   parseCaptureInput, resolveCaptureTarget, isEmptyCapture, captureTitleOrDefault,
 } from "./lib/captureInput";
+export { runCapture, type CaptureRunnerDeps } from "./lib/runCapture";
+export { useQuickCapture } from "./hooks/useQuickCapture";
 export { QuickCaptureDialog, type QuickCaptureDialogProps } from "./components/QuickCaptureDialog";
