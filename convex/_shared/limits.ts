@@ -55,6 +55,11 @@ export const RATE_LIMITS = {
   // (we don't have anonymous IPs in Convex), so 60/min keeps a single
   // form from getting hammered into oblivion regardless of source.
   formsPublicSubmit: { scope: "forms.publicSubmit", max: 60,  windowMs: 60_000 },
+
+  // File-upload URL minting — bound per-user so an authed client can't
+  // loop generateUploadUrl to mint unlimited URLs + push unbounded blobs
+  // (storage-cost abuse / DoS). confirmUpload shares the bucket.
+  fileUpload:        { scope: "files.upload",      max: 120, windowMs: 60_000 },
 } as const;
 
 // ─── Char caps ────────────────────────────────────────────────────

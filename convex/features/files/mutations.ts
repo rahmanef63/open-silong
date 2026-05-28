@@ -3,12 +3,17 @@ import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { Id } from "../../_generated/dataModel";
 import { getActiveWorkspaceMutation, rowInActiveWorkspace } from "../../_shared/workspace";
+import { rateLimit } from "../../_shared/rateLimit";
+import { RATE_LIMITS } from "../../_shared/limits";
 
 export const generateUploadUrl = mutation({
   args: {},
   handler: async (ctx) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
+    // Bound URL minting — without this an authed loop could mint unlimited
+    // upload URLs + push unbounded blobs (storage-cost DoS).
+    await rateLimit(ctx, userId, RATE_LIMITS.fileUpload);
     return await ctx.storage.generateUploadUrl();
   },
 });
