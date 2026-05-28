@@ -1,15 +1,20 @@
 # Formula Engine — Public API Surface Review
 
-**Status:** 1.G.1 complete (genericized, grep-gate enforced). Pending publish
-to `rahman-shared` (1.G.2 step A).
+**Status:** Publish-ready. Engine is genericized + zero-dependency, now locked
+by two CI gates: `__boundary__.test.ts` (relative-imports-only ⇒ zero dep, no
+Node built-ins, Convex/edge-runtime safe) and `__surface__.test.ts` (SemVer
+export tripwire). Remaining is the external `rahman-shared` copy + publish
+itself (1.G.2 step A), then post-publish Convex wiring.
 
 This document is the **API contract** the package will publish. Anything
 listed under "Public surface" is part of the SemVer commitment; anything
 under "Intentional non-exports" can change without bumping major.
 
 Source of truth: `frontend/slices/databases/lib/formulaEngine/index.ts`.
-Boundary enforcement: `lib/formulaEngine/__boundary__.test.ts` fails CI
-if any engine file imports `@/shared`, `@/slices`, or `@convex`.
+Boundary enforcement: `lib/formulaEngine/__boundary__.test.ts` fails CI if any
+engine file imports anything non-relative (domain alias, npm dep, or Node
+built-in) — proving the directory is zero-dependency and Convex/edge-runtime
+safe. `__surface__.test.ts` freezes the public value-export surface (§6 SemVer).
 
 ---
 
@@ -366,12 +371,21 @@ asserts no consumer-side leak BACK into the engine path.
 
 1. **License header** — rahman-shared is MIT; engine ships with the same.
    No additional headers needed in per-file source.
-2. **Tree-shaking** — confirm rollup/esbuild can drop unused fn registries
-   (e.g. consumer that only uses string fns shouldn't pay for date fns).
-   Audit `functions/index.ts` for side-effect-free declarations.
+2. **Tree-shaking** — ✅ AUDITED. `functions/index.ts` builds `REGISTRY` +
+   `SIGNATURES` as top-level `const` object-spreads of imported const maps;
+   `_registry.ts` is types + a pure `need()` guard; every domain module
+   (`string`/`number`/`date`/`list`/`logic`) exports pure const maps. Zero
+   module-level side effects ⇒ `"sideEffects": false` is safe to declare.
+   Per-fn tree-shaking is N/A by design: `evalCall` dispatches through one
+   merged `REGISTRY` that references all groups, so any `evalFormulaCore`
+   consumer legitimately needs all handlers — granularity is "import the
+   engine or not", which is correct (not a regression).
 3. **TS-only target** — `rahman-shared/package.json` ships `.ts` directly
-   (no `dist/`). Engine has zero runtime deps so tree-shaking happens at
-   the consumer's bundler. Confirm Convex runtime accepts `.ts`-direct
-   import path (Convex usually wants `.js`).
+   (no `dist/`). Engine code is now CI-proven zero-dep + Node-builtin-free
+   (gate above) ⇒ runtime-safe for `.ts`-direct execution in Convex/edge.
+   The only residual is whether Convex deploy RESOLVES a `.ts` subpath
+   export — a packaging detail, validated empirically at first publish
+   (move convexHost → `convex/features/formulas/host.ts`, import
+   `rahman-shared/formulaEngine`, run `convex deploy`). No code blocker.
 4. **Test parity** — the 611 vitest cases live in this repo. On lift,
    parity tests should also move to `rahman-shared`. Defer until publish.
