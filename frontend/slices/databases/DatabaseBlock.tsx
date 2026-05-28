@@ -31,7 +31,7 @@ export function DatabaseBlock({
    *  home of the DB (no host page concept). Used by `/dashboard/db/[id]`. */
   fullPage?: boolean;
 }) {
-  const { getDatabase, pages, updateBlock, updateDatabase } = useDbAdapter();
+  const { getDatabase, pages, databases, updateBlock, updateDatabase } = useDbAdapter();
   const { updateView } = useDbAdapter();
   const navigate = useNavigate();
   const [openRowId, setOpenRowId] = useState<string | null>(null);
@@ -45,7 +45,10 @@ export function DatabaseBlock({
   // sorts, hiddenProps, frozenProps, groupBy, search, tableCalcs).
   const view = sourceView ? mergeViewOverrides(sourceView, block) : undefined;
   const rows = useDatabaseRows(db, pages);
-  const filtered = useFilteredRows(rows, view);
+  // Pass db/pages/databases so formula + rollup columns are filterable +
+  // sortable (1.G.3) — the hook evaluates those via the engine. Stored
+  // props keep the cheap raw-value path.
+  const filtered = useFilteredRows(rows, view, db, pages, databases);
 
   // "Inline" means embedded in a regular page's block stream. Full-page
   // route forces isInline=false so the "Open as page" button hides
