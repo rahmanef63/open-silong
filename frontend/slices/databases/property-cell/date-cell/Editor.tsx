@@ -1,4 +1,4 @@
-import { Calendar as DayPicker } from "@/shared/ui/calendar";
+import { DateCalendar } from "./DateCalendar";
 import { Switch } from "@/shared/ui/switch";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -69,10 +69,9 @@ export function DateEditor({ value, prop, onChange, onClear, onPropPatch }: Prop
         )}
       </div>
 
-      <DayPicker
-        mode="single"
+      <DateCalendar
         selected={startDate}
-        onSelect={setStart}
+        onPick={setStart}
         defaultMonth={startDate}
       />
 
@@ -96,12 +95,10 @@ export function DateEditor({ value, prop, onChange, onClear, onPropPatch }: Prop
               />
             )}
           </div>
-          <DayPicker
-            mode="single"
+          <DateCalendar
             selected={ymdToDate(value.end)}
-            onSelect={setEnd}
+            onPick={setEnd}
             defaultMonth={ymdToDate(value.end) ?? startDate}
-            disabled={(d) => !!startDate && d < startDate}
           />
         </div>
       )}
