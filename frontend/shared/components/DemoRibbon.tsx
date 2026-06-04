@@ -9,7 +9,14 @@ import { Button } from "@/shared/ui/button";
  *  to stay clear of editor chrome. */
 const IS_DEMO = process.env.NEXT_PUBLIC_DEMO === "1";
 const REPO = "https://github.com/rahmanef63/open-silong";
-const CLONE_URL = `https://vercel.com/new/clone?repository-url=${REPO}&env=NEXT_PUBLIC_CONVEX_URL,NEXT_PUBLIC_CONVEX_SITE_URL`;
+// Only CONVEX_DEPLOY_KEY is asked for — the build (vercel.json →
+// build:auto) deploys Convex functions, provisions auth keys
+// (scripts/setup-auth.mjs), and injects NEXT_PUBLIC_CONVEX_URL itself.
+const CLONE_URL =
+  `https://vercel.com/new/clone?repository-url=${REPO}` +
+  `&env=CONVEX_DEPLOY_KEY` +
+  `&envDescription=${encodeURIComponent("Convex production deploy key — Convex dashboard → Settings → Deploy Keys")}` +
+  `&envLink=${encodeURIComponent("https://dashboard.convex.dev")}`;
 
 export function DemoRibbon() {
   if (!IS_DEMO) return null;

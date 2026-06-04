@@ -5,6 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import { AuthForm } from "./AuthForm";
 import { AuthClient } from "./AuthClient";
 import { DemoGuestEntry } from "./DemoGuestEntry";
+import { SetupPointer } from "./SetupPointer";
 
 export const metadata: Metadata = {
   title: "Sign in",
@@ -31,6 +32,7 @@ export default function AuthPage() {
             </AuthClient>
           </Suspense>
         </div>
+        <SetupPointer />
       </div>
     </div>
   );

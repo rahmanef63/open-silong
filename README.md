@@ -52,6 +52,16 @@ licensed. No vendor lock-in.
 
 ### Lane 1 — Convex Cloud (fastest, free tier)
 
+**One-click**: [Deploy with Vercel](https://vercel.com/new/clone?repository-url=https://github.com/rahmanef63/open-silong&env=CONVEX_DEPLOY_KEY&envDescription=Convex%20production%20deploy%20key%20%E2%80%94%20Convex%20dashboard%20%E2%86%92%20Settings%20%E2%86%92%20Deploy%20Keys&envLink=https%3A%2F%2Fdashboard.convex.dev) —
+only asks for `CONVEX_DEPLOY_KEY` (create a project at
+[dashboard.convex.dev](https://dashboard.convex.dev) → Settings → Deploy
+Keys). The build deploys the Convex functions, provisions the auth keys,
+and injects `NEXT_PUBLIC_CONVEX_URL` automatically. Your first visit
+lands on the `/setup` wizard: claim the owner (superadmin) account and
+seed the template gallery + demo workspace in one click.
+
+Local development:
+
 ```bash
 git clone https://github.com/rahmanef63/open-silong.git
 cd open-silong
