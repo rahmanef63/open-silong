@@ -6,6 +6,8 @@ import { Search } from "lucide-react";
 import { ErrorBoundary } from "@/shared/components/ErrorBoundary";
 import { ConfirmProvider } from "@/shared/components/ConfirmProvider";
 import { RouteSkeleton, PageBodySkeleton } from "@/shared/components/RouteSkeleton";
+import { SiteLoader } from "@/shared/components/SiteLoader";
+import { useStore } from "@/shared/lib/store";
 import { TooltipProvider } from "@/shared/ui/tooltip";
 import { Toaster } from "@/shared/ui/toaster";
 import { Toaster as Sonner } from "@/shared/ui/sonner";
@@ -65,8 +67,26 @@ function AuthGuard({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!isLoading && !isAuthenticated) window.location.replace("/auth");
   }, [isLoading, isAuthenticated]);
-  if (isLoading || !isAuthenticated) return <RouteSkeleton />;
+  if (isLoading || !isAuthenticated) {
+    // Splash over the skeleton — same initiate loading state as the rest
+    // of the template fleet. The skeleton stays underneath as the 8s
+    // hard-timeout fallback surface.
+    return (
+      <>
+        <RouteSkeleton />
+        <SiteLoader ready={false} />
+      </>
+    );
+  }
   return <>{children}</>;
+}
+
+/** Splash for the data phase — must live inside StoreProvider. Flips
+ *  `ready` when the first pages+databases snapshot lands, finishing the
+ *  initiate sequence the AuthGuard splash started. */
+function WorkspaceSplash() {
+  const { isInitialLoading } = useStore();
+  return <SiteLoader ready={!isInitialLoading} />;
 }
 
 const SIDEBAR_STYLE = { "--sidebar-width": "17rem" } as React.CSSProperties;
@@ -122,6 +142,7 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
         <AuthGuard>
           <RouterProvider basename="/dashboard">
           <StoreProvider>
+            <WorkspaceSplash />
             <NotionAdapterMount>
             <ConfirmProvider>
             <WorkspaceIOProvider>

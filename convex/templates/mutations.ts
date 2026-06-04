@@ -4,7 +4,7 @@ import { requireAuth, requireAdmin } from "../_shared/auth";
 import { logAuditEventInternal } from "../admin/mutations";
 import { validateTemplate } from "./lib/validate";
 import { instantiateTemplate } from "./lib/instantiate";
-import { SEED_TEMPLATES } from "./seed";
+import { seedTemplateGallery } from "./lib/seedGallery";
 
 export const upsertTemplate = mutation({
   args: {
@@ -82,47 +82,8 @@ export const seedDefaults = mutation({
   args: {},
   handler: async (ctx) => {
     const actorId = await requireAdmin(ctx);
-    // Full-table scan acceptable — admin-only seed mutation, called from
-    // the admin templates panel after fresh deploys. `pageTemplates`
-    // stays small (template count ≈ 20–50 across a deployment).
-    const existing = await ctx.db.query("pageTemplates").take(500);
-    const seedByName = new Map(
-      existing.filter((d) => d.isSeed).map((d) => [d.name, d]),
-    );
-    let inserted = 0;
-    let updated = 0;
-    const now = Date.now();
-    for (const tpl of SEED_TEMPLATES) {
-      validateTemplate(tpl);
-      const prior = seedByName.get(tpl.name);
-      if (prior) {
-        await ctx.db.patch(prior._id, {
-          icon: tpl.icon,
-          category: tpl.category,
-          description: tpl.description,
-          // Don't overwrite admin-curated images with empty seed list on re-seed.
-          ...(tpl.images && tpl.images.length > 0 ? { images: tpl.images } : {}),
-          json: tpl,
-          updatedAt: now,
-        });
-        updated += 1;
-      } else {
-        await ctx.db.insert("pageTemplates", {
-          name: tpl.name,
-          icon: tpl.icon,
-          category: tpl.category,
-          description: tpl.description,
-          images: tpl.images,
-          json: tpl,
-          createdBy: actorId,
-          isPublished: true,
-          isSeed: true,
-          createdAt: now,
-          updatedAt: now,
-        });
-        inserted += 1;
-      }
-    }
+    // Upsert loop lives in lib/seedGallery — shared with setup.seedAll.
+    const { inserted, updated } = await seedTemplateGallery(ctx, actorId);
     await logAuditEventInternal(ctx, actorId, "template.seed", undefined, { inserted, updated });
     return { inserted, updated };
   },

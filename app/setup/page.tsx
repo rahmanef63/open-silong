@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { SetupClient } from "./SetupClient";
+import { SetupGate } from "./SetupGate";
 
 export const metadata: Metadata = {
   title: "Setup — Silong",
@@ -14,10 +15,13 @@ export default function SetupPage() {
         <div className="space-y-2 pb-6">
           <h1 className="text-2xl font-semibold tracking-tight">Setup workspace</h1>
           <p className="text-sm text-muted-foreground">
-            Instance Silong baru. Tiga langkah dan workspace ini milikmu.
+            Instance Silong baru. Empat langkah dan workspace ini milikmu —
+            lengkap dengan data contoh.
           </p>
         </div>
-        <SetupClient />
+        <SetupGate>
+          <SetupClient />
+        </SetupGate>
       </div>
     </main>
   );
