@@ -57,7 +57,11 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
         },
       },
     }),
-    Google,
+    // Google OAuth is opt-in: only registered when the deployment has
+    // credentials (pnpm exec convex env set AUTH_GOOGLE_ID/SECRET). The
+    // public demo + fresh clones run without it — pair with
+    // NEXT_PUBLIC_AUTH_GOOGLE=1 on the frontend to show the button.
+    ...(process.env.AUTH_GOOGLE_ID ? [Google] : []),
     // Demo guest mode — the showcase deployment auto-signs visitors in
     // anonymously so they land straight in a real workspace (no form).
     // Anonymous users are blocked from claimSuperAdmin (see admin/mutations).
