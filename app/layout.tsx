@@ -30,8 +30,14 @@ const fraunces = Fraunces({
   preload: false,
 });
 
+// Env-driven so clones get correct absolute og/canonical URLs without
+// forking — same chain as the template fleet. Reference deploy is the
+// Vercel demo (the self-hosted silong.rahmanef.com lane was turned off
+// 2026-06-04).
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://silong-os.vercel.app";
+
 export const metadata: Metadata = {
-  metadataBase: new URL("https://silong.rahmanef.com"),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "Silong — Open-source collaborative workspace",
     template: "%s · Silong",
@@ -57,7 +63,7 @@ export const metadata: Metadata = {
     title: "Silong — Open-source collaborative workspace",
     description: "An open-source Notion-inspired workspace, built for everyone. Self-hostable, block-based, real-time.",
     type: "website",
-    url: "https://silong.rahmanef.com",
+    url: SITE_URL,
     siteName: "Silong",
     images: [{ url: "/banner-light.png", width: 1200, height: 630 }],
   },

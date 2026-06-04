@@ -1,10 +1,19 @@
 # open-silong — Claude / Agent Conventions
 
 Open-source collaborative workspace (Notion-inspired). Next 16 (App Router) +
-React 19 + Convex 1.36 self-hosted. License MIT.
+React 19 + Convex 1.36 (cloud reference deploy; self-hosted lane supported).
+License MIT.
 
-Live: https://silong.rahmanef.com · Convex: https://api-silong.rahmanef.com ·
+Live: https://silong-os.vercel.app (Vercel + Convex cloud prod
+`canny-flamingo-7`, dev `coordinated-ptarmigan-140`) ·
 Repo: https://github.com/rahmanef63/open-silong
+
+**Self-hosted lane OFF 2026-06-04**: silong.rahmanef.com (Dokploy app
+`notion-page-clone-gniidj`) stopped + autoDeploy disabled — push to main no
+longer redeploys it. The Convex self-hosted compose
+(`api-notion-page-clone.rahmanef.com`) still runs with the old data; restart
+the app from Dokploy if the lane is ever revived. Vercel deployment is the
+reference deploy now.
 
 **Rebrand 2026-05-20**: project formerly known as `notion-page-clone` / `nosion`.
 - Github repo renaming to `open-silong` (rahmanef63 account).

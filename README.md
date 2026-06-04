@@ -11,7 +11,7 @@
 [![Tailwind](https://img.shields.io/badge/Tailwind-v4-38bdf8?logo=tailwindcss)](https://tailwindcss.com)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](./CONTRIBUTING.md)
 
-[Live demo](https://silong.rahmanef.com) ·
+[Live demo](https://silong-os.vercel.app) ·
 [Docs](./docs/) ·
 [Contributing](./CONTRIBUTING.md) ·
 [Security](./SECURITY.md)
@@ -99,9 +99,9 @@ setup + adding GitHub/Apple/Discord providers:
 
 ### Lane 3 — Try without installing
 
-[silong.rahmanef.com](https://silong.rahmanef.com) — public demo.
-Sign in with email magic link, start writing. Data is real, instance
-is shared.
+[silong-os.vercel.app](https://silong-os.vercel.app) — public demo.
+Lands you straight in a guest workspace (no sign-up needed), or create
+an email + password account to keep your data. Instance is shared.
 
 ### Lane 4 — Template only (no backend)
 
