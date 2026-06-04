@@ -13,6 +13,7 @@ import type * as _shared_aiKeyResolver from "../_shared/aiKeyResolver.js";
 import type * as _shared_aiProviders from "../_shared/aiProviders.js";
 import type * as _shared_aiQuota from "../_shared/aiQuota.js";
 import type * as _shared_auth from "../_shared/auth.js";
+import type * as _shared_blockOps from "../_shared/blockOps.js";
 import type * as _shared_blocks from "../_shared/blocks.js";
 import type * as _shared_hash from "../_shared/hash.js";
 import type * as _shared_idRemap from "../_shared/idRemap.js";
@@ -145,6 +146,7 @@ declare const fullApi: ApiFromModules<{
   "_shared/aiProviders": typeof _shared_aiProviders;
   "_shared/aiQuota": typeof _shared_aiQuota;
   "_shared/auth": typeof _shared_auth;
+  "_shared/blockOps": typeof _shared_blockOps;
   "_shared/blocks": typeof _shared_blocks;
   "_shared/hash": typeof _shared_hash;
   "_shared/idRemap": typeof _shared_idRemap;

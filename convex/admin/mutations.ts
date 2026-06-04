@@ -36,6 +36,12 @@ export const claimSuperAdmin = mutation({
   args: {},
   handler: async (ctx) => {
     const userId = await requireAuth(ctx);
+    // Demo guests (Anonymous provider) can never own the instance —
+    // otherwise the first drive-by visitor claims the showcase deploy.
+    const me = await ctx.db.get(userId);
+    if (me?.isAnonymous) {
+      throw new Error("Akun tamu tidak bisa klaim — daftar dengan email dulu.");
+    }
     // Cheap O(log n) probe via by_role — no full-table scan even on a
     // freshly-deployed instance. After the first claim, the if-throw fires
     // and the path stops being hit anyway.
