@@ -26,9 +26,11 @@ export default function Home() {
     }
     if (IS_DEMO && !tried.current) {
       tried.current = true;
-      void signIn("anonymous")
-        .then(() => router.replace("/dashboard"))
-        .catch(() => router.replace("/auth"));
+      // NO redirect in .then(): the middleware reads an httpOnly cookie that
+      // lands slightly AFTER the client token — navigating immediately races
+      // it and bounces to /auth. We just sign in; when isAuthenticated flips
+      // true this effect re-runs and takes the redirect branch above.
+      void signIn("anonymous").catch(() => router.replace("/auth"));
       return;
     }
     if (!IS_DEMO) router.replace("/dashboard");
