@@ -1,4 +1,5 @@
 import { convexAuth } from "@convex-dev/auth/server";
+import { ConvexError } from "convex/values";
 import { Password } from "@convex-dev/auth/providers/Password";
 import { Anonymous } from "@convex-dev/auth/providers/Anonymous";
 import Google from "@auth/core/providers/google";
@@ -6,6 +7,18 @@ import Google from "@auth/core/providers/google";
 export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
   providers: [
     Password({
+      profile(params) {
+        // Guard BEFORE any account row is created: without the JWT signing
+        // key no sign-in can ever succeed — fail with a pointer to /setup
+        // instead of a half-created account. Mirrors
+        // template-personal-brand-os c85c66a.
+        if (!process.env.JWT_PRIVATE_KEY) {
+          throw new ConvexError(
+            "Kunci login belum terpasang di backend. Buka /setup di situs ini untuk panduan perbaikannya.",
+          );
+        }
+        return { email: params.email as string };
+      },
       crypto: {
         async hashSecret(password: string) {
           const salt = crypto.getRandomValues(new Uint8Array(16));
