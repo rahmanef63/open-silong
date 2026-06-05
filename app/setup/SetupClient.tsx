@@ -63,6 +63,25 @@ export function SetupClient() {
 
   return (
     <div className="space-y-6">
+      {setupStatus?.authReady === false && (
+        <div className="rounded-xl border border-amber-500/40 bg-amber-500/5 p-4 text-sm">
+          <p className="font-medium">Kunci login belum terpasang</p>
+          <p className="mt-1 text-muted-foreground">
+            Deploy key kamu tidak punya izin menulis env Convex
+            (<code>WriteEnvironmentVariables</code>) — pendaftaran akan gagal
+            sampai ini dibereskan:
+          </p>
+          <ol className="mt-2 list-decimal space-y-1 pl-4 text-muted-foreground">
+            <li>
+              <a className="underline" href="https://dashboard.convex.dev" target="_blank" rel="noreferrer">dashboard.convex.dev</a>{" "}
+              → project kamu → <b>Production</b> → Settings → Deploy Keys →
+              <b> Generate production deploy key</b> (pakai akun admin team).
+            </li>
+            <li>Vercel → Settings → Environment Variables → ganti <b>CONVEX_DEPLOY_KEY</b>.</li>
+            <li><b>Redeploy</b> — kunci login dibuat otomatis saat build.</li>
+          </ol>
+        </div>
+      )}
       <ol className="space-y-4">
         <Step done={step1Done} title="1. Buat akun">
           <p className="text-sm text-muted-foreground">

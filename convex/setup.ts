@@ -23,6 +23,9 @@ export const status = query({
     return {
       ownerClaimed: !!superadmin,
       seeded: !!template,
+      // JWT auth keys present? (setup-auth.mjs provisions them at build; a
+      // deploy key without WriteEnvironmentVariables leaves them missing.)
+      authReady: !!process.env.JWT_PRIVATE_KEY,
     };
   },
 });

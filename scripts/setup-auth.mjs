@@ -3,6 +3,13 @@
 // deploy key lets us set the deployment's env. Idempotent: generates the
 // @convex-dev/auth JWT keys once and skips if they already exist (so sessions
 // aren't invalidated on every deploy). Same pattern as the template fleet.
+//
+// SAFETY: env-set failures are caught + reported WITHOUT echoing the command
+// (the command contains the private key — an uncaught execFileSync error would
+// dump it into the build log). Permission failures (403
+// WriteEnvironmentVariables — deploy key isn't a production key, or its
+// creator isn't a Convex admin/Project Admin) do NOT fail the build: the site
+// goes live and /setup walks the owner through fixing the key.
 import { execFileSync } from "node:child_process";
 
 if (!process.env.CONVEX_DEPLOY_KEY) {
@@ -24,6 +31,27 @@ function envGet(name) {
   }
 }
 
+// Set one env var. Never rethrows, never prints the value — only convex's own
+// error lines (which contain no secret).
+function envSet(pair, label) {
+  try {
+    execFileSync("npx", ["convex", "env", "set", pair], {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    return true;
+  } catch (e) {
+    const out = `${e.stdout || ""}${e.stderr || ""}`;
+    const denied = /403|Unauthorized|WriteEnvironmentVariables/i.test(out);
+    console.error(
+      `[setup-auth] ✖ gagal set ${label}${denied ? " — deploy key tidak punya izin tulis env (WriteEnvironmentVariables)" : ""}`,
+    );
+    const firstLines = out.trim().split("\n").slice(0, 2).join("\n");
+    if (firstLines) console.error(firstLines);
+    return false;
+  }
+}
+
 if (envGet("JWT_PRIVATE_KEY")) {
   console.log("[setup-auth] JWT keys already set — skip.");
   process.exit(0);
@@ -31,7 +59,6 @@ if (envGet("JWT_PRIVATE_KEY")) {
 
 console.log("[setup-auth] generating auth keys…");
 // Same format as `npx @convex-dev/auth` (jose RS256, newlines → spaces).
-// IMPORTANT: private key + JWKS must come from ONE generateKeyPair call.
 const { generateKeyPair, exportPKCS8, exportJWK } = await import("jose");
 const keys = await generateKeyPair("RS256", { extractable: true });
 const privateKey = (await exportPKCS8(keys.privateKey)).trimEnd().replace(/\n/g, " ");
@@ -47,8 +74,30 @@ const site =
       : "");
 
 // NAME=value form: the value starts with "-----BEGIN", which the CLI would else
-// parse as a flag.
-npx(["convex", "env", "set", `JWT_PRIVATE_KEY=${privateKey}`]);
-npx(["convex", "env", "set", `JWKS=${jwks}`]);
-if (site) npx(["convex", "env", "set", `SITE_URL=${site}`]);
+// parse as a flag. JWT_PRIVATE_KEY + JWKS must land as a PAIR (same keygen);
+// if the first set succeeds but the second fails, roll the first back so the
+// idempotency check above doesn't lock in a broken half-pair.
+let ok = envSet(`JWT_PRIVATE_KEY=${privateKey}`, "JWT_PRIVATE_KEY");
+if (ok) {
+  ok = envSet(`JWKS=${jwks}`, "JWKS");
+  if (!ok) {
+    try { npx(["convex", "env", "remove", "JWT_PRIVATE_KEY"], true); } catch { /* best effort */ }
+  }
+}
+if (ok && site) envSet(`SITE_URL=${site}`, "SITE_URL"); // non-critical
+
+if (!ok) {
+  console.error(`
+[setup-auth] ──────────────────────────────────────────────────────────
+  Kunci login TIDAK terpasang. Penyebab paling umum:
+   1. CONVEX_DEPLOY_KEY bukan "Production deploy key"
+      (dashboard.convex.dev → pilih project → Production → Settings →
+      Deploy Keys → Generate), atau
+   2. Akun pembuat key bukan admin / Project Admin di team Convex itu.
+  Build TETAP dilanjutkan — situs akan live, tapi daftar/login owner
+  gagal sampai key diganti di Vercel lalu Redeploy.
+  Buka /setup di situsmu — halaman itu memandu langkah perbaikannya.
+──────────────────────────────────────────────────────────────────────`);
+  process.exit(0);
+}
 console.log("[setup-auth] auth keys provisioned ✔");
