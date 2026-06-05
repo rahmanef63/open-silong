@@ -15,7 +15,7 @@ const REPO = "https://github.com/rahmanef63/open-silong";
 const CLONE_URL =
   `https://vercel.com/new/clone?repository-url=${REPO}` +
   `&env=CONVEX_DEPLOY_KEY` +
-  `&envDescription=${encodeURIComponent("Convex production deploy key — Convex dashboard → Settings → Deploy Keys")}` +
+  `&envDescription=${encodeURIComponent("Convex production deploy key — WAJIB capability deploy + env:view + env:write (atau full access)")}` +
   `&envLink=${encodeURIComponent("https://dashboard.convex.dev")}`;
 
 export function DemoRibbon() {

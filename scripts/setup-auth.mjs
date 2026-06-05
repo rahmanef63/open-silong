@@ -2,7 +2,7 @@
 // Runs only when CONVEX_DEPLOY_KEY is present (i.e. a real clone build); the
 // deploy key lets us set the deployment's env. Idempotent: generates the
 // @convex-dev/auth JWT keys once and skips if they already exist (so sessions
-// aren't invalidated on every deploy). Same pattern as the template fleet.
+// aren't invalidated on every deploy).
 //
 // SAFETY: env-set failures are caught + reported WITHOUT echoing the command
 // (the command contains the private key — an uncaught execFileSync error would
@@ -90,9 +90,11 @@ if (!ok) {
   console.error(`
 [setup-auth] ──────────────────────────────────────────────────────────
   Kunci login TIDAK terpasang. Penyebab paling umum:
-   1. CONVEX_DEPLOY_KEY bukan "Production deploy key"
-      (dashboard.convex.dev → pilih project → Production → Settings →
-      Deploy Keys → Generate), atau
+   1. Deploy key kamu tidak mencentang capability env — di UI deploy key
+      Convex terbaru, pastikan key punya: deployment:deploy +
+      deployment:env:view + deployment:env:write (atau pilih full access).
+      Generate: dashboard.convex.dev → project → Production → Settings →
+      Deploy Keys.
    2. Akun pembuat key bukan admin / Project Admin di team Convex itu.
   Build TETAP dilanjutkan — situs akan live, tapi daftar/login owner
   gagal sampai key diganti di Vercel lalu Redeploy.
