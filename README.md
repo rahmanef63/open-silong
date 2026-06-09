@@ -25,6 +25,24 @@ Built for teams that want to **own their data**: self-host the full
 stack with Docker Compose, or run on Convex Cloud free tier. MIT
 licensed. No vendor lock-in.
 
+## Screenshots
+
+![open-silong workspace — sidebar, pages and databases on the dashboard](./docs/media/dashboard.png)
+
+| Block editor | Database — Table | Database — Board |
+|:---:|:---:|:---:|
+| <img src="./docs/media/editor.png" alt="Block editor with rich blocks, slash menu and cover" /> | <img src="./docs/media/database.png" alt="Database table view with typed properties" /> | <img src="./docs/media/database-board.png" alt="Database board (Kanban) view grouped by status" /> |
+| **Template gallery** | **Admin panel** | **Command palette** |
+| <img src="./docs/media/templates.png" alt="Template marketplace with 26 templates and AI prompt" /> | <img src="./docs/media/admin.png" alt="Admin overview with workspace metrics" /> | <img src="./docs/media/command-palette.png" alt="Command palette searching pages and databases" /> |
+
+| Dark mode | Mobile | First-run setup |
+|:---:|:---:|:---:|
+| <img src="./docs/media/dashboard-dark.png" alt="Dashboard in dark mode" width="280" /> | <img src="./docs/media/mobile-home.png" alt="Mobile workspace home" width="160" /> | <img src="./docs/media/setup.png" alt="First-run /setup wizard: claim owner, seed demo" width="280" /> |
+
+> Captured live on [silong-os.vercel.app](https://silong-os.vercel.app),
+> signed in as the workspace superadmin (demo workspace seeded from the
+> `/setup` wizard).
+
 ## Features
 
 - **Block editor.** Slash-menu, drag-handle reorder, nested children,
