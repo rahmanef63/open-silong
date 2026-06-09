@@ -10,6 +10,7 @@ const eslintConfig = [
       "node_modules/**",
       "convex/_generated/**",
       "**/*.d.ts",
+      "scripts/**/*.cjs",
     ],
   },
   ...tseslint.configs.recommended,
