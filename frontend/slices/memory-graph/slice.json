@@ -28,7 +28,7 @@
     ],
     "slices": [],
     "convex": [],
-    "shadcn": ["button", "slider", "textarea"],
+    "shadcn": ["button", "input", "label", "scroll-area", "slider", "switch", "textarea"],
     "npm": []
   }
 }

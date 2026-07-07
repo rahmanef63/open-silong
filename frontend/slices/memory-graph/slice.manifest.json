@@ -11,7 +11,11 @@
       "types/domain",
       "types/graph",
       "ui/button",
+      "ui/input",
+      "ui/label",
+      "ui/scroll-area",
       "ui/slider",
+      "ui/switch",
       "ui/textarea"
     ],
     "slices": [],

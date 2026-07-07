@@ -61,7 +61,7 @@ export function LocalGraphPanel({ pageId }: Props) {
       </div>
       {open && (
         <div className="mt-3 h-64 overflow-hidden rounded-md border border-border bg-muted/40">
-          <MemoryGraphView graph={graph} onNodeClick={handleClick} className="h-full w-full" />
+          <MemoryGraphView graph={graph} onSelect={handleClick} className="h-full w-full" />
         </div>
       )}
     </section>

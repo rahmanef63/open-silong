@@ -27,7 +27,9 @@ const MEMORY_CAPTURE_PROMPT = `You are the memory keeper for a personal knowledg
 Keep it tight and factual.`;
 
 export function GraphRouteClient() {
-  const graph = useQuery(api.features.graph.queries.getGlobalGraph, {});
+  // Cap nodes for a readable + performant DOM graph; tags included so the
+  // control-panel Tags filter has data to toggle.
+  const graph = useQuery(api.features.graph.queries.getGlobalGraph, { limit: 160, includeTags: true });
   const createPage = useMutation(api.pages.create);
   const captureMemory = useAction(api.ai.chat.complete);
   const navigate = useNavigate();
