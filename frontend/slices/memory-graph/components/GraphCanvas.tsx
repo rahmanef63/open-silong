@@ -1,22 +1,22 @@
 "use client";
 
 /** The force-directed canvas — the only place `react-force-graph-2d` is
- *  imported (loaded via `GraphCanvasLazy` = next/dynamic ssr:false, because the
- *  lib touches window/canvas at module load).
+ *  imported (loaded via `GraphCanvasLazy` = next/dynamic ssr:false).
  *
- *  "Memory" look: a lime glowing HUB orb (highest-degree node), dark rounded
- *  ICON CHIPS for its direct neighbours (categories, showing the page emoji),
- *  and dark PILLS with a title for everything deeper (leaves). Background is
- *  transparent so the page's dotted grid shows through. Hovering a page node
- *  reveals a "+" affordance to add a child page.
+ *  Colours are THEME-DYNAMIC: every fill/stroke derives from the app's CSS
+ *  theme tokens via `useGraphTheme()` + `withAlpha`, so the graph follows
+ *  light/dark + tweakcn presets like the rest of the app. Node roles: a glowing
+ *  HUB orb (highest-degree node), icon CHIPS for its neighbours, PILLS with a
+ *  title for leaves. Hovering a page node reveals a "+" to add a child page.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ForwardRefExoticComponent, RefAttributes } from "react";
 import { Plus } from "lucide-react";
 import ForceGraph2D from "react-force-graph-2d";
+import { Button } from "@/shared/ui/button";
 import type { Graph, GraphEdge, GraphNode } from "@/shared/types/graph";
-import { MEM } from "../lib/memoryTheme";
+import { useGraphTheme, withAlpha } from "../lib/themeBridge";
 import type { DisplayConfig, ForceConfig } from "../lib/forceConfig";
 
 type FGNode = GraphNode & { x?: number; y?: number };
@@ -32,6 +32,7 @@ interface ForceGraph2DProps {
   d3VelocityDecay?: number;
   linkColor?: (link: FGLink) => string;
   linkWidth?: (link: FGLink) => number;
+  linkDirectionalArrowLength?: number;
   nodeCanvasObjectMode?: () => "replace" | "before" | "after";
   nodeCanvasObject?: (node: FGNode, ctx: CanvasRenderingContext2D, globalScale: number) => void;
   nodePointerAreaPaint?: (node: FGNode, color: string, ctx: CanvasRenderingContext2D) => void;
@@ -93,6 +94,9 @@ export default function GraphCanvas({
     hideTimer.current = setTimeout(() => setHoverId(null), 150);
   };
 
+  const theme = useGraphTheme();
+  const ns = display.nodeSize / 3; // config-driven size scale (default 1)
+
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -125,7 +129,6 @@ export default function GraphCanvas({
     return adj;
   }, [graph]);
 
-  // Hub = highest-degree page node; categories = its direct neighbours.
   const { hubId, categoryIds } = useMemo(() => {
     let best: GraphNode | null = null;
     for (const n of graph.nodes) {
@@ -177,72 +180,71 @@ export default function GraphCanvas({
       ctx.textBaseline = "middle";
 
       if (role === "hub") {
-        const core = 8 + Math.min(6, Math.sqrt(node.degree) * 1.2);
+        const core = (8 + Math.min(6, Math.sqrt(node.degree) * 1.2)) * ns;
         const halo = core * 2.6;
         const g = ctx.createRadialGradient(x, y, 0, x, y, halo);
-        g.addColorStop(0, MEM.hubCore);
-        g.addColorStop(0.4, MEM.accent);
-        g.addColorStop(1, "rgba(212,248,74,0)");
+        g.addColorStop(0, theme.node);
+        g.addColorStop(0.45, withAlpha(theme.node, 0.45));
+        g.addColorStop(1, withAlpha(theme.node, 0));
         ctx.fillStyle = g;
         ctx.beginPath();
         ctx.arc(x, y, halo, 0, 2 * Math.PI);
         ctx.fill();
-        ctx.fillStyle = MEM.hubCore;
+        ctx.fillStyle = theme.node;
         ctx.beginPath();
         ctx.arc(x, y, core * 0.6, 0, 2 * Math.PI);
         ctx.fill();
       } else if (role === "category") {
-        const s = 9;
-        roundRect(ctx, x - s, y - s, s * 2, s * 2, 4);
-        ctx.fillStyle = MEM.chip;
+        const s = 9 * ns;
+        roundRect(ctx, x - s, y - s, s * 2, s * 2, 4 * ns);
+        ctx.fillStyle = withAlpha(theme.text, 0.06);
         ctx.fill();
         ctx.lineWidth = 0.6;
-        ctx.strokeStyle = MEM.chipBorder;
+        ctx.strokeStyle = theme.border;
         ctx.stroke();
         const glyph = node.icon || node.title.slice(0, 1).toUpperCase() || "•";
         ctx.font = `${s * 1.05}px ui-sans-serif, system-ui, sans-serif`;
-        ctx.fillStyle = MEM.text;
+        ctx.fillStyle = theme.text;
         ctx.fillText(glyph, x, y + 0.5);
         if (highlighted?.has(node.id)) {
-          ctx.font = `4px ui-sans-serif, system-ui, sans-serif`;
-          ctx.fillStyle = MEM.muted;
+          ctx.font = `${4 * ns}px ui-sans-serif, system-ui, sans-serif`;
+          ctx.fillStyle = theme.muted;
           ctx.fillText(trunc(node.title, 24), x, y + s + 5);
         }
       } else if (role === "ghost") {
-        const r = 5;
+        const r = 5 * ns;
         ctx.setLineDash([2.2, 1.8]);
         ctx.lineWidth = 1;
-        ctx.strokeStyle = MEM.muted;
+        ctx.strokeStyle = theme.muted;
         ctx.beginPath();
         ctx.arc(x, y, r, 0, 2 * Math.PI);
         ctx.stroke();
         ctx.setLineDash([]);
       } else if (role === "tag") {
-        const s = 6;
-        roundRect(ctx, x - s, y - s, s * 2, s * 2, 3);
-        ctx.fillStyle = "rgba(212,248,74,0.14)";
+        const s = 6 * ns;
+        roundRect(ctx, x - s, y - s, s * 2, s * 2, 3 * ns);
+        ctx.fillStyle = withAlpha(theme.tag, 0.15);
         ctx.fill();
         ctx.font = `${s * 1.1}px ui-sans-serif, system-ui, sans-serif`;
-        ctx.fillStyle = MEM.accent;
+        ctx.fillStyle = theme.tag;
         ctx.fillText("#", x, y + 0.5);
       } else {
-        // leaf pill
         const label = trunc(node.title || "Untitled", 22);
-        const fs = 4;
+        const fs = 4 * ns;
         ctx.font = `${fs}px ui-sans-serif, system-ui, sans-serif`;
         const tw = ctx.measureText(label).width;
-        const padX = 4;
-        const h = fs + 5;
+        const padX = 4 * ns;
+        const h = fs + 5 * ns;
         const w = tw + padX * 2;
         roundRect(ctx, x - w / 2, y - h / 2, w, h, h / 2);
-        ctx.fillStyle = MEM.pill;
+        ctx.fillStyle = withAlpha(theme.text, 0.05);
         ctx.fill();
-        ctx.fillStyle = MEM.muted;
+        ctx.fillStyle = theme.muted;
         ctx.fillText(label, x, y + 0.3);
       }
       ctx.restore();
     },
-    [roleOf, highlighted],
+    [roleOf, highlighted, theme, ns],
   );
 
   const paintPointerArea = useCallback(
@@ -253,29 +255,29 @@ export default function GraphCanvas({
       ctx.fillStyle = color;
       if (role === "leaf") {
         const label = trunc(node.title || "Untitled", 22);
-        ctx.font = `4px ui-sans-serif, system-ui, sans-serif`;
-        const w = ctx.measureText(label).width + 8;
-        const h = 9;
+        ctx.font = `${4 * ns}px ui-sans-serif, system-ui, sans-serif`;
+        const w = ctx.measureText(label).width + 8 * ns;
+        const h = 9 * ns;
         roundRect(ctx, x - w / 2, y - h / 2, w, h, h / 2);
         ctx.fill();
       } else {
-        const r = role === "hub" ? 12 : role === "category" ? 11 : 7;
+        const r = (role === "hub" ? 12 : role === "category" ? 11 : 7) * ns;
         ctx.beginPath();
         ctx.arc(x, y, r, 0, 2 * Math.PI);
         ctx.fill();
       }
     },
-    [roleOf],
+    [roleOf, ns],
   );
 
   const linkColor = useCallback(
     (link: FGLink): string => {
-      if (!highlighted) return MEM.edge;
+      if (!highlighted) return theme.link;
       const incident =
         highlighted.has(linkEndId(link.source)) && highlighted.has(linkEndId(link.target));
-      return incident ? MEM.edgeHot : "rgba(255,255,255,0.04)";
+      return incident ? withAlpha(theme.node, 0.85) : withAlpha(theme.link, 0.3);
     },
-    [highlighted],
+    [highlighted, theme],
   );
 
   const linkWidth = useCallback(
@@ -289,8 +291,6 @@ export default function GraphCanvas({
     [highlighted, display.linkThickness],
   );
 
-  // Glue the "+" overlay to the hovered page node every frame (follows the
-  // simulation drift + zoom/pan). Imperative to avoid per-frame React renders.
   useEffect(() => {
     if (!hoverId || !onAddChild) {
       hoverNodeRef.current = null;
@@ -331,7 +331,7 @@ export default function GraphCanvas({
             width={size.w}
             height={size.h}
             backgroundColor="rgba(0,0,0,0)"
-            nodeRelSize={4}
+            nodeRelSize={4 * ns}
             cooldownTicks={140}
             d3VelocityDecay={0.32}
             nodeLabel={(n) => n.title}
@@ -340,6 +340,7 @@ export default function GraphCanvas({
             nodePointerAreaPaint={paintPointerArea}
             linkColor={linkColor}
             linkWidth={linkWidth}
+            linkDirectionalArrowLength={display.showArrows ? 3 : 0}
             onNodeHover={(n) => {
               if (n) {
                 clearHide();
@@ -355,10 +356,12 @@ export default function GraphCanvas({
               fgRef.current?.zoomToFit(500, 60);
             }}
           />
-          {/* Hover "+" — add a child page. Positioned imperatively above. */}
-          <button
+          <Button
             ref={plusRef}
             type="button"
+            size="icon"
+            variant="outline"
+            aria-label="Add child page"
             style={{
               display: "none",
               position: "absolute",
@@ -366,6 +369,7 @@ export default function GraphCanvas({
               top: 0,
               transform: "translate(14px, -14px)",
             }}
+            className="z-10 size-6 rounded-full"
             onMouseEnter={() => {
               clearHide();
               if (plusRef.current) plusRef.current.style.display = "flex";
@@ -375,19 +379,9 @@ export default function GraphCanvas({
               const n = hoverNodeRef.current;
               if (n && onAddChild) onAddChild(n);
             }}
-            className="z-10 flex-col items-center gap-0.5"
-            aria-label="Add memory"
           >
-            <span
-              className="flex size-6 items-center justify-center rounded-full border transition-transform hover:scale-110"
-              style={{ borderColor: MEM.chipBorder, background: "rgba(255,255,255,0.08)", color: MEM.text }}
-            >
-              <Plus className="size-3.5" />
-            </span>
-            <span className="text-[9px]" style={{ color: MEM.muted }}>
-              Add memory
-            </span>
-          </button>
+            <Plus className="size-3.5" />
+          </Button>
         </>
       ) : null}
     </div>

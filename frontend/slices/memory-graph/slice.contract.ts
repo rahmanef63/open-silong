@@ -18,7 +18,7 @@ export const contract = {
     deps: ["react-force-graph-2d"] as const,
   },
   provides: {
-    components: ["GraphPage", "GraphView", "LocalGraphPanel", "GraphControls"] as string[],
+    components: ["GraphPage", "LocalGraphPanel"] as string[],
   },
   conflicts: [] as string[],
   bidir: {

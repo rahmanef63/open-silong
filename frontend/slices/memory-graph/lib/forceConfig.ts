@@ -15,16 +15,6 @@ export interface ForceConfig {
   linkDistance: number;
 }
 
-/** What to include in the rendered graph. */
-export interface FilterConfig {
-  /** Show `#tag` nodes + their edges. */
-  includeTags: boolean;
-  /** Show unresolved `[[ghost]]` nodes + their edges. */
-  includeGhosts: boolean;
-  /** Show page nodes with no visible connections. */
-  includeOrphans: boolean;
-}
-
 /** Cosmetic knobs. */
 export interface DisplayConfig {
   /** Draw directional arrowheads on edges. */
@@ -43,32 +33,12 @@ export const DEFAULT_FORCE: ForceConfig = {
   linkDistance: 45,
 };
 
-export const DEFAULT_FILTER: FilterConfig = {
-  includeTags: true,
-  includeGhosts: true,
-  includeOrphans: true,
-};
-
 export const DEFAULT_DISPLAY: DisplayConfig = {
   showArrows: false,
   labelThreshold: 1.4,
   nodeSize: 3,
   linkThickness: 1,
 };
-
-/** Slider bounds — kept beside the defaults so the controls and the physics
- *  never drift apart. */
-export const FORCE_BOUNDS = {
-  centerStrength: { min: 0, max: 1, step: 0.01 },
-  repelStrength: { min: 0, max: 300, step: 5 },
-  linkDistance: { min: 10, max: 200, step: 5 },
-} as const;
-
-export const DISPLAY_BOUNDS = {
-  labelThreshold: { min: 0, max: 4, step: 0.1 },
-  nodeSize: { min: 1, max: 8, step: 0.5 },
-  linkThickness: { min: 0.5, max: 4, step: 0.5 },
-} as const;
 
 /** Local (ego) graph presets — tighter spread, always-on labels for a small
  *  panel beside the backlinks list. */

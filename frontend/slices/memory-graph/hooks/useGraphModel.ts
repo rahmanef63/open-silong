@@ -22,7 +22,6 @@ import { usePages } from "@/shared/lib/store";
 import { extractEdgesFromBlocks, slug } from "@/shared/lib/graphLinks";
 import type { Graph, GraphEdge, GraphNode } from "@/shared/types/graph";
 import type { Page } from "@/shared/types/domain";
-import type { FilterConfig } from "../lib/forceConfig";
 
 export const ghostNodeId = (title: string): string => `ghost:${slug(title)}`;
 export const tagNodeId = (tag: string): string => `tag:${tag}`;
@@ -139,35 +138,6 @@ export function buildGraphFromPages(pages: Page[]): Graph {
   }
 
   return { nodes: Array.from(nodes.values()), edges };
-}
-
-/** Prune the full model down to what the filter switches allow. Recomputes
- *  connectivity so the orphan filter reflects the post-tag/ghost edge set. */
-export function filterGraph(graph: Graph, filter: FilterConfig): Graph {
-  const keepNode = (n: GraphNode): boolean => {
-    if (n.kind === "tag") return filter.includeTags;
-    if (n.kind === "ghost") return filter.includeGhosts;
-    return true;
-  };
-
-  const present = new Set(graph.nodes.filter(keepNode).map((n) => n.id));
-  let edges = graph.edges.filter((e) => present.has(e.source) && present.has(e.target));
-
-  let nodes = graph.nodes.filter((n) => present.has(n.id));
-
-  if (!filter.includeOrphans) {
-    const connected = new Set<string>();
-    for (const e of edges) {
-      connected.add(e.source);
-      connected.add(e.target);
-    }
-    // Only page nodes can be orphans; tag/ghost always carry an edge.
-    nodes = nodes.filter((n) => n.kind !== "page" || connected.has(n.id));
-    const keep = new Set(nodes.map((n) => n.id));
-    edges = edges.filter((e) => keep.has(e.source) && keep.has(e.target));
-  }
-
-  return { nodes, edges };
 }
 
 /** Reactive full knowledge graph derived from the pages store. Memoized on

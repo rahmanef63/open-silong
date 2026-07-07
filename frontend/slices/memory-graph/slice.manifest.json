@@ -11,11 +11,8 @@
       "types/domain",
       "types/graph",
       "ui/button",
-      "ui/label",
-      "ui/separator",
-      "ui/sheet",
       "ui/slider",
-      "ui/switch"
+      "ui/textarea"
     ],
     "slices": [],
     "convex": []

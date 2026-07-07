@@ -14,7 +14,6 @@ import { Button } from "@/shared/ui/button";
 import { Slider } from "@/shared/ui/slider";
 import type { GraphNode } from "@/shared/types/graph";
 import { useLocalGraph } from "../hooks/useLocalGraph";
-import { MEM } from "../lib/memoryTheme";
 import { LOCAL_DISPLAY, LOCAL_FORCE } from "../lib/forceConfig";
 import { GraphCanvas } from "./GraphCanvasLazy";
 
@@ -62,10 +61,7 @@ export function LocalGraphPanel({ pageId }: Props) {
         )}
       </div>
       {open && (
-        <div
-          className="mt-3 h-64 overflow-hidden rounded-md border border-border"
-          style={{ background: MEM.surface }}
-        >
+        <div className="mt-3 h-64 overflow-hidden rounded-md border border-border bg-muted/40">
           <GraphCanvas
             graph={graph}
             force={LOCAL_FORCE}

@@ -1,17 +1,24 @@
 "use client";
 
-/** Bottom "Add a memory" input. Collapsed = a rounded pill; on focus (or once
- *  it has text) it expands into a box with a helper line. Submitting hands the
- *  trimmed text to `onSubmit` — the host turns it into a page.
- *  ponytail: this just creates a page titled with the text — no LLM/AI memory
- *  extraction. The "memory/chat" framing is purely visual. Add extraction later.
+/** Bottom "Add a memory" input. Submitting hands the trimmed text to `onSubmit`
+ *  — the host decides what to do with it. Theme-token styled (shadcn Textarea +
+ *  Button), copy is prop-driven.
  */
 
 import { useRef, useState } from "react";
-import { ArrowUp, Plus, Paperclip } from "lucide-react";
-import { MEM } from "../lib/memoryTheme";
+import { ArrowUp } from "lucide-react";
+import { Button } from "@/shared/ui/button";
+import { Textarea } from "@/shared/ui/textarea";
 
-export function MemoryChatInput({ onSubmit }: { onSubmit?: (text: string) => void }) {
+export function MemoryChatInput({
+  onSubmit,
+  placeholder = "Add a memory",
+  helper = "Memories are saved as pages in this workspace.",
+}: {
+  onSubmit?: (text: string) => void;
+  placeholder?: string;
+  helper?: string;
+}) {
   const [value, setValue] = useState("");
   const [focused, setFocused] = useState(false);
   const ref = useRef<HTMLTextAreaElement | null>(null);
@@ -27,16 +34,9 @@ export function MemoryChatInput({ onSubmit }: { onSubmit?: (text: string) => voi
 
   return (
     <div className="pointer-events-auto mx-auto w-full max-w-xl px-4">
-      <div
-        className="rounded-2xl border shadow-lg backdrop-blur"
-        style={{
-          borderColor: MEM.chipBorder,
-          background: "rgba(20,20,22,0.85)",
-        }}
-      >
-        <div className={expanded ? "flex flex-col gap-2 p-3" : "flex items-center gap-2 px-3 py-2"}>
-          {!expanded && <Plus className="size-4 shrink-0" style={{ color: MEM.muted }} />}
-          <textarea
+      <div className="rounded-2xl border border-border bg-popover/90 shadow-lg backdrop-blur">
+        <div className="flex items-end gap-2 p-2">
+          <Textarea
             ref={ref}
             rows={1}
             value={value}
@@ -49,47 +49,23 @@ export function MemoryChatInput({ onSubmit }: { onSubmit?: (text: string) => voi
                 submit();
               }
             }}
-            placeholder="Add a memory"
-            className="flex-1 resize-none bg-transparent text-sm outline-none placeholder:opacity-60"
-            style={{ color: MEM.text, minHeight: expanded ? 44 : 20, maxHeight: 160 }}
+            placeholder={placeholder}
+            className="min-h-0 flex-1 resize-none border-0 bg-transparent px-2 py-1.5 shadow-none focus-visible:ring-0"
+            style={{ maxHeight: 160 }}
           />
-          {expanded ? (
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5" style={{ color: MEM.muted }}>
-                <button type="button" className="rounded-md p-1 hover:bg-white/5" aria-label="Add">
-                  <Plus className="size-4" />
-                </button>
-                <button type="button" className="rounded-md p-1 hover:bg-white/5" aria-label="Attach">
-                  <Paperclip className="size-4" />
-                </button>
-              </div>
-              <SendButton onClick={submit} disabled={!value.trim()} />
-            </div>
-          ) : (
-            <SendButton onClick={submit} disabled={!value.trim()} />
-          )}
+          <Button
+            type="button"
+            size="icon"
+            onClick={submit}
+            disabled={!value.trim()}
+            aria-label="Add memory"
+            className="shrink-0 rounded-full"
+          >
+            <ArrowUp className="size-4" />
+          </Button>
         </div>
       </div>
-      {expanded && (
-        <p className="mt-1.5 text-center text-[11px]" style={{ color: MEM.muted }}>
-          Memories are saved as pages in this workspace.
-        </p>
-      )}
+      {expanded && <p className="mt-1.5 text-center text-xs text-muted-foreground">{helper}</p>}
     </div>
-  );
-}
-
-function SendButton({ onClick, disabled }: { onClick: () => void; disabled: boolean }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      aria-label="Add memory"
-      className="flex size-8 shrink-0 items-center justify-center rounded-full transition-opacity disabled:opacity-40"
-      style={{ background: MEM.accent, color: MEM.accentInk }}
-    >
-      <ArrowUp className="size-4" />
-    </button>
   );
 }

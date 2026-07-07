@@ -1,36 +1,35 @@
 "use client";
 
-/** Global knowledge graph canvas wrapper. Feeds the (host or client) graph
- *  model into the force canvas, navigates on node click, and forwards the
- *  host's "add child page" action to the hover-"+" affordance. Chrome (header,
- *  title, chat input) lives in `GraphPage`.
+/** Global graph canvas wrapper. Renders the host-supplied model, navigates on
+ *  node click, forwards the host's "add child page" action to the hover "+".
  */
 
-import { useMemo } from "react";
 import { useNavigate } from "@/shared/lib/router";
 import { ROUTES } from "@/shared/lib/routes";
 import { cn } from "@/shared/lib/utils";
 import type { Graph, GraphNode } from "@/shared/types/graph";
-import { useGraphModel, filterGraph } from "../hooks/useGraphModel";
-import { DEFAULT_DISPLAY, DEFAULT_FILTER, DEFAULT_FORCE } from "../lib/forceConfig";
-import { MEM } from "../lib/memoryTheme";
+import { DEFAULT_DISPLAY, DEFAULT_FORCE } from "../lib/forceConfig";
 import { GraphCanvas } from "./GraphCanvasLazy";
 
+const EMPTY: Graph = { nodes: [], edges: [] };
+
 export interface GraphViewProps {
-  /** Host-supplied model (the server `getGlobalGraph` query). Omitted → the
-   *  client model built from the pages store (portable/offline fallback). */
+  /** Host-supplied model (the server `getGlobalGraph` query). Falls back to an
+   *  empty graph while the query loads. */
   model?: Graph;
-  /** Host-supplied "create a child page under this node" action (hover "+"). */
   onAddChild?: (node: GraphNode) => void;
+  emptyLabel?: string;
   className?: string;
 }
 
-export function GraphView({ model, onAddChild, className }: GraphViewProps) {
-  const clientModel = useGraphModel();
-  const source = model ?? clientModel;
+export function GraphView({
+  model,
+  onAddChild,
+  emptyLabel = "Nothing to graph yet.",
+  className,
+}: GraphViewProps) {
   const navigate = useNavigate();
-
-  const graph = useMemo(() => filterGraph(source, DEFAULT_FILTER), [source]);
+  const graph = model ?? EMPTY;
 
   const handleClick = (node: GraphNode) => {
     if (node.kind === "page") navigate(ROUTES.page(node.id));
@@ -39,10 +38,12 @@ export function GraphView({ model, onAddChild, className }: GraphViewProps) {
   if (graph.nodes.length === 0) {
     return (
       <div
-        className={cn("flex h-full w-full items-center justify-center p-8 text-center text-sm", className)}
-        style={{ color: MEM.muted }}
+        className={cn(
+          "flex h-full w-full items-center justify-center p-8 text-center text-sm text-muted-foreground",
+          className,
+        )}
       >
-        No memories yet — add one below to grow your graph.
+        {emptyLabel}
       </div>
     );
   }
