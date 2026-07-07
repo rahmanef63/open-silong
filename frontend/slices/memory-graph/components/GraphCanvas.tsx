@@ -1,60 +1,51 @@
 "use client";
 
 /** The force-directed canvas — the only place `react-force-graph-2d` is
- *  imported. This module is loaded exclusively through `next/dynamic({ ssr:
- *  false })` (see `GraphCanvasLazy`) because the library touches `window` /
- *  `canvas` at module load and SSR-crashes Next 16 otherwise. Keeping the ref
- *  *inside* this component (not threaded through `dynamic`) is deliberate:
- *  `next/dynamic` does not forward refs, and we need one to drive `d3Force`.
+ *  imported (loaded via `GraphCanvasLazy` = next/dynamic ssr:false, because the
+ *  lib touches window/canvas at module load).
  *
- *  Node paint: radius ∝ degree, hubs bigger + brand-coloured, ghosts dim +
- *  dashed, tags a distinct hue + rounded-square. Hover highlights the 1-hop
- *  neighbourhood and fades the rest. Colours come from the theme bridge so the
- *  canvas tracks light/dark + tweakcn presets.
+ *  "Memory" look: a lime glowing HUB orb (highest-degree node), dark rounded
+ *  ICON CHIPS for its direct neighbours (categories, showing the page emoji),
+ *  and dark PILLS with a title for everything deeper (leaves). Background is
+ *  transparent so the page's dotted grid shows through. Hovering a page node
+ *  reveals a "+" affordance to add a child page.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ForwardRefExoticComponent, RefAttributes } from "react";
+import { Plus } from "lucide-react";
 import ForceGraph2D from "react-force-graph-2d";
 import type { Graph, GraphEdge, GraphNode } from "@/shared/types/graph";
-import { withAlpha, type GraphTheme } from "../lib/themeBridge";
+import { MEM } from "../lib/memoryTheme";
 import type { DisplayConfig, ForceConfig } from "../lib/forceConfig";
 
 type FGNode = GraphNode & { x?: number; y?: number };
 type FGLink = { source: string | FGNode; target: string | FGNode } & Partial<GraphEdge>;
 
-/** Minimal shape of the props we pass — avoids coupling to the library's own
- *  (loosely-typed) prop exports. */
 interface ForceGraph2DProps {
   graphData: { nodes: FGNode[]; links: FGLink[] };
   width?: number;
   height?: number;
   backgroundColor?: string;
-  nodeId?: string;
   nodeRelSize?: number;
   cooldownTicks?: number;
   d3VelocityDecay?: number;
   linkColor?: (link: FGLink) => string;
   linkWidth?: (link: FGLink) => number;
-  linkDirectionalArrowLength?: number;
-  linkDirectionalArrowRelPos?: number;
-  linkDirectionalArrowColor?: (link: FGLink) => string;
   nodeCanvasObjectMode?: () => "replace" | "before" | "after";
   nodeCanvasObject?: (node: FGNode, ctx: CanvasRenderingContext2D, globalScale: number) => void;
   nodePointerAreaPaint?: (node: FGNode, color: string, ctx: CanvasRenderingContext2D) => void;
   onNodeClick?: (node: FGNode) => void;
-  onNodeRightClick?: (node: FGNode, event: MouseEvent) => void;
   onNodeHover?: (node: FGNode | null) => void;
   onEngineStop?: () => void;
   nodeLabel?: (node: FGNode) => string;
-  enableNodeDrag?: boolean;
 }
 
-/** Imperative handle we drive after mount. */
 interface FGHandle {
   d3Force: (name: string) => { strength?: (v: number) => void; distance?: (v: number) => void } | undefined;
   d3ReheatSimulation: () => void;
   zoomToFit: (ms?: number, padding?: number) => void;
+  graph2ScreenCoords: (x: number, y: number) => { x: number; y: number };
 }
 
 const FG = ForceGraph2D as unknown as ForwardRefExoticComponent<
@@ -63,33 +54,45 @@ const FG = ForceGraph2D as unknown as ForwardRefExoticComponent<
 
 export interface GraphCanvasProps {
   graph: Graph;
-  theme: GraphTheme;
   force: ForceConfig;
   display: DisplayConfig;
   onNodeClick?: (node: GraphNode) => void;
-  onNodeContext?: (node: GraphNode, event: MouseEvent) => void;
+  onAddChild?: (node: GraphNode) => void;
   className?: string;
 }
 
-const linkEndId = (end: string | FGNode): string =>
-  typeof end === "string" ? end : end.id;
+type Role = "hub" | "category" | "leaf" | "ghost" | "tag";
+
+const linkEndId = (end: string | FGNode): string => (typeof end === "string" ? end : end.id);
+const trunc = (s: string, n: number) => (s.length > n ? s.slice(0, n - 1) + "…" : s);
 
 export default function GraphCanvas({
   graph,
-  theme,
   force,
   display,
   onNodeClick,
-  onNodeContext,
+  onAddChild,
   className,
 }: GraphCanvasProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const fgRef = useRef<FGHandle | null>(null);
+  const plusRef = useRef<HTMLButtonElement | null>(null);
+  const hoverNodeRef = useRef<FGNode | null>(null);
   const [size, setSize] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
   const [hoverId, setHoverId] = useState<string | null>(null);
   const didFit = useRef(false);
+  const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const clearHide = () => {
+    if (hideTimer.current) {
+      clearTimeout(hideTimer.current);
+      hideTimer.current = null;
+    }
+  };
+  const scheduleHide = () => {
+    clearHide();
+    hideTimer.current = setTimeout(() => setHoverId(null), 150);
+  };
 
-  // Measure the container so the canvas gets explicit pixel dimensions.
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -100,10 +103,6 @@ export default function GraphCanvas({
     return () => ro.disconnect();
   }, []);
 
-  // Fresh graphData each time the model changes: react-force-graph mutates the
-  // link source/target (id → node ref) + node x/y in place, so we hand it
-  // copies and let hover/theme re-renders keep the same objects (positions
-  // persist). Also resets the one-shot zoom-to-fit.
   const graphData = useMemo(() => {
     didFit.current = false;
     return {
@@ -126,6 +125,30 @@ export default function GraphCanvas({
     return adj;
   }, [graph]);
 
+  // Hub = highest-degree page node; categories = its direct neighbours.
+  const { hubId, categoryIds } = useMemo(() => {
+    let best: GraphNode | null = null;
+    for (const n of graph.nodes) {
+      if (n.kind !== "page") continue;
+      if (!best || n.degree > best.degree) best = n;
+    }
+    return {
+      hubId: best?.id ?? null,
+      categoryIds: best ? (adjacency.get(best.id) ?? new Set<string>()) : new Set<string>(),
+    };
+  }, [graph, adjacency]);
+
+  const roleOf = useCallback(
+    (node: GraphNode): Role => {
+      if (node.kind === "ghost") return "ghost";
+      if (node.kind === "tag") return "tag";
+      if (node.id === hubId) return "hub";
+      if (categoryIds.has(node.id)) return "category";
+      return "leaf";
+    },
+    [hubId, categoryIds],
+  );
+
   const highlighted = useMemo(() => {
     if (!hoverId) return null;
     const set = new Set<string>([hoverId]);
@@ -133,7 +156,6 @@ export default function GraphCanvas({
     return set;
   }, [hoverId, adjacency]);
 
-  // Apply the physics config to the built-in forces, then reheat.
   useEffect(() => {
     const fg = fgRef.current;
     if (!fg) return;
@@ -143,152 +165,230 @@ export default function GraphCanvas({
     fg.d3ReheatSimulation();
   }, [force, graphData]);
 
-  const radiusFor = useCallback(
-    (node: GraphNode): number => {
-      const base = display.nodeSize;
-      const grow = Math.sqrt(node.degree || 0) * (display.nodeSize * 0.5);
-      const r = base + grow;
-      return node.hub ? r * 1.6 : r;
-    },
-    [display.nodeSize],
-  );
-
-  const colorFor = useCallback(
-    (node: GraphNode): string => {
-      if (node.kind === "ghost") return theme.ghost;
-      if (node.kind === "tag") return theme.tag;
-      if (node.hub) return theme.hub;
-      return theme.node;
-    },
-    [theme],
-  );
-
   const paintNode = useCallback(
-    (node: FGNode, ctx: CanvasRenderingContext2D, globalScale: number) => {
+    (node: FGNode, ctx: CanvasRenderingContext2D) => {
       const x = node.x ?? 0;
       const y = node.y ?? 0;
-      const r = radiusFor(node);
+      const role = roleOf(node);
       const dim = highlighted != null && !highlighted.has(node.id);
-
       ctx.save();
-      ctx.globalAlpha = dim ? 0.12 : node.kind === "ghost" ? 0.75 : 1;
+      ctx.globalAlpha = dim ? 0.14 : 1;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
 
-      const fill = colorFor(node);
-      if (node.kind === "ghost") {
-        // Hollow dashed ring for unresolved links.
+      if (role === "hub") {
+        const core = 8 + Math.min(6, Math.sqrt(node.degree) * 1.2);
+        const halo = core * 2.6;
+        const g = ctx.createRadialGradient(x, y, 0, x, y, halo);
+        g.addColorStop(0, MEM.hubCore);
+        g.addColorStop(0.4, MEM.accent);
+        g.addColorStop(1, "rgba(212,248,74,0)");
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(x, y, halo, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.fillStyle = MEM.hubCore;
+        ctx.beginPath();
+        ctx.arc(x, y, core * 0.6, 0, 2 * Math.PI);
+        ctx.fill();
+      } else if (role === "category") {
+        const s = 9;
+        roundRect(ctx, x - s, y - s, s * 2, s * 2, 4);
+        ctx.fillStyle = MEM.chip;
+        ctx.fill();
+        ctx.lineWidth = 0.6;
+        ctx.strokeStyle = MEM.chipBorder;
+        ctx.stroke();
+        const glyph = node.icon || node.title.slice(0, 1).toUpperCase() || "•";
+        ctx.font = `${s * 1.05}px ui-sans-serif, system-ui, sans-serif`;
+        ctx.fillStyle = MEM.text;
+        ctx.fillText(glyph, x, y + 0.5);
+        if (highlighted?.has(node.id)) {
+          ctx.font = `4px ui-sans-serif, system-ui, sans-serif`;
+          ctx.fillStyle = MEM.muted;
+          ctx.fillText(trunc(node.title, 24), x, y + s + 5);
+        }
+      } else if (role === "ghost") {
+        const r = 5;
+        ctx.setLineDash([2.2, 1.8]);
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = MEM.muted;
         ctx.beginPath();
         ctx.arc(x, y, r, 0, 2 * Math.PI);
-        ctx.setLineDash([r * 0.6, r * 0.5]);
-        ctx.lineWidth = Math.max(0.6, r * 0.28);
-        ctx.strokeStyle = fill;
         ctx.stroke();
         ctx.setLineDash([]);
-      } else if (node.kind === "tag") {
-        // Rounded square to read distinctly from page circles.
-        const s = r * 1.7;
-        const rad = r * 0.4;
-        roundRect(ctx, x - s / 2, y - s / 2, s, s, rad);
-        ctx.fillStyle = fill;
+      } else if (role === "tag") {
+        const s = 6;
+        roundRect(ctx, x - s, y - s, s * 2, s * 2, 3);
+        ctx.fillStyle = "rgba(212,248,74,0.14)";
         ctx.fill();
+        ctx.font = `${s * 1.1}px ui-sans-serif, system-ui, sans-serif`;
+        ctx.fillStyle = MEM.accent;
+        ctx.fillText("#", x, y + 0.5);
       } else {
-        ctx.beginPath();
-        ctx.arc(x, y, r, 0, 2 * Math.PI);
-        ctx.fillStyle = fill;
+        // leaf pill
+        const label = trunc(node.title || "Untitled", 22);
+        const fs = 4;
+        ctx.font = `${fs}px ui-sans-serif, system-ui, sans-serif`;
+        const tw = ctx.measureText(label).width;
+        const padX = 4;
+        const h = fs + 5;
+        const w = tw + padX * 2;
+        roundRect(ctx, x - w / 2, y - h / 2, w, h, h / 2);
+        ctx.fillStyle = MEM.pill;
         ctx.fill();
-        if (node.hub) {
-          ctx.lineWidth = Math.max(0.5, r * 0.18);
-          ctx.strokeStyle = withAlpha(theme.bg, 0.9);
-          ctx.stroke();
-        }
+        ctx.fillStyle = MEM.muted;
+        ctx.fillText(label, x, y + 0.3);
       }
-
-      // Labels: only past the fade threshold (or when this node is hovered).
-      const showLabel =
-        globalScale >= display.labelThreshold || (highlighted != null && highlighted.has(node.id));
-      if (showLabel && !dim) {
-        const fontSize = Math.max(2, 11 / globalScale);
-        ctx.font = `${fontSize}px ui-sans-serif, system-ui, sans-serif`;
-        ctx.textAlign = "center";
-        ctx.textBaseline = "top";
-        ctx.fillStyle = node.kind === "ghost" ? theme.muted : theme.text;
-        const label = node.title.length > 28 ? node.title.slice(0, 27) + "…" : node.title;
-        ctx.fillText(label, x, y + r + 1.5);
-      }
-
       ctx.restore();
     },
-    [radiusFor, colorFor, highlighted, display.labelThreshold, theme],
+    [roleOf, highlighted],
   );
 
   const paintPointerArea = useCallback(
     (node: FGNode, color: string, ctx: CanvasRenderingContext2D) => {
       const x = node.x ?? 0;
       const y = node.y ?? 0;
-      const r = radiusFor(node) + 2;
+      const role = roleOf(node);
       ctx.fillStyle = color;
-      ctx.beginPath();
-      ctx.arc(x, y, r, 0, 2 * Math.PI);
-      ctx.fill();
+      if (role === "leaf") {
+        const label = trunc(node.title || "Untitled", 22);
+        ctx.font = `4px ui-sans-serif, system-ui, sans-serif`;
+        const w = ctx.measureText(label).width + 8;
+        const h = 9;
+        roundRect(ctx, x - w / 2, y - h / 2, w, h, h / 2);
+        ctx.fill();
+      } else {
+        const r = role === "hub" ? 12 : role === "category" ? 11 : 7;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, 2 * Math.PI);
+        ctx.fill();
+      }
     },
-    [radiusFor],
+    [roleOf],
   );
 
   const linkColor = useCallback(
     (link: FGLink): string => {
-      if (!highlighted) return withAlpha(theme.link, 0.9);
-      const incident = highlighted.has(linkEndId(link.source)) && highlighted.has(linkEndId(link.target));
-      return incident ? withAlpha(theme.hub, 0.9) : withAlpha(theme.link, 0.15);
+      if (!highlighted) return MEM.edge;
+      const incident =
+        highlighted.has(linkEndId(link.source)) && highlighted.has(linkEndId(link.target));
+      return incident ? MEM.edgeHot : "rgba(255,255,255,0.04)";
     },
-    [highlighted, theme],
+    [highlighted],
   );
 
   const linkWidth = useCallback(
     (link: FGLink): number => {
-      const base = link.resolved === false ? display.linkThickness * 0.7 : display.linkThickness;
+      const base = display.linkThickness * 0.6;
       if (!highlighted) return base;
-      const incident = highlighted.has(linkEndId(link.source)) && highlighted.has(linkEndId(link.target));
-      return incident ? base * 2 : base;
+      const incident =
+        highlighted.has(linkEndId(link.source)) && highlighted.has(linkEndId(link.target));
+      return incident ? base * 2.2 : base;
     },
     [highlighted, display.linkThickness],
   );
 
-  const handleClick = useCallback(
-    (node: FGNode) => {
-      onNodeClick?.(node);
-    },
-    [onNodeClick],
-  );
+  // Glue the "+" overlay to the hovered page node every frame (follows the
+  // simulation drift + zoom/pan). Imperative to avoid per-frame React renders.
+  useEffect(() => {
+    if (!hoverId || !onAddChild) {
+      hoverNodeRef.current = null;
+      if (plusRef.current) plusRef.current.style.display = "none";
+      return;
+    }
+    const node = graphData.nodes.find((n) => n.id === hoverId) ?? null;
+    hoverNodeRef.current = node;
+    const role = node ? roleOf(node) : "leaf";
+    if (!node || role === "ghost" || role === "tag") {
+      if (plusRef.current) plusRef.current.style.display = "none";
+      return;
+    }
+    let raf = 0;
+    const tick = () => {
+      const fg = fgRef.current;
+      const btn = plusRef.current;
+      const n = hoverNodeRef.current;
+      if (fg && btn && n && n.x != null && n.y != null) {
+        const p = fg.graph2ScreenCoords(n.x, n.y);
+        btn.style.display = "flex";
+        btn.style.left = `${p.x}px`;
+        btn.style.top = `${p.y}px`;
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [hoverId, graphData, roleOf, onAddChild]);
 
   return (
-    <div ref={containerRef} className={className ?? "h-full w-full"}>
+    <div ref={containerRef} className={className ?? "relative h-full w-full"}>
       {size.w > 0 && size.h > 0 ? (
-        <FG
-          ref={fgRef}
-          graphData={graphData}
-          width={size.w}
-          height={size.h}
-          backgroundColor={theme.bg}
-          nodeRelSize={4}
-          cooldownTicks={120}
-          d3VelocityDecay={0.3}
-          nodeLabel={(n) => n.title}
-          nodeCanvasObjectMode={() => "replace"}
-          nodeCanvasObject={paintNode}
-          nodePointerAreaPaint={paintPointerArea}
-          linkColor={linkColor}
-          linkWidth={linkWidth}
-          linkDirectionalArrowLength={display.showArrows ? 3 : 0}
-          linkDirectionalArrowRelPos={0.9}
-          linkDirectionalArrowColor={linkColor}
-          onNodeHover={(n) => setHoverId(n?.id ?? null)}
-          onNodeClick={handleClick}
-          onNodeRightClick={(n, e) => onNodeContext?.(n, e)}
-          onEngineStop={() => {
-            if (didFit.current) return;
-            didFit.current = true;
-            fgRef.current?.zoomToFit(400, 48);
-          }}
-        />
+        <>
+          <FG
+            ref={fgRef}
+            graphData={graphData}
+            width={size.w}
+            height={size.h}
+            backgroundColor="rgba(0,0,0,0)"
+            nodeRelSize={4}
+            cooldownTicks={140}
+            d3VelocityDecay={0.32}
+            nodeLabel={(n) => n.title}
+            nodeCanvasObjectMode={() => "replace"}
+            nodeCanvasObject={paintNode}
+            nodePointerAreaPaint={paintPointerArea}
+            linkColor={linkColor}
+            linkWidth={linkWidth}
+            onNodeHover={(n) => {
+              if (n) {
+                clearHide();
+                setHoverId(n.id);
+              } else {
+                scheduleHide();
+              }
+            }}
+            onNodeClick={(n) => onNodeClick?.(n)}
+            onEngineStop={() => {
+              if (didFit.current) return;
+              didFit.current = true;
+              fgRef.current?.zoomToFit(500, 60);
+            }}
+          />
+          {/* Hover "+" — add a child page. Positioned imperatively above. */}
+          <button
+            ref={plusRef}
+            type="button"
+            style={{
+              display: "none",
+              position: "absolute",
+              left: 0,
+              top: 0,
+              transform: "translate(14px, -14px)",
+            }}
+            onMouseEnter={() => {
+              clearHide();
+              if (plusRef.current) plusRef.current.style.display = "flex";
+            }}
+            onMouseLeave={scheduleHide}
+            onClick={() => {
+              const n = hoverNodeRef.current;
+              if (n && onAddChild) onAddChild(n);
+            }}
+            className="z-10 flex-col items-center gap-0.5"
+            aria-label="Add memory"
+          >
+            <span
+              className="flex size-6 items-center justify-center rounded-full border transition-transform hover:scale-110"
+              style={{ borderColor: MEM.chipBorder, background: "rgba(255,255,255,0.08)", color: MEM.text }}
+            >
+              <Plus className="size-3.5" />
+            </span>
+            <span className="text-[9px]" style={{ color: MEM.muted }}>
+              Add memory
+            </span>
+          </button>
+        </>
       ) : null}
     </div>
   );

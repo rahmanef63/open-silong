@@ -14,7 +14,7 @@ import { Button } from "@/shared/ui/button";
 import { Slider } from "@/shared/ui/slider";
 import type { GraphNode } from "@/shared/types/graph";
 import { useLocalGraph } from "../hooks/useLocalGraph";
-import { useGraphTheme } from "../lib/themeBridge";
+import { MEM } from "../lib/memoryTheme";
 import { LOCAL_DISPLAY, LOCAL_FORCE } from "../lib/forceConfig";
 import { GraphCanvas } from "./GraphCanvasLazy";
 
@@ -26,7 +26,6 @@ export function LocalGraphPanel({ pageId }: Props) {
   const [open, setOpen] = useState(true);
   const [depth, setDepth] = useState(1);
   const graph = useLocalGraph(pageId, depth);
-  const theme = useGraphTheme();
   const navigate = useNavigate();
 
   // Only the page itself, no neighbours → nothing worth drawing.
@@ -63,10 +62,12 @@ export function LocalGraphPanel({ pageId }: Props) {
         )}
       </div>
       {open && (
-        <div className="mt-3 h-64 overflow-hidden rounded-md border border-border bg-card">
+        <div
+          className="mt-3 h-64 overflow-hidden rounded-md border border-border"
+          style={{ background: MEM.surface }}
+        >
           <GraphCanvas
             graph={graph}
-            theme={theme}
             force={LOCAL_FORCE}
             display={LOCAL_DISPLAY}
             onNodeClick={handleClick}
