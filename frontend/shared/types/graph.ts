@@ -12,15 +12,23 @@
  *  Keep this in sync with the mirrored copy in `convex/_shared/graph.ts`.
  */
 
-/** The four ways one page can point at another thing in the graph. */
-export type EdgeKind = "wikilink" | "page-block" | "mention" | "tag";
+/** Edge kinds. The first four are STORED in `pageLinks.kind`; `db-row` and
+ *  `relation` are computed at query time from the databases layer (rows of a
+ *  database, and relation-property references) — never persisted in pageLinks. */
+export type EdgeKind =
+  | "wikilink"
+  | "page-block"
+  | "mention"
+  | "tag"
+  | "db-row"
+  | "relation";
 
 export interface GraphNode {
-  /** page=<pageId> · ghost='ghost:'+slug(title) · tag='tag:'+tag */
+  /** page=<pageId> · ghost='ghost:'+slug(title) · tag='tag:'+tag · database=<dbId> */
   id: string;
   title: string;
   icon: string;
-  kind: "page" | "ghost" | "tag";
+  kind: "page" | "ghost" | "tag" | "database";
   /** Incident-edge count — drives node size in the force graph. */
   degree: number;
   /** Wiki-verified page → rendered as a hub (bigger/brighter). */

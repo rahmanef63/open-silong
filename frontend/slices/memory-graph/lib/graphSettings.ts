@@ -9,6 +9,8 @@ export interface GraphFilters {
   query: string;
   /** Show `#tag` nodes. */
   showTags: boolean;
+  /** Show database nodes + their row sub-nodes. */
+  showDatabases: boolean;
   /** Show unresolved `[[ghost]]` nodes. */
   showGhosts: boolean;
   /** Show degree-0 page nodes. */
@@ -51,6 +53,7 @@ export interface GroupInfo {
 export const DEFAULT_FILTERS: GraphFilters = {
   query: "",
   showTags: false,
+  showDatabases: true,
   showGhosts: true,
   showOrphans: true,
   hiddenGroups: [],

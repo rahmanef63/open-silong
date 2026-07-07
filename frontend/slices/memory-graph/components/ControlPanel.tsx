@@ -249,6 +249,14 @@ export function ControlPanel({
               }
             />
             <SwitchRow
+              id="graph-filter-databases"
+              label="Databases"
+              checked={filters.showDatabases}
+              onCheckedChange={(v) =>
+                onFiltersChange({ ...filters, showDatabases: v })
+              }
+            />
+            <SwitchRow
               id="graph-filter-ghosts"
               label="Unresolved"
               checked={filters.showGhosts}

@@ -10,15 +10,22 @@
 import type { Doc } from "../_generated/dataModel";
 import { slug } from "./links";
 
-/** Mirror of `frontend/shared/types/graph.ts` `EdgeKind`. */
-export type EdgeKind = "wikilink" | "page-block" | "mention" | "tag";
+/** Mirror of `frontend/shared/types/graph.ts` `EdgeKind`. `db-row`/`relation`
+ *  are computed at query time (databases layer), not stored in pageLinks. */
+export type EdgeKind =
+  | "wikilink"
+  | "page-block"
+  | "mention"
+  | "tag"
+  | "db-row"
+  | "relation";
 
 /** Mirror of `frontend/shared/types/graph.ts` `GraphNode`. */
 export interface GraphNode {
   id: string;
   title: string;
   icon: string;
-  kind: "page" | "ghost" | "tag";
+  kind: "page" | "ghost" | "tag" | "database";
   degree: number;
   hub?: boolean;
 }

@@ -22,6 +22,7 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import {
   readActiveWorkspace,
   pagesInActiveWorkspace,
+  databasesInActiveWorkspace,
 } from "../../_shared/workspace";
 import { requireWorkspaceAccess } from "../../_shared/auth";
 import {
@@ -34,6 +35,7 @@ import {
   pageMeta,
   collectOutgoing,
   pagesInSameWorkspace,
+  augmentWithDatabases,
   BACKLINKS_CAP,
   LINKS_PER_PAGE_CAP,
   TAG_SCAN_CAP,
@@ -68,12 +70,25 @@ export const getGlobalGraph = query({
         ? Math.min(args.limit, GRAPH_PAGE_CAP)
         : undefined;
 
-    return buildGraphFromEdges(edges, live.map(pageMeta), {
+    const base = buildGraphFromEdges(edges, live.map(pageMeta), {
       includeTags: args.includeTags,
       includeGhosts: args.includeGhosts,
       includeOrphans: args.includeOrphans,
       limit,
     });
+
+    // Layer the database structure on top at query time: database nodes,
+    // db → row-page edges, and row → related-page relation edges. Reuses the
+    // same by_workspace read (+ legacy by_user fallback) that pages use.
+    const databases = await databasesInActiveWorkspace(ctx, userId, active);
+    const pagesById = new Map<string, Doc<"pages">>(
+      live.map((p) => [p._id, p]),
+    );
+    return augmentWithDatabases(
+      base,
+      databases.filter((d) => !d.trashed),
+      pagesById,
+    );
   },
 });
 

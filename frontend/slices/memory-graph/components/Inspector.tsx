@@ -15,6 +15,7 @@ import { useRef } from "react";
 import { ExternalLink, Crosshair, Plus, X } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { Button } from "@/shared/ui/button";
+import { DynamicIcon } from "@/shared/components/icon-picker";
 import type { GraphNode } from "@/shared/types/graph";
 
 export interface InspectorProps {
@@ -31,6 +32,7 @@ export interface InspectorProps {
 function kindLabel(node: GraphNode): string {
   if (node.kind === "tag") return "Tag";
   if (node.kind === "ghost") return "Unresolved";
+  if (node.kind === "database") return "Database";
   return node.hub ? "Cluster" : "Memory";
 }
 
@@ -67,11 +69,7 @@ export function Inspector({ node, onClose, onOpen, onFocus, onAddChild }: Inspec
 
           {/* title (icon emoji + title) */}
           <h2 className="mt-1 flex items-start gap-2 text-lg font-semibold leading-tight text-foreground">
-            {n.icon ? (
-              <span className="shrink-0 text-xl leading-none" aria-hidden>
-                {n.icon}
-              </span>
-            ) : null}
+            {n.icon ? <DynamicIcon value={n.icon} size={22} className="shrink-0" /> : null}
             <span className="min-w-0 break-words">{n.title || "Untitled"}</span>
           </h2>
 

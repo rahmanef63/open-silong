@@ -14,7 +14,8 @@
  */
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Plus, Folder } from "lucide-react";
+import { Plus } from "lucide-react";
+import { DynamicIcon } from "@/shared/components/icon-picker";
 import { cn } from "@/shared/lib/utils";
 import type { Graph, GraphNode } from "@/shared/types/graph";
 import {
@@ -26,7 +27,7 @@ import {
   type GraphForces,
 } from "../lib/graphSettings";
 
-type Role = "core" | "hub" | "leaf" | "ghost" | "tag";
+type Role = "core" | "hub" | "leaf" | "ghost" | "tag" | "database";
 interface P { x: number; y: number; vx: number; vy: number; ax: number; ay: number }
 
 const CX = 800;
@@ -53,6 +54,7 @@ function analyze(graph: Graph) {
   const roleOf = (n: GraphNode): Role => {
     if (n.kind === "ghost") return "ghost";
     if (n.kind === "tag") return "tag";
+    if (n.kind === "database") return "database";
     if (n.id === coreId) return "core";
     if (hubIds.has(n.id)) return "hub";
     return "leaf";
@@ -137,6 +139,7 @@ export function MemoryGraphView({
     const ok = (n: GraphNode): boolean => {
       const r = meta.roleOf(n);
       if (r === "core") return true;
+      if (r === "database" && !filters.showDatabases) return false;
       if (r === "tag" && !filters.showTags) return false;
       if (r === "ghost" && !filters.showGhosts) return false;
       if (r === "leaf" && n.degree === 0 && !filters.showOrphans) return false;
@@ -208,7 +211,8 @@ export function MemoryGraphView({
       if (!a || !b) continue;
       const hot = hov && hset.has(e.source) && hset.has(e.target);
       const mk = arrows ? ` marker-end="url(#mg-ar)"` : "";
-      html += `<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" class="${hot ? "mg-edge-hot" : "mg-edge"}"${mk}/>`;
+      const base = e.kind === "relation" ? "mg-edge-rel" : e.kind === "db-row" ? "mg-edge-db" : "mg-edge";
+      html += `<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" class="${hot ? "mg-edge-hot" : base}"${mk}/>`;
     }
     if (hoverRef.current) {
       const p = posRef.current.get(hoverRef.current);
@@ -451,7 +455,14 @@ export function MemoryGraphView({
           if (role === "hub")
             return (
               <button key={n.id} data-id={n.id} type="button" className={cls} aria-label={label} {...handlers}>
-                {n.icon ? <span className="mg-icon">{n.icon}</span> : <span className="mg-icon"><Folder /></span>}
+                <DynamicIcon value={n.icon} fallback="🗂️" className="mg-icon" />
+              </button>
+            );
+          if (role === "database")
+            return (
+              <button key={n.id} data-id={n.id} type="button" className={cls} aria-label={label} {...handlers}>
+                <DynamicIcon value={n.icon} fallback="lucide:Database" className="mg-icon" />
+                <span className="mg-db-label">{label}</span>
               </button>
             );
           if (role === "tag")
@@ -462,7 +473,7 @@ export function MemoryGraphView({
             );
           return (
             <button key={n.id} data-id={n.id} type="button" className={cls} title={label} {...handlers}>
-              {n.icon ? <span className="mg-icon-sm">{n.icon}</span> : null}
+              {n.icon ? <DynamicIcon value={n.icon} className="mg-icon-sm" /> : null}
               {label}
             </button>
           );
@@ -493,6 +504,8 @@ const MG_CSS = `
 .mg-edge{stroke:var(--border);stroke-width:calc(1.1 * var(--mg-link))}
 .mg-edge-hot{stroke:color-mix(in srgb, var(--primary) 80%, transparent);stroke-width:calc(1.5 * var(--mg-link))}
 .mg-edge-temp{stroke:color-mix(in srgb, var(--primary) 55%, transparent);stroke-width:1.6;stroke-dasharray:4 5}
+.mg-edge-db{stroke:color-mix(in srgb, var(--primary) 45%, var(--border));stroke-width:calc(1.3 * var(--mg-link))}
+.mg-edge-rel{stroke:color-mix(in srgb, var(--primary) 60%, transparent);stroke-width:calc(1.2 * var(--mg-link));stroke-dasharray:5 4}
 .mg-node{position:absolute;left:var(--x,0);top:var(--y,0);transform:translate(-50%,-50%);border:0;background:transparent;padding:0;cursor:pointer;user-select:none;touch-action:none}
 .mg-core{width:calc(56px * var(--mg-scale));height:calc(56px * var(--mg-scale));border-radius:999px;cursor:grab;
   background:radial-gradient(circle at 50% 50%, color-mix(in srgb,var(--primary) 92%, white) 0 22%, color-mix(in srgb,var(--primary) 70%, transparent) 40%, color-mix(in srgb,var(--primary) 22%, transparent) 68%, transparent 100%);
@@ -501,9 +514,13 @@ const MG_CSS = `
   background:color-mix(in srgb,var(--card) 90%, transparent);border:1px solid var(--border);color:var(--foreground);
   box-shadow:0 8px 22px rgba(0,0,0,.16);transition:transform .15s ease,border-color .15s ease}
 .mg-hub:hover,.mg-hub.mg-hover,.mg-hub.mg-selected{transform:translate(-50%,-50%) scale(1.08);border-color:color-mix(in srgb,var(--primary) 45%, var(--border))}
-.mg-icon{font-size:calc(16px * var(--mg-scale));line-height:1;display:grid;place-items:center}
-.mg-icon svg{width:calc(17px * var(--mg-scale));height:calc(17px * var(--mg-scale))}
-.mg-icon-sm{font-size:11px;margin-right:2px}
+.mg-database{display:grid;place-items:center;gap:2px;padding:6px 10px;border-radius:calc(11px * var(--mg-scale));cursor:grab;
+  background:color-mix(in srgb,var(--card) 92%, transparent);border:1px solid var(--border);color:var(--foreground);
+  box-shadow:0 8px 22px rgba(0,0,0,.18);transition:transform .15s ease,border-color .15s ease}
+.mg-database:hover,.mg-database.mg-hover,.mg-database.mg-selected{transform:translate(-50%,-50%) scale(1.06);border-color:color-mix(in srgb,var(--primary) 50%, var(--border))}
+.mg-db-label{font-size:calc(9px * var(--mg-scale));font-weight:600;color:var(--muted-foreground);max-width:96px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mg-icon{font-size:calc(17px * var(--mg-scale));line-height:1;display:grid;place-items:center}
+.mg-icon-sm{font-size:11px;margin-right:2px;display:inline-grid;place-items:center}
 .mg-leaf,.mg-tag{min-width:64px;height:calc(24px * var(--mg-scale));padding:0 12px;display:flex;align-items:center;gap:4px;border-radius:999px;white-space:nowrap;
   font-size:calc(11px * var(--mg-scale));font-weight:600;letter-spacing:-.01em;
   color:var(--muted-foreground);background:color-mix(in srgb,var(--muted) 55%, transparent);border:1px solid transparent;

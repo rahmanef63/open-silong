@@ -3,6 +3,7 @@
   "description": "Knowledge graph (global route + per-page ego panel) — a DOM+SVG renderer with radial layout, pan/zoom/drag, and theme-token styling.",
   "deps": {
     "shared": [
+      "components/icon-picker",
       "lib/graphLinks",
       "lib/router",
       "lib/routes",
