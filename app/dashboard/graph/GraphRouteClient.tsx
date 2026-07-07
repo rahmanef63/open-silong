@@ -9,11 +9,25 @@
  *  fallback. Keeps the slice itself convex-free.
  */
 
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
+import type { Id } from "@convex/_generated/dataModel";
 import { GraphPage } from "@/slices/memory-graph";
+import { useNavigate } from "@/shared/lib/router";
+import { ROUTES } from "@/shared/lib/routes";
+import type { GraphNode } from "@/shared/types/graph";
 
 export function GraphRouteClient() {
   const graph = useQuery(api.features.graph.queries.getGlobalGraph, {});
-  return <GraphPage model={graph ?? undefined} />;
+  const createPage = useMutation(api.pages.create);
+  const navigate = useNavigate();
+
+  // Create a page parented to the right-clicked node, then open it. The
+  // reactive `getGlobalGraph` query repaints the new node + hierarchy edge.
+  const onAddChild = async (node: GraphNode) => {
+    const newId = await createPage({ parentId: node.id as Id<"pages">, title: "Untitled" });
+    if (newId) navigate(ROUTES.page(String(newId)));
+  };
+
+  return <GraphPage model={graph ?? undefined} onAddChild={onAddChild} />;
 }

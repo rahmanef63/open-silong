@@ -8,7 +8,7 @@
 
 import { useState } from "react";
 import { Network } from "lucide-react";
-import type { Graph } from "@/shared/types/graph";
+import type { Graph, GraphNode } from "@/shared/types/graph";
 import { GraphView } from "../components/GraphView";
 import { GraphControls } from "../components/GraphControls";
 import {
@@ -24,9 +24,12 @@ export interface GraphPageProps {
   /** Host-supplied graph model threaded into `GraphView`. Omitted → client
    *  fallback (portable slice). */
   model?: Graph;
+  /** Host-supplied "create a child page under this node" action, surfaced in
+   *  the node right-click menu. Omitted → the action is hidden. */
+  onAddChild?: (node: GraphNode) => void;
 }
 
-export function GraphPage({ model }: GraphPageProps = {}) {
+export function GraphPage({ model, onAddChild }: GraphPageProps = {}) {
   const [filter, setFilter] = useState<FilterConfig>(DEFAULT_FILTER);
   const [force, setForce] = useState<ForceConfig>(DEFAULT_FORCE);
   const [display, setDisplay] = useState<DisplayConfig>(DEFAULT_DISPLAY);
@@ -48,7 +51,7 @@ export function GraphPage({ model }: GraphPageProps = {}) {
         />
       </div>
       <div className="relative min-h-0 flex-1">
-        <GraphView model={model} filter={filter} force={force} display={display} className="absolute inset-0" />
+        <GraphView model={model} onAddChild={onAddChild} filter={filter} force={force} display={display} className="absolute inset-0" />
       </div>
     </div>
   );

@@ -6,10 +6,12 @@
  *  overlays the corner so the node encodings read at a glance.
  */
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ExternalLink, Plus } from "lucide-react";
 import { useNavigate } from "@/shared/lib/router";
 import { ROUTES } from "@/shared/lib/routes";
 import { cn } from "@/shared/lib/utils";
+import { Button } from "@/shared/ui/button";
 import type { Graph, GraphNode } from "@/shared/types/graph";
 import { useGraphModel, filterGraph } from "../hooks/useGraphModel";
 import { useGraphTheme } from "../lib/themeBridge";
@@ -25,13 +27,25 @@ export interface GraphViewProps {
    *  Omitted → falls back to the client model built from the pages store,
    *  so the portable/offline slice still works. */
   model?: Graph;
+  /** Host-supplied "create a child page under this node" action. Omitted →
+   *  the "Add child page" context-menu item is hidden (portable slice has no
+   *  write path of its own). */
+  onAddChild?: (node: GraphNode) => void;
 }
 
-export function GraphView({ filter, force, display, className, model }: GraphViewProps) {
+/** Right-click menu anchor: the node plus the viewport coords to open at. */
+interface NodeMenuState {
+  node: GraphNode;
+  x: number;
+  y: number;
+}
+
+export function GraphView({ filter, force, display, className, model, onAddChild }: GraphViewProps) {
   const clientModel = useGraphModel();
   const source = model ?? clientModel;
   const theme = useGraphTheme();
   const navigate = useNavigate();
+  const [menu, setMenu] = useState<NodeMenuState | null>(null);
 
   const graph = useMemo(() => filterGraph(source, filter), [source, filter]);
 
@@ -56,10 +70,88 @@ export function GraphView({ filter, force, display, className, model }: GraphVie
             force={force}
             display={display}
             onNodeClick={handleClick}
+            onNodeContext={(node, e) => {
+              // Pages are the only nodes with a destination / write path.
+              if (node.kind === "page") setMenu({ node, x: e.clientX, y: e.clientY });
+            }}
           />
           <GraphLegend />
+          {menu ? (
+            <NodeContextMenu
+              menu={menu}
+              onClose={() => setMenu(null)}
+              onOpen={() => navigate(ROUTES.page(menu.node.id))}
+              onAddChild={onAddChild ? () => onAddChild(menu.node) : undefined}
+            />
+          ) : null}
         </>
       )}
+    </div>
+  );
+}
+
+/** Lightweight right-click menu, positioned at the click's viewport coords.
+ *  Closes on select, outside-click, or Escape. */
+function NodeContextMenu({
+  menu,
+  onClose,
+  onOpen,
+  onAddChild,
+}: {
+  menu: NodeMenuState;
+  onClose: () => void;
+  onOpen: () => void;
+  onAddChild?: () => void;
+}) {
+  const ref = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const onPointerDown = (e: MouseEvent) => {
+      if (!ref.current?.contains(e.target as Node)) onClose();
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [onClose]);
+
+  const select = (fn: () => void) => {
+    fn();
+    onClose();
+  };
+
+  return (
+    <div
+      ref={ref}
+      role="menu"
+      style={{ position: "fixed", top: menu.y, left: menu.x }}
+      className="z-50 min-w-40 rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md"
+    >
+      <Button
+        variant="ghost"
+        size="sm"
+        className="w-full justify-start gap-2 font-normal"
+        onClick={() => select(onOpen)}
+      >
+        <ExternalLink className="size-4" />
+        Open page
+      </Button>
+      {onAddChild ? (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="w-full justify-start gap-2 font-normal"
+          onClick={() => select(onAddChild)}
+        >
+          <Plus className="size-4" />
+          Add child page
+        </Button>
+      ) : null}
     </div>
   );
 }

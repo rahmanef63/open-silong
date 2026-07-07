@@ -38,6 +38,7 @@ export function pageMeta(p: Doc<"pages">): GraphPageMeta {
     title: p.title || "Untitled",
     icon: p.icon,
     wiki: p.wiki,
+    parentId: p.parentId ?? null,
   };
 }
 

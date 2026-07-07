@@ -43,6 +43,7 @@ interface ForceGraph2DProps {
   nodeCanvasObject?: (node: FGNode, ctx: CanvasRenderingContext2D, globalScale: number) => void;
   nodePointerAreaPaint?: (node: FGNode, color: string, ctx: CanvasRenderingContext2D) => void;
   onNodeClick?: (node: FGNode) => void;
+  onNodeRightClick?: (node: FGNode, event: MouseEvent) => void;
   onNodeHover?: (node: FGNode | null) => void;
   onEngineStop?: () => void;
   nodeLabel?: (node: FGNode) => string;
@@ -66,6 +67,7 @@ export interface GraphCanvasProps {
   force: ForceConfig;
   display: DisplayConfig;
   onNodeClick?: (node: GraphNode) => void;
+  onNodeContext?: (node: GraphNode, event: MouseEvent) => void;
   className?: string;
 }
 
@@ -78,6 +80,7 @@ export default function GraphCanvas({
   force,
   display,
   onNodeClick,
+  onNodeContext,
   className,
 }: GraphCanvasProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -279,6 +282,7 @@ export default function GraphCanvas({
           linkDirectionalArrowColor={linkColor}
           onNodeHover={(n) => setHoverId(n?.id ?? null)}
           onNodeClick={handleClick}
+          onNodeRightClick={(n, e) => onNodeContext?.(n, e)}
           onEngineStop={() => {
             if (didFit.current) return;
             didFit.current = true;

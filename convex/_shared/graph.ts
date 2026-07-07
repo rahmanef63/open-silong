@@ -44,6 +44,8 @@ export interface GraphPageMeta {
   title: string;
   icon: string;
   wiki?: unknown;
+  /** Parent page (Notion nesting) — used to synthesize hierarchy edges. */
+  parentId?: string | null;
 }
 
 export interface BuildGraphOptions {
@@ -143,6 +145,25 @@ export function buildGraphFromEdges(
     });
     nodes.get(source)!.degree++;
     nodes.get(target)!.degree++;
+  }
+
+  // Hierarchy edges: parent → child page nesting (the Notion tree). These are
+  // NOT stored in pageLinks — synthesized here so nested pages connect into an
+  // Obsidian-style graph even before anyone adds [[wikilinks]]. Deduped against
+  // any existing link between the same two nodes (either direction).
+  const pairSeen = new Set<string>();
+  const pairKey = (a: string, b: string) => (a < b ? `${a}|${b}` : `${b}|${a}`);
+  for (const e of outEdges) pairSeen.add(pairKey(e.source, e.target));
+  for (const p of pages) {
+    const parent = p.parentId;
+    if (!parent || parent === p._id) continue;
+    if (!nodes.has(parent) || !nodes.has(p._id)) continue;
+    const key = pairKey(parent, p._id);
+    if (pairSeen.has(key)) continue;
+    pairSeen.add(key);
+    outEdges.push({ source: parent, target: p._id, kind: "page-block", resolved: true });
+    nodes.get(parent)!.degree++;
+    nodes.get(p._id)!.degree++;
   }
 
   let nodeList = Array.from(nodes.values());
