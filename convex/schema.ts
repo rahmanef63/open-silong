@@ -129,6 +129,15 @@ export default defineSchema({
     /** Denormalized title + flattened block text. Updated on every page write
      *  so Convex searchIndex can match body content, not just title. */
     searchText: v.optional(v.string()),
+    /** Denormalized `#tags` extracted from block content by the memory-graph
+     *  edge reindex (`convex/_shared/links.ts:reindexPageLinks`). Powers tag
+     *  filter chips + the `pageLinks.by_workspace_tag` pane. Optional —
+     *  legacy rows lack it until backfilled. */
+    tags: v.optional(v.array(v.string())),
+    /** Normalized (slugged, lowercased) title — the resolver key for
+     *  `[[Title]]` wikilinks. Maintained alongside `title` on every write.
+     *  Optional so legacy rows resolve as ghosts until backfilled. */
+    titleKey: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -136,6 +145,9 @@ export default defineSchema({
     .index("by_user_parent", ["userId", "parentId"])
     .index("by_workspace", ["workspaceId"])
     .index("by_workspace_parent", ["workspaceId", "parentId"])
+    // Resolves `[[Title]]` wikilinks → pageId within a workspace. Unique
+    // match ⇒ resolved edge; zero/many ⇒ ghost node.
+    .index("by_workspace_titleKey", ["workspaceId", "titleKey"])
     // Powers `sites.workspaceDirectory` (anon /site/[ws]) — walks only the
     // (workspace, public) bucket instead of scanning the whole workspace.
     .index("by_workspace_public", ["workspaceId", "isPublic"])
@@ -151,6 +163,44 @@ export default defineSchema({
       searchField: "searchText",
       filterFields: ["userId", "workspaceId", "trashed"],
     }),
+
+  /** Memory-graph edge index — one row per outgoing link found in a page's
+   *  block content. Denormalized on every page write by
+   *  `convex/_shared/links.ts:reindexPageLinks` (delete-by-source then
+   *  reinsert, mirroring the searchText denorm). Powers server/MCP graph
+   *  reads (backlinks, outgoing, tags, global/local graph) that the
+   *  browser store can't answer (no client store on the MCP path,
+   *  workspace-scale global graph, unlinked-mention diffing).
+   *
+   *  `kind` taxonomy is the ONE contract shared with the frontend
+   *  (`frontend/shared/types/graph.ts`) + MCP:
+   *    - 'wikilink'   → `[[Title]]`; `targetTitle` set, `targetPageId` set
+   *                     + `resolved:true` when the title resolves uniquely,
+   *                     else ghost (`resolved:false`, no targetPageId).
+   *    - 'page-block' → a `type:'page'` child-page block; `targetPageId` set.
+   *    - 'mention'    → inline `[label](/p/<id>)` / `/dashboard/p/<id>`.
+   *    - 'tag'        → `#tag` (full nested path, e.g. 'a/b') in `tag`.
+   *  `sourceBlockId` is the block the link lives in (backlink previews). */
+  pageLinks: defineTable({
+    workspaceId: v.id("workspaces"),
+    sourcePageId: v.id("pages"),
+    sourceBlockId: v.string(),
+    targetPageId: v.optional(v.id("pages")),
+    targetTitle: v.optional(v.string()),
+    tag: v.optional(v.string()),
+    kind: v.union(
+      v.literal("wikilink"),
+      v.literal("page-block"),
+      v.literal("mention"),
+      v.literal("tag"),
+    ),
+    resolved: v.boolean(),
+    createdAt: v.number(),
+  })
+    .index("by_source", ["sourcePageId"])
+    .index("by_target", ["targetPageId"])
+    .index("by_workspace_tag", ["workspaceId", "tag"])
+    .index("by_workspace_target_title", ["workspaceId", "targetTitle"]),
 
   databases: defineTable({
     userId: v.id("users"),

@@ -10,6 +10,7 @@ import {
   remapRowProps,
   remapTemplates,
 } from "../_shared/idRemap";
+import { reindexPageLinks } from "../_shared/links";
 import type { BlockLike } from "../_shared/blocks";
 import type { Id } from "../_generated/dataModel";
 
@@ -267,6 +268,17 @@ export const importFromJson = mutation({
         rowProps: s.rowProps,
       });
       snapshotsImported += 1;
+    }
+
+    // Phase 6: reindex graph edges for every imported page. Blocks are final
+    // after phase 3 (parent / rowOfDb / mention + page refs remapped), so
+    // extracted edges reference the new ids. Imported pages carry no
+    // workspaceId (legacy-style insert above), so reindexPageLinks refreshes
+    // `pages.titleKey` but skips `pageLinks` edge rows until the
+    // multi-workspace backfill stamps workspaceId. Fetch each fresh doc.
+    for (const newId of pageMap.values()) {
+      const doc = await ctx.db.get(newId as Id<"pages">);
+      if (doc) await reindexPageLinks(ctx, doc);
     }
 
     return {

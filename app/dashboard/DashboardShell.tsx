@@ -28,6 +28,7 @@ import { UndoRedoButtons } from "@/shared/components/UndoRedoButtons";
 import { AppSidebar } from "@/slices/workspace-sidebar";
 import { SelectionToolbar } from "@/slices/editor/components/SelectionToolbar";
 import { MentionTypeahead } from "@/slices/editor/components/MentionTypeahead";
+import { WikiLinkTypeahead } from "@/slices/editor/components/wikilink-typeahead";
 import { TweakcnSwitcher, ThemeColorSync, WorkspaceThemeBridge } from "@/slices/theme-presets";
 import { useTouchLastSeen } from "@/shared/hooks/useTouchLastSeen";
 
@@ -156,6 +157,7 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
             </Suspense>
             <SelectionToolbar />
             <MentionTypeahead />
+            <WikiLinkTypeahead />
 
             <SidebarProvider defaultOpen style={SIDEBAR_STYLE}>
               <div className="print:hidden contents">

@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import {
-  Inbox, Search, Settings, Sparkles, Trash2, User, ShieldAlert, FileBox, Bot, Plus, FileJson, Library,
+  Inbox, Search, Settings, Sparkles, Trash2, User, ShieldAlert, FileBox, Bot, Plus, FileJson, Library, Network,
 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import {
@@ -91,6 +91,7 @@ export function AppSidebar({ onOpenSearch }: Props) {
     { icon: Search, label: "Search", onClick: onOpenSearch, active: false, shortcut: "⌘K" },
     { icon: Sparkles, label: "Dashboard", onClick: () => go("/"), active: pathname === ROUTE_BASE },
     { icon: Library, label: "Library", onClick: () => go("/library"), active: pathname === path("/library") },
+    { icon: Network, label: "Graph", onClick: () => go("/graph"), active: pathname === path("/graph") },
     { icon: Bot, label: "AI", onClick: () => setAiOpen(true), active: false },
     {
       icon: Inbox, label: "Inbox", onClick: () => go("/inbox"),

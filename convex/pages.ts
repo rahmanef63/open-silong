@@ -6,6 +6,7 @@ import { requireAuth, requireOwned, requireWorkspaceAccess } from "./_shared/aut
 import { rateLimit } from "./_shared/rateLimit";
 import { Id } from "./_generated/dataModel";
 import { buildSearchText } from "./features/search/lib";
+import { reindexPageLinks, titleKeyFor } from "./_shared/links";
 import { collectDescendantsFromDocs } from "./_shared/pageTree";
 import { regenAllBlockIds, findDuplicateBlockId, type BlockLike } from "./_shared/blocks";
 import {
@@ -272,6 +273,7 @@ export const create = mutation({
       workspaceId: active._id,
       parentId: args.parentId as Id<"pages"> | null,
       title: args.title ?? "",
+      titleKey: titleKeyFor(args.title ?? ""),
       icon: args.icon ?? "lucide:FileText",
       cover: null,
       blocks,
@@ -357,6 +359,10 @@ export const update = mutation({
       updatedAt: Date.now(),
     });
     if (touchesContent) {
+      // Rebuild graph edges + titleKey next to searchText. Fetch the fresh
+      // doc so reindex sees the patched blocks/title/workspaceId.
+      const fresh = await ctx.db.get(args.pageId as Id<"pages">);
+      if (fresh) await reindexPageLinks(ctx, fresh);
       await ctx.scheduler.runAfter(0, (internal.webhooks.deliver as any).run, {
         ownerId: userId,
         event: "page.updated",
@@ -464,11 +470,12 @@ export const duplicate = mutation({
     const blocks = regenAllBlockIds(cloned);
     const title = src.title ? `${src.title} (copy)` : "";
     const active = await getActiveWorkspaceMutation(ctx, userId);
-    return await ctx.db.insert("pages", {
+    const newPageId = await ctx.db.insert("pages", {
       userId,
       workspaceId: src.workspaceId ?? active._id,
       parentId: src.parentId,
       title,
+      titleKey: titleKeyFor(title),
       icon: src.icon,
       cover: src.cover,
       blocks,
@@ -481,6 +488,10 @@ export const duplicate = mutation({
       createdAt: now,
       updatedAt: now,
     });
+    // Cloned blocks may carry [[wikilinks]] / #tags / mentions — index them.
+    const fresh = await ctx.db.get(newPageId);
+    if (fresh) await reindexPageLinks(ctx, fresh);
+    return newPageId;
   },
 });
 
@@ -505,6 +516,8 @@ export const addBlock = mutation({
       searchText: buildSearchText(page.title, blocks),
       updatedAt: Date.now(),
     });
+    const fresh = await ctx.db.get(args.pageId as Id<"pages">);
+    if (fresh) await reindexPageLinks(ctx, fresh);
     return newId;
   },
 });
@@ -534,6 +547,8 @@ export const appendMarkdown = mutation({
       searchText: buildSearchText(page.title, blocks),
       updatedAt: Date.now(),
     });
+    const fresh = await ctx.db.get(args.pageId as Id<"pages">);
+    if (fresh) await reindexPageLinks(ctx, fresh);
     return parsed.length;
   },
 });
@@ -556,6 +571,8 @@ export const replaceBlockById = mutation({
       searchText: buildSearchText(page.title, blocks),
       updatedAt: Date.now(),
     });
+    const fresh = await ctx.db.get(args.pageId as Id<"pages">);
+    if (fresh) await reindexPageLinks(ctx, fresh);
   },
 });
 
@@ -573,6 +590,8 @@ export const duplicateBlockById = mutation({
       searchText: buildSearchText(page.title, dup.blocks),
       updatedAt: Date.now(),
     });
+    const fresh = await ctx.db.get(args.pageId as Id<"pages">);
+    if (fresh) await reindexPageLinks(ctx, fresh);
     return dup.newId;
   },
 });
@@ -607,6 +626,8 @@ export const insertBlocksAfter = mutation({
       searchText: buildSearchText(page.title, blocks),
       updatedAt: Date.now(),
     });
+    const fresh = await ctx.db.get(args.pageId as Id<"pages">);
+    if (fresh) await reindexPageLinks(ctx, fresh);
     return blocks.length;
   },
 });
@@ -629,6 +650,10 @@ export const updateBlock = mutation({
       ...(touchesText ? { searchText: buildSearchText(page.title, blocks) } : {}),
       updatedAt: Date.now(),
     });
+    if (touchesText) {
+      const fresh = await ctx.db.get(args.pageId as Id<"pages">);
+      if (fresh) await reindexPageLinks(ctx, fresh);
+    }
   },
 });
 
@@ -645,6 +670,8 @@ export const deleteBlock = mutation({
       searchText: buildSearchText(page.title, blocks),
       updatedAt: Date.now(),
     });
+    const fresh = await ctx.db.get(args.pageId as Id<"pages">);
+    if (fresh) await reindexPageLinks(ctx, fresh);
   },
 });
 

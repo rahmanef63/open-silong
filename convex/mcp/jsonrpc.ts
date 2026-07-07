@@ -311,6 +311,95 @@ const TOOLS: ToolDef[] = [
     inputSchema: obj({ pageId: { type: "string" } }, ["pageId"]),
     annotations: { destructiveHint: true, idempotentHint: true },
   },
+
+  // ── Memory graph (Obsidian-style knowledge graph = agent memory) ────
+  // READ: traverse the graph before answering questions that depend on
+  // how notes relate. WRITE: grow the graph as durable memory.
+  {
+    name: "graph_backlinks",
+    description: "List the notes that LINK TO this page (incoming links). Call this when the user asks 'what references / points to / mentions this note', or before summarizing a topic so you gather everything that cites it. Pass the pageId from pages_search / pages_list. Returns each source page's id, title, icon, link kind, and the block it lives in.",
+    inputSchema: obj({ pageId: { type: "string" } }, ["pageId"]),
+    annotations: { readOnlyHint: true },
+  },
+  {
+    name: "graph_links",
+    description: "List the OUTGOING links from this page — resolved page links, unresolved [[ghost]] links (a title with no page yet), and #tags. Call this to see what a note connects out to before following a train of thought. Pass the pageId. Returns kind, resolved flag, target pageId/title, and tag.",
+    inputSchema: obj({ pageId: { type: "string" } }, ["pageId"]),
+    annotations: { readOnlyHint: true },
+  },
+  {
+    name: "graph_neighbors",
+    description: "Get the LOCAL subgraph around a page — every node reachable within `depth` hops (default 1, max 3). Call this to explore a note's neighbourhood / immediate context. Returns { nodes, edges } where node id = pageId, 'ghost:<slug>' for unresolved links, or 'tag:<tag>'.",
+    inputSchema: obj({
+      pageId: { type: "string" },
+      depth: { type: "number", description: "Hops from the page, 1..3, default 1" },
+    }, ["pageId"]),
+    annotations: { readOnlyHint: true },
+  },
+  {
+    name: "graph_global",
+    description: "Get the WHOLE memory graph (all the user's notes + how they connect). Call this to understand the overall structure of the knowledge base, find clusters, or pick where new information belongs. Returns { nodes, edges }, highest-degree nodes first, capped by `limit`. Set includeTags:true to include #tag nodes.",
+    inputSchema: obj({
+      limit: { type: "number", description: "Max nodes, 1..2000, default 500 (keeps highest-degree)" },
+      includeTags: { type: "boolean", description: "Include #tag nodes + tag edges (default false)" },
+    }),
+    annotations: { readOnlyHint: true },
+  },
+  {
+    name: "graph_tags",
+    description: "List every #tag in the knowledge base with a page count. Call this to discover how notes are categorized before filtering by tag or choosing a tag for a new note. Returns [{ tag, count }] sorted by count.",
+    inputSchema: obj({}),
+    annotations: { readOnlyHint: true },
+  },
+  {
+    name: "graph_by_tag",
+    description: "List the notes carrying a given #tag. Call this when the user references a topic by tag (e.g. 'my #project notes'). Pass the tag WITHOUT the leading # (both accepted). Returns [{ pageId, title, icon }].",
+    inputSchema: obj({ tag: { type: "string", description: "Tag name, with or without leading #" } }, ["tag"]),
+    annotations: { readOnlyHint: true },
+  },
+  {
+    name: "graph_unlinked_mentions",
+    description: "Find notes that mention this page's TITLE in their text but don't actually link to it. Call this to surface link opportunities the user missed, or to gather context that isn't formally connected yet. Pass the pageId. Returns [{ pageId, title, icon, snippet }].",
+    inputSchema: obj({ pageId: { type: "string" } }, ["pageId"]),
+    annotations: { readOnlyHint: true },
+  },
+  {
+    name: "graph_related",
+    description: "Find notes RELATED to this page by shared tags and co-citation (2-hop neighbours), ranked by connectedness. Call this for recall — 'what else do I know that's relevant to this note'. Pass the pageId. Returns [{ pageId, title, icon, direct, score }].",
+    inputSchema: obj({ pageId: { type: "string" } }, ["pageId"]),
+    annotations: { readOnlyHint: true },
+  },
+  {
+    name: "note_create_linked",
+    description: "Create a new note ALREADY WIRED into the graph. Use this instead of pages_create when the new note should connect to existing knowledge: pass `links` (titles to [[wikilink]] out to) and `tags` (added as #tags) and they are appended + indexed so backlinks/graph queries see them immediately. `markdown` fills the body. Returns the new pageId.",
+    inputSchema: obj({
+      title: { type: "string" },
+      markdown: { type: "string", description: "Optional note body (same markdown parser as pages_append_markdown)" },
+      links: { type: "array", items: { type: "string" }, description: "Titles to link out to as [[wikilinks]] (# or [[ ]] stripped automatically)" },
+      tags: { type: "array", items: { type: "string" }, description: "Tags to add as #tags (leading # optional)" },
+      icon: { type: "string", description: "Optional emoji icon" },
+    }, ["title"]),
+    annotations: { destructiveHint: false, idempotentHint: false },
+  },
+  {
+    name: "note_link",
+    description: "Add a [[wikilink]] FROM one note TO another. Call this to connect two existing notes when you notice a relationship. `to` may be a pageId (linked by that page's title so it resolves) or a plain title (a ghost link until such a page exists). Optional `alias` sets the displayed text ([[Title|alias]]). Reindexes the source so graph_backlinks sees it.",
+    inputSchema: obj({
+      fromPageId: { type: "string", description: "The note the link is added to" },
+      to: { type: "string", description: "Target pageId or note title" },
+      alias: { type: "string", description: "Optional display text for the link" },
+    }, ["fromPageId", "to"]),
+    annotations: { destructiveHint: false, idempotentHint: false },
+  },
+  {
+    name: "note_tag",
+    description: "Add a #tag to a note. Call this to categorize a note so graph_by_tag / graph_tags surface it. Pass the tag with or without the leading #. Idempotent — tagging with a tag the note already has is a no-op.",
+    inputSchema: obj({
+      pageId: { type: "string" },
+      tag: { type: "string", description: "Tag name, with or without leading #" },
+    }, ["pageId", "tag"]),
+    annotations: { destructiveHint: false, idempotentHint: true },
+  },
 ];
 
 // ─────────────────────── tool dispatch ───────────────────────
@@ -711,6 +800,100 @@ async function dispatchTool(
       try {
         await ctx.runMutation(internal.mcp.internal.trashPage, { userId, pageId });
         return textResult({ ok: true, pageId });
+      } catch (e) {
+        return errResult(e instanceof Error ? e.message : String(e));
+      }
+    }
+
+    // ── Memory graph ───────────────────────────────────────────────
+    case "graph_backlinks": {
+      const pageId = String(args.pageId ?? "");
+      if (!pageId) return errResult("pageId is required");
+      const r = await ctx.runQuery(internal.mcp.internal.graphBacklinks, { userId, pageId });
+      return textResult(r);
+    }
+    case "graph_links": {
+      const pageId = String(args.pageId ?? "");
+      if (!pageId) return errResult("pageId is required");
+      const r = await ctx.runQuery(internal.mcp.internal.graphOutgoing, { userId, pageId });
+      return textResult(r);
+    }
+    case "graph_neighbors": {
+      const pageId = String(args.pageId ?? "");
+      if (!pageId) return errResult("pageId is required");
+      const rawDepth = args.depth;
+      const depth = typeof rawDepth === "number" && rawDepth > 0 ? Math.floor(rawDepth) : undefined;
+      const r = await ctx.runQuery(internal.mcp.internal.graphNeighbors, { userId, pageId, depth });
+      return textResult(r);
+    }
+    case "graph_global": {
+      const rawLimit = args.limit;
+      const limit = typeof rawLimit === "number" && rawLimit > 0 ? Math.floor(rawLimit) : undefined;
+      const includeTags = typeof args.includeTags === "boolean" ? args.includeTags : undefined;
+      const r = await ctx.runQuery(internal.mcp.internal.graphGlobal, { userId, limit, includeTags });
+      return textResult(r);
+    }
+    case "graph_tags": {
+      const r = await ctx.runQuery(internal.mcp.internal.graphTags, { userId });
+      return textResult(r);
+    }
+    case "graph_by_tag": {
+      const tag = String(args.tag ?? "");
+      if (!tag) return errResult("tag is required");
+      const r = await ctx.runQuery(internal.mcp.internal.graphByTag, { userId, tag });
+      return textResult(r);
+    }
+    case "graph_unlinked_mentions": {
+      const pageId = String(args.pageId ?? "");
+      if (!pageId) return errResult("pageId is required");
+      const r = await ctx.runQuery(internal.mcp.internal.graphUnlinkedMentions, { userId, pageId });
+      return textResult(r);
+    }
+    case "graph_related": {
+      const pageId = String(args.pageId ?? "");
+      if (!pageId) return errResult("pageId is required");
+      const r = await ctx.runQuery(internal.mcp.internal.graphRelated, { userId, pageId });
+      return textResult(r);
+    }
+    case "note_create_linked": {
+      const title = String(args.title ?? "").trim();
+      if (!title) return errResult("title is required");
+      const markdown = typeof args.markdown === "string" ? args.markdown : undefined;
+      const links = Array.isArray(args.links) ? args.links.map((l) => String(l ?? "")).filter(Boolean) : undefined;
+      const tags = Array.isArray(args.tags) ? args.tags.map((t) => String(t ?? "")).filter(Boolean) : undefined;
+      const icon = typeof args.icon === "string" && args.icon ? args.icon : undefined;
+      try {
+        const pageId = await ctx.runMutation(internal.mcp.internal.createLinkedNote, {
+          userId, title, markdown, links, tags, icon,
+        });
+        return textResult({ ok: true, pageId });
+      } catch (e) {
+        return errResult(e instanceof Error ? e.message : String(e));
+      }
+    }
+    case "note_link": {
+      const fromPageId = String(args.fromPageId ?? "");
+      const to = String(args.to ?? "").trim();
+      if (!fromPageId) return errResult("fromPageId is required");
+      if (!to) return errResult("to is required");
+      const alias = typeof args.alias === "string" && args.alias.trim() ? args.alias.trim() : undefined;
+      try {
+        const r = await ctx.runMutation(internal.mcp.internal.addLink, {
+          userId, fromPageId, to, alias,
+        });
+        return textResult(r);
+      } catch (e) {
+        return errResult(e instanceof Error ? e.message : String(e));
+      }
+    }
+    case "note_tag": {
+      const pageId = String(args.pageId ?? "");
+      const tag = String(args.tag ?? "").trim();
+      if (!pageId) return errResult("pageId is required");
+      if (!tag) return errResult("tag is required");
+      try {
+        const r = await ctx.runMutation(internal.mcp.internal.addTag, { userId, pageId, tag });
+        return textResult(r);
       } catch (e) {
         return errResult(e instanceof Error ? e.message : String(e));
       }

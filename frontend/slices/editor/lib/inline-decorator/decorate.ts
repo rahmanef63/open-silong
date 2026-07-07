@@ -95,6 +95,36 @@ export function decorateLineToFragment(line: string, opts?: { hideMarkers?: bool
         frag.appendChild(makeMarker(")", opts));
         break;
       }
+      case "wikilink": {
+        // `[[title]]` / `[[title|alias]]` — brackets + pipe as dim markers,
+        // title/alias in link color. EVERY source char stays in the DOM
+        // (raw untrimmed title/alias) so innerText === source: the marker
+        // spans reproduce `[[`, `|`, `]]` verbatim.
+        frag.appendChild(makeMarker("[[", opts));
+        const title = document.createElement("span");
+        title.className = "text-brand underline decoration-brand/40 underline-offset-2";
+        title.textContent = tok.title;
+        frag.appendChild(title);
+        if (tok.alias !== undefined) {
+          frag.appendChild(makeMarker("|", opts));
+          const alias = document.createElement("span");
+          alias.className = "text-brand underline decoration-brand/40 underline-offset-2";
+          alias.textContent = tok.alias;
+          frag.appendChild(alias);
+        }
+        frag.appendChild(makeMarker("]]", opts));
+        break;
+      }
+      case "tag": {
+        // `#tag` pill — the `#` and the tag path live in ONE text node so
+        // innerText contributes exactly `#tag` (caret parity). Pure visual
+        // styling; no characters added or removed.
+        const pill = document.createElement("span");
+        pill.className = "rounded bg-brand/10 px-1 font-medium text-brand";
+        pill.textContent = "#" + tok.tag;
+        frag.appendChild(pill);
+        break;
+      }
     }
   }
   return frag;

@@ -79,6 +79,60 @@ describe("tokenizeInline", () => {
   it("does not match cross-newline math", () => {
     expect(tokenizeInline("$a\nb$")).toEqual([{ kind: "text", value: "$a\nb$" }]);
   });
+
+  it("wikilink [[Title]]", () => {
+    expect(tokenizeInline("[[Home]]")).toEqual([
+      { kind: "wikilink", title: "Home", alias: undefined },
+    ]);
+  });
+
+  it("wikilink with alias [[Title|alias]]", () => {
+    expect(tokenizeInline("[[Home Page|home]]")).toEqual([
+      { kind: "wikilink", title: "Home Page", alias: "home" },
+    ]);
+  });
+
+  it("wikilink amid text, exact source round-trips", () => {
+    const tokens = tokenizeInline("see [[Notes]] now");
+    expect(tokens).toEqual([
+      { kind: "text", value: "see " },
+      { kind: "wikilink", title: "Notes", alias: undefined },
+      { kind: "text", value: " now" },
+    ]);
+  });
+
+  it("preserves raw (untrimmed) wikilink title for caret parity", () => {
+    // The decorator reconstructs `[[` + title + `]]`; trimming here would
+    // drop the inner spaces and drift innerText from the stored source.
+    expect(tokenizeInline("[[ spaced ]]")).toEqual([
+      { kind: "wikilink", title: " spaced ", alias: undefined },
+    ]);
+  });
+
+  it("tag #tag", () => {
+    expect(tokenizeInline("#todo")).toEqual([{ kind: "tag", tag: "todo" }]);
+  });
+
+  it("nested tag #a/b keeps the full path", () => {
+    expect(tokenizeInline("#area/work")).toEqual([{ kind: "tag", tag: "area/work" }]);
+  });
+
+  it("tag mid-line keeps the leading space in its own text run", () => {
+    expect(tokenizeInline("foo #bar")).toEqual([
+      { kind: "text", value: "foo " },
+      { kind: "tag", tag: "bar" },
+    ]);
+  });
+
+  it("does NOT tokenize a heading marker `# ` as a tag (h1 collision guard)", () => {
+    expect(tokenizeInline("# ")).toEqual([{ kind: "text", value: "# " }]);
+    expect(tokenizeInline("## heading")).toEqual([{ kind: "text", value: "## heading" }]);
+  });
+
+  it("does NOT tokenize `#` glued to a non-boundary word char", () => {
+    // TAG_RE requires start-of-string or whitespace before `#`.
+    expect(tokenizeInline("a#b")).toEqual([{ kind: "text", value: "a#b" }]);
+  });
 });
 
 describe("stripMd", () => {

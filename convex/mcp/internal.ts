@@ -13,9 +13,9 @@
  *       touching the live UI fns.
  */
 
-import { internalQuery, internalMutation } from "../_generated/server";
+import { internalQuery, internalMutation, type QueryCtx } from "../_generated/server";
 import { v } from "convex/values";
-import type { Id } from "../_generated/dataModel";
+import type { Doc, Id } from "../_generated/dataModel";
 import { buildSearchText } from "../features/search/lib";
 import { regenAllBlockIds, type BlockLike } from "../_shared/blocks";
 import { CHAR_CAPS, COUNT_CAPS } from "../_shared/limits";
@@ -24,6 +24,18 @@ import { uid } from "../_shared/uid";
 // "dynamic module import unsupported" inside Convex internal mutations.
 import { markdownToBlocks } from "../_shared/markdown";
 import { getActiveWorkspaceMutation } from "../_shared/workspace";
+// Memory-graph edge index + pure graph algorithms. The write mutations
+// below reindex a page's outgoing links after mutating its blocks; the
+// read queries build the Graph shape + BFS ego graphs the MCP graph_*
+// tools return.
+import { reindexPageLinks, slug } from "../_shared/links";
+import {
+  buildGraphFromEdges,
+  buildAdjacency,
+  bfs,
+  type Graph,
+  type GraphPageMeta,
+} from "../_shared/graph";
 
 // ─── Read ──────────────────────────────────────────────────────────
 
@@ -460,5 +472,455 @@ export const setIconAs = internalMutation({
     const icon = args.icon.trim().slice(0, 8) || "📄";
     await ctx.db.patch(args.pageId as Id<"pages">, { icon, updatedAt: Date.now() });
     return { ok: true };
+  },
+});
+
+// ─── Memory graph ──────────────────────────────────────────────────
+//
+// Read queries answer the graph_* MCP tools; write mutations make the
+// graph a WRITABLE agent memory. All gate ownership inline via the
+// explicit `userId` arg (same pattern as the rest of this file — the
+// Convex auth ctx is empty on the MCP bearer path). MCP is per-USER
+// across all the user's workspaces (matches `listPages`), so the graph
+// collection walks the `by_user` page index, not a single workspace.
+
+/** Max backlink/outgoing edge rows returned for one page. */
+const GRAPH_LINKS_CAP = 1_000;
+/** Max pages scanned when assembling the per-user graph (global/neighbors/related). */
+const GRAPH_PAGE_CAP = 1_000;
+/** Max outgoing edges collected per source page during that assembly. */
+const GRAPH_EDGES_PER_PAGE = 200;
+/** Default / hard-max node count for `graph_global`. */
+const GRAPH_NODE_LIMIT_DEFAULT = 500;
+const GRAPH_NODE_LIMIT_MAX = 2_000;
+/** Local-graph BFS depth ceiling. */
+const GRAPH_DEPTH_MAX = 3;
+/** Max related notes returned by `graph_related`. */
+const RELATED_MAX = 20;
+
+/** `#tag` char rule — mirrors `TAG_RE` capture in `_shared/links.ts`. */
+const TAG_CHAR_RE = /^[A-Za-z0-9_][A-Za-z0-9_/-]*$/;
+
+/** Strip a leading `#`, trim, validate. Returns null when not a legal tag. */
+function normalizeTag(raw: string): string | null {
+  const t = String(raw ?? "").replace(/^#+/, "").trim();
+  return t && TAG_CHAR_RE.test(t) ? t : null;
+}
+
+function cleanTags(tags?: string[]): string[] {
+  const out: string[] = [];
+  for (const raw of tags ?? []) {
+    const n = normalizeTag(raw);
+    if (n && !out.includes(n)) out.push(n);
+  }
+  return out;
+}
+
+/** Strip surrounding `[[ ]]` if the caller already wrapped the target. */
+function stripWikiBrackets(s: string): string {
+  return String(s ?? "").replace(/^\s*\[\[/, "").replace(/\]\]\s*$/, "").trim();
+}
+
+/** Assemble the per-user graph: every live page owned by `userId` (node
+ *  meta) plus its outgoing `pageLinks` rows (edges). Bounded by the caps
+ *  above — the source-edge fan-out uses the `by_source` index per page. */
+async function collectUserGraph(
+  ctx: QueryCtx,
+  userId: Id<"users">,
+): Promise<{ edges: Doc<"pageLinks">[]; pages: GraphPageMeta[] }> {
+  const allPages = await ctx.db
+    .query("pages")
+    .withIndex("by_user", (q) => q.eq("userId", userId))
+    .take(GRAPH_PAGE_CAP);
+  const live = allPages.filter((p) => !p.trashed);
+  const pages: GraphPageMeta[] = live.map((p) => ({
+    _id: p._id,
+    title: p.title,
+    icon: p.icon,
+    wiki: p.wiki,
+  }));
+  const edges: Doc<"pageLinks">[] = [];
+  for (const p of live) {
+    const rows = await ctx.db
+      .query("pageLinks")
+      .withIndex("by_source", (q) => q.eq("sourcePageId", p._id))
+      .take(GRAPH_EDGES_PER_PAGE);
+    for (const r of rows) edges.push(r);
+  }
+  return { edges, pages };
+}
+
+/** Pages linking TO this page (incoming resolved edges). `by_target`. */
+export const graphBacklinks = internalQuery({
+  args: { userId: v.id("users"), pageId: v.string() },
+  handler: async (ctx, args) => {
+    const target = await ctx.db.get(args.pageId as Id<"pages">);
+    if (!target || target.userId !== args.userId) return { backlinks: [] };
+    const rows = await ctx.db
+      .query("pageLinks")
+      .withIndex("by_target", (q) => q.eq("targetPageId", args.pageId as Id<"pages">))
+      .take(GRAPH_LINKS_CAP);
+    const backlinks: Array<{
+      pageId: string; title: string; icon: string; kind: string; blockId?: string;
+    }> = [];
+    for (const r of rows) {
+      const src = await ctx.db.get(r.sourcePageId);
+      if (!src || src.userId !== args.userId || src.trashed) continue;
+      backlinks.push({
+        pageId: src._id,
+        title: src.title || "Untitled",
+        icon: src.icon,
+        kind: r.kind,
+        blockId: r.sourceBlockId || undefined,
+      });
+    }
+    return { backlinks };
+  },
+});
+
+/** Outgoing links from this page — resolved page targets, unresolved
+ *  ghost titles, and tags. `by_source`. */
+export const graphOutgoing = internalQuery({
+  args: { userId: v.id("users"), pageId: v.string() },
+  handler: async (ctx, args) => {
+    const page = await ctx.db.get(args.pageId as Id<"pages">);
+    if (!page || page.userId !== args.userId) return { links: [] };
+    const rows = await ctx.db
+      .query("pageLinks")
+      .withIndex("by_source", (q) => q.eq("sourcePageId", args.pageId as Id<"pages">))
+      .take(GRAPH_LINKS_CAP);
+    const links: Array<Record<string, unknown>> = [];
+    for (const r of rows) {
+      if (r.kind === "tag") {
+        links.push({ kind: "tag", tag: r.tag, resolved: true, blockId: r.sourceBlockId || undefined });
+        continue;
+      }
+      let targetTitle = r.targetTitle;
+      let icon: string | undefined;
+      if (r.resolved && r.targetPageId) {
+        const t = await ctx.db.get(r.targetPageId);
+        if (t && t.userId === args.userId && !t.trashed) {
+          targetTitle = t.title || "Untitled";
+          icon = t.icon;
+        }
+      }
+      links.push({
+        kind: r.kind,
+        resolved: r.resolved,
+        targetPageId: r.targetPageId ?? undefined,
+        targetTitle,
+        icon,
+        blockId: r.sourceBlockId || undefined,
+      });
+    }
+    return { links };
+  },
+});
+
+/** Local (ego) subgraph — BFS n-hop around a page. */
+export const graphNeighbors = internalQuery({
+  args: { userId: v.id("users"), pageId: v.string(), depth: v.optional(v.number()) },
+  handler: async (ctx, args): Promise<Graph> => {
+    const root = await ctx.db.get(args.pageId as Id<"pages">);
+    if (!root || root.userId !== args.userId) return { nodes: [], edges: [] };
+    const depth = Math.min(Math.max(Math.floor(args.depth ?? 1), 1), GRAPH_DEPTH_MAX);
+    const { edges, pages } = await collectUserGraph(ctx, args.userId);
+    const full = buildGraphFromEdges(edges, pages, {
+      includeTags: true,
+      includeGhosts: true,
+      includeOrphans: true,
+    });
+    const rootId = String(root._id);
+    if (!full.nodes.some((n) => n.id === rootId)) return { nodes: [], edges: [] };
+    const adj = buildAdjacency(full.edges);
+    const keep = bfs(adj, rootId, depth);
+    return {
+      nodes: full.nodes.filter((n) => keep.has(n.id)),
+      edges: full.edges.filter((e) => keep.has(e.source) && keep.has(e.target)),
+    };
+  },
+});
+
+/** Whole memory graph (nodes + edges), highest-degree first up to `limit`. */
+export const graphGlobal = internalQuery({
+  args: {
+    userId: v.id("users"),
+    limit: v.optional(v.number()),
+    includeTags: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args): Promise<Graph> => {
+    const { edges, pages } = await collectUserGraph(ctx, args.userId);
+    const limit = Math.min(
+      Math.max(Math.floor(args.limit ?? GRAPH_NODE_LIMIT_DEFAULT), 1),
+      GRAPH_NODE_LIMIT_MAX,
+    );
+    return buildGraphFromEdges(edges, pages, {
+      includeTags: args.includeTags ?? false,
+      includeGhosts: true,
+      includeOrphans: true,
+      limit,
+    });
+  },
+});
+
+/** All tags + page counts, from the denormalized `pages.tags`. */
+export const graphTags = internalQuery({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const pages = await ctx.db
+      .query("pages")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .take(GRAPH_PAGE_CAP);
+    const counts = new Map<string, number>();
+    for (const p of pages) {
+      if (p.trashed) continue;
+      for (const t of p.tags ?? []) counts.set(t, (counts.get(t) ?? 0) + 1);
+    }
+    const tags = Array.from(counts.entries())
+      .map(([tag, count]) => ({ tag, count }))
+      .sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag));
+    return { tags };
+  },
+});
+
+/** Pages carrying a given tag (denormalized `pages.tags`). */
+export const graphByTag = internalQuery({
+  args: { userId: v.id("users"), tag: v.string() },
+  handler: async (ctx, args) => {
+    const tag = normalizeTag(args.tag);
+    if (!tag) return { pages: [] };
+    const pages = await ctx.db
+      .query("pages")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .take(GRAPH_PAGE_CAP);
+    const out: Array<{ pageId: string; title: string; icon: string }> = [];
+    for (const p of pages) {
+      if (p.trashed) continue;
+      if ((p.tags ?? []).includes(tag)) {
+        out.push({ pageId: p._id, title: p.title || "Untitled", icon: p.icon });
+      }
+    }
+    return { pages: out };
+  },
+});
+
+/** Notes that mention this page's TITLE in their text but don't link it.
+ *  Full-text search on the title minus pages that already link here. */
+export const graphUnlinkedMentions = internalQuery({
+  args: { userId: v.id("users"), pageId: v.string() },
+  handler: async (ctx, args) => {
+    const page = await ctx.db.get(args.pageId as Id<"pages">);
+    if (!page || page.userId !== args.userId) return { mentions: [] };
+    const title = (page.title ?? "").trim();
+    if (!title) return { mentions: [] };
+    // Pages already linking to this one — exclude them (they're "linked").
+    const linkedRows = await ctx.db
+      .query("pageLinks")
+      .withIndex("by_target", (q) => q.eq("targetPageId", args.pageId as Id<"pages">))
+      .take(GRAPH_LINKS_CAP);
+    const linked = new Set<string>(linkedRows.map((r) => String(r.sourcePageId)));
+    const q = title.slice(0, CHAR_CAPS.searchQuery);
+    const results = await ctx.db
+      .query("pages")
+      .withSearchIndex("search_content", (s) =>
+        s.search("searchText", q).eq("userId", args.userId).eq("trashed", false),
+      )
+      .take(COUNT_CAPS.searchResultMax);
+    const mentions: Array<{ pageId: string; title: string; icon: string; snippet: string }> = [];
+    for (const r of results) {
+      if (String(r._id) === String(page._id)) continue;
+      if (linked.has(String(r._id))) continue;
+      mentions.push({
+        pageId: r._id,
+        title: r.title || "Untitled",
+        icon: r.icon,
+        snippet: (r.searchText ?? "").slice(0, 200),
+      });
+    }
+    return { mentions };
+  },
+});
+
+/** Notes related by shared tags / co-citation — 2-hop BFS neighbours,
+ *  ranked by global degree (recall for an agent). */
+export const graphRelated = internalQuery({
+  args: { userId: v.id("users"), pageId: v.string() },
+  handler: async (ctx, args) => {
+    const root = await ctx.db.get(args.pageId as Id<"pages">);
+    if (!root || root.userId !== args.userId) return { related: [] };
+    const { edges, pages } = await collectUserGraph(ctx, args.userId);
+    const full = buildGraphFromEdges(edges, pages, {
+      includeTags: true,
+      includeGhosts: false,
+      includeOrphans: false,
+    });
+    const rootId = String(root._id);
+    if (!full.nodes.some((n) => n.id === rootId)) return { related: [] };
+    const adj = buildAdjacency(full.edges);
+    const within2 = bfs(adj, rootId, 2);
+    const direct = bfs(adj, rootId, 1);
+    const nodeById = new Map(full.nodes.map((n) => [n.id, n]));
+    const related: Array<{
+      pageId: string; title: string; icon: string; direct: boolean; score: number;
+    }> = [];
+    for (const id of within2) {
+      if (id === rootId) continue;
+      const node = nodeById.get(id);
+      if (!node || node.kind !== "page") continue;
+      related.push({
+        pageId: id,
+        title: node.title,
+        icon: node.icon,
+        direct: direct.has(id),
+        score: node.degree,
+      });
+    }
+    related.sort((a, b) => b.score - a.score || a.title.localeCompare(b.title));
+    return { related: related.slice(0, RELATED_MAX) };
+  },
+});
+
+/** Create a note already wired into the graph — body markdown + appended
+ *  `[[links]]` + `#tags`, then reindex so its edges land in `pageLinks`. */
+export const createLinkedNote = internalMutation({
+  args: {
+    userId: v.id("users"),
+    title: v.string(),
+    markdown: v.optional(v.string()),
+    links: v.optional(v.array(v.string())),
+    tags: v.optional(v.array(v.string())),
+    icon: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const title = args.title;
+    if (title.length > CHAR_CAPS.pageTitle) throw new Error("Title too long");
+    const ws = await getActiveWorkspaceMutation(ctx, args.userId);
+
+    // Assemble body: base markdown, then a wikilink line per link, then a
+    // single line of #tags. `#tag` (no space) stays a paragraph — a lone
+    // `# ` at line start would become an h1, so we never emit that.
+    const parts: string[] = [];
+    if (args.markdown && args.markdown.trim()) parts.push(args.markdown.trim());
+    const links = (args.links ?? []).map(stripWikiBrackets).filter(Boolean);
+    if (links.length) parts.push(links.map((l) => `[[${l}]]`).join("\n"));
+    const tags = cleanTags(args.tags);
+    if (tags.length) parts.push(tags.map((t) => `#${t}`).join(" "));
+    const bodyMd = parts.join("\n\n");
+
+    const blocks: BlockLike[] = bodyMd.trim()
+      ? (markdownToBlocks(bodyMd) as BlockLike[])
+      : [{ id: uid(), type: "paragraph", text: "" }];
+    if (blocks.length > COUNT_CAPS.blocksPerPage) {
+      throw new Error(`Page would exceed block cap (${COUNT_CAPS.blocksPerPage})`);
+    }
+
+    const now = Date.now();
+    const pageId = await ctx.db.insert("pages", {
+      userId: args.userId,
+      workspaceId: ws._id,
+      parentId: null,
+      title,
+      icon: args.icon?.trim() || "📄",
+      cover: null,
+      blocks,
+      favorite: false,
+      trashed: false,
+      isPublic: false,
+      titleKey: slug(title),
+      searchText: buildSearchText(title, blocks),
+      createdAt: now,
+      updatedAt: now,
+    });
+    // Reindex AFTER the doc is patched so edges reference the final blocks.
+    const doc = await ctx.db.get(pageId);
+    if (doc) await reindexPageLinks(ctx, doc);
+    return pageId;
+  },
+});
+
+/** Append `[[to]]` into a note and reindex. `to` may be a pageId (linked
+ *  by that page's title so it resolves) or a literal title (ghost until
+ *  a page with that title exists). */
+export const addLink = internalMutation({
+  args: {
+    userId: v.id("users"),
+    fromPageId: v.string(),
+    to: v.string(),
+    alias: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const page = await ctx.db.get(args.fromPageId as Id<"pages">);
+    if (!page || page.userId !== args.userId) throw new Error("Tidak ditemukan");
+
+    let title = stripWikiBrackets(args.to);
+    const maybeId = ctx.db.normalizeId("pages", args.to);
+    if (maybeId) {
+      const target = await ctx.db.get(maybeId);
+      if (target && target.userId === args.userId) title = target.title || title;
+    }
+    if (!title) throw new Error("link target is empty");
+
+    const alias = args.alias?.trim();
+    const token = alias ? `[[${title}|${alias}]]` : `[[${title}]]`;
+    const blocks: BlockLike[] = [
+      ...(page.blocks as BlockLike[]),
+      { id: uid(), type: "paragraph", text: token },
+    ];
+    if (blocks.length > COUNT_CAPS.blocksPerPage) {
+      throw new Error(`Page would exceed block cap (${COUNT_CAPS.blocksPerPage})`);
+    }
+    await ctx.db.patch(page._id, {
+      blocks,
+      searchText: buildSearchText(page.title, blocks),
+      updatedAt: Date.now(),
+    });
+    const doc = await ctx.db.get(page._id);
+    if (doc) await reindexPageLinks(ctx, doc);
+    return { ok: true, linkedTitle: title };
+  },
+});
+
+/** Add a `#tag` to a note and reindex. Idempotent on the denormalized
+ *  `pages.tags` — a second call with the same tag is a no-op write. */
+export const addTag = internalMutation({
+  args: { userId: v.id("users"), pageId: v.string(), tag: v.string() },
+  handler: async (ctx, args) => {
+    const page = await ctx.db.get(args.pageId as Id<"pages">);
+    if (!page || page.userId !== args.userId) throw new Error("Tidak ditemukan");
+    const tag = normalizeTag(args.tag);
+    if (!tag) throw new Error("Invalid tag");
+    if ((page.tags ?? []).includes(tag)) {
+      return { ok: true, tag, alreadyPresent: true };
+    }
+
+    const token = `#${tag}`;
+    const blocks = [...(page.blocks as BlockLike[])];
+    // Prefer appending to the last paragraph so tags cluster; never touch a
+    // heading/other block type (would rewrite its rendered text).
+    let idx = -1;
+    for (let i = blocks.length - 1; i >= 0; i--) {
+      const b = blocks[i];
+      if ((b.type === "paragraph" || b.type === undefined) && typeof b.text === "string") {
+        idx = i;
+        break;
+      }
+    }
+    if (idx >= 0) {
+      const b = blocks[idx] as BlockLike & { text: string };
+      blocks[idx] = { ...b, text: b.text ? `${b.text} ${token}` : token };
+    } else {
+      blocks.push({ id: uid(), type: "paragraph", text: token });
+    }
+    if (blocks.length > COUNT_CAPS.blocksPerPage) {
+      throw new Error(`Page would exceed block cap (${COUNT_CAPS.blocksPerPage})`);
+    }
+    await ctx.db.patch(page._id, {
+      blocks,
+      searchText: buildSearchText(page.title, blocks),
+      updatedAt: Date.now(),
+    });
+    const doc = await ctx.db.get(page._id);
+    if (doc) await reindexPageLinks(ctx, doc);
+    return { ok: true, tag };
   },
 });

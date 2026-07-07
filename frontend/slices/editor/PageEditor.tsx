@@ -7,6 +7,7 @@ import { BlockEditor } from "./BlockEditor";
 import { RowPropertiesPanel } from "./RowPropertiesPanel";
 import { PageCommentsPanel, PageCommentsProvider } from "@/slices/comments";
 import { BacklinksPanel } from "@/slices/backlinks";
+import { LocalGraphPanel } from "@/slices/memory-graph";
 import { cn } from "@/shared/lib/utils";
 import {
   DndContext, closestCenter, pointerWithin, KeyboardSensor, PointerSensor, useSensor, useSensors,
@@ -274,6 +275,7 @@ export function PageEditor({ components }: PageEditorProps = {}) {
 
                   <Subpages page={page} subpages={subpages} />
                   <BacklinksPanel pageId={page.id} />
+                  <LocalGraphPanel pageId={page.id} />
                   <PageCommentsPanel pageId={page.id} />
                 </>
               )}

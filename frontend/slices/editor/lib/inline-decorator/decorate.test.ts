@@ -72,4 +72,27 @@ describe("decorateLineToFragment", () => {
     expect(markers[0].className).toContain("text-transparent");
     expect(host.textContent).toBe("**H**"); // round-trip preserved
   });
+
+  it("wikilink → title span wrapped in [[ ]] markers, exact round-trip", () => {
+    const host = render("[[Notes]]");
+    expect(markerTexts(host)).toEqual(["[[", "]]"]);
+    expect(host.textContent).toBe("[[Notes]]"); // innerText === source (caret parity)
+  });
+
+  it("wikilink with alias keeps the pipe marker + both spans, exact round-trip", () => {
+    const host = render("[[Home Page|home]]");
+    expect(markerTexts(host)).toEqual(["[[", "|", "]]"]);
+    expect(host.textContent).toBe("[[Home Page|home]]");
+  });
+
+  it("wikilink round-trips inner spaces verbatim (no trimming)", () => {
+    expect(render("[[ spaced ]]").textContent).toBe("[[ spaced ]]");
+  });
+
+  it("tag → single pill span carrying `#tag`, exact round-trip", () => {
+    const host = render("done #area/work now");
+    expect(host.textContent).toBe("done #area/work now");
+    const pill = Array.from(host.querySelectorAll("span")).find((s) => s.textContent === "#area/work");
+    expect(pill).toBeTruthy();
+  });
 });
