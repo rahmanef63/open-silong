@@ -10,6 +10,11 @@ const MARKER_CLS =
 const HEADING_MARKER_CLS =
   "md-marker text-transparent select-none text-[0px] leading-[0] tracking-[0]";
 
+/** Inline icons for `@`-mention chips — pure SVG (no text nodes) so they never
+ *  affect innerText / caret counting. Sized to 1em, painted currentColor. */
+const PAGE_ICON_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:1em;height:1em;vertical-align:-0.15em"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>`;
+const DB_ICON_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:1em;height:1em;vertical-align:-0.15em"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3"/><path d="M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>`;
+
 function makeMarker(text: string, opts?: { hideMarkers?: boolean }): HTMLSpanElement {
   const span = document.createElement("span");
   span.className = opts?.hideMarkers ? HEADING_MARKER_CLS : MARKER_CLS;
@@ -76,9 +81,39 @@ export function decorateLineToFragment(line: string, opts?: { hideMarkers?: bool
         break;
       }
       case "link": {
-        // [label](href) — render label as styled link, keep markers dim. The
-        // label carries data-href; BlockEditor's delegated onContentClick
-        // navigates on click (text-selection is left alone for editing).
+        const isPage = /^\/(?:dashboard\/)?p\/[A-Za-z0-9_-]+/.test(tok.href);
+        const isDb = /^\/(?:dashboard\/)?db\/[A-Za-z0-9_-]+/.test(tok.href);
+        if (isPage || isDb) {
+          // Page/DB mention → inline chip: [icon] label. The `[`, `](`, url, `)`
+          // stay in the DOM at 0px (innerText === source → caret parity) and a
+          // non-text SVG icon is prepended (adds no text). The label carries
+          // data-href so BlockEditor's onContentClick navigates on click.
+          const chip = document.createElement("span");
+          chip.className =
+            "mention-chip inline-flex items-baseline gap-1 rounded px-1 bg-brand/10 text-brand no-underline";
+          const ico = document.createElement("span");
+          ico.contentEditable = "false";
+          ico.setAttribute("aria-hidden", "true");
+          ico.className = "mention-ico select-none";
+          ico.innerHTML = isDb ? DB_ICON_SVG : PAGE_ICON_SVG;
+          chip.appendChild(ico);
+          chip.appendChild(makeMarker("[", { hideMarkers: true }));
+          const label = document.createElement("span");
+          label.className = "cursor-pointer font-medium";
+          label.textContent = tok.label;
+          label.dataset.href = tok.href;
+          chip.appendChild(label);
+          chip.appendChild(makeMarker("](", { hideMarkers: true }));
+          const url = document.createElement("span");
+          url.className = "text-transparent text-[0px] leading-[0] select-none";
+          url.textContent = tok.href;
+          chip.appendChild(url);
+          chip.appendChild(makeMarker(")", { hideMarkers: true }));
+          frag.appendChild(chip);
+          break;
+        }
+        // Generic link (external / other) — styled label, dim markers. Label
+        // carries data-href; BlockEditor's onContentClick navigates on click.
         frag.appendChild(makeMarker("[", opts));
         const a = document.createElement("span");
         a.className = "text-brand underline decoration-brand/40 underline-offset-2 cursor-pointer";

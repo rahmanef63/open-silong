@@ -58,7 +58,6 @@ export function GraphPage({
   onAddChild,
   onSubmitMemory,
   onImport,
-  workspaceName,
   labels,
 }: GraphPageProps = {}) {
   const l = { ...DEFAULTS, ...labels };
@@ -111,16 +110,6 @@ export function GraphPage({
           ) : null}
         </div>
       </div>
-
-      {/* center title */}
-      {hasNodes ? (
-        <div className="pointer-events-none absolute inset-x-0 top-[24%] z-10 flex flex-col items-center text-center">
-          <span className="text-xl font-semibold text-foreground">
-            {workspaceName ? `${workspaceName} memory` : l.title}
-          </span>
-          <span className="text-sm text-muted-foreground">{l.tagline}</span>
-        </div>
-      ) : null}
 
       {/* graph */}
       <div className="relative z-[5] min-h-0 flex-1">

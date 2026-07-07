@@ -45,6 +45,18 @@ describe("decorateLineToFragment", () => {
     expect(host.textContent).toBe("`x=1`");
   });
 
+  it("page mention → chip with a non-text icon; source round-trips; label carries data-href", () => {
+    const host = render("[My Page](/dashboard/p/abc123)");
+    // caret parity: textContent (== innerText source) is the raw markdown; the
+    // SVG icon contributes NO text, the brackets/url are 0px but still present.
+    expect(host.textContent).toBe("[My Page](/dashboard/p/abc123)");
+    expect(host.querySelector(".mention-chip")).not.toBeNull();
+    expect(host.querySelector(".mention-ico svg")).not.toBeNull();
+    const label = host.querySelector<HTMLElement>("[data-href]");
+    expect(label?.dataset.href).toBe("/dashboard/p/abc123");
+    expect(label?.textContent).toBe("My Page");
+  });
+
   it("math → span wrapped in $ markers", () => {
     const host = render("$a+b$");
     expect(markerTexts(host)).toEqual(["$", "$"]);
