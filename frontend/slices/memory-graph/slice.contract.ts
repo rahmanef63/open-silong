@@ -15,7 +15,7 @@ export const contract = {
     auth: "convex" as const,
     rbac: [] as string[],
     env: [] as string[],
-    deps: ["react-force-graph-2d"] as const,
+    deps: [] as const,
   },
   provides: {
     components: ["GraphPage", "LocalGraphPanel"] as string[],

@@ -28,7 +28,7 @@
     ],
     "slices": [],
     "convex": [],
-    "shadcn": ["button", "label", "slider", "switch", "separator", "sheet"],
-    "npm": ["react-force-graph-2d"]
+    "shadcn": ["button", "slider", "textarea"],
+    "npm": []
   }
 }

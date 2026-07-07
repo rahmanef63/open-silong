@@ -1,6 +1,6 @@
 {
   "name": "memory-graph",
-  "description": "Obsidian-style force-directed knowledge graph built client-side from the pages store.",
+  "description": "Knowledge graph (global route + per-page ego panel) — a DOM+SVG renderer with radial layout, pan/zoom/drag, and theme-token styling.",
   "deps": {
     "shared": [
       "lib/graphLinks",
@@ -17,5 +17,5 @@
     "slices": [],
     "convex": []
   },
-  "notes": "Canvas is loaded via next/dynamic({ ssr:false }) (GraphCanvasLazy) — react-force-graph-2d touches window at import. Regenerate with scripts/generate-slice-manifests.mjs after landing."
+  "notes": "MemoryGraphView is a purpose-built DOM+SVG renderer (no canvas lib) so page icons render natively and colours stay theme-token dynamic. Regenerate with scripts/generate-slice-manifests.mjs after edits."
 }
