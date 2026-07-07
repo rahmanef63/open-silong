@@ -76,12 +76,12 @@ export function decorateLineToFragment(line: string, opts?: { hideMarkers?: bool
         break;
       }
       case "link": {
-        // [label](href) — render label as styled link, keep markers dim.
-        // We don't make the <a> clickable inside contentEditable to avoid
-        // accidental navigation while editing.
+        // [label](href) — render label as styled link, keep markers dim. The
+        // label carries data-href; BlockEditor's delegated onContentClick
+        // navigates on click (text-selection is left alone for editing).
         frag.appendChild(makeMarker("[", opts));
         const a = document.createElement("span");
-        a.className = "text-brand underline decoration-brand/40 underline-offset-2";
+        a.className = "text-brand underline decoration-brand/40 underline-offset-2 cursor-pointer";
         a.textContent = tok.label;
         a.dataset.href = tok.href;
         frag.appendChild(a);

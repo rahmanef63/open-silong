@@ -73,6 +73,28 @@ function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerR
   const composingRef = useRef(false);
   const history = useBlockHistory(block.text);
 
+  // Make `@`-mention / link spans (data-href) clickable inside the editor:
+  // plain click navigates; text-selection is left alone for editing.
+  const onContentClick = useCallback(
+    (e: React.MouseEvent<HTMLElement>) => {
+      const el = (e.target as HTMLElement).closest<HTMLElement>("[data-href]");
+      if (!el) return;
+      const sel = window.getSelection();
+      if (sel && !sel.isCollapsed) return;
+      const href = el.dataset.href;
+      if (!href) return;
+      const internal = href.match(/^\/(?:dashboard\/)?p\/([A-Za-z0-9_-]+)/);
+      if (internal) {
+        e.preventDefault();
+        navigate(ROUTES.page(internal[1]));
+      } else if (/^https?:\/\//i.test(href)) {
+        e.preventDefault();
+        window.open(href, "_blank", "noopener,noreferrer");
+      }
+    },
+    [navigate],
+  );
+
   const { attributes, listeners, setNodeRef, transform, transition, isDragging, isOver } =
     useSortable({ id: block.id });
 
@@ -196,6 +218,7 @@ function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerR
         handleInput={handleInput}
         handleKeyDown={handleKeyDown}
         handlePaste={handlePaste}
+        onContentClick={onContentClick}
         ordinal={ordinal}
         onCheck={(c) => updateBlock(pageId, block.id, { checked: c })}
         onLang={(lang) => updateBlock(pageId, block.id, { lang })}

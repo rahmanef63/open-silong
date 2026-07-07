@@ -22,6 +22,8 @@ interface Props {
    *  payload looks like markdown, parses into multiple blocks and
    *  preventDefaults; otherwise falls through to native paste. */
   handlePaste?: (e: React.ClipboardEvent<HTMLElement>) => void;
+  /** Click on the editable — navigates when a `@`-mention / link span is hit. */
+  onContentClick?: (e: React.MouseEvent<HTMLElement>) => void;
   onCheck: (v: boolean) => void;
   onLang: (l: string) => void;
   /** 1-based ordinal for numbered list rendering. Computed by the
@@ -45,7 +47,7 @@ function indentStyle(b: Block): React.CSSProperties | undefined {
   return lvl > 0 ? { paddingLeft: `${lvl * 24}px` } : undefined;
 }
 
-export function BlockBody({ block, setRef, handleInput, handleKeyDown, handlePaste, onCheck, onLang, ordinal }: Props) {
+export function BlockBody({ block, setRef, handleInput, handleKeyDown, handlePaste, onContentClick, onCheck, onLang, ordinal }: Props) {
   const textCls = colorClass(block.color);
   const bgCls = bgColorClass(block.bgColor);
 
@@ -56,6 +58,7 @@ export function BlockBody({ block, setRef, handleInput, handleKeyDown, handlePas
     onInput: handleInput,
     onKeyDown: handleKeyDown,
     onPaste: handlePaste,
+    onClick: onContentClick,
     "data-placeholder": PLACEHOLDERS[block.type] ?? "",
     className: cn(
       "outline-none flex-1 min-w-0 whitespace-pre-wrap break-words empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground/60",
