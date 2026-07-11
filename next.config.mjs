@@ -19,6 +19,13 @@ process.env.NEXT_PUBLIC_BUILD_ID = BUILD_ID;
 
 const nextConfig = {
   output: "standalone",
+  // geoip-lite loads its .dat data files from disk at runtime; the standalone
+  // output tracer can't see those fs reads, so include them explicitly for the
+  // analytics beacon route or the built image ships without them (geo silently
+  // empty; the x-vercel-ip-* header fallback still fills country).
+  outputFileTracingIncludes: {
+    "/api/analytics": ["./node_modules/geoip-lite/data/**"],
+  },
   reactStrictMode: true,
   transpilePackages: ["rahman-shared"],
   generateBuildId: () => BUILD_ID,

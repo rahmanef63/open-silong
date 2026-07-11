@@ -18,6 +18,24 @@ export const pruneRateLimits = internalMutation({
   },
 });
 
+/** Daily prune of expired visitor-beacon rate-limit windows
+ *  (convex/features/traffic). Same rationale as pruneRateLimits: the
+ *  fixed-window counter resets in place, but a row per distinct visitor IP
+ *  would sit forever — this drops buckets whose window ended > 24 h ago via
+ *  the `by_reset` range index. */
+export const pruneVisitorRateLimits = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const cutoff = Date.now() - ONE_DAY_MS;
+    const old = await ctx.db
+      .query("visitorRateLimits")
+      .withIndex("by_reset", (q) => q.lt("resetAt", cutoff))
+      .collect();
+    for (const row of old) await ctx.db.delete(row._id);
+    return { pruned: old.length };
+  },
+});
+
 /** Permanently delete pages + databases whose `trashed === true` and
  *  last `updatedAt` is older than 30 days. Mirrors `pages.permanently
  *  Delete` / `databases.permanentlyDeleteDatabase` (also drops

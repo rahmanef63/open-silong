@@ -6,6 +6,7 @@ import { ConvexAuthNextjsServerProvider } from "@convex-dev/auth/nextjs/server";
 import Providers from "./providers";
 import { HeadHints } from "@/shared/components/HeadHints";
 import { InstallPrompt } from "@/shared/components/InstallPrompt";
+import { AnalyticsBeacon } from "@/shared/components/AnalyticsBeacon";
 import "./globals.css";
 
 const inter = Inter({
@@ -100,6 +101,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </Providers>
           </div>
           <InstallPrompt />
+          {/* Cookieless visitor beacon — self-skips /dashboard + non-page routes,
+              so only public marketing/share/site traffic is counted. */}
+          <Suspense fallback={null}>
+            <AnalyticsBeacon />
+          </Suspense>
           <Script
             src="https://www.googletagmanager.com/gtag/js?id=G-82JXWGW4GM"
             strategy="afterInteractive"

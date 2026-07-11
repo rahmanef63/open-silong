@@ -9,9 +9,11 @@ import { AuditLogPanel } from "./AuditLogPanel";
 import { FeedbackPanel } from "./FeedbackPanel";
 import { AIConfigPanel } from "./ai/AIConfigPanel";
 import { ChangelogPanel } from "./ChangelogPanel";
+import { TrafficPanel } from "./TrafficPanel";
 
 const TABS = [
   { id: "overview", label: "Overview" },
+  { id: "traffic", label: "Traffic" },
   { id: "users", label: "Users" },
   { id: "templates", label: "Templates" },
   { id: "ai", label: "AI" },
@@ -40,6 +42,7 @@ export function AdminPanel() {
             ))}
           </TabsList>
           <TabsContent value="overview" className="mt-6"><OverviewPanel /></TabsContent>
+          <TabsContent value="traffic" className="mt-6"><TrafficPanel /></TabsContent>
           <TabsContent value="users" className="mt-6"><UsersPanel /></TabsContent>
           <TabsContent value="templates" className="mt-6"><TemplatesPanel /></TabsContent>
           <TabsContent value="ai" className="mt-6"><AIConfigPanel /></TabsContent>

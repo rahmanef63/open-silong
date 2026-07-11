@@ -12,6 +12,13 @@ crons.daily(
   internal.maintenance.pruneRateLimits,
 );
 
+/** Prune visitor-beacon rate-limit buckets older than 24 h (traffic feature). */
+crons.daily(
+  "prune-visitor-rate-limits",
+  { hourUTC: 3, minuteUTC: 15 },
+  internal.maintenance.pruneVisitorRateLimits,
+);
+
 /** Permanently deletes pages soft-deleted > 30 days ago. */
 crons.daily(
   "purge-stale-trash",

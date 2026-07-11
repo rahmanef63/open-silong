@@ -1,9 +1,14 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import { authTables } from "@convex-dev/auth/server";
+import { trafficTables } from "./features/traffic/tables";
 
 export default defineSchema({
   ...authTables,
+  // Cookieless visitor analytics (visitorPageviews + visitorRateLimits). Kept
+  // in a feature module + spread here, distinct from the per-user `pageViews`
+  // read-receipt table below. See convex/features/traffic/.
+  ...trafficTables,
 
   /** Workspace = collaboration boundary. Every user has exactly one
    *  `isPersonal` workspace (auto-created at first auth). Additional
