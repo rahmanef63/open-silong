@@ -4,8 +4,22 @@
 // IP (never sent to Convex, never stored). Fire-and-forget → always 204.
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@convex/_generated/api";
-import geoip from "geoip-lite";
 import { createHash } from "node:crypto";
+
+// geoip-lite loads its .dat data at module-eval and ships without it → a TOP-LEVEL import
+// crashes `next build`. Lazy + guarded: builds clean; geo degrades to null if data is absent.
+type _Geo = { country?: string; region?: string; city?: string; ll?: [number, number] } | null;
+let _geoip: { lookup: (ip: string) => _Geo } | null | undefined;
+async function lookupGeo(ip: string): Promise<_Geo> {
+  if (_geoip === undefined) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const m: any = await import("geoip-lite");
+      _geoip = m.default ?? m;
+    } catch { _geoip = null; }
+  }
+  try { return _geoip?.lookup(ip) ?? null; } catch { return null; }
+}
 
 export const runtime = "nodejs"; // geoip-lite reads its .dat data files via fs
 
@@ -75,7 +89,7 @@ export async function POST(req: Request) {
   }
 
   const ip = clientIp(req);
-  const geo = ip && ip !== "?" ? geoip.lookup(ip) : null;
+  const geo = ip && ip !== "?" ? (await lookupGeo(ip)) : null;
   // Vercel edge already resolves country — use it as a fallback when the
   // offline geoip db misses (e.g. a fresh IP block).
   const country = geo?.country || req.headers.get("x-vercel-ip-country") || undefined;
