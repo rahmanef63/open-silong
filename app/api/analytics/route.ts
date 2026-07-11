@@ -21,7 +21,6 @@ async function lookupGeo(ip: string): Promise<_Geo> {
   try { return _geoip?.lookup(ip) ?? null; } catch { return null; }
 }
 
-export const runtime = "nodejs"; // geoip-lite reads its .dat data files via fs
 
 const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL || process.env.CONVEX_URL || "";
 const VIEWPORTS = new Set(["mobile", "tablet", "desktop"]);
