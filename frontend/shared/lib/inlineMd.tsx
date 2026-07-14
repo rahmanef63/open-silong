@@ -15,9 +15,26 @@
  *  there is no XSS surface. */
 
 import * as React from "react";
-import katex from "katex";
 import { WIKILINK_RE, TAG_RE, slug } from "./graphLinks";
 import { ROUTES_ABS, ROUTE_BASE } from "./routes";
+
+/** Lazy KaTeX — the library is ~264KB and only inline `$math$` needs it, but a
+ *  top-level import dragged it into every bundle that touches inlineMd (share
+ *  view, exports, the editor's stripMd/tokenizeInline). Load it on demand when
+ *  a math token actually renders; show the raw expression until it arrives. */
+function KatexInline({ expr }: { expr: string }) {
+  const [html, setHtml] = React.useState<string | null>(null);
+  React.useEffect(() => {
+    let alive = true;
+    import("katex")
+      .then((k) => { if (alive) setHtml(k.default.renderToString(expr, { throwOnError: false, displayMode: false })); })
+      .catch(() => { /* keep the raw-expr fallback */ });
+    return () => { alive = false; };
+  }, [expr]);
+  return html !== null
+    ? <span dangerouslySetInnerHTML={{ __html: html }} />
+    : <span className="font-mono text-[0.9em]">{expr}</span>;
+}
 
 /** Strip inline-markdown markers from a plain-text source. Inverse of
  *  the wrap-with-marker behavior in `SelectionToolbar`. Used by the
@@ -155,10 +172,8 @@ export function renderInline(input: string, opts?: InlineRenderOptions): React.R
         return <del key={i}>{t.inner}</del>;
       case "code":
         return <code key={i} className="rounded bg-muted/70 px-1 py-0.5 font-mono text-[0.9em]">{t.inner}</code>;
-      case "math": {
-        const html = katex.renderToString(t.inner, { throwOnError: false, displayMode: false });
-        return <span key={i} dangerouslySetInnerHTML={{ __html: html }} />;
-      }
+      case "math":
+        return <KatexInline key={i} expr={t.inner} />;
       case "link": {
         const internal = t.href.startsWith("/");
         return (

@@ -45,14 +45,33 @@
  */
 
 import { createContext, useContext, useMemo, type ComponentType, type ReactNode } from "react";
+import dynamic from "next/dynamic";
 import type { Block, Database, Page, Property } from "@/shared/types/domain";
-import { BlockEditor as DefaultBlockEditor, RowPropertiesPanel as DefaultRowPropertiesPanel } from "@/slices/editor";
 import { EditorComponentsProvider } from "@/slices/editor";
-import {
-  DatabaseBlock as DefaultDatabaseBlock,
-  PropertyCell as DefaultPropertyCell,
-  DatabasesComponentsProvider,
-} from "@/slices/databases";
+import { DatabasesComponentsProvider } from "@/slices/databases";
+
+// Lazy defaults: keep the editor (~9k LOC) and databases (~17k LOC) slices OUT
+// of the shared dashboard-layout chunk. They load on demand when a page /
+// database view actually renders one (via the registries below) — so
+// /library, /inbox, /graph never pull them. The providers above are tiny React
+// contexts and stay static. ssr:false — these are interactive client surfaces
+// the shell (AuthGuard splash) never server-renders anyway.
+const DefaultBlockEditor = dynamic(
+  () => import("@/slices/editor").then((m) => ({ default: m.BlockEditor })),
+  { ssr: false },
+);
+const DefaultRowPropertiesPanel = dynamic(
+  () => import("@/slices/editor").then((m) => ({ default: m.RowPropertiesPanel })),
+  { ssr: false },
+);
+const DefaultDatabaseBlock = dynamic(
+  () => import("@/slices/databases").then((m) => ({ default: m.DatabaseBlock })),
+  { ssr: false },
+);
+const DefaultPropertyCell = dynamic(
+  () => import("@/slices/databases").then((m) => ({ default: m.PropertyCell })),
+  { ssr: false },
+);
 import { NotionAdapterProvider } from "./adapter/context";
 import type { NotionAdapter } from "./adapter/types";
 import {
