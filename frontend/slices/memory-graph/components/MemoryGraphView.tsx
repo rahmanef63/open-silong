@@ -45,16 +45,18 @@ const REHEAT = 0.7;       // energy injected on a control/node change
 const DRAG_ALPHA = 0.4;   // energy while dragging a node
 const JITTER = 0.6;       // brownian kick (×alpha) that makes Animate visible
 
-// Force-law constants — remapped so the Forces sliders have visible, stable
-// reach at graph-scale separations (80–260px). Repel is INVERSE-LINEAR
-// (repel/d), not inverse-square: the old repel/d² was ~0.04 at 150px (dead),
-// which collapsed the cloud into a collision-packed blob where the Link /
-// Distance / Center sliders had nothing to modulate.
-const REPEL_SCALE = 100;   // charge at repel=100 (folds the old *900 out → base == f.repel)
-const REPEL_CAP = 2.5;     // near-field clamp; only bites sub-collision (redundant w/ the hard push)
-const REPEL_MAX2 = 122500; // (~350px)² far-field cutoff → medium/large graphs can't disperse off-screen
-const CENTER_K = 0.004;    // gravity gain (was 0.0016) — restores center-slider authority
-const SPRING_K = 0.025;    // link stiffness (was 0.006) — makes Link + Link-distance actually felt
+// Force-law constants — the d3-force model Obsidian's graph is built on:
+// inverse-square many-body repulsion (near nodes push hard, far nodes barely
+// interact → clusters clump) and degree-normalised link springs with a bias
+// so hubs stay put without a per-node "mass" hack. Each slider maps onto a
+// wide, visibly-distinct range. Refs: d3 forceManyBody strength −30,
+// forceLink strength 1/min(deg), forceX/Y strength 0.1, velocityDecay 0.4.
+const REPEL_SCALE = 7000;  // many-body charge at repel=100  (magnitude = charge / d²)
+const REPEL_CAP = 5;       // near-field magnitude clamp (sub-collision only; collision does the rest)
+const REPEL_MAX2 = 640000; // (~800px)² perf backstop — inverse-square force is already ~0 out here
+const CENTER_K = 0.1;      // forceX/Y gravity strength at center=100 (d3 default 0.1)
+const DAMPEN = 0.7;        // velocity retained per tick (d3 velocityDecay 0.4 → retain 0.6; a touch livelier)
+const VEL_CAP = 12;        // integrator safety clamp (forces self-limit; rarely reached)
 
 function analyze(graph: Graph) {
   const adj = new Map<string, Set<string>>();
@@ -160,17 +162,18 @@ export function MemoryGraphView({
 
   const nodeById = useCallback((id: string) => graph.nodes.find((n) => n.id === id) ?? null, [graph]);
 
-  // Per-node mass + collision radius. Hubs (high degree) get more mass so they
-  // anchor while leaves swing; radius mirrors the CSS disc so discs never stack.
+  // Per-node collision radius (mirrors the CSS disc so discs never stack) and
+  // clamped degree (min 1) for the d3 link-strength normaliser. Hub anchoring
+  // is emergent — via link strength + bias, not a per-node mass term.
   const sim = useMemo(() => {
-    const mass = new Map<string, number>();
     const rad = new Map<string, number>();
+    const deg = new Map<string, number>();
     for (const n of nodes) {
       const d = n.degree || 0;
-      mass.set(n.id, 1 + Math.sqrt(d));
       rad.set(n.id, Math.min(54, Math.max(18, 20 + d * 2.4)) / 2);
+      deg.set(n.id, Math.max(1, d));
     }
-    return { mass, rad };
+    return { rad, deg };
   }, [nodes]);
   const simRef = useRef(sim);
   simRef.current = sim;
@@ -298,34 +301,32 @@ export function MemoryGraphView({
     } else btn.classList.remove("mg-add-visible");
   }, [addSlot, nodeById, onAddChild]);
 
-  // ── force simulation (free cloud: repel + link springs + centre pull) ──
-  // Every injected force scales by `alpha` (temperature); collision is
-  // position-based (unscaled) so discs never overlap even at rest. Increments
-  // divide by node mass so hubs anchor and leaves swing.
+  // ── force simulation — d3-force model (inverse-square many-body repulsion,
+  // degree-normalised link springs, forceX/Y centre gravity). Every injected
+  // force scales by `alpha` (temperature); collision is position-based
+  // (unscaled) so discs never overlap even at rest.
   const step = useCallback((alpha: number) => {
     const f = forcesRef.current;
     const pm = posRef.current;
     const animate = f.animate;
     const dragId = dragIdRef.current;
-    const { mass, rad } = simRef.current;
+    const { rad, deg } = simRef.current;
     const nodeScale = displayRef.current.nodeSize / 100;
-    const repel = (f.repel / 100) * REPEL_SCALE;    // == f.repel (charge)
-    const centerF = Math.max(0.06, f.center / 100); // floored so center=0 still anchors orphans/islands
-    const linkF = f.link / 100;
+    const charge = (f.repel / 100) * REPEL_SCALE;               // many-body strength (inverse-square)
+    const gravity = Math.max(0.008, f.center / 100) * CENTER_K; // forceX/Y pull; floored so the cloud can't escape
+    const linkMul = f.link / 100;                              // 0..1 link-strength multiplier
     const desired = f.linkDistance;
     // gentle isotropic pull to one centre — disconnected islands settle in a
     // ring where repel balances it.
     for (const n of nodes) {
       const p = pm.get(n.id);
       if (!p) continue;
-      const m = mass.get(n.id) || 1;
-      p.vx += ((CX - p.x) * CENTER_K * centerF * alpha) / m;
-      p.vy += ((CY - p.y) * CENTER_K * centerF * alpha) / m;
+      p.vx += (CX - p.x) * gravity * alpha;
+      p.vy += (CY - p.y) * gravity * alpha;
     }
     for (let i = 0; i < nodes.length; i++) {
       const a = pm.get(nodes[i].id);
       if (!a) continue;
-      const ma = mass.get(nodes[i].id) || 1;
       const ra = (rad.get(nodes[i].id) || 10) * nodeScale;
       for (let j = i + 1; j < nodes.length; j++) {
         const b = pm.get(nodes[j].id);
@@ -334,13 +335,12 @@ export function MemoryGraphView({
         let dy = a.y - b.y;
         let d2 = dx * dx + dy * dy;
         if (d2 < 1) { dx = Math.random() - 0.5; dy = Math.random() - 0.5; d2 = 1; }
-        if (d2 > REPEL_MAX2) continue; // far-field cutoff (~350px) — repel & collision are both no-ops past here
+        if (d2 > REPEL_MAX2) continue; // perf backstop (~800px) — inverse-square force is ~0 out here
         const d = Math.sqrt(d2);
         const ux = dx / d, uy = dy / d;
-        const force = Math.min(REPEL_CAP, repel / d) * alpha; // inverse-linear → alive across the whole cloud
-        const mb = mass.get(nodes[j].id) || 1;
-        a.vx += (ux * force) / ma; a.vy += (uy * force) / ma;
-        b.vx -= (ux * force) / mb; b.vy -= (uy * force) / mb;
+        const mag = Math.min(REPEL_CAP, charge / d2) * alpha; // inverse-square → clusters clump (Obsidian/d3)
+        a.vx += ux * mag; a.vy += uy * mag;
+        b.vx -= ux * mag; b.vy -= uy * mag;
         // hard collision (unscaled by alpha → holds at rest)
         const minD = ra + (rad.get(nodes[j].id) || 10) * nodeScale + 6;
         if (d < minD) {
@@ -354,14 +354,17 @@ export function MemoryGraphView({
       const a = pm.get(e.source);
       const b = pm.get(e.target);
       if (!a || !b) continue;
-      const dx = b.x - a.x;
-      const dy = b.y - a.y;
-      const d = Math.sqrt(dx * dx + dy * dy) || 1;
-      const diff = (d - desired) * SPRING_K * linkF * alpha;
-      const ux = dx / d, uy = dy / d;
-      const ma = mass.get(e.source) || 1, mb = mass.get(e.target) || 1;
-      a.vx += (ux * diff) / ma; a.vy += (uy * diff) / ma;
-      b.vx -= (ux * diff) / mb; b.vy -= (uy * diff) / mb;
+      // d3 link force: strength = linkMul / min(deg) (dense areas looser), and a
+      // degree bias moves the lower-degree (leaf) end more so hubs stay put.
+      const ds = deg.get(e.source) || 1, dt = deg.get(e.target) || 1;
+      const strength = (linkMul / Math.min(ds, dt)) * alpha;
+      const bias = ds / (ds + dt);
+      const dx = b.x - a.x, dy = b.y - a.y;
+      const d = Math.hypot(dx, dy) || 1;
+      const l = ((d - desired) / d) * strength;
+      const fx = dx * l, fy = dy * l;
+      b.vx -= fx * bias;       b.vy -= fy * bias;
+      a.vx += fx * (1 - bias); a.vy += fy * (1 - bias);
     }
     for (const n of nodes) {
       const p = pm.get(n.id);
@@ -371,9 +374,9 @@ export function MemoryGraphView({
         p.vx += (Math.random() - 0.5) * JITTER * alpha;
         p.vy += (Math.random() - 0.5) * JITTER * alpha;
       }
-      p.vx *= 0.85; p.vy *= 0.85;
+      p.vx *= DAMPEN; p.vy *= DAMPEN;
       const v = Math.hypot(p.vx, p.vy);
-      if (v > 8) { p.vx = (p.vx / v) * 8; p.vy = (p.vy / v) * 8; }
+      if (v > VEL_CAP) { p.vx = (p.vx / v) * VEL_CAP; p.vy = (p.vy / v) * VEL_CAP; }
       p.x += p.vx; p.y += p.vy;
     }
   }, [nodes, edges]);

@@ -69,13 +69,14 @@ export const DEFAULT_DISPLAY: GraphDisplay = {
   colorGroups: true,
 };
 
-// Tuned for the remapped force law (see MemoryGraphView REPEL_SCALE/SPRING_K/
-// CENTER_K). Every slider sits mid-scale so the first paint is an airy, legible
-// cloud (~175–185px spacing) with obvious travel in both directions.
+// Tuned for the d3-force model (see MemoryGraphView REPEL_SCALE / CENTER_K and
+// the degree-normalised link springs). Airy, legible first paint — link 85
+// holds leaves firmly at ~link-distance, repel 50 gives clumpy Obsidian-style
+// clusters, weak centre keeps it framed. Every slider has travel both ways.
 export const DEFAULT_FORCES: GraphForces = {
-  center: 45,
-  repel: 55,
-  link: 80,
+  center: 40,
+  repel: 50,
+  link: 85,
   linkDistance: 170,
   animate: false,
 };
