@@ -52,6 +52,12 @@ reference deploy now.
   protect HTTP queries.
 - Indexes mandatory for every `.filter` / `.order` path. Add via
   `defineTable(...).index(...)`.
+- **Page blocks live in the `pageBlocks` table, NOT on the `pages` doc**
+  (split 2026-07-14). Never read `page.blocks` directly — use
+  `readPageBlocks` / `writePageBlocks` / `newPageBlockFields` from
+  `convex/_shared/pageContent.ts`. `searchText` stays on `pages`.
+  `pages.blocks` is retained-but-emptied as a fallback for un-backfilled
+  rows. Backfill: `admin/pageBlocksBackfill:run`.
 
 ### UI non-negotiables
 - shadcn primitives only. Never raw `<button>` / `<dialog>` /
