@@ -43,7 +43,11 @@ export function AIAgentConsole({ open, onOpenChange, context, activeContext }: P
   const { workspace } = useWorkspaces();
   const modelRefs = useQuery(
     api.aiKeys.list.myModelRefs,
-    workspace?.id ? { workspaceId: workspace.id as Id<"workspaces"> } : {},
+    // Skip the store's synthetic "local" id (rendered before the workspace
+    // query resolves) — `v.id("workspaces")` rejects it (ArgumentValidationError).
+    workspace?.id && workspace.id !== "local"
+      ? { workspaceId: workspace.id as Id<"workspaces"> }
+      : {},
   ) ?? [];
   const DEFAULT_MODEL = "__default__";
 

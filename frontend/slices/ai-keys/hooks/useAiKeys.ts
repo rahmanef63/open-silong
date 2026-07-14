@@ -52,9 +52,12 @@ export interface SaveArgs {
 }
 
 export function useAiKeys(workspaceId: string | undefined) {
+  // The store renders a synthetic "local" workspace id before the convex
+  // query resolves; `v.id("workspaces")` rejects it — treat it as "no ws".
+  const hasWs = !!workspaceId && workspaceId !== "local";
   const list = useQuery(
     api.aiKeys.list.mine,
-    workspaceId ? { workspaceId: asWorkspaceId(workspaceId) } : {},
+    hasWs ? { workspaceId: asWorkspaceId(workspaceId!) } : {},
   );
   const saveAction = useAction(api.aiKeys.save.save);
   const removeMutation = useMutation(api.aiKeys.write.remove);
@@ -66,7 +69,7 @@ export function useAiKeys(workspaceId: string | undefined) {
         const result = await saveAction({
           id: args.id ? asKeyId(args.id) : undefined,
           scope: args.scope,
-          workspaceId: args.workspaceId ? asWorkspaceId(args.workspaceId) : undefined,
+          workspaceId: args.workspaceId && args.workspaceId !== "local" ? asWorkspaceId(args.workspaceId) : undefined,
           provider: args.provider,
           plaintextKey: args.plaintextKey,
           endpoint: args.endpoint || undefined,

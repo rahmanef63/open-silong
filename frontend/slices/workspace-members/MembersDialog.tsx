@@ -23,8 +23,10 @@ interface Props {
 
 export function MembersDialog({ open, onOpenChange, workspace }: Props) {
   const wsId = workspace.id as unknown as Id<"workspaces">;
-  const members = useQuery(api.workspaces.members, open ? { workspaceId: wsId } : "skip") ?? [];
-  const invites = useQuery(api.invites.listForWorkspace, open ? { workspaceId: wsId } : "skip") ?? [];
+  // Skip the store's synthetic "local" id — `v.id("workspaces")` rejects it.
+  const ready = open && workspace.id !== "local";
+  const members = useQuery(api.workspaces.members, ready ? { workspaceId: wsId } : "skip") ?? [];
+  const invites = useQuery(api.invites.listForWorkspace, ready ? { workspaceId: wsId } : "skip") ?? [];
   const createInvite = useMutation(api.invites.create);
   const revokeInvite = useMutation(api.invites.revoke);
   const createOp = useAsyncError("members.createInvite");
