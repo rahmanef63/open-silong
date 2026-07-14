@@ -6,6 +6,10 @@ import { requireAuth, requireOwned, requireWorkspaceAccess } from "./_shared/aut
 import { rateLimit } from "./_shared/rateLimit";
 import { Id } from "./_generated/dataModel";
 import { buildSearchText } from "./features/search/lib";
+import {
+  readPageBlocks, writePageBlocks, insertPageBlocks, newPageBlockFields, pageMetaOf,
+  deletePageBlocks,
+} from "./_shared/pageContent";
 import { reindexPageLinks, titleKeyFor } from "./_shared/links";
 import { collectDescendantsFromDocs } from "./_shared/pageTree";
 import { regenAllBlockIds, findDuplicateBlockId, type BlockLike } from "./_shared/blocks";
@@ -78,7 +82,7 @@ export const getPublicShare = query({
       title: doc.title,
       icon: doc.icon,
       cover: doc.cover,
-      blocks: doc.blocks,
+      blocks: await readPageBlocks(ctx, doc),
       font: doc.font,
       smallText: doc.smallText,
       fullWidth: doc.fullWidth,
@@ -162,43 +166,36 @@ export const listMeta = query({
     const active = await readActiveWorkspace(ctx, userId);
     if (!active) return [];
     const docs = await pagesInActiveWorkspace(ctx, userId, active);
-    return docs.map((d) => ({
-      _id: d._id,
-      _creationTime: d._creationTime,
-      userId: d.userId,
-      parentId: d.parentId,
-      title: d.title,
-      icon: d.icon,
-      cover: d.cover,
-      favorite: d.favorite,
-      trashed: d.trashed,
-      isPublic: d.isPublic,
-      shareSlug: d.shareSlug,
-      rowOfDatabaseId: d.rowOfDatabaseId,
-      rowProps: d.rowProps,
-      font: d.font,
-      smallText: d.smallText,
-      fullWidth: d.fullWidth,
-      locked: d.locked,
-      createdAt: d.createdAt,
-      updatedAt: d.updatedAt,
-      /** Cheap derived signal: does this page host any database block?
-       *  Used by callers that need to find a database's host page without
-       *  scanning all blocks of all pages. */
-      databaseHostFor: (d.blocks as any[])
-        .filter((b) => b?.type === "database" && b?.databaseId)
-        .map((b) => b.databaseId as string),
-      /** Block count for cheap previews. */
-      blockCount: (d.blocks as any[]).length,
-      /** First text-bearing block, truncated. Lets dashboard show snippets
-       *  without shipping the full blocks array. */
-      previewText: (() => {
-        for (const b of d.blocks as any[]) {
-          if (typeof b?.text === "string" && b.text.trim()) return b.text.slice(0, 120);
-        }
-        return "";
-      })(),
-    }));
+    return docs.map((d) => {
+      // Denormalized meta (blockCount/previewText/databaseHostFor) read from
+      // the stored columns — no blocks deserialization. Legacy rows fall back
+      // to deriving from `d.blocks` until backfilled.
+      const meta = pageMetaOf(d);
+      return {
+        _id: d._id,
+        _creationTime: d._creationTime,
+        userId: d.userId,
+        parentId: d.parentId,
+        title: d.title,
+        icon: d.icon,
+        cover: d.cover,
+        favorite: d.favorite,
+        trashed: d.trashed,
+        isPublic: d.isPublic,
+        shareSlug: d.shareSlug,
+        rowOfDatabaseId: d.rowOfDatabaseId,
+        rowProps: d.rowProps,
+        font: d.font,
+        smallText: d.smallText,
+        fullWidth: d.fullWidth,
+        locked: d.locked,
+        createdAt: d.createdAt,
+        updatedAt: d.updatedAt,
+        databaseHostFor: meta.databaseHostFor as string[],
+        blockCount: meta.blockCount,
+        previewText: meta.previewText,
+      };
+    });
   },
 });
 
@@ -229,7 +226,8 @@ export const getById = query({
     } else if (doc.userId !== userId) {
       return null;
     }
-    return doc;
+    // Splice blocks back in from pageBlocks (falls back to legacy doc.blocks).
+    return { ...doc, blocks: await readPageBlocks(ctx, doc) };
   },
 });
 
@@ -260,7 +258,7 @@ export const create = mutation({
       titleKey: titleKeyFor(args.title ?? ""),
       icon: args.icon ?? "lucide:FileText",
       cover: null,
-      blocks,
+      ...newPageBlockFields(blocks),
       favorite: false,
       trashed: false,
       isPublic: false,
@@ -270,6 +268,7 @@ export const create = mutation({
       createdAt: now,
       updatedAt: now,
     });
+    await insertPageBlocks(ctx, pageId, blocks);
     // Fire-and-forget webhook fan-out — no await blocks the caller.
     // `as any` on internal.webhooks.deliver: convex codegen FilterApi for
     // the `internal` surface drops internalAction refs in some module shapes
@@ -334,19 +333,33 @@ export const update = mutation({
       throw new Error(`Page exceeds block cap (${COUNT_CAPS.blocksPerPage})`);
     }
     const { userId, doc: page } = await requireWorkspaceAccess(ctx, "pages", args.pageId as Id<"pages">, { write: true });
+    const hasBlocks = "blocks" in args.patch;
     const nextTitle = args.patch.title ?? page.title;
-    const nextBlocks = args.patch.blocks ?? page.blocks;
-    const touchesContent = "title" in args.patch || "blocks" in args.patch;
-    await ctx.db.patch(args.pageId as Id<"pages">, {
-      ...args.patch,
-      ...(touchesContent ? { searchText: buildSearchText(nextTitle, nextBlocks) } : {}),
-      updatedAt: Date.now(),
-    });
+    const touchesContent = "title" in args.patch || hasBlocks;
+    // Current blocks: the incoming patch when it edits them, else the stored
+    // pageBlocks (needed to rebuild searchText on a title-only edit).
+    const nextBlocks = hasBlocks
+      ? (args.patch.blocks as unknown[])
+      : await readPageBlocks(ctx, page);
+    if (hasBlocks) {
+      // Block edit → split writer (writes pageBlocks + denorm, empties doc).
+      const rest: Record<string, unknown> = { ...args.patch };
+      delete rest.blocks;
+      await writePageBlocks(ctx, args.pageId as Id<"pages">, nextBlocks, {
+        ...rest,
+        searchText: buildSearchText(nextTitle, nextBlocks),
+      });
+    } else {
+      await ctx.db.patch(args.pageId as Id<"pages">, {
+        ...args.patch,
+        ...(touchesContent ? { searchText: buildSearchText(nextTitle, nextBlocks) } : {}),
+        updatedAt: Date.now(),
+      });
+    }
     if (touchesContent) {
-      // Rebuild graph edges + titleKey next to searchText. Fetch the fresh
-      // doc so reindex sees the patched blocks/title/workspaceId.
+      // Rebuild graph edges + titleKey next to searchText.
       const fresh = await ctx.db.get(args.pageId as Id<"pages">);
-      if (fresh) await reindexPageLinks(ctx, fresh);
+      if (fresh) await reindexPageLinks(ctx, fresh, nextBlocks);
       await ctx.scheduler.runAfter(0, (internal.webhooks.deliver as any).run, {
         ownerId: userId,
         event: "page.updated",
@@ -428,6 +441,7 @@ export const permanentlyDelete = mutation({
       // take(100) leaves slack for legacy rows that pre-dated the cap.
       const snaps = await ctx.db.query("snapshots").withIndex("by_user_page", (q) => q.eq("userId", userId).eq("pageId", id as Id<"pages">)).take(100);
       for (const s of snaps) await ctx.db.delete(s._id);
+      await deletePageBlocks(ctx, id as Id<"pages">);
       await ctx.db.delete(id as Id<"pages">);
     }
     await ctx.scheduler.runAfter(0, (internal.webhooks.deliver as any).run, {
@@ -450,7 +464,8 @@ export const duplicate = mutation({
     await rateLimit(ctx, userId, RATE_LIMITS.pagesDuplicate);
     await rateLimit(ctx, userId, RATE_LIMITS.pagesDuplicateDay);
     const now = Date.now();
-    const cloned = JSON.parse(JSON.stringify(src.blocks)) as BlockLike[];
+    const srcBlocks = await readPageBlocks(ctx, src);
+    const cloned = JSON.parse(JSON.stringify(srcBlocks)) as BlockLike[];
     const blocks = regenAllBlockIds(cloned);
     const title = src.title ? `${src.title} (copy)` : "";
     const active = await getActiveWorkspaceMutation(ctx, userId);
@@ -462,7 +477,7 @@ export const duplicate = mutation({
       titleKey: titleKeyFor(title),
       icon: src.icon,
       cover: src.cover,
-      blocks,
+      ...newPageBlockFields(blocks),
       favorite: false,
       trashed: false,
       isPublic: src.isPublic,
@@ -472,9 +487,10 @@ export const duplicate = mutation({
       createdAt: now,
       updatedAt: now,
     });
+    await insertPageBlocks(ctx, newPageId, blocks);
     // Cloned blocks may carry [[wikilinks]] / #tags / mentions — index them.
     const fresh = await ctx.db.get(newPageId);
-    if (fresh) await reindexPageLinks(ctx, fresh);
+    if (fresh) await reindexPageLinks(ctx, fresh, blocks);
     return newPageId;
   },
 });
@@ -492,16 +508,15 @@ export const addBlock = mutation({
   },
   handler: async (ctx, args) => {
     const { doc: page } = await requireWorkspaceAccess(ctx, "pages", args.pageId as Id<"pages">, { write: true });
+    const curBlocks = await readPageBlocks(ctx, page);
     const { blocks, newId } = addBlockToArray(
-      page.blocks as BlockOpLike[], args.afterIndex, args.type, args.init, uid,
+      curBlocks as BlockOpLike[], args.afterIndex, args.type, args.init, uid,
     );
-    await ctx.db.patch(args.pageId as Id<"pages">, {
-      blocks,
+    await writePageBlocks(ctx, args.pageId as Id<"pages">, blocks, {
       searchText: buildSearchText(page.title, blocks),
-      updatedAt: Date.now(),
     });
     const fresh = await ctx.db.get(args.pageId as Id<"pages">);
-    if (fresh) await reindexPageLinks(ctx, fresh);
+    if (fresh) await reindexPageLinks(ctx, fresh, blocks);
     return newId;
   },
 });
@@ -515,7 +530,7 @@ export const appendMarkdown = mutation({
   handler: async (ctx, args) => {
     const { doc: page } = await requireWorkspaceAccess(ctx, "pages", args.pageId as Id<"pages">, { write: true });
     const parsed = markdownToBlocks(args.markdown);
-    const cur = page.blocks as Array<{ id: string; type?: string; text?: string }>;
+    const cur = (await readPageBlocks(ctx, page)) as Array<{ id: string; type?: string; text?: string }>;
     // Drop the trailing empty paragraph stub that newly-created pages
     // ship with, so the appended content doesn't render with an empty
     // gap above it.
@@ -526,13 +541,11 @@ export const appendMarkdown = mutation({
     if (blocks.length > COUNT_CAPS.blocksPerPage) {
       throw new Error(`Page would exceed block cap (${COUNT_CAPS.blocksPerPage})`);
     }
-    await ctx.db.patch(args.pageId as Id<"pages">, {
-      blocks,
+    await writePageBlocks(ctx, args.pageId as Id<"pages">, blocks, {
       searchText: buildSearchText(page.title, blocks),
-      updatedAt: Date.now(),
     });
     const fresh = await ctx.db.get(args.pageId as Id<"pages">);
-    if (fresh) await reindexPageLinks(ctx, fresh);
+    if (fresh) await reindexPageLinks(ctx, fresh, blocks);
     return parsed.length;
   },
 });
@@ -548,15 +561,14 @@ export const replaceBlockById = mutation({
   },
   handler: async (ctx, args) => {
     const { doc: page } = await requireWorkspaceAccess(ctx, "pages", args.pageId as Id<"pages">, { write: true });
-    const blocks = replaceBlockInArray(page.blocks as BlockOpLike[], args.blockId, args.nextBlock);
+    const curBlocks = await readPageBlocks(ctx, page);
+    const blocks = replaceBlockInArray(curBlocks as BlockOpLike[], args.blockId, args.nextBlock);
     if (!blocks) throw new Error("Block not found");
-    await ctx.db.patch(args.pageId as Id<"pages">, {
-      blocks,
+    await writePageBlocks(ctx, args.pageId as Id<"pages">, blocks, {
       searchText: buildSearchText(page.title, blocks),
-      updatedAt: Date.now(),
     });
     const fresh = await ctx.db.get(args.pageId as Id<"pages">);
-    if (fresh) await reindexPageLinks(ctx, fresh);
+    if (fresh) await reindexPageLinks(ctx, fresh, blocks);
   },
 });
 
@@ -566,16 +578,15 @@ export const duplicateBlockById = mutation({
   args: { pageId: v.id("pages"), blockId: v.string() },
   handler: async (ctx, args) => {
     const { doc: page } = await requireWorkspaceAccess(ctx, "pages", args.pageId as Id<"pages">, { write: true });
-    const dup = duplicateBlockInArray(page.blocks as BlockOpLike[], args.blockId, uid);
+    const curBlocks = await readPageBlocks(ctx, page);
+    const dup = duplicateBlockInArray(curBlocks as BlockOpLike[], args.blockId, uid);
     if (!dup) throw new Error("Block not found");
     if (dup.blocks.length > COUNT_CAPS.blocksPerPage) throw new Error(`Page exceeds block cap (${COUNT_CAPS.blocksPerPage})`);
-    await ctx.db.patch(args.pageId as Id<"pages">, {
-      blocks: dup.blocks,
+    await writePageBlocks(ctx, args.pageId as Id<"pages">, dup.blocks, {
       searchText: buildSearchText(page.title, dup.blocks),
-      updatedAt: Date.now(),
     });
     const fresh = await ctx.db.get(args.pageId as Id<"pages">);
-    if (fresh) await reindexPageLinks(ctx, fresh);
+    if (fresh) await reindexPageLinks(ctx, fresh, dup.blocks);
     return dup.newId;
   },
 });
@@ -600,18 +611,17 @@ export const insertBlocksAfter = mutation({
   },
   handler: async (ctx, args) => {
     const { doc: page } = await requireWorkspaceAccess(ctx, "pages", args.pageId as Id<"pages">, { write: true });
+    const curBlocks = await readPageBlocks(ctx, page);
     const blocks = insertBlocksAfterAnchor(
-      page.blocks as BlockOpLike[], args.anchorBlockId, args.blocks as BlockOpLike[], !!args.replaceAnchor,
+      curBlocks as BlockOpLike[], args.anchorBlockId, args.blocks as BlockOpLike[], !!args.replaceAnchor,
     );
     if (!blocks) throw new Error("Anchor block not found");
     if (blocks.length > COUNT_CAPS.blocksPerPage) throw new Error(`Page exceeds block cap (${COUNT_CAPS.blocksPerPage})`);
-    await ctx.db.patch(args.pageId as Id<"pages">, {
-      blocks,
+    await writePageBlocks(ctx, args.pageId as Id<"pages">, blocks, {
       searchText: buildSearchText(page.title, blocks),
-      updatedAt: Date.now(),
     });
     const fresh = await ctx.db.get(args.pageId as Id<"pages">);
-    if (fresh) await reindexPageLinks(ctx, fresh);
+    if (fresh) await reindexPageLinks(ctx, fresh, blocks);
     return blocks.length;
   },
 });
@@ -624,19 +634,18 @@ export const updateBlock = mutation({
   args: { pageId: v.id("pages"), blockId: v.string(), patch: v.any() },
   handler: async (ctx, args) => {
     const { doc: page } = await requireWorkspaceAccess(ctx, "pages", args.pageId as Id<"pages">, { write: true });
-    const blocks = updateBlockInArray(page.blocks as BlockOpLike[], args.blockId, args.patch);
+    const curBlocks = await readPageBlocks(ctx, page);
+    const blocks = updateBlockInArray(curBlocks as BlockOpLike[], args.blockId, args.patch);
     // Only rebuild searchText when the patch touches text-bearing fields.
     // Toggle/reorder/style-only patches skip the O(blocks) string build.
     const TEXT_FIELDS = ["text", "type", "lang", "caption"];
     const touchesText = Object.keys(args.patch ?? {}).some((k) => TEXT_FIELDS.includes(k));
-    await ctx.db.patch(args.pageId as Id<"pages">, {
-      blocks,
-      ...(touchesText ? { searchText: buildSearchText(page.title, blocks) } : {}),
-      updatedAt: Date.now(),
-    });
+    await writePageBlocks(ctx, args.pageId as Id<"pages">, blocks,
+      touchesText ? { searchText: buildSearchText(page.title, blocks) } : {},
+    );
     if (touchesText) {
       const fresh = await ctx.db.get(args.pageId as Id<"pages">);
-      if (fresh) await reindexPageLinks(ctx, fresh);
+      if (fresh) await reindexPageLinks(ctx, fresh, blocks);
     }
   },
 });
@@ -648,14 +657,13 @@ export const deleteBlock = mutation({
   args: { pageId: v.id("pages"), blockId: v.string() },
   handler: async (ctx, args) => {
     const { doc: page } = await requireWorkspaceAccess(ctx, "pages", args.pageId as Id<"pages">, { write: true });
-    const blocks = deleteBlockFromArray(page.blocks as BlockOpLike[], args.blockId, uid);
-    await ctx.db.patch(args.pageId as Id<"pages">, {
-      blocks,
+    const curBlocks = await readPageBlocks(ctx, page);
+    const blocks = deleteBlockFromArray(curBlocks as BlockOpLike[], args.blockId, uid);
+    await writePageBlocks(ctx, args.pageId as Id<"pages">, blocks, {
       searchText: buildSearchText(page.title, blocks),
-      updatedAt: Date.now(),
     });
     const fresh = await ctx.db.get(args.pageId as Id<"pages">);
-    if (fresh) await reindexPageLinks(ctx, fresh);
+    if (fresh) await reindexPageLinks(ctx, fresh, blocks);
   },
 });
 
@@ -666,11 +674,11 @@ export const reorderBlocks = mutation({
   args: { pageId: v.id("pages"), orderedIds: v.array(v.string()) },
   handler: async (ctx, args) => {
     const { doc: page } = await requireWorkspaceAccess(ctx, "pages", args.pageId as Id<"pages">, { write: true });
-    const blocks = reorderBlocksInArray(page.blocks as BlockOpLike[], args.orderedIds);
-    await ctx.db.patch(args.pageId as Id<"pages">, {
-      blocks,
-      // searchText unchanged — reorder doesn't change set of words
-      updatedAt: Date.now(),
-    });
+    const curBlocks = await readPageBlocks(ctx, page);
+    const blocks = reorderBlocksInArray(curBlocks as BlockOpLike[], args.orderedIds);
+    // searchText unchanged — reorder doesn't change the set of words. But
+    // previewText CAN change (first text block moved) → writePageBlocks
+    // recomputes the denorm columns.
+    await writePageBlocks(ctx, args.pageId as Id<"pages">, blocks, {});
   },
 });

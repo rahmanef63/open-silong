@@ -2,6 +2,11 @@ import type { MutationCtx } from "../../_generated/server";
 import type { Id } from "../../_generated/dataModel";
 import { uid } from "../../_shared/uid";
 import { requireActiveWorkspaceWritable } from "../../_shared/workspace";
+import {
+  newPageBlockFields,
+  insertPageBlocks,
+  writePageBlocks,
+} from "../../_shared/pageContent";
 import type {
   TemplateJson, TplBlockT, TplDatabaseT, TplPageT, TplViewT,
 } from "./validate";
@@ -193,7 +198,7 @@ export async function instantiateTemplate(
       title: p.title,
       icon: p.icon,
       cover: p.cover ?? null,
-      blocks,
+      ...newPageBlockFields(blocks),
       favorite: false,
       trashed: false,
       isPublic: false,
@@ -203,6 +208,7 @@ export async function instantiateTemplate(
       createdAt: now,
       updatedAt: now,
     });
+    await insertPageBlocks(ctx, pageId, blocks);
     pagesInserted += 1;
     if (p.ref) pageMap.set(p.ref, pageId);
     for (const child of p.children ?? []) {
@@ -224,7 +230,7 @@ export async function instantiateTemplate(
   async function walkRepatch(p: TplPageT, pageId: Id<"pages">) {
     if (hasUnresolvedPageRef(p.blocks)) {
       const finalBlocks = buildBlocks(p.blocks, dbMap, pageMap);
-      await ctx.db.patch(pageId, { blocks: finalBlocks, updatedAt: Date.now() });
+      await writePageBlocks(ctx, pageId, finalBlocks);
     }
   }
   await walkRepatch(template.page, rootPageId);
@@ -242,6 +248,7 @@ export async function instantiateTemplate(
     for (const row of db.seedRows) {
       const titleProp = db.properties.find((p) => p.type === "text") ?? db.properties[0];
       const titleVal = titleProp ? row.props[titleProp.id] : "";
+      const seedRowBlocks = [{ id: uid(), type: "paragraph", text: "" }];
       const rowPageId = await ctx.db.insert("pages", {
         userId,
         workspaceId,
@@ -249,7 +256,7 @@ export async function instantiateTemplate(
         title: typeof titleVal === "string" ? titleVal : (titleVal != null ? String(titleVal) : ""),
         icon: "📄",
         cover: null,
-        blocks: [{ id: uid(), type: "paragraph", text: "" }],
+        ...newPageBlockFields(seedRowBlocks),
         favorite: false,
         trashed: false,
         isPublic: false,
@@ -258,6 +265,7 @@ export async function instantiateTemplate(
         createdAt: Date.now(),
         updatedAt: Date.now(),
       });
+      await insertPageBlocks(ctx, rowPageId, seedRowBlocks);
       rowPageIds.push(rowPageId);
       rowsInserted += 1;
     }

@@ -20,6 +20,7 @@ import { internalMutation } from "../_generated/server";
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
+import { newPageBlockFields, insertPageBlocks } from "../_shared/pageContent";
 
 interface Body {
   from?: string;
@@ -103,18 +104,20 @@ export const createPageFromEmail = internalMutation({
       text: `📧 Imported from email: ${from}`,
     };
     const allBlocks = [marker, ...blocks];
+    const finalBlocks = allBlocks.map((b, i) => ({ id: `${now}_${i}`, ...b }));
     const pageId = await ctx.db.insert("pages", {
       userId,
       parentId: null,
       title,
       icon: "📧",
       cover: null,
-      blocks: allBlocks.map((b, i) => ({ id: `${now}_${i}`, ...b })),
+      ...newPageBlockFields(finalBlocks),
       favorite: false,
       trashed: false,
       createdAt: now,
       updatedAt: now,
     });
+    await insertPageBlocks(ctx, pageId, finalBlocks);
     return pageId;
   },
 });

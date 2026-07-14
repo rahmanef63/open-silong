@@ -5,6 +5,7 @@ import { requireOwned } from "./_shared/auth";
 import { Id } from "./_generated/dataModel";
 import { readActiveWorkspace, rowInActiveWorkspace } from "./_shared/workspace";
 import { COUNT_CAPS } from "./_shared/limits";
+import { writePageBlocks, buildSearchText } from "./_shared/pageContent";
 
 export const listForPage = query({
   args: { pageId: v.id("pages") },
@@ -101,13 +102,13 @@ export const restore = mutation({
   handler: async (ctx, args) => {
     const { doc: snap } = await requireOwned(ctx, "snapshots", args.snapshotId as Id<"snapshots">);
     const { doc: page } = await requireOwned(ctx, "pages", snap.pageId as Id<"pages">);
-    await ctx.db.patch(snap.pageId as Id<"pages">, {
+    const blocks = JSON.parse(JSON.stringify(snap.blocks));
+    await writePageBlocks(ctx, snap.pageId as Id<"pages">, blocks, {
       title: snap.title,
       icon: snap.icon,
       cover: snap.cover,
-      blocks: JSON.parse(JSON.stringify(snap.blocks)),
       rowProps: snap.rowProps ? JSON.parse(JSON.stringify(snap.rowProps)) : page.rowProps,
-      updatedAt: Date.now(),
+      searchText: buildSearchText(snap.title, blocks),
     });
   },
 });

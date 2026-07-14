@@ -13,6 +13,11 @@ import {
   requireActiveWorkspaceWritable,
 } from "./_shared/workspace";
 import { uid } from "./_shared/uid";
+import {
+  newPageBlockFields,
+  insertPageBlocks,
+  readPageBlocks,
+} from "./_shared/pageContent";
 
 /** Owner-only full list. Includes `properties[]`, `views[]`,
  *  `rowIds[]`, `templates[]`. Acceptable to ship in full because
@@ -187,7 +192,7 @@ export const addRow = mutation({
       title: "",
       icon: tpl?.icon ?? "lucide:FileText",
       cover: null,
-      blocks: seedBlocks,
+      ...newPageBlockFields(seedBlocks),
       favorite: false,
       trashed: false,
       rowOfDatabaseId: args.dbId,
@@ -196,6 +201,7 @@ export const addRow = mutation({
       updatedAt: now,
       ...init,
     });
+    await insertPageBlocks(ctx, rowId, seedBlocks);
     await ctx.db.patch(args.dbId as Id<"databases">, {
       rowIds: [...db.rowIds, rowId],
       uniqueIdCounter: counter,
@@ -255,6 +261,7 @@ export const duplicateWithRows = mutation({
         if (!newPropId) continue;
         remappedRowProps[newPropId] = val;
       }
+      const clonedBlocks = JSON.parse(JSON.stringify(await readPageBlocks(ctx, page)));
       const newId = await ctx.db.insert("pages", {
         userId,
         workspaceId: target.workspaceId,
@@ -262,7 +269,7 @@ export const duplicateWithRows = mutation({
         title: page.title,
         icon: page.icon,
         cover: page.cover ?? null,
-        blocks: JSON.parse(JSON.stringify(page.blocks ?? [])),
+        ...newPageBlockFields(clonedBlocks),
         favorite: false,
         trashed: false,
         rowOfDatabaseId: args.targetDbId,
@@ -270,6 +277,7 @@ export const duplicateWithRows = mutation({
         createdAt: now,
         updatedAt: now,
       });
+      await insertPageBlocks(ctx, newId, clonedBlocks);
       rowIdMap.set(String(oldId), String(newId));
       insertedIds.push(newId);
     }

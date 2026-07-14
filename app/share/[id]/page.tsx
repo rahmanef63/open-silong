@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { fetchQuery } from "convex/nextjs";
 import { api } from "@convex/_generated/api";
+import type { Block } from "@/shared/types/domain";
 import { SharedPageView } from "./SharedPageView";
 
 interface PageProps {
@@ -12,7 +13,9 @@ interface PageProps {
 // React.cache dedupes the same id within a single request — generateMetadata
 // + the page handler hit Convex once instead of twice.
 const loadShare = cache(async (id: string) => {
-  return fetchQuery(api.pages.getPublicShare, { id });
+  const page = await fetchQuery(api.pages.getPublicShare, { id });
+  // Boundary cast: blocks arrive as unknown[] from the pageBlocks split read.
+  return page ? { ...page, blocks: page.blocks as Block[] } : null;
 });
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {

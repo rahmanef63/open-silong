@@ -21,6 +21,7 @@
 import { v } from "convex/values";
 import { internalMutation } from "../../_generated/server";
 import { reindexPageLinks } from "../../_shared/links";
+import { readPageBlocks } from "../../_shared/pageContent";
 
 const DEFAULT_BATCH = 100;
 const MAX_BATCH = 200;
@@ -44,7 +45,7 @@ export const backfillLinks = internalMutation({
         skipped++;
         continue;
       }
-      await reindexPageLinks(ctx, page);
+      await reindexPageLinks(ctx, page, await readPageBlocks(ctx, page));
       processed++;
     }
 

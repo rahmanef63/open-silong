@@ -1,6 +1,7 @@
 import { internalMutation } from "../../_generated/server";
 import { v } from "convex/values";
 import { buildSearchText } from "./lib";
+import { readPageBlocks } from "../../_shared/pageContent";
 
 /** One-shot: backfill `searchText` on all pages owned by the given user.
  *  Internal — caller is a migration script, not a logged-in client.
@@ -14,7 +15,8 @@ export const backfillSearchText = internalMutation({
       .collect();
     let updated = 0;
     for (const p of pages) {
-      const next = buildSearchText(p.title, p.blocks);
+      const blocks = await readPageBlocks(ctx, p);
+      const next = buildSearchText(p.title, blocks);
       if (next !== p.searchText) {
         await ctx.db.patch(p._id, { searchText: next });
         updated++;

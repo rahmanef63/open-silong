@@ -3,6 +3,12 @@ import { v } from "convex/values";
 import { buildSearchText } from "../features/search/lib";
 import type { Id } from "../_generated/dataModel";
 import { uid } from "../_shared/uid";
+import {
+  newPageBlockFields,
+  insertPageBlocks,
+  readPageBlocks,
+  writePageBlocks,
+} from "../_shared/pageContent";
 
 async function insertDb(
   ctx: MutationCtx,
@@ -42,13 +48,14 @@ async function insertDb(
     const rowProps: Record<string, string> = {};
     props.forEach((p, i) => { rowProps[p.id] = cells[i] ?? ""; });
     const title = (cells[0] ?? "").trim() || "Untitled";
+    const seedBlocks = [{ id: uid(), type: "paragraph", text: "" }];
     const rowPageId = await ctx.db.insert("pages", {
       userId,
       parentId: null,
       title,
       icon: "📄",
       cover: null,
-      blocks: [{ id: uid(), type: "paragraph", text: "" }],
+      ...newPageBlockFields(seedBlocks),
       favorite: false,
       trashed: false,
       isPublic: false,
@@ -58,6 +65,7 @@ async function insertDb(
       createdAt: now,
       updatedAt: now,
     });
+    await insertPageBlocks(ctx, rowPageId, seedBlocks);
     rowIds.push(rowPageId);
   }
   await ctx.db.patch(dbId, { rowIds });
@@ -76,13 +84,13 @@ export const createPage = internalMutation({
   },
   handler: async (ctx, { userId, parentId, title, icon, blocks }) => {
     const now = Date.now();
-    return await ctx.db.insert("pages", {
+    const pageId = await ctx.db.insert("pages", {
       userId,
       parentId: parentId as Id<"pages"> | null,
       title,
       icon: icon ?? "📄",
       cover: null,
-      blocks,
+      ...newPageBlockFields(blocks),
       favorite: false,
       trashed: false,
       isPublic: false,
@@ -90,6 +98,8 @@ export const createPage = internalMutation({
       createdAt: now,
       updatedAt: now,
     });
+    await insertPageBlocks(ctx, pageId, blocks);
+    return pageId;
   },
 });
 
@@ -104,11 +114,10 @@ export const appendBlocks = internalMutation({
   handler: async (ctx, { userId, pageId, blocks }) => {
     const page = await ctx.db.get(pageId as Id<"pages">);
     if (!page || page.userId !== userId) return;
-    const next = [...page.blocks, ...blocks];
-    await ctx.db.patch(pageId as Id<"pages">, {
-      blocks: next,
+    const existing = await readPageBlocks(ctx, page);
+    const next = [...existing, ...blocks];
+    await writePageBlocks(ctx, pageId as Id<"pages">, next, {
       searchText: buildSearchText(page.title, next),
-      updatedAt: Date.now(),
     });
   },
 });
@@ -136,7 +145,7 @@ export const createDatabaseFromCsvWithHost = internalMutation({
       title: name,
       icon: "🗂️",
       cover: null,
-      blocks,
+      ...newPageBlockFields(blocks),
       favorite: false,
       trashed: false,
       isPublic: false,
@@ -144,6 +153,7 @@ export const createDatabaseFromCsvWithHost = internalMutation({
       createdAt: now,
       updatedAt: now,
     });
+    await insertPageBlocks(ctx, pageId, blocks);
     return { dbId, pageId: String(pageId) };
   },
 });

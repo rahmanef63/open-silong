@@ -143,6 +143,12 @@ export default defineSchema({
      *  `[[Title]]` wikilinks. Maintained alongside `title` on every write.
      *  Optional so legacy rows resolve as ghosts until backfilled. */
     titleKey: v.optional(v.string()),
+    /** Denormalized block metadata — maintained on every block write so
+     *  `listMeta` / admin aggregates never deserialize the blocks array.
+     *  `databaseHostFor` above is the third denorm column. Optional: legacy
+     *  rows fall back to deriving from `blocks` until backfilled. */
+    blockCount: v.optional(v.number()),
+    previewText: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -168,6 +174,18 @@ export default defineSchema({
       searchField: "searchText",
       filterFields: ["userId", "workspaceId", "trashed"],
     }),
+
+  /** Heavy page content, split out of `pages` (2026-07-14) so the
+   *  workspace-wide `listMeta` sidebar subscription re-reads only small
+   *  metadata docs instead of every page's full blocks array on each edit.
+   *  One row per page. `pages.blocks` is emptied once a page is backfilled
+   *  here; reads fall back to `pages.blocks` for not-yet-migrated rows
+   *  (`_shared/pageContent.ts`). searchText intentionally STAYS on `pages`
+   *  (its search index + filterFields live there). */
+  pageBlocks: defineTable({
+    pageId: v.id("pages"),
+    blocks: v.array(v.any()),
+  }).index("by_page", ["pageId"]),
 
   /** Memory-graph edge index — one row per outgoing link found in a page's
    *  block content. Denormalized on every page write by

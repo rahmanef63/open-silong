@@ -2,6 +2,7 @@ import { query } from "../_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { requireAdminQuery } from "../_shared/auth";
+import { pageMetaOf } from "../_shared/pageContent";
 
 const DAY_MS = 86_400_000;
 
@@ -62,9 +63,7 @@ export const getOverview = query({
     let rowCount = 0;
     for (const p of pages) {
       if (p.trashed) continue;
-      blockCount += Array.isArray((p as { blocks?: unknown[] }).blocks)
-        ? ((p as { blocks: unknown[] }).blocks).length
-        : 0;
+      blockCount += pageMetaOf(p).blockCount;
     }
     for (const d of databases) {
       rowCount += Array.isArray((d as { rowIds?: unknown[] }).rowIds)

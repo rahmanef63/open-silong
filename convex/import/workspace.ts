@@ -11,6 +11,7 @@ import {
   remapTemplates,
 } from "../_shared/idRemap";
 import { reindexPageLinks } from "../_shared/links";
+import { newPageBlockFields, writePageBlocks } from "../_shared/pageContent";
 import type { BlockLike } from "../_shared/blocks";
 import type { Id } from "../_generated/dataModel";
 
@@ -142,7 +143,7 @@ export const importFromJson = mutation({
         title: p.title ?? "",
         icon: p.icon ?? "📄",
         cover: p.cover ?? null,
-        blocks: [],
+        ...newPageBlockFields([]),
         favorite: !!p.favorite,
         trashed: !!p.trashed,
         isPublic: !!p.isPublic,
@@ -223,11 +224,10 @@ export const importFromJson = mutation({
         }
       }
 
-      await ctx.db.patch(newId as Id<"pages">, {
+      await writePageBlocks(ctx, newId as Id<"pages">, remappedBlocks, {
         parentId: newParent as Id<"pages"> | null,
         rowOfDatabaseId: newRowOfDb as Id<"databases"> | undefined,
         rowProps: nextRowProps,
-        blocks: remappedBlocks,
       });
     }
 

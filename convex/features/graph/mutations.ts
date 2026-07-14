@@ -11,6 +11,7 @@ import { v } from "convex/values";
 import { mutation } from "../../_generated/server";
 import { requireWorkspaceAccess } from "../../_shared/auth";
 import { reindexPageLinks } from "../../_shared/links";
+import { readPageBlocks } from "../../_shared/pageContent";
 
 /** Force-reindex a single page's outgoing links + denormalized tags.
  *  Requires write access (owner|editor) to the page's workspace. */
@@ -23,7 +24,7 @@ export const reindexPage = mutation({
     // Re-fetch so the reindex sees the freshest blocks/title/workspaceId.
     const fresh = await ctx.db.get(doc._id);
     if (!fresh) return { ok: false as const };
-    await reindexPageLinks(ctx, fresh);
+    await reindexPageLinks(ctx, fresh, await readPageBlocks(ctx, fresh));
     return { ok: true as const };
   },
 });

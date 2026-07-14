@@ -25,6 +25,7 @@ import type { ActionCtx } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
 import { sha256Hex } from "../_shared/hash";
 import { markdownToBlocks } from "../_shared/markdown";
+import { pageMetaOf } from "../_shared/pageContent";
 
 const PROTOCOL_VERSION = "2024-11-05";
 
@@ -445,7 +446,7 @@ async function dispatchTool(
           icon: p.icon,
           parentId: p.parentId,
           updatedAt: p.updatedAt,
-          blockCount: Array.isArray(p.blocks) ? p.blocks.length : 0,
+          blockCount: pageMetaOf(p).blockCount,
         })),
         nextCursor: rows.nextCursor,
         total: rows.total,

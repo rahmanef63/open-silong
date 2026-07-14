@@ -16,6 +16,7 @@
 import type { MutationCtx } from "../_generated/server";
 import type { Doc, Id } from "../_generated/dataModel";
 import { walkBlocks, type BlockLike } from "./blocks";
+import { readPageBlocksById } from "./pageContent";
 
 /** Edge kind — mirror of `frontend/shared/types/graph.ts` `EdgeKind`
  *  (can't import across the frontend↔convex wall). */
@@ -135,6 +136,7 @@ export function extractEdges(blocks: unknown): RawEdge[] {
 export async function reindexPageLinks(
   ctx: MutationCtx,
   page: Doc<"pages">,
+  blocks?: unknown[],
 ): Promise<void> {
   const workspaceId = page.workspaceId;
   const titleKey = slug(page.title);
@@ -146,7 +148,11 @@ export async function reindexPageLinks(
   }
   if (!workspaceId) return; // legacy row — no workspace to stamp edges into
 
-  const raw = extractEdges(page.blocks);
+  // Blocks now live in `pageBlocks`; `page.blocks` is emptied post-migration.
+  // Prefer the explicitly-passed array (the write site just built it); fall
+  // back to the pageBlocks row so any un-updated caller still indexes content.
+  const content = blocks ?? (await readPageBlocksById(ctx, page._id));
+  const raw = extractEdges(content);
 
   // Resolve each wikilink title → unique pageId within the workspace.
   const resolvedRows: Array<{

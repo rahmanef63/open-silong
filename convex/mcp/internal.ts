@@ -17,6 +17,9 @@ import { internalQuery, internalMutation, type QueryCtx } from "../_generated/se
 import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { buildSearchText } from "../features/search/lib";
+import {
+  readPageBlocks, writePageBlocks, insertPageBlocks, newPageBlockFields,
+} from "../_shared/pageContent";
 import { regenAllBlockIds, type BlockLike } from "../_shared/blocks";
 import { CHAR_CAPS, COUNT_CAPS } from "../_shared/limits";
 import { uid } from "../_shared/uid";
@@ -81,7 +84,11 @@ export const fetchPage = internalQuery({
   handler: async (ctx, args) => {
     const doc = await ctx.db.get(args.pageId as Id<"pages">);
     if (!doc || doc.userId !== args.userId) return null;
-    return doc;
+    // Splice blocks back in from `pageBlocks` (falls back to legacy
+    // doc.blocks). MCP callers that render a page's content — jsonrpc
+    // `pages_get`, http `nosion-fetch` — read `.blocks` off this shape,
+    // so the block-split read lives here (mirrors `pages.getById`).
+    return { ...doc, blocks: (await readPageBlocks(ctx, doc)) as typeof doc.blocks };
   },
 });
 
@@ -149,14 +156,14 @@ export const createPage = internalMutation({
     const seedBlocks: BlockLike[] = args.blocks?.length
       ? regenAllBlockIds(args.blocks as BlockLike[])
       : [{ id: uid(), type: "paragraph", text: "" }];
-    return await ctx.db.insert("pages", {
+    const pageId = await ctx.db.insert("pages", {
       userId: args.userId,
       workspaceId: ws._id,
       parentId: args.parentId as Id<"pages"> | null,
       title: args.title ?? "",
       icon: args.icon ?? "📄",
       cover: null,
-      blocks: seedBlocks,
+      ...newPageBlockFields(seedBlocks),
       favorite: false,
       trashed: false,
       isPublic: false,
@@ -166,6 +173,8 @@ export const createPage = internalMutation({
       createdAt: now,
       updatedAt: now,
     });
+    await insertPageBlocks(ctx, pageId, seedBlocks);
+    return pageId;
   },
 });
 
@@ -189,14 +198,29 @@ export const updatePage = internalMutation({
     if (Array.isArray(patch.blocks) && (patch.blocks as unknown[]).length > COUNT_CAPS.blocksPerPage) {
       throw new Error(`Page exceeds block cap (${COUNT_CAPS.blocksPerPage})`);
     }
+    const hasBlocks = "blocks" in patch;
     const nextTitle = (patch.title as string) ?? doc.title;
-    const nextBlocks = (patch.blocks as unknown[]) ?? doc.blocks;
-    const touchesContent = "title" in patch || "blocks" in patch;
-    await ctx.db.patch(args.pageId as Id<"pages">, {
-      ...patch,
-      ...(touchesContent ? { searchText: buildSearchText(nextTitle, nextBlocks) } : {}),
-      updatedAt: Date.now(),
-    });
+    const touchesContent = "title" in patch || hasBlocks;
+    // Current blocks: the incoming patch when it edits them, else the stored
+    // pageBlocks (needed to rebuild searchText on a title-only edit).
+    const nextBlocks = hasBlocks
+      ? (patch.blocks as unknown[])
+      : await readPageBlocks(ctx, doc);
+    if (hasBlocks) {
+      // Block edit → split writer (writes pageBlocks + denorm, empties doc).
+      const rest: Record<string, unknown> = { ...patch };
+      delete rest.blocks;
+      await writePageBlocks(ctx, args.pageId as Id<"pages">, nextBlocks, {
+        ...rest,
+        searchText: buildSearchText(nextTitle, nextBlocks),
+      });
+    } else {
+      await ctx.db.patch(args.pageId as Id<"pages">, {
+        ...patch,
+        ...(touchesContent ? { searchText: buildSearchText(nextTitle, nextBlocks) } : {}),
+        updatedAt: Date.now(),
+      });
+    }
     return { ok: true };
   },
 });
@@ -227,10 +251,11 @@ export const duplicatePage = internalMutation({
     const src = await ctx.db.get(args.pageId as Id<"pages">);
     if (!src || src.userId !== args.userId) throw new Error("Tidak ditemukan");
     const now = Date.now();
-    const cloned = JSON.parse(JSON.stringify(src.blocks)) as BlockLike[];
+    const srcBlocks = await readPageBlocks(ctx, src);
+    const cloned = JSON.parse(JSON.stringify(srcBlocks)) as BlockLike[];
     const blocks = regenAllBlockIds(cloned);
     const title = src.title ? `${src.title} (copy)` : "";
-    return await ctx.db.insert("pages", {
+    const newPageId = await ctx.db.insert("pages", {
       userId: args.userId,
       // Inherit src workspace if stamped; otherwise resolve active.
       workspaceId: src.workspaceId ?? (await getActiveWorkspaceMutation(ctx, args.userId))._id,
@@ -238,7 +263,7 @@ export const duplicatePage = internalMutation({
       title,
       icon: src.icon,
       cover: src.cover,
-      blocks,
+      ...newPageBlockFields(blocks),
       favorite: false,
       trashed: false,
       isPublic: false,
@@ -248,6 +273,8 @@ export const duplicatePage = internalMutation({
       createdAt: now,
       updatedAt: now,
     });
+    await insertPageBlocks(ctx, newPageId, blocks);
+    return newPageId;
   },
 });
 
@@ -311,7 +338,7 @@ export const createRow = internalMutation({
       title: args.title ?? "",
       icon: "📄",
       cover: null,
-      blocks,
+      ...newPageBlockFields(blocks),
       favorite: false,
       trashed: false,
       rowOfDatabaseId: args.dbId as Id<"databases">,
@@ -320,6 +347,7 @@ export const createRow = internalMutation({
       createdAt: now,
       updatedAt: now,
     });
+    await insertPageBlocks(ctx, rowId, blocks);
     await ctx.db.patch(args.dbId as Id<"databases">, {
       rowIds: [...db.rowIds, rowId],
       updatedAt: now,
@@ -350,7 +378,7 @@ export const appendMarkdownAs = internalMutation({
     const page = await ctx.db.get(args.pageId as Id<"pages">);
     if (!page || page.userId !== args.userId) throw new Error("Tidak ditemukan");
     const parsed = markdownToBlocks(args.markdown);
-    const cur = page.blocks as Array<{ id: string; type?: string; text?: string }>;
+    const cur = (await readPageBlocks(ctx, page)) as Array<{ id: string; type?: string; text?: string }>;
     const trimmed = cur.length === 1 && cur[0].type === "paragraph" && cur[0].text === ""
       ? []
       : cur;
@@ -358,10 +386,8 @@ export const appendMarkdownAs = internalMutation({
     if (blocks.length > COUNT_CAPS.blocksPerPage) {
       throw new Error(`Page would exceed block cap (${COUNT_CAPS.blocksPerPage})`);
     }
-    await ctx.db.patch(args.pageId as Id<"pages">, {
-      blocks,
+    await writePageBlocks(ctx, args.pageId as Id<"pages">, blocks, {
       searchText: buildSearchText(page.title, blocks),
-      updatedAt: Date.now(),
     });
     return parsed.length;
   },
@@ -374,9 +400,12 @@ export const setTitleAs = internalMutation({
     const page = await ctx.db.get(args.pageId as Id<"pages">);
     if (!page || page.userId !== args.userId) throw new Error("Tidak ditemukan");
     if (args.title.length > CHAR_CAPS.pageTitle) throw new Error("Title too long");
+    // Title-only change — rebuild searchText from the stored blocks, but a
+    // plain patch keeps `pageBlocks` untouched (don't empty content here).
+    const blocks = await readPageBlocks(ctx, page);
     await ctx.db.patch(args.pageId as Id<"pages">, {
       title: args.title,
-      searchText: buildSearchText(args.title, page.blocks),
+      searchText: buildSearchText(args.title, blocks),
       updatedAt: Date.now(),
     });
     return { ok: true };
@@ -393,7 +422,7 @@ export const embedDatabaseAs = internalMutation({
     if (!page || page.userId !== args.userId) throw new Error("Page tidak ditemukan");
     const db = await ctx.db.get(args.dbId as Id<"databases">);
     if (!db || db.userId !== args.userId) throw new Error("Database tidak ditemukan");
-    const cur = page.blocks as Array<{ id: string; type?: string; text?: string }>;
+    const cur = (await readPageBlocks(ctx, page)) as Array<{ id: string; type?: string; text?: string }>;
     // Drop the stub empty paragraph that new pages ship with so the
     // embed renders flush with the page top.
     const trimmed = cur.length === 1 && cur[0].type === "paragraph" && cur[0].text === ""
@@ -404,10 +433,8 @@ export const embedDatabaseAs = internalMutation({
     if (blocks.length > COUNT_CAPS.blocksPerPage) {
       throw new Error(`Page would exceed block cap (${COUNT_CAPS.blocksPerPage})`);
     }
-    await ctx.db.patch(args.pageId as Id<"pages">, {
-      blocks,
+    await writePageBlocks(ctx, args.pageId as Id<"pages">, blocks, {
       searchText: buildSearchText(page.title, blocks),
-      updatedAt: Date.now(),
     });
     return { ok: true, blockId: block.id };
   },
@@ -444,7 +471,7 @@ export const appendColumnsAs = internalMutation({
         newBlocks.push({ ...b, layoutGroup: layoutId, layoutCol: col });
       }
     }
-    const cur = page.blocks as Array<{ id: string; type?: string; text?: string }>;
+    const cur = (await readPageBlocks(ctx, page)) as Array<{ id: string; type?: string; text?: string }>;
     const trimmed = cur.length === 1 && cur[0].type === "paragraph" && cur[0].text === ""
       ? []
       : cur;
@@ -453,11 +480,9 @@ export const appendColumnsAs = internalMutation({
       throw new Error(`Page would exceed block cap (${COUNT_CAPS.blocksPerPage})`);
     }
     const layouts = [...(page.layouts ?? []), newLayout];
-    await ctx.db.patch(args.pageId as Id<"pages">, {
-      blocks,
+    await writePageBlocks(ctx, args.pageId as Id<"pages">, blocks, {
       layouts,
       searchText: buildSearchText(page.title, blocks),
-      updatedAt: Date.now(),
     });
     return { ok: true, layoutId, blocksInserted: newBlocks.length };
   },
@@ -822,7 +847,7 @@ export const createLinkedNote = internalMutation({
       title,
       icon: args.icon?.trim() || "📄",
       cover: null,
-      blocks,
+      ...newPageBlockFields(blocks),
       favorite: false,
       trashed: false,
       isPublic: false,
@@ -831,9 +856,10 @@ export const createLinkedNote = internalMutation({
       createdAt: now,
       updatedAt: now,
     });
+    await insertPageBlocks(ctx, pageId, blocks);
     // Reindex AFTER the doc is patched so edges reference the final blocks.
     const doc = await ctx.db.get(pageId);
-    if (doc) await reindexPageLinks(ctx, doc);
+    if (doc) await reindexPageLinks(ctx, doc, blocks);
     return pageId;
   },
 });
@@ -863,19 +889,17 @@ export const addLink = internalMutation({
     const alias = args.alias?.trim();
     const token = alias ? `[[${title}|${alias}]]` : `[[${title}]]`;
     const blocks: BlockLike[] = [
-      ...(page.blocks as BlockLike[]),
+      ...((await readPageBlocks(ctx, page)) as BlockLike[]),
       { id: uid(), type: "paragraph", text: token },
     ];
     if (blocks.length > COUNT_CAPS.blocksPerPage) {
       throw new Error(`Page would exceed block cap (${COUNT_CAPS.blocksPerPage})`);
     }
-    await ctx.db.patch(page._id, {
-      blocks,
+    await writePageBlocks(ctx, page._id, blocks, {
       searchText: buildSearchText(page.title, blocks),
-      updatedAt: Date.now(),
     });
     const doc = await ctx.db.get(page._id);
-    if (doc) await reindexPageLinks(ctx, doc);
+    if (doc) await reindexPageLinks(ctx, doc, blocks);
     return { ok: true, linkedTitle: title };
   },
 });
@@ -894,7 +918,7 @@ export const addTag = internalMutation({
     }
 
     const token = `#${tag}`;
-    const blocks = [...(page.blocks as BlockLike[])];
+    const blocks = [...((await readPageBlocks(ctx, page)) as BlockLike[])];
     // Prefer appending to the last paragraph so tags cluster; never touch a
     // heading/other block type (would rewrite its rendered text).
     let idx = -1;
@@ -914,13 +938,11 @@ export const addTag = internalMutation({
     if (blocks.length > COUNT_CAPS.blocksPerPage) {
       throw new Error(`Page would exceed block cap (${COUNT_CAPS.blocksPerPage})`);
     }
-    await ctx.db.patch(page._id, {
-      blocks,
+    await writePageBlocks(ctx, page._id, blocks, {
       searchText: buildSearchText(page.title, blocks),
-      updatedAt: Date.now(),
     });
     const doc = await ctx.db.get(page._id);
-    if (doc) await reindexPageLinks(ctx, doc);
+    if (doc) await reindexPageLinks(ctx, doc, blocks);
     return { ok: true, tag };
   },
 });

@@ -45,11 +45,14 @@ export const SKILL_HANDLERS: Record<string, SkillHandler> = {
       pageId: doc._id,
       title: doc.title,
       icon: doc.icon,
-      blocks: (doc.blocks ?? []).slice(0, 200).map((b: { type: string; text?: string; checked?: boolean }) => ({
-        type: b.type,
-        text: b.text ?? "",
-        ...(b.checked !== undefined ? { checked: b.checked } : {}),
-      })),
+      blocks: (doc.blocks ?? []).slice(0, 200).map((raw) => {
+        const b = raw as { type: string; text?: string; checked?: boolean };
+        return {
+          type: b.type,
+          text: b.text ?? "",
+          ...(b.checked !== undefined ? { checked: b.checked } : {}),
+        };
+      }),
     };
   },
 

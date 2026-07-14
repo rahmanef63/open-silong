@@ -11,6 +11,7 @@
 import type { MutationCtx } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
 import { uid } from "./uid";
+import { newPageBlockFields, insertPageBlocks } from "./pageContent";
 
 type Block = { id: string; type: string; text: string };
 
@@ -88,14 +89,14 @@ export async function seedWelcomeContent(
 
   const now = Date.now();
   for (const page of SEED_PAGES) {
-    await ctx.db.insert("pages", {
+    const pageId = await ctx.db.insert("pages", {
       userId,
       workspaceId,
       parentId: null,
       title: page.title,
       icon: page.icon,
       cover: null,
-      blocks: page.blocks,
+      ...newPageBlockFields(page.blocks),
       favorite: false,
       trashed: false,
       isPublic: false,
@@ -103,5 +104,6 @@ export async function seedWelcomeContent(
       createdAt: now,
       updatedAt: now,
     });
+    await insertPageBlocks(ctx, pageId, page.blocks);
   }
 }
