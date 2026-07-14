@@ -15,6 +15,7 @@ import { useWorkspaces } from "@/shared/lib/store/hooks";
 import { useAiKeys, type UserKeyRow } from "../hooks/useAiKeys";
 import { AddKeyDialog } from "./AddKeyDialog";
 import { ProviderKeyCard } from "./ProviderKeyCard";
+import { ChatGPTConnectButton } from "./ChatGPTConnectButton";
 
 export function AISection() {
   const { workspace } = useWorkspaces();
@@ -40,6 +41,8 @@ export function AISection() {
   const labelFor = useMemo(() => {
     const map = new Map<string, string>();
     (providers ?? []).forEach((p) => map.set(p.id, p.label));
+    // Codex is OAuth-only and not in the provider catalog.
+    map.set("openai-codex", "ChatGPT (OAuth)");
     return (id: string) => map.get(id) ?? id;
   }, [providers]);
 
@@ -67,6 +70,8 @@ export function AISection() {
             >
               <Plug className="mr-1 h-3.5 w-3.5" /> Connect OpenRouter
             </Button>
+            {/* ToS-grey: rides the user's ChatGPT subscription (opt-in). */}
+            <ChatGPTConnectButton />
             <Button onClick={() => { setEditTarget(undefined); setAddOpen(true); }}>
               <Plus className="mr-1 h-3.5 w-3.5" /> Add key
             </Button>

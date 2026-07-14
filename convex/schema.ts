@@ -643,7 +643,15 @@ export default defineSchema({
       v.literal("google"),
       v.literal("openrouter"),
       v.literal("custom"),
+      // ToS-grey "Sign in with ChatGPT" (Codex CLI) OAuth connection.
+      // encryptedKey holds a JSON.stringify(CodexBundle), NOT an API key.
+      // OAuth-only: never created via the manual aiKeys.save path.
+      v.literal("openai-codex"),
     ),
+    /** How this row authenticates. `undefined`/"api_key" = classic
+     *  pasted key. "oauth" = device-code flow (openai-codex), where
+     *  `encryptedKey` wraps a refreshable token bundle. */
+    authMode: v.optional(v.union(v.literal("api_key"), v.literal("oauth"))),
     label: v.optional(v.string()),                // user-given nickname
     encryptedKey: v.string(),                     // enc:v1:iv:ct envelope
     last4: v.string(),
@@ -661,6 +669,18 @@ export default defineSchema({
   })
     .index("by_owner", ["ownerUserId"])
     .index("by_workspace_scope", ["workspaceId", "scope"]),
+
+  /** Transient device-code state for the "Sign in with ChatGPT" (Codex)
+   *  OAuth flow. One row per user while a connect is in progress:
+   *  `startCodexLogin` writes {deviceAuthId,userCode}, `pollCodexLogin`
+   *  reads them each tick, and the row is cleared once tokens land (or
+   *  aged out). ToS-grey — see `_shared/codexLib.ts`. */
+  aiCodexFlows: defineTable({
+    userId: v.id("users"),
+    deviceAuthId: v.optional(v.string()),
+    userCode: v.optional(v.string()),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]),
 
   /** AI usage log — one row per successful AI call. Drives Settings →
    *  AI → Usage tab + Admin → AI Usage panel. `keySource` records

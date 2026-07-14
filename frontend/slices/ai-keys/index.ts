@@ -7,4 +7,5 @@
 export { AISection } from "./components/AISection";
 export { AddKeyDialog } from "./components/AddKeyDialog";
 export { ProviderKeyCard } from "./components/ProviderKeyCard";
-export { useAiKeys, type UserKeyRow, type Provider, type KeyModel } from "./hooks/useAiKeys";
+export { ChatGPTConnectButton } from "./components/ChatGPTConnectButton";
+export { useAiKeys, type UserKeyRow, type Provider, type KeyProvider, type KeyModel } from "./hooks/useAiKeys";

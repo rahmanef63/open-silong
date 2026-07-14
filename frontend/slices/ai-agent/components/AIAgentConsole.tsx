@@ -3,10 +3,15 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
+import type { Id } from "@convex/_generated/dataModel";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/shared/ui/sheet";
 import { Button } from "@/shared/ui/button";
 import { Textarea } from "@/shared/ui/textarea";
 import { Alert, AlertDescription } from "@/shared/ui/alert";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/shared/ui/select";
+import { useWorkspaces } from "@/shared/lib/store/hooks";
 import {
   Sparkles, Trash2, ArrowUp, ChevronDown, ChevronRight, Wrench, CheckCircle2,
   XCircle, Pencil, Search as SearchIcon, History, Plus, MessageSquare, AtSign, Slash,
@@ -30,7 +35,17 @@ export function AIAgentConsole({ open, onOpenChange, context, activeContext }: P
     approveProposal, discardProposal,
     sessions, activeSessionId, newSession, switchSession, renameSession, deleteSession,
     agent, agents, setAgent,
+    selectedModel, setSelectedModel,
   } = chat;
+
+  // BYOK model refs the user can pick ("" = admin default). Includes any
+  // connected ChatGPT (Codex) models as "openai-codex/<id>".
+  const { workspace } = useWorkspaces();
+  const modelRefs = useQuery(
+    api.aiKeys.list.myModelRefs,
+    workspace?.id ? { workspaceId: workspace.id as Id<"workspaces"> } : {},
+  ) ?? [];
+  const DEFAULT_MODEL = "__default__";
 
   // Subscribe to live progress while a run is in flight. Convex queries
   // are reactive — re-renders as the backend pushes new steps.
@@ -102,6 +117,22 @@ export function AIAgentConsole({ open, onOpenChange, context, activeContext }: P
           <SheetDescription className="text-xs">
             <code>@</code> picks an agent · <code>/</code> picks a skill · mutations need approval.
           </SheetDescription>
+          {modelRefs.length > 0 && (
+            <Select
+              value={selectedModel || DEFAULT_MODEL}
+              onValueChange={(v) => setSelectedModel(v === DEFAULT_MODEL ? "" : v)}
+            >
+              <SelectTrigger className="h-7 mt-1 text-xs">
+                <SelectValue placeholder="Model" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={DEFAULT_MODEL}>Model: admin default</SelectItem>
+                {modelRefs.map((m) => (
+                  <SelectItem key={m.ref} value={m.ref}>{m.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </SheetHeader>
 
         {historyOpen && (

@@ -8,6 +8,10 @@ import { internal } from "../_generated/api";
 import { CHAR_CAPS, RATE_LIMITS } from "../_shared/limits";
 import { AI_PROVIDERS, resolveProviderBaseUrl } from "../_shared/aiProviders";
 import { resolveAiKey, type Provider as ByokProvider } from "../_shared/aiKeyResolver";
+import { parseModelRef } from "../_shared/modelRef";
+import { decryptApiKey, encryptApiKey } from "../_shared/aiCrypto";
+import { ensureFreshCodex, codexChat, type CodexBundle } from "../_shared/codexLib";
+import type { Id } from "../_generated/dataModel";
 import { SKILL_BY_TOOL_NAME, SKILL_BY_ID, toolsForLLM, type Skill } from "./skillCatalog";
 import { SKILL_HANDLERS } from "./skillHandlers";
 
@@ -28,14 +32,46 @@ const MessageSchema = v.object({
   content: v.string(),
 });
 
-interface ResolvedAI {
-  baseUrl: string;
-  apiKey: string;
-  model: string;
-  source: "global" | "env" | "inline" | "user" | "workspace";
-}
+type ResolvedSource = "global" | "env" | "inline" | "user" | "workspace";
+
+/** Discriminated so the ChatGPT/Codex OAuth path can carry a refreshable
+ *  token bundle (Responses API) instead of a baseUrl + Bearer key
+ *  (chat/completions). The `complete` action short-circuits on
+ *  `mode:"codex"` before the tool loop; everything else stays `http`. */
+type ResolvedAI =
+  | { mode: "http"; baseUrl: string; apiKey: string; model: string; source: ResolvedSource }
+  | { mode: "codex"; bundle: CodexBundle; model: string; source: ResolvedSource; keyId: Id<"aiUserKeys"> };
 
 const BYOK_PROVIDERS = new Set(["openai", "anthropic", "google", "openrouter", "custom"]);
+
+/** Resolve + refresh the caller's ChatGPT/Codex OAuth bundle. ToS-grey:
+ *  only reached when the user explicitly selected an `openai-codex/*`
+ *  model. Refreshes + re-persists the token bundle when it's near expiry
+ *  so the returned bundle is always live. */
+async function resolveCodex(
+  ctx: ActionCtx,
+  userId: Id<"users">,
+  model: string,
+): Promise<ResolvedAI> {
+  const row = await ctx.runQuery(internal.aiKeys.codex._getCodexKey, { userId });
+  if (!row) {
+    throw new Error("No ChatGPT connection — connect it in Settings → AI first.");
+  }
+  let bundle: CodexBundle;
+  try {
+    bundle = JSON.parse(await decryptApiKey(row.encryptedKey));
+  } catch {
+    throw new Error("ChatGPT connection is unreadable — reconnect it in Settings → AI.");
+  }
+  const { bundle: fresh, refreshed } = await ensureFreshCodex(bundle);
+  if (refreshed) {
+    await ctx.runMutation(internal.aiKeys.codex._storeCodexBundle, {
+      keyId: row._id,
+      encryptedKey: await encryptApiKey(JSON.stringify(fresh)),
+    });
+  }
+  return { mode: "codex", bundle: fresh, model, source: "user", keyId: row._id };
+}
 
 /** Resolution order (BYOK-first — a stored user key is the whole point):
  *  1. The signed-in user's PERSONAL / workspace-SHARED `aiUserKeys` key for
@@ -60,15 +96,61 @@ async function resolveAI(
 
   // Desired provider / model / base URL.
   const provider = global?.provider ?? "openrouter";
-  let model = global?.model ?? AI_PROVIDERS.openrouter.defaultModel;
-  if (override) model = override;
-  if (callerOverrideModel) model = callerOverrideModel; // caller wins (e.g. summaries)
+  let effectiveModel = global?.model ?? AI_PROVIDERS.openrouter.defaultModel;
+  if (override) effectiveModel = override;
+  if (callerOverrideModel) effectiveModel = callerOverrideModel; // caller wins (e.g. summaries)
+
+  // Provider-ref routing applies ONLY to an explicit caller/picker
+  // selection ("openai-codex/gpt-5", "openrouter/google/gemini-…",
+  // "openai/gpt-4o"). It must NEVER parse admin config models: an
+  // OpenRouter model id is itself vendor-prefixed (e.g. the default
+  // "google/gemini-3.1-flash-lite"), and treating "google" as a BYOK
+  // provider would silently divert the admin's OpenRouter config to the
+  // user's Google key. So parse the caller arg only; absent it, the
+  // admin path runs untouched.
+  const ref = callerOverrideModel
+    ? parseModelRef(callerOverrideModel)
+    : { provider: null as string | null, model: effectiveModel };
+
+  // 0) ChatGPT/Codex OAuth (ToS-grey, opt-in) — explicit picker selection.
+  if (ref.provider === "openai-codex") {
+    if (!userId) throw new Error("Sign in to use your ChatGPT connection.");
+    return await resolveCodex(ctx, userId, ref.model);
+  }
+
+  // 1a) Explicit provider ref from the picker → that provider's BYOK key.
+  //     Only diverts when the user actually HAS a key for it; otherwise we
+  //     fall through to the legacy path with the ORIGINAL (unstripped) ref
+  //     so summaries/admin behaviour never changes.
+  if (ref.provider && userId && activeWorkspaceId && BYOK_PROVIDERS.has(ref.provider)) {
+    try {
+      const k = await resolveAiKey(ctx, {
+        userId,
+        workspaceId: activeWorkspaceId,
+        provider: ref.provider as ByokProvider,
+      });
+      if (k.source === "user" || k.source === "workspace") {
+        return {
+          mode: "http",
+          baseUrl: k.endpoint || resolveProviderBaseUrl(ref.provider),
+          apiKey: k.plaintext,
+          model: ref.model,
+          source: k.source,
+        };
+      }
+    } catch {
+      /* no key for the picked provider — fall through to legacy */
+    }
+  }
+
+  // Legacy path — admin provider + BYOK-first for the admin provider.
+  const model = effectiveModel;
   const baseUrl = resolveProviderBaseUrl(provider, global?.baseUrl ?? undefined);
 
-  // 1) BYOK — user's own or workspace-shared key for this provider wins.
-  //    resolveAiKey throws on miss; treat that as "no user key" and fall
-  //    through. It also returns an env "admin" tier, which we ignore here
-  //    so the admin/env fallbacks below own that path.
+  // 1b) BYOK — user's own or workspace-shared key for the admin provider
+  //     wins. resolveAiKey throws on miss; treat that as "no user key" and
+  //     fall through. It also returns an env "admin" tier, which we ignore
+  //     here so the admin/env fallbacks below own that path.
   if (userId && activeWorkspaceId && BYOK_PROVIDERS.has(provider)) {
     try {
       const k = await resolveAiKey(ctx, {
@@ -77,7 +159,7 @@ async function resolveAI(
         provider: provider as ByokProvider,
       });
       if (k.source === "user" || k.source === "workspace") {
-        return { baseUrl: k.endpoint || baseUrl, apiKey: k.plaintext, model, source: k.source };
+        return { mode: "http", baseUrl: k.endpoint || baseUrl, apiKey: k.plaintext, model, source: k.source };
       }
     } catch {
       /* no user/workspace key — fall through to admin/env */
@@ -86,7 +168,7 @@ async function resolveAI(
 
   // 2) Admin global config.
   if (global) {
-    return { baseUrl, apiKey: global.apiKey, model, source: "global" };
+    return { mode: "http", baseUrl, apiKey: global.apiKey, model, source: "global" };
   }
 
   // 3) env fallback (OpenRouter), preserved so a fresh deploy still works.
@@ -94,6 +176,7 @@ async function resolveAI(
   if (envKey) {
     const openrouter = AI_PROVIDERS.openrouter;
     return {
+      mode: "http",
       baseUrl: openrouter.baseUrl,
       apiKey: envKey,
       model: callerOverrideModel ?? openrouter.defaultModel,
@@ -193,6 +276,45 @@ export const complete = action({
       } catch { /* progress is advisory — never block on a failure */ }
     };
     await flushProgress();
+
+    // ── ChatGPT/Codex OAuth short-circuit (ToS-grey, opt-in) ───────────
+    // Only reached when the user explicitly picked an `openai-codex/*`
+    // model. The Codex backend is a Responses API, not chat/completions,
+    // and has no tool-calling in this integration → single hop, no tools,
+    // no proposals. Any failure here is isolated to codex-selected
+    // requests; the normal AI path never enters this branch. After this
+    // early return TS narrows `cfg` to the `http` variant below.
+    if (cfg.mode === "codex") {
+      const codexMessages = conversation.map((m) => ({
+        role: String(m.role),
+        content: typeof m.content === "string" ? m.content : "",
+      }));
+      const t0 = Date.now();
+      const out = await codexChat(cfg.bundle, cfg.model, codexMessages);
+      const codexMs = Date.now() - t0;
+      const usage = { input_tokens: out.promptTokens, output_tokens: out.completionTokens };
+      const delta = out.promptTokens + out.completionTokens;
+      if (delta > 0) {
+        // ponytail: reuse the existing token-ledger mutation for quota
+        // bookkeeping; the richer aiUsageLog row is skipped for codex
+        // (the normal chat path doesn't write it either).
+        try { await ctx.runMutation(internal.ai.internal.recordAiUsage, { tokens: delta }); }
+        catch { /* advisory */ }
+      }
+      progress.push({ kind: "finalize", label: `ChatGPT (Codex) · ${codexMs}ms` });
+      await flushProgress();
+      if (runId) {
+        try { await ctx.runMutation(internal.ai.internal.clearProgress, { runId }); } catch { /* advisory */ }
+      }
+      return {
+        text: out.text,
+        usage,
+        model: cfg.model,
+        source: cfg.source,
+        progress,
+        proposals: [] as Array<{ id: string; skillId: string; label: string; args: Record<string, unknown> }>,
+      };
+    }
 
     let reply = "";
     let totalLlmMs = 0;
@@ -411,13 +533,19 @@ export const testConnection = action({
       // is IGNORED here; resolveProviderBaseUrl falls back to the
       // catalog's known good base URL for the chosen provider.
       cfg = {
+        mode: "http",
         baseUrl: resolveProviderBaseUrl(args.provider),
         apiKey: inlineKey,
         model: args.model.trim(),
         source: "inline",
-      } as ResolvedAI;
+      };
     } else {
       cfg = await resolveAI(ctx);
+    }
+    // Admin connectivity test only exercises the chat/completions path.
+    // A codex-selected config (OAuth) has no baseUrl/apiKey to test here.
+    if (cfg.mode !== "http") {
+      throw new Error("The admin test does not cover the ChatGPT (Codex) connection.");
     }
     const res = await fetch(`${cfg.baseUrl}/chat/completions`, {
       method: "POST",

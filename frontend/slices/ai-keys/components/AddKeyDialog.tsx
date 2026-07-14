@@ -39,7 +39,9 @@ export function AddKeyDialog({ open, onOpenChange, workspaceId, existing }: AddK
   const { save } = useAiKeys(workspaceId);
 
   const [scope, setScope] = useState<"personal" | "workspace">(existing?.scope ?? "personal");
-  const [provider, setProvider] = useState<Provider>(existing?.provider ?? "openrouter");
+  // Edit is hidden for codex rows, so `existing.provider` is always a
+  // manual Provider here; the cast just satisfies the widened KeyProvider.
+  const [provider, setProvider] = useState<Provider>((existing?.provider as Provider) ?? "openrouter");
   const [plaintext, setPlaintext] = useState("");
   const [endpoint, setEndpoint] = useState(existing?.endpoint ?? "");
   const [label, setLabel] = useState(existing?.label ?? "");
@@ -52,7 +54,7 @@ export function AddKeyDialog({ open, onOpenChange, workspaceId, existing }: AddK
   useEffect(() => {
     if (!open) return;
     setScope(existing?.scope ?? "personal");
-    setProvider(existing?.provider ?? "openrouter");
+    setProvider((existing?.provider as Provider) ?? "openrouter");
     setPlaintext("");
     setEndpoint(existing?.endpoint ?? "");
     setLabel(existing?.label ?? "");

@@ -15,6 +15,10 @@ const asWorkspaceId = (s: string): Id<"workspaces"> => s as Id<"workspaces">;
 const asKeyId = (s: string): Id<"aiUserKeys"> => s as Id<"aiUserKeys">;
 
 export type Provider = "openai" | "anthropic" | "google" | "openrouter" | "custom";
+/** Manual-save providers + the OAuth-only ChatGPT/Codex connection.
+ *  `openai-codex` rows are created via the device-code flow, never the
+ *  Add-key dialog, so `Provider` (the manual set) stays narrow. */
+export type KeyProvider = Provider | "openai-codex";
 
 export interface KeyModel { id: string; label: string; enabled: boolean }
 
@@ -23,7 +27,7 @@ export interface UserKeyRow {
   ownerUserId: string;
   scope: "personal" | "workspace";
   workspaceId: string | null;
-  provider: Provider;
+  provider: KeyProvider;
   label: string | null;
   last4: string;
   endpoint: string | null;

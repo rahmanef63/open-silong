@@ -29,6 +29,10 @@ export function ProviderKeyCard({
   const [busy, setBusy] = useState(false);
   const enabledModelCount = row.enabledModels.filter((m) => m.enabled).length;
   const validated = !!row.validatedAt && !row.validatedError;
+  // Codex is an OAuth connection, not a pasted key — no Edit dialog, and
+  // preferOwn has no effect (it resolves only via an explicit picker ref).
+  const isCodex = row.provider === "openai-codex";
+  const displayLabel = isCodex ? "ChatGPT (OAuth)" : (providerLabel ?? row.provider);
 
   const handleRemove = async () => {
     const ok = await confirm({
@@ -49,11 +53,14 @@ export function ProviderKeyCard({
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-sm font-medium">
-              {row.label || providerLabel || row.provider}
+              {row.label || displayLabel}
             </span>
             <Badge variant={row.scope === "workspace" ? "default" : "secondary"} className="text-[10px]">
               {row.scope}
             </Badge>
+            {isCodex && (
+              <Badge variant="outline" className="text-[10px]">OAuth</Badge>
+            )}
             <span className="font-mono text-[11px] text-muted-foreground">{row.last4}</span>
             {validated ? (
               <span className="inline-flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400">
@@ -66,15 +73,17 @@ export function ProviderKeyCard({
             ) : null}
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
-            {providerLabel ?? row.provider} ·{" "}
+            {displayLabel} ·{" "}
             <span className="tabular-nums">{enabledModelCount}</span> model{enabledModelCount === 1 ? "" : "s"} enabled
             {row.endpoint ? ` · ${truncMid(row.endpoint, 36)}` : ""}
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-1">
-          <Button variant="ghost" size="icon" onClick={onEdit} aria-label="Edit key" className="h-7 w-7">
-            <Edit3 className="h-3.5 w-3.5" />
-          </Button>
+          {!isCodex && (
+            <Button variant="ghost" size="icon" onClick={onEdit} aria-label="Edit key" className="h-7 w-7">
+              <Edit3 className="h-3.5 w-3.5" />
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="icon"
@@ -88,7 +97,7 @@ export function ProviderKeyCard({
         </div>
       </div>
 
-      {row.scope === "personal" && (
+      {row.scope === "personal" && !isCodex && (
         <div className={cn("mt-3 flex items-center justify-between gap-3 rounded border border-dashed border-border/60 px-3 py-2")}>
           <div>
             <p className="text-xs font-medium">Prefer this key</p>

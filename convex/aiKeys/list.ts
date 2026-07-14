@@ -68,6 +68,50 @@ export const mine = query({
   },
 });
 
+/** Model refs the signed-in user can pick in the AI console. Each ref is
+ *  a provider-prefixed `"<provider>/<modelId>"` string that resolveAI
+ *  parses back into an explicit BYOK selection. Codex (ChatGPT OAuth)
+ *  models surface as `"openai-codex/<id>"` with a "ChatGPT · …" label.
+ *  Deduped by ref; NEVER returns key material. The empty "(admin default)"
+ *  option is prepended client-side. */
+export const myModelRefs = query({
+  args: { workspaceId: v.optional(v.id("workspaces")) },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
+
+    const personal = await ctx.db
+      .query("aiUserKeys")
+      .withIndex("by_owner", (q) => q.eq("ownerUserId", userId))
+      .filter((q) => q.eq(q.field("scope"), "personal"))
+      .take(50);
+    const workspace = args.workspaceId
+      ? await ctx.db
+          .query("aiUserKeys")
+          .withIndex("by_workspace_scope", (q) =>
+            q.eq("workspaceId", args.workspaceId).eq("scope", "workspace"),
+          )
+          .take(50)
+      : [];
+
+    const byRef = new Map<string, { ref: string; label: string; provider: string }>();
+    for (const k of [...personal, ...workspace]) {
+      const isCodex = k.provider === "openai-codex";
+      for (const m of k.enabledModels) {
+        if (!m.enabled) continue;
+        const ref = `${k.provider}/${m.id}`;
+        if (byRef.has(ref)) continue;
+        byRef.set(ref, {
+          ref,
+          label: isCodex ? `ChatGPT · ${m.label}` : m.label,
+          provider: k.provider,
+        });
+      }
+    }
+    return [...byRef.values()];
+  },
+});
+
 /** Resolver-only — returns encrypted envelope. Called from server
  *  actions via `ctx.runQuery`. Never expose to the client directly. */
 export const forResolver = query({

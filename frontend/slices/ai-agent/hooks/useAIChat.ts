@@ -55,6 +55,18 @@ export function useAIChat(activeContext?: ActiveContext) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // User-picked model ref ("" = admin default). A provider-prefixed ref
+  // like "openai-codex/gpt-5" / "openrouter/google/gemini-…" is passed to
+  // complete() as `model`; the backend resolveAI parses it into an
+  // explicit BYOK selection. Persisted so the choice survives reloads.
+  const [selectedModel, setSelectedModelState] = useState<string>(() => {
+    try { return localStorage.getItem("silong:ai-model") ?? ""; } catch { return ""; }
+  });
+  const setSelectedModel = useCallback((m: string) => {
+    setSelectedModelState(m);
+    try { localStorage.setItem("silong:ai-model", m); } catch { /* ignore */ }
+  }, []);
+
   // Refresh sessions list from store. Called after any mutation.
   const refreshSessions = useCallback(() => {
     setSessions(SessionStore.list());
@@ -179,6 +191,8 @@ export function useAIChat(activeContext?: ActiveContext) {
       const r = await complete({
         messages: apiMessages,
         system: systemParts.length ? systemParts.join("\n\n") : undefined,
+        // "" → admin default (legacy path); a provider-prefixed ref selects BYOK.
+        model: selectedModel || undefined,
         context: effectiveContext && (effectiveContext.activePageId || effectiveContext.userName)
           ? effectiveContext
           : undefined,
@@ -200,7 +214,7 @@ export function useAIChat(activeContext?: ActiveContext) {
       setPending(false);
       setLiveRunId(null);
     }
-  }, [activeContext, complete, pending, refreshSessions, writeMessages]);
+  }, [activeContext, complete, pending, refreshSessions, writeMessages, selectedModel]);
 
   /** Approve one proposal → run the mutation via the convex action,
    *  patch the assistant message's proposal state inline. */
@@ -278,5 +292,7 @@ export function useAIChat(activeContext?: ActiveContext) {
     sessions, activeSessionId, newSession, switchSession, renameSession, deleteSession,
     // Agent
     agent, agents: AGENTS, setAgent,
+    // Model picker ("" = admin default)
+    selectedModel, setSelectedModel,
   };
 }
