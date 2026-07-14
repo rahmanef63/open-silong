@@ -404,8 +404,8 @@ export default defineSchema({
     lastError: v.optional(v.string()),
   }).index("by_user", ["userId"]),
 
-  /** Append-only audit log of every webhook delivery attempt. Pruned
-   *  by `maintenance.pruneWebhookDeliveries` (TBD) after 30 days. */
+  /** Append-only audit log of every webhook delivery attempt.
+   *  Automatic pruning is not yet implemented. */
   webhookDeliveries: defineTable({
     endpointId: v.id("webhookEndpoints"),
     event: v.string(),
@@ -617,27 +617,6 @@ export default defineSchema({
   })
     .index("by_user", ["userId"])
     .index("by_updated", ["updatedAt"]),
-
-  /** Generic per-portal dashboard menu items. Useful for any downstream
-   *  app consuming this Convex backend that wants pluggable navigation
-   *  per role (owner / staff / guest / …). Edit via the Convex dashboard
-   *  table view or via mutations in `convex/zianMenu.ts`. Public read,
-   *  no auth gate. */
-  zianMenuItems: defineTable({
-    portal: v.string(),            // owner | manager | staff | guest | resident | security | admin
-    slug: v.string(),              // stable id within portal
-    label: v.string(),             // display text
-    icon: v.string(),              // lucide-react component name
-    route: v.string(),             // absolute path
-    order: v.number(),             // sort order ascending
-    parentSlug: v.optional(v.string()),  // when set, this row is a child of (portal, parentSlug) — sidebar nests them
-    requirePermission: v.optional(v.string()),
-    active: v.boolean(),
-    updatedAt: v.number(),
-  })
-    .index("by_portal_order", ["portal", "order"])
-    .index("by_portal_slug", ["portal", "slug"])
-    .index("by_portal_parent", ["portal", "parentSlug"]),
 
   /** BYOK AI keys — users add their own provider keys to offset
    *  admin AI costs OR use private models. Scope decides visibility:

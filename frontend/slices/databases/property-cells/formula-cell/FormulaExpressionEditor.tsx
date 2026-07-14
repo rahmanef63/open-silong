@@ -1,6 +1,6 @@
 "use client";
 
-import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState, type KeyboardEvent, type MutableRefObject } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { AlertTriangle } from "lucide-react";
 import type { Database } from "@/shared/types/domain";
 import { cn } from "@/shared/lib/utils";
@@ -331,7 +331,3 @@ export const FormulaExpressionEditor = forwardRef<FormulaExpressionEditorRef, Fo
     );
   },
 );
-
-// Internal: ref-style sigil used in early dev for testability hooks.
-// Suppress unused-import lint without exposing a public type.
-void (null as unknown as MutableRefObject<HTMLInputElement>);

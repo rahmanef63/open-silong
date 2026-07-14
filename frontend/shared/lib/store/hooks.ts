@@ -13,16 +13,6 @@
 
 import { useStore } from "./context";
 
-export function useUser() {
-  const s = useStore();
-  return { user: s.user, updateUser: s.updateUser };
-}
-
-export function usePreferences() {
-  const s = useStore();
-  return { preferences: s.preferences, updatePreferences: s.updatePreferences };
-}
-
 export function useWorkspaces() {
   const s = useStore();
   return {
@@ -59,55 +49,6 @@ export function usePages() {
   };
 }
 
-export function useRecents() {
-  const s = useStore();
-  return { recents: s.recents, pushRecent: s.pushRecent };
-}
-
-export function useBlocks() {
-  const s = useStore();
-  return {
-    addBlock: s.addBlock,
-    updateBlock: s.updateBlock,
-    deleteBlock: s.deleteBlock,
-    duplicateBlock: s.duplicateBlock,
-    moveBlock: s.moveBlock,
-    reorderBlocks: s.reorderBlocks,
-    setBlockType: s.setBlockType,
-    replaceBlock: s.replaceBlock,
-  };
-}
-
-export function useDatabases() {
-  const s = useStore();
-  return {
-    databases: s.databases,
-    trashedDatabases: s.trashedDatabases,
-    getDatabase: s.getDatabase,
-    createDatabase: s.createDatabase,
-    updateDatabase: s.updateDatabase,
-    trashDatabase: s.trashDatabase,
-    restoreDatabase: s.restoreDatabase,
-    permanentlyDeleteDatabase: s.permanentlyDeleteDatabase,
-    addDatabaseFromTable: s.addDatabaseFromTable,
-    duplicateDatabase: s.duplicateDatabase,
-  };
-}
-
-export function useDatabaseProperties() {
-  const s = useStore();
-  return {
-    addProperty: s.addProperty,
-    duplicateProperty: s.duplicateProperty,
-    updateProperty: s.updateProperty,
-    deleteProperty: s.deleteProperty,
-    reorderProperties: s.reorderProperties,
-    addSelectOption: s.addSelectOption,
-    updateSelectOption: s.updateSelectOption,
-    deleteSelectOption: s.deleteSelectOption,
-  };
-}
-
 export function useDatabaseRows() {
   const s = useStore();
   return {
@@ -119,24 +60,6 @@ export function useDatabaseRows() {
   };
 }
 
-export function useDatabaseViews() {
-  const s = useStore();
-  return {
-    addView: s.addView,
-    updateView: s.updateView,
-    deleteView: s.deleteView,
-  };
-}
-
-export function useSnapshotsStore() {
-  const s = useStore();
-  return {
-    snapshots: s.snapshots,
-    snapshotsForPage: s.snapshotsForPage,
-    restoreSnapshot: s.restoreSnapshot,
-  };
-}
-
 export function useUndoRedo() {
   const s = useStore();
   return {
@@ -145,9 +68,4 @@ export function useUndoRedo() {
     canUndo: s.canUndo,
     canRedo: s.canRedo,
   };
-}
-
-export function useAuth() {
-  const s = useStore();
-  return { signOut: s.signOut, saving: s.saving };
 }

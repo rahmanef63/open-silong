@@ -7,4 +7,3 @@ export type { FileRef, ParsedFileRef } from "./types";
 
 export { FilesAdapterProvider, useFilesAdapter } from "./adapter/context";
 export type { FilesAdapter } from "./adapter/types";
-export { useLocalStorageFilesAdapter } from "./adapter/localStorageAdapter";

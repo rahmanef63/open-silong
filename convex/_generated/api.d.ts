@@ -28,8 +28,6 @@ import type * as _shared_rateLimit from "../_shared/rateLimit.js";
 import type * as _shared_seedWelcomeContent from "../_shared/seedWelcomeContent.js";
 import type * as _shared_uid from "../_shared/uid.js";
 import type * as _shared_workspace from "../_shared/workspace.js";
-import type * as admin_backfillHasPublicForm from "../admin/backfillHasPublicForm.js";
-import type * as admin_backfillWorkspaceId from "../admin/backfillWorkspaceId.js";
 import type * as admin_fkAudit from "../admin/fkAudit.js";
 import type * as admin_fkGc from "../admin/fkGc.js";
 import type * as admin_mutations from "../admin/mutations.js";
@@ -144,7 +142,6 @@ import type * as webhooks_deliveries from "../webhooks/deliveries.js";
 import type * as webhooks_mutations from "../webhooks/mutations.js";
 import type * as webhooks_queries from "../webhooks/queries.js";
 import type * as workspaces from "../workspaces.js";
-import type * as zianMenu from "../zianMenu.js";
 
 import type {
   ApiFromModules,
@@ -173,8 +170,6 @@ declare const fullApi: ApiFromModules<{
   "_shared/seedWelcomeContent": typeof _shared_seedWelcomeContent;
   "_shared/uid": typeof _shared_uid;
   "_shared/workspace": typeof _shared_workspace;
-  "admin/backfillHasPublicForm": typeof admin_backfillHasPublicForm;
-  "admin/backfillWorkspaceId": typeof admin_backfillWorkspaceId;
   "admin/fkAudit": typeof admin_fkAudit;
   "admin/fkGc": typeof admin_fkGc;
   "admin/mutations": typeof admin_mutations;
@@ -289,7 +284,6 @@ declare const fullApi: ApiFromModules<{
   "webhooks/mutations": typeof webhooks_mutations;
   "webhooks/queries": typeof webhooks_queries;
   workspaces: typeof workspaces;
-  zianMenu: typeof zianMenu;
 }>;
 
 /**

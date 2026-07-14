@@ -20,7 +20,7 @@ import type { Id } from "../_generated/dataModel";
 import type { ActionCtx } from "../_generated/server";
 import {
   blockToNotion, blockFromNotion,
-  propertyToNotionSchema, propertiesArrayToMap,
+  propertiesArrayToMap,
   valueToNotion, valueFromNotion,
 } from "../_shared/notionShape";
 import { sha256Hex } from "../_shared/hash";
@@ -347,13 +347,6 @@ export const mcpHandler = httpAction(async (ctx, req) => {
         return ok(rowToNotionPage(updated, db));
       }
 
-      // ─── Discovery ───────────────────────────────────────────
-      case "nosion-list-tools": {
-        return ok({
-          tools: TOOL_LIST,
-        });
-      }
-
       default:
         return err(400, `Unknown tool: ${body.tool}`);
     }
@@ -382,21 +375,3 @@ function mapNotionPropsToRaw(
   }
   return out;
 }
-
-const TOOL_LIST = [
-  { name: "nosion-search", description: "Full-text search across pages.", required: ["query"] },
-  { name: "nosion-list-pages", description: "List pages with cursor pagination.", required: [] },
-  { name: "nosion-list-databases", description: "List all databases.", required: [] },
-  { name: "nosion-fetch", description: "Fetch any page or database by id.", required: ["id"] },
-  { name: "nosion-list-rows", description: "List rows of a database.", required: ["database_id"] },
-  { name: "nosion-create-page", description: "Create a page with optional Notion-shape children blocks.", required: [] },
-  { name: "nosion-update-page", description: "Patch page title/icon/cover/children.", required: ["page_id"] },
-  { name: "nosion-move-page", description: "Reparent a page.", required: ["page_id"] },
-  { name: "nosion-trash-page", description: "Soft-delete a page (archive).", required: ["page_id"] },
-  { name: "nosion-duplicate-page", description: "Deep-clone a page with fresh ids.", required: ["page_id"] },
-  { name: "nosion-create-database", description: "Create a database.", required: [] },
-  { name: "nosion-update-database", description: "Patch database title/icon/properties.", required: ["database_id"] },
-  { name: "nosion-create-row", description: "Insert a row with Notion-shape properties envelope.", required: ["database_id"] },
-  { name: "nosion-update-row", description: "Patch row properties.", required: ["page_id"] },
-  { name: "nosion-list-tools", description: "List available MCP tools.", required: [] },
-] as const;

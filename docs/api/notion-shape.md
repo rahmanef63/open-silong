@@ -100,11 +100,15 @@ content. By design.
 ### Properties (schema)
 
 ```ts
-import { propertyToNotionSchema, propertyFromNotionSchema } from "@convex/_shared/notionShape";
+import { propertyToNotionSchema } from "@convex/_shared/notionShape";
 
 propertyToNotionSchema({ id:"p1", name:"Price", type:"number", numberFormat:"currency", numberCurrencyCode:"EUR" });
 // → { id:"p1", name:"Price", type:"number", number:{ format:"euro" } }
 ```
+
+Only the Nosion → Notion emit direction ships today. The reverse
+mapper (`propertyFromNotionSchema`) was removed — it had no production
+caller.
 
 22 of Notion's 23 types covered (no `verification` yet — pending
 matching Nosion implementation). Currency format mapping:
@@ -114,10 +118,10 @@ matching Nosion implementation). Currency format mapping:
 | `dollar` / `euro` / `pound` / `yen` / `yuan` / `ruble` / `rupee` / `won` / `real` / `rupiah` | `USD` / `EUR` / `GBP` / `JPY` / `CNY` / `RUB` / `INR` / `KRW` / `BRL` / `IDR` |
 | any other named currency (frank, peso, …) | falls back to `dollar` on emit; preserved verbatim on import |
 
-### Properties (array ↔ map)
+### Properties (array → map)
 
 ```ts
-import { propertiesArrayToMap, propertiesMapToArray } from "@convex/_shared/notionShape";
+import { propertiesArrayToMap } from "@convex/_shared/notionShape";
 
 propertiesArrayToMap([{id:"p1",name:"Title",type:"text"}, {id:"p2",name:"Tags",type:"multi_select"}]);
 // → { Title: { id:"p1", name:"Title", type:"rich_text", rich_text:{} },
@@ -166,9 +170,9 @@ in v1 — Nosion doesn't emit it.
 types in the table above. Foreign Notion types degrade to
 `paragraph`.
 
-`propertyToNotionSchema` ⇄ `propertyFromNotionSchema`: lossless for
-the 22 covered types. Property `id` is preserved when present —
-caller assigns when missing (e.g. on Notion → Nosion import).
+`propertyToNotionSchema`: emit-only (Nosion → Notion). The reverse
+mapper was removed for lack of a production caller; reintroduce it if
+a Notion → Nosion schema importer is ever built.
 
 `valueToNotion` ⇄ `valueFromNotion`: lossless except `person` array
 data on reverse from a foreign workspace (user ids are meaningless
@@ -183,5 +187,5 @@ across workspaces — see `_shared/idRemap.ts`).
 | Emit Notion-shape JSON to a third party | `*ToNotion*` |
 | Accept Notion API JSON from a third party | `*FromNotion*` |
 | Build a "Show as Notion JSON" preview in the UI | `pageDoc → blockToNotion` per block |
-| Build a Notion → Nosion importer | `blockFromNotion` per block + `propertyFromNotionSchema` for db schema + `valueFromNotion` per cell |
+| Build a Notion → Nosion importer | `blockFromNotion` per block + `valueFromNotion` per cell (property-schema reverse mapper not shipped) |
 | Test rich_text round-trip in isolation | `inlineMdToRichText(richTextToInlineMd(arr))` |

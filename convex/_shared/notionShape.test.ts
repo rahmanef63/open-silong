@@ -2,8 +2,8 @@ import { describe, it, expect } from "vitest";
 import {
   inlineMdToRichText, richTextToInlineMd,
   blockToNotion, blockFromNotion,
-  propertyToNotionSchema, propertyFromNotionSchema,
-  propertiesArrayToMap, propertiesMapToArray,
+  propertyToNotionSchema,
+  propertiesArrayToMap,
   valueToNotion, valueFromNotion,
 } from "./notionShape";
 
@@ -144,28 +144,7 @@ describe("propertyToNotionSchema", () => {
   });
 });
 
-describe("propertyFromNotionSchema round-trip", () => {
-  const seeds = [
-    { id: "x1", name: "Title", type: "text" },
-    { id: "x2", name: "Pct", type: "number", numberFormat: "percent" },
-    { id: "x3", name: "Price", type: "number", numberFormat: "currency", numberCurrencyCode: "USD" },
-    { id: "x4", name: "Tags", type: "multi_select", options: [{ id: "t1", name: "Hot", color: "red" }] },
-    { id: "x5", name: "R", type: "relation", relationDatabaseId: "db_a", relationTwoWay: true, relationInversePropertyId: "iv" },
-  ];
-  for (const seed of seeds) {
-    it(`round-trips ${seed.name}`, () => {
-      const back = propertyFromNotionSchema(propertyToNotionSchema(seed));
-      expect(back.type).toBe(seed.type);
-      expect(back.name).toBe(seed.name);
-      if (seed.numberFormat) expect(back.numberFormat).toBe(seed.numberFormat);
-      if (seed.numberCurrencyCode) expect(back.numberCurrencyCode).toBe(seed.numberCurrencyCode);
-      if (seed.relationDatabaseId) expect(back.relationDatabaseId).toBe(seed.relationDatabaseId);
-      if (seed.relationTwoWay) expect(back.relationTwoWay).toBe(true);
-    });
-  }
-});
-
-describe("propertiesArrayToMap / propertiesMapToArray", () => {
+describe("propertiesArrayToMap", () => {
   it("array → map keyed by name, preserves config", () => {
     const arr = [
       { id: "p1", name: "Title", type: "text" },
@@ -174,12 +153,6 @@ describe("propertiesArrayToMap / propertiesMapToArray", () => {
     const map = propertiesArrayToMap(arr);
     expect(Object.keys(map)).toEqual(["Title", "Tags"]);
     expect(map.Tags.type).toBe("multi_select");
-  });
-  it("round-trips name + type", () => {
-    const arr = [{ id: "a", name: "N", type: "number", numberFormat: "decimal" }];
-    const back = propertiesMapToArray(propertiesArrayToMap(arr));
-    expect(back[0].name).toBe("N");
-    expect(back[0].type).toBe("number");
   });
 });
 

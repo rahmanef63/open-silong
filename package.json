@@ -42,10 +42,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "convex:dev": "convex dev",
-    "convex:deploy": "convex deploy",
-    "sync:rr": "node scripts/sync-to-rr.mjs",
-    "sync:rr:status": "node scripts/rr-sync-status.mjs",
-    "sync:rr:doc": "node scripts/sync-to-rr.mjs --regen-doc"
+    "convex:deploy": "convex deploy"
   },
   "dependencies": {
     "@auth/core": "^0.37.4",

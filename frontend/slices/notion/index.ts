@@ -52,18 +52,12 @@ export {
   NotionAdapterProvider, useNotionAdapter, useNotionAdapterOptional,
   type NotionAdapterProviderProps,
 } from "./adapter/context";
-export { noopAdapter } from "./adapter/noopAdapter";
 export type {
   NotionAdapter, PagesAdapter, DatabasesAdapter,
   AiAdapter, PresenceAdapter, SearchAdapter, UserAdapter,
   WorkspacesAdapter, RecentsAdapter, SnapshotsAdapter,
 } from "./adapter/types";
 
-// ─── Reference adapter implementations. The Convex one is the
-//     production default for this repo; the localStorage one is the
-//     rr / demo / portfolio default.
-//     NOTE: `useConvexNotionAdapter` is intentionally NOT re-exported
-//     here — `convexAdapter/` is skip-listed in rr-sync.json. Consumers
-//     wanting the Convex impl import it directly from the file path:
+// ─── Reference adapter implementation. `useConvexNotionAdapter` is the
+//     production adapter; import it directly from the file path:
 //     `@/slices/notion/adapter/convexAdapter`.
-export { useLocalStorageNotionAdapter } from "./adapter/localStorageAdapter";

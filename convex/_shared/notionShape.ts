@@ -450,10 +450,6 @@ const NOSION_TO_NOTION_PROP_TYPE: Record<string, string> = {
   ai_custom: "ai_custom",
 };
 
-const NOTION_TO_NOSION_PROP_TYPE: Record<string, string> = Object.fromEntries(
-  Object.entries(NOSION_TO_NOTION_PROP_TYPE).map(([k, v]) => [v, k]),
-);
-
 /** Convert a Nosion Property → Notion property-schema entry payload
  *  (the value side of `properties: { name → entry }`). */
 export function propertyToNotionSchema(p: PropertyLike): NotionPropertySchemaEntry {
@@ -509,38 +505,6 @@ export function propertyToNotionSchema(p: PropertyLike): NotionPropertySchemaEnt
   return out;
 }
 
-/** Inverse: Notion property-schema entry → Nosion Property partial.
- *  `id` is preserved if Notion supplied one; otherwise caller assigns. */
-export function propertyFromNotionSchema(entry: NotionPropertySchemaEntry): PropertyLike {
-  const ntype = entry.type;
-  const noType = NOTION_TO_NOSION_PROP_TYPE[ntype] ?? "text";
-  const out: PropertyLike = { id: entry.id, name: entry.name, type: noType, description: entry.description };
-  const cfg = (entry as Record<string, unknown>)[ntype] as Record<string, unknown> | undefined;
-  if (ntype === "number" && cfg) {
-    const fmt = cfg.format as string | undefined;
-    const nf = nosionNumberFormat(fmt);
-    if (nf.format) out.numberFormat = nf.format;
-    if (nf.currency) out.numberCurrencyCode = nf.currency;
-  }
-  if ((ntype === "select" || ntype === "multi_select" || ntype === "status") && Array.isArray(cfg?.options)) {
-    out.options = (cfg!.options as Array<{ id: string; name: string; color: string }>).map((o) => o);
-  }
-  if (ntype === "relation" && cfg) {
-    out.relationDatabaseId = (cfg.database_id as string) ?? null;
-    out.relationTwoWay = (cfg.type as string) === "dual_property";
-    const dp = cfg.dual_property as { synced_property_id?: string } | undefined;
-    if (dp?.synced_property_id) out.relationInversePropertyId = dp.synced_property_id;
-  }
-  if (ntype === "rollup" && cfg) {
-    out.rollupRelationPropertyId = (cfg.relation_property_id as string) ?? null;
-    out.rollupTargetPropertyId = (cfg.rollup_property_id as string) ?? null;
-    out.rollupAggregate = (cfg.function as string) ?? "count";
-  }
-  if (ntype === "formula" && cfg) out.formulaExpression = (cfg.expression as string) ?? "";
-  if (ntype === "unique_id" && cfg) out.uniqueIdPrefix = (cfg.prefix as string) ?? undefined;
-  return out;
-}
-
 /** Notion `number.format` is one enum (`"number" | "percent" | "dollar"
  *  | "yen" | …`). Nosion splits format vs ISO 4217 currency code. */
 function notionNumberFormat(format: string | undefined, currency: string | undefined): string {
@@ -561,18 +525,6 @@ function notionNumberFormat(format: string | undefined, currency: string | undef
   }
 }
 
-function nosionNumberFormat(notion: string | undefined): { format?: string; currency?: string } {
-  if (!notion || notion === "number" || notion === "decimal") return { format: notion };
-  if (notion === "percent") return { format: "percent" };
-  const map: Record<string, string> = {
-    dollar: "USD", euro: "EUR", pound: "GBP", yen: "JPY",
-    yuan: "CNY", ruble: "RUB", rupee: "INR", won: "KRW",
-    real: "BRL", rupiah: "IDR",
-  };
-  if (map[notion]) return { format: "currency", currency: map[notion] };
-  return { format: notion };
-}
-
 /** Nosion stores properties as an ORDERED ARRAY (display order
  *  matters); Notion stores them as a NAME-KEYED MAP. Caller picks
  *  which side they want at the boundary. */
@@ -580,11 +532,6 @@ export function propertiesArrayToMap(props: PropertyLike[]): Record<string, Noti
   const out: Record<string, NotionPropertySchemaEntry> = {};
   for (const p of props) out[p.name ?? p.id ?? ""] = propertyToNotionSchema(p);
   return out;
-}
-
-/** Inverse — preserves declaration order from Object.keys. */
-export function propertiesMapToArray(map: Record<string, NotionPropertySchemaEntry>): PropertyLike[] {
-  return Object.values(map).map(propertyFromNotionSchema);
 }
 
 // ─── Property values (rowProps) ───────────────────────────────────

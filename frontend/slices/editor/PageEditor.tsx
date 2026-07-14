@@ -66,8 +66,7 @@ export function PageEditor({ components }: PageEditorProps = {}) {
     [outerComponents, components?.DatabaseBlock],
   );
   const { id } = useParams<{ id: string }>();
-  const { updatePage, pushRecent, addBlock, reorderBlocks, childrenOf, getDatabase } = useEditorAdapter();
-  void reorderBlocks; // tree-aware move below uses updatePage directly
+  const { updatePage, pushRecent, addBlock, childrenOf, getDatabase } = useEditorAdapter();
   const fullPageRaw = useFullPage(id ?? null);
   // Virtualize legacy `columns2..5` blocks into the new layout-primitive
   // shape on every read. Writes through the store persist the flattened

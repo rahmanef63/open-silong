@@ -56,11 +56,9 @@ expects.
 | `nosion-update-database` | Patch db title/icon/properties | `database_id` |
 | `nosion-create-row` | Insert row; `properties` is Notion-shape envelope map | `database_id` |
 | `nosion-update-row` | Patch row properties (partial merge) | `page_id` |
-| `nosion-list-tools` | List MCP tools (alternate to client introspection) | — |
 
-Tool list is shipped statically in two places — keep them in sync:
-- Server: `convex/mcp/http.ts:TOOL_LIST` (used by `nosion-list-tools`)
-- Client: `mcp/tools.ts:TOOLS` (used for `tools/list` JSON Schema)
+Tool discovery is served over JSON-RPC `tools/list` from the client
+catalog (`mcp/tools.ts:TOOLS`, JSON Schema).
 
 ## Wire format
 
