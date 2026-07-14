@@ -4,9 +4,11 @@
  *  (Personal / Workspace), with add / edit / remove actions. Falls back
  *  to an explanatory empty state when nothing is configured. */
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "convex/react";
-import { Plus, KeyRound } from "lucide-react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { Plus, KeyRound, Plug } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { api } from "@convex/_generated/api";
 import { useWorkspaces } from "@/shared/lib/store/hooks";
@@ -22,6 +24,18 @@ export function AISection() {
 
   const [addOpen, setAddOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<UserKeyRow | undefined>();
+
+  // Surface the OpenRouter OAuth roundtrip result (set by the callback route),
+  // then strip the query param so a refresh doesn't re-toast.
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  useEffect(() => {
+    const connect = searchParams.get("connect");
+    if (!connect) return;
+    if (connect === "openrouter") toast.success("OpenRouter connected — key added");
+    else if (connect === "error") toast.error("OpenRouter connect failed — try again");
+    router.replace("/dashboard/settings?s=ai");
+  }, [searchParams, router]);
 
   const labelFor = useMemo(() => {
     const map = new Map<string, string>();
@@ -46,10 +60,22 @@ export function AISection() {
               features fall back to the admin-configured key.
             </p>
           </div>
-          <Button onClick={() => { setEditTarget(undefined); setAddOpen(true); }}>
-            <Plus className="mr-1 h-3.5 w-3.5" /> Add key
-          </Button>
+          <div className="flex shrink-0 flex-wrap justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => { window.location.href = "/api/ai-oauth/openrouter/start"; }}
+            >
+              <Plug className="mr-1 h-3.5 w-3.5" /> Connect OpenRouter
+            </Button>
+            <Button onClick={() => { setEditTarget(undefined); setAddOpen(true); }}>
+              <Plus className="mr-1 h-3.5 w-3.5" /> Add key
+            </Button>
+          </div>
         </div>
+        <p className="pt-1 text-xs text-muted-foreground">
+          <span className="font-medium text-foreground">OpenRouter</span> connects via OAuth (one click, no key to paste).
+          OpenAI, Anthropic, Google &amp; custom endpoints use <span className="font-medium text-foreground">Add key</span>.
+        </p>
       </div>
 
       {isLoading && (
