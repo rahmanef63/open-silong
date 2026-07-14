@@ -29,7 +29,6 @@ import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { Switch } from "@/shared/ui/switch";
 import { Slider } from "@/shared/ui/slider";
-import { ScrollArea } from "@/shared/ui/scroll-area";
 import type {
   GraphFilters,
   GraphDisplay,
@@ -211,8 +210,8 @@ export function ControlPanel({
         </div>
       </div>
 
-      {/* scrollable body */}
-      <ScrollArea className="min-h-0 flex-1">
+      {/* scrollable body — native overflow (bulletproof vs flex-height quirks) */}
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
         <div className="px-3">
           {/* Search */}
           <Section title="Search">
@@ -421,7 +420,7 @@ export function ControlPanel({
             </Button>
           </Section>
         </div>
-      </ScrollArea>
+      </div>
     </div>
   );
 }

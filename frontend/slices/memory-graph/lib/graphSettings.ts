@@ -69,10 +69,13 @@ export const DEFAULT_DISPLAY: GraphDisplay = {
   colorGroups: true,
 };
 
+// Tuned for the remapped force law (see MemoryGraphView REPEL_SCALE/SPRING_K/
+// CENTER_K). Every slider sits mid-scale so the first paint is an airy, legible
+// cloud (~175–185px spacing) with obvious travel in both directions.
 export const DEFAULT_FORCES: GraphForces = {
-  center: 47,
-  repel: 56,
-  link: 96,
+  center: 45,
+  repel: 55,
+  link: 80,
   linkDistance: 170,
   animate: false,
 };

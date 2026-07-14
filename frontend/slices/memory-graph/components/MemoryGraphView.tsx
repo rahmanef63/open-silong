@@ -45,6 +45,17 @@ const REHEAT = 0.7;       // energy injected on a control/node change
 const DRAG_ALPHA = 0.4;   // energy while dragging a node
 const JITTER = 0.6;       // brownian kick (×alpha) that makes Animate visible
 
+// Force-law constants — remapped so the Forces sliders have visible, stable
+// reach at graph-scale separations (80–260px). Repel is INVERSE-LINEAR
+// (repel/d), not inverse-square: the old repel/d² was ~0.04 at 150px (dead),
+// which collapsed the cloud into a collision-packed blob where the Link /
+// Distance / Center sliders had nothing to modulate.
+const REPEL_SCALE = 100;   // charge at repel=100 (folds the old *900 out → base == f.repel)
+const REPEL_CAP = 2.5;     // near-field clamp; only bites sub-collision (redundant w/ the hard push)
+const REPEL_MAX2 = 122500; // (~350px)² far-field cutoff → medium/large graphs can't disperse off-screen
+const CENTER_K = 0.004;    // gravity gain (was 0.0016) — restores center-slider authority
+const SPRING_K = 0.025;    // link stiffness (was 0.006) — makes Link + Link-distance actually felt
+
 function analyze(graph: Graph) {
   const adj = new Map<string, Set<string>>();
   const add = (a: string, b: string) => {
@@ -298,8 +309,8 @@ export function MemoryGraphView({
     const dragId = dragIdRef.current;
     const { mass, rad } = simRef.current;
     const nodeScale = displayRef.current.nodeSize / 100;
-    const repel = (f.repel / 100) * 900;
-    const centerF = f.center / 100;
+    const repel = (f.repel / 100) * REPEL_SCALE;    // == f.repel (charge)
+    const centerF = Math.max(0.06, f.center / 100); // floored so center=0 still anchors orphans/islands
     const linkF = f.link / 100;
     const desired = f.linkDistance;
     // gentle isotropic pull to one centre — disconnected islands settle in a
@@ -308,8 +319,8 @@ export function MemoryGraphView({
       const p = pm.get(n.id);
       if (!p) continue;
       const m = mass.get(n.id) || 1;
-      p.vx += ((CX - p.x) * 0.0016 * centerF * alpha) / m;
-      p.vy += ((CY - p.y) * 0.0016 * centerF * alpha) / m;
+      p.vx += ((CX - p.x) * CENTER_K * centerF * alpha) / m;
+      p.vy += ((CY - p.y) * CENTER_K * centerF * alpha) / m;
     }
     for (let i = 0; i < nodes.length; i++) {
       const a = pm.get(nodes[i].id);
@@ -323,9 +334,10 @@ export function MemoryGraphView({
         let dy = a.y - b.y;
         let d2 = dx * dx + dy * dy;
         if (d2 < 1) { dx = Math.random() - 0.5; dy = Math.random() - 0.5; d2 = 1; }
+        if (d2 > REPEL_MAX2) continue; // far-field cutoff (~350px) — repel & collision are both no-ops past here
         const d = Math.sqrt(d2);
         const ux = dx / d, uy = dy / d;
-        const force = Math.min(2.5, repel / d2) * alpha;
+        const force = Math.min(REPEL_CAP, repel / d) * alpha; // inverse-linear → alive across the whole cloud
         const mb = mass.get(nodes[j].id) || 1;
         a.vx += (ux * force) / ma; a.vy += (uy * force) / ma;
         b.vx -= (ux * force) / mb; b.vy -= (uy * force) / mb;
@@ -345,7 +357,7 @@ export function MemoryGraphView({
       const dx = b.x - a.x;
       const dy = b.y - a.y;
       const d = Math.sqrt(dx * dx + dy * dy) || 1;
-      const diff = (d - desired) * 0.006 * linkF * alpha;
+      const diff = (d - desired) * SPRING_K * linkF * alpha;
       const ux = dx / d, uy = dy / d;
       const ma = mass.get(e.source) || 1, mb = mass.get(e.target) || 1;
       a.vx += (ux * diff) / ma; a.vy += (uy * diff) / ma;
