@@ -36,6 +36,15 @@ interface P { x: number; y: number; vx: number; vy: number }
 const CX = 800;
 const CY = 500;
 
+// Simulation temperature (d3-force-style alpha): scales every injected force,
+// decays toward a target, self-stops when frozen, reheats on interaction.
+const ALPHA_MIN = 0.02;   // below this (with Animate off) the loop freezes
+const ALPHA_DECAY = 0.02; // per-frame approach rate toward the target
+const ALPHA_FLOOR = 0.06; // Animate ON holds here → perpetual gentle breathing
+const REHEAT = 0.7;       // energy injected on a control/node change
+const DRAG_ALPHA = 0.4;   // energy while dragging a node
+const JITTER = 0.6;       // brownian kick (×alpha) that makes Animate visible
+
 function analyze(graph: Graph) {
   const adj = new Map<string, Set<string>>();
   const add = (a: string, b: string) => {
@@ -78,6 +87,10 @@ export interface MemoryGraphViewProps {
   onAddChild?: (node: GraphNode) => void;
   /** Bump `nonce` to recenter the view on `id`. */
   focusTarget?: { id: string; nonce: number } | null;
+  /** Bump to re-energize the simulation (Reheat button). */
+  reheatNonce?: number;
+  /** Bump to frame the whole graph (Zoom-to-fit button). */
+  fitNonce?: number;
   className?: string;
 }
 
@@ -90,6 +103,8 @@ export function MemoryGraphView({
   onSelect,
   onAddChild,
   focusTarget,
+  reheatNonce,
+  fitNonce,
   className,
 }: MemoryGraphViewProps) {
   const stageRef = useRef<HTMLDivElement | null>(null);
@@ -125,13 +140,43 @@ export function MemoryGraphView({
   const hoverRef = useRef<string | null>(null);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const rafRef = useRef<number>(0);
-  const coolRef = useRef(0);
+  const alphaRef = useRef(1);                     // seed hot so first mount settles
+  const dragIdRef = useRef<string | null>(null);  // pinned anchor while dragging
   const displayRef = useRef(display);
   const forcesRef = useRef(forces);
   displayRef.current = display;
   forcesRef.current = forces;
 
   const nodeById = useCallback((id: string) => graph.nodes.find((n) => n.id === id) ?? null, [graph]);
+
+  // Per-node mass + collision radius. Hubs (high degree) get more mass so they
+  // anchor while leaves swing; radius mirrors the CSS disc so discs never stack.
+  const sim = useMemo(() => {
+    const mass = new Map<string, number>();
+    const rad = new Map<string, number>();
+    for (const n of nodes) {
+      const d = n.degree || 0;
+      mass.set(n.id, 1 + Math.sqrt(d));
+      rad.set(n.id, Math.min(54, Math.max(18, 20 + d * 2.4)) / 2);
+    }
+    return { mass, rad };
+  }, [nodes]);
+  const simRef = useRef(sim);
+  simRef.current = sim;
+
+  // Categorical hue per connected-component (golden-angle spread) — powers the
+  // optional "Colour groups" tint so clusters read at a glance (Obsidian-style).
+  const tint = useMemo(() => {
+    const reps: string[] = [];
+    const seen = new Set<string>();
+    for (const n of graph.nodes) {
+      const g = meta.groupOf(n);
+      if (g && !seen.has(g)) { seen.add(g); reps.push(g); }
+    }
+    const m = new Map<string, number>();
+    reps.forEach((r, i) => m.set(r, Math.round((i * 137.5) % 360)));
+    return m;
+  }, [graph, meta]);
 
   // Seed / preserve positions when the visible set changes.
   const seedMap = useMemo(() => seed(nodes), [nodes]);
@@ -143,7 +188,7 @@ export function MemoryGraphView({
       next.set(n.id, prev ?? { x: s.x, y: s.y, vx: 0, vy: 0 });
     }
     posRef.current = next;
-    coolRef.current = 220; // settle the new layout
+    alphaRef.current = 1; // reheat fully to settle the new layout
   }, [nodes, seedMap]);
 
   const applyView = useCallback(() => {
@@ -178,7 +223,13 @@ export function MemoryGraphView({
       const hot = hov && hset.has(e.source) && hset.has(e.target);
       const mk = arrows ? ` marker-end="url(#mg-ar)"` : "";
       const base = e.kind === "relation" ? "mg-edge-rel" : e.kind === "db-row" ? "mg-edge-db" : "mg-edge";
-      html += `<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" class="${hot ? "mg-edge-hot" : base}"${mk}/>`;
+      // When a node is focused, non-neighbour edges dim rather than vanish.
+      const cls = hot ? "mg-edge-hot" : hov ? `${base} mg-edge-dim` : base;
+      // Gentle quadratic arc — control point perpendicular to the chord.
+      const dx = b.x - a.x, dy = b.y - a.y, len = Math.hypot(dx, dy) || 1, bow = Math.min(26, len * 0.14);
+      const mx = (a.x + b.x) / 2 + (-dy / len) * bow;
+      const my = (a.y + b.y) / 2 + (dx / len) * bow;
+      html += `<path d="M${a.x.toFixed(1)} ${a.y.toFixed(1)} Q${mx.toFixed(1)} ${my.toFixed(1)} ${b.x.toFixed(1)} ${b.y.toFixed(1)}" class="${cls}"${mk}/>`;
     }
     if (hoverRef.current) {
       const p = posRef.current.get(hoverRef.current);
@@ -189,6 +240,25 @@ export function MemoryGraphView({
     }
     svg.innerHTML = html;
   }, [edges, meta, selectedId, addSlot, nodeById]);
+
+  // Dim every node NOT in the focus neighbourhood (focus + direct neighbours).
+  // Imperative DOM toggle — off the per-frame render path, like everything else.
+  const applyFocus = useCallback((focus: string | null) => {
+    const w = worldRef.current;
+    if (!w) return;
+    const els = w.querySelectorAll<HTMLElement>("[data-id]");
+    const keep = new Set<string>();
+    if (focus) {
+      keep.add(focus);
+      for (const nb of meta.adj.get(focus) ?? []) keep.add(nb);
+    }
+    // Only dim if the focus node is actually rendered — a selected node that
+    // got filtered out must NOT dim the whole graph.
+    const active = !!focus && Array.from(els).some((el) => el.dataset.id === focus);
+    els.forEach((el) => {
+      el.classList.toggle("mg-dim", active && !keep.has(el.dataset.id ?? ""));
+    });
+  }, [meta]);
 
   const applyNode = useCallback((id: string) => {
     const p = posRef.current.get(id);
@@ -218,24 +288,34 @@ export function MemoryGraphView({
   }, [addSlot, nodeById, onAddChild]);
 
   // ── force simulation (free cloud: repel + link springs + centre pull) ──
-  const step = useCallback(() => {
+  // Every injected force scales by `alpha` (temperature); collision is
+  // position-based (unscaled) so discs never overlap even at rest. Increments
+  // divide by node mass so hubs anchor and leaves swing.
+  const step = useCallback((alpha: number) => {
     const f = forcesRef.current;
     const pm = posRef.current;
+    const animate = f.animate;
+    const dragId = dragIdRef.current;
+    const { mass, rad } = simRef.current;
+    const nodeScale = displayRef.current.nodeSize / 100;
     const repel = (f.repel / 100) * 900;
     const centerF = f.center / 100;
     const linkF = f.link / 100;
     const desired = f.linkDistance;
-    // ponytail: gentle isotropic pull to one centre — tune via the Centre
-    // slider; disconnected islands settle in a ring where repel balances it.
+    // gentle isotropic pull to one centre — disconnected islands settle in a
+    // ring where repel balances it.
     for (const n of nodes) {
       const p = pm.get(n.id);
       if (!p) continue;
-      p.vx += (CX - p.x) * 0.0016 * centerF;
-      p.vy += (CY - p.y) * 0.0016 * centerF;
+      const m = mass.get(n.id) || 1;
+      p.vx += ((CX - p.x) * 0.0016 * centerF * alpha) / m;
+      p.vy += ((CY - p.y) * 0.0016 * centerF * alpha) / m;
     }
     for (let i = 0; i < nodes.length; i++) {
       const a = pm.get(nodes[i].id);
       if (!a) continue;
+      const ma = mass.get(nodes[i].id) || 1;
+      const ra = (rad.get(nodes[i].id) || 10) * nodeScale;
       for (let j = i + 1; j < nodes.length; j++) {
         const b = pm.get(nodes[j].id);
         if (!b) continue;
@@ -243,11 +323,19 @@ export function MemoryGraphView({
         let dy = a.y - b.y;
         let d2 = dx * dx + dy * dy;
         if (d2 < 1) { dx = Math.random() - 0.5; dy = Math.random() - 0.5; d2 = 1; }
-        const force = Math.min(2.5, repel / d2);
         const d = Math.sqrt(d2);
-        const fx = (dx / d) * force;
-        const fy = (dy / d) * force;
-        a.vx += fx; a.vy += fy; b.vx -= fx; b.vy -= fy;
+        const ux = dx / d, uy = dy / d;
+        const force = Math.min(2.5, repel / d2) * alpha;
+        const mb = mass.get(nodes[j].id) || 1;
+        a.vx += (ux * force) / ma; a.vy += (uy * force) / ma;
+        b.vx -= (ux * force) / mb; b.vy -= (uy * force) / mb;
+        // hard collision (unscaled by alpha → holds at rest)
+        const minD = ra + (rad.get(nodes[j].id) || 10) * nodeScale + 6;
+        if (d < minD) {
+          const push = (minD - d) * 0.5;
+          a.x += ux * push; a.y += uy * push;
+          b.x -= ux * push; b.y -= uy * push;
+        }
       }
     }
     for (const e of edges) {
@@ -257,14 +345,20 @@ export function MemoryGraphView({
       const dx = b.x - a.x;
       const dy = b.y - a.y;
       const d = Math.sqrt(dx * dx + dy * dy) || 1;
-      const diff = (d - desired) * 0.006 * linkF;
-      const fx = (dx / d) * diff;
-      const fy = (dy / d) * diff;
-      a.vx += fx; a.vy += fy; b.vx -= fx; b.vy -= fy;
+      const diff = (d - desired) * 0.006 * linkF * alpha;
+      const ux = dx / d, uy = dy / d;
+      const ma = mass.get(e.source) || 1, mb = mass.get(e.target) || 1;
+      a.vx += (ux * diff) / ma; a.vy += (uy * diff) / ma;
+      b.vx -= (ux * diff) / mb; b.vy -= (uy * diff) / mb;
     }
     for (const n of nodes) {
       const p = pm.get(n.id);
       if (!p) continue;
+      if (n.id === dragId) { p.vx = 0; p.vy = 0; continue; } // fixed anchor
+      if (animate) {
+        p.vx += (Math.random() - 0.5) * JITTER * alpha;
+        p.vy += (Math.random() - 0.5) * JITTER * alpha;
+      }
       p.vx *= 0.85; p.vy *= 0.85;
       const v = Math.hypot(p.vx, p.vy);
       if (v > 8) { p.vx = (p.vx / v) * 8; p.vy = (p.vy / v) * 8; }
@@ -280,9 +374,11 @@ export function MemoryGraphView({
   const loopRef = useRef<() => void>(() => {});
   loopRef.current = () => {
     const animate = forcesRef.current.animate;
-    if (!animate && coolRef.current <= 0) { rafRef.current = 0; return; }
-    step();
-    if (!animate) coolRef.current -= 1;
+    const target = animate ? ALPHA_FLOOR : 0;
+    alphaRef.current += (target - alphaRef.current) * ALPHA_DECAY;
+    // Animate OFF + cooled below the floor → freeze (a genuine Pause).
+    if (!animate && alphaRef.current < ALPHA_MIN) { alphaRef.current = 0; rafRef.current = 0; return; }
+    step(alphaRef.current);
     applyAll();
     positionAdd();
     rafRef.current = requestAnimationFrame(() => loopRef.current());
@@ -290,6 +386,10 @@ export function MemoryGraphView({
   const ensureRunning = useCallback(() => {
     if (!rafRef.current) rafRef.current = requestAnimationFrame(() => loopRef.current());
   }, []);
+  const reheat = useCallback((a = REHEAT) => {
+    alphaRef.current = Math.max(alphaRef.current, a);
+    ensureRunning();
+  }, [ensureRunning]);
 
   // Cancel the RAF on unmount only.
   useEffect(() => () => {
@@ -297,14 +397,18 @@ export function MemoryGraphView({
     rafRef.current = 0;
   }, []);
 
-  // Wake + re-settle the sim whenever the node set, the Animate toggle, or any
-  // Force knob changes. Without this a settled graph ignores Forces-slider
-  // edits — the loop had already exited — which reads as "the controls do
-  // nothing".
+  // Reheat so a settled graph visibly re-flows on any node-set or Forces edit
+  // (works even while paused → the controls always respond).
+  useEffect(() => { reheat(); }, [nodes, forces.center, forces.repel, forces.link, forces.linkDistance, reheat]);
+  // Toggling Animate ON reheats so you SEE it wake; OFF runs the loop down to
+  // the freeze threshold. The `animate` flag also drives per-frame breathing.
   useEffect(() => {
-    if (!forcesRef.current.animate) coolRef.current = Math.max(coolRef.current, 160);
-    ensureRunning();
-  }, [nodes, forces.animate, forces.center, forces.repel, forces.link, forces.linkDistance, ensureRunning]);
+    if (forces.animate) reheat();
+    else ensureRunning();
+  }, [forces.animate, reheat, ensureRunning]);
+
+  // Explicit Reheat button (ControlPanel) — re-energize on demand.
+  useEffect(() => { if (reheatNonce) reheat(1); }, [reheatNonce, reheat]);
 
   // Arrows toggle repaints edges immediately (the loop may be idle).
   useEffect(() => { redrawEdges(); }, [display.arrows, redrawEdges]);
@@ -346,6 +450,29 @@ export function MemoryGraphView({
     }
   }, [focusTarget, applyView]);
 
+  // Zoom-to-fit: frame the whole node cloud with padding.
+  const fit = useCallback(() => {
+    const stage = stageRef.current;
+    if (!stage) return;
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (const p of posRef.current.values()) {
+      if (p.x < minX) minX = p.x; if (p.y < minY) minY = p.y;
+      if (p.x > maxX) maxX = p.x; if (p.y > maxY) maxY = p.y;
+    }
+    if (!isFinite(minX)) return;
+    const r = stage.getBoundingClientRect(), pad = 90;
+    const s = Math.min(1.6, Math.max(0.35, Math.min(
+      (r.width - pad * 2) / (maxX - minX || 1),
+      (r.height - pad * 2) / (maxY - minY || 1),
+    )));
+    view.current.scale = s;
+    view.current.x = r.width / 2 - ((minX + maxX) / 2) * s;
+    view.current.y = r.height / 2 - ((minY + maxY) / 2) * s;
+    applyView();
+    applyAll();
+  }, [applyView, applyAll]);
+  useEffect(() => { if (fitNonce) fit(); }, [fitNonce, fit]);
+
   // ── pan / zoom / drag ──────────────────────────────────────
   const drag = useRef<{ mode: "pan" | "node" | null; id?: string; sx: number; sy: number; ox: number; oy: number; moved: boolean }>({
     mode: null, sx: 0, sy: 0, ox: 0, oy: 0, moved: false,
@@ -358,6 +485,7 @@ export function MemoryGraphView({
       const p = posRef.current.get(id);
       if (p) {
         drag.current = { mode: "node", id, sx: e.clientX, sy: e.clientY, ox: p.x, oy: p.y, moved: false };
+        dragIdRef.current = id; // pin: the sim treats it as a fixed anchor
         (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
         return;
       }
@@ -380,14 +508,18 @@ export function MemoryGraphView({
         p.x = d.ox + (e.clientX - d.sx) / s;
         p.y = d.oy + (e.clientY - d.sy) / s;
         p.vx = 0; p.vy = 0;
-        coolRef.current = Math.max(coolRef.current, 60); // nudge the sim awake
+        alphaRef.current = Math.max(alphaRef.current, DRAG_ALPHA); // keep neighbours settling
+        ensureRunning();
         applyNode(d.id);
         redrawEdges();
         positionAdd();
       }
     }
   };
-  const onUp = () => { drag.current.mode = null; };
+  const onUp = () => {
+    if (drag.current.mode === "node") { dragIdRef.current = null; reheat(DRAG_ALPHA); } // unpin + settle
+    drag.current.mode = null;
+  };
 
   const onWheel = (e: React.WheelEvent) => {
     const stage = stageRef.current;
@@ -406,12 +538,17 @@ export function MemoryGraphView({
 
   // ── hover "+" ──────────────────────────────────────────────
   const clearHide = () => { if (hideTimer.current) clearTimeout(hideTimer.current); hideTimer.current = null; };
-  const enter = (id: string) => { clearHide(); hoverRef.current = id; setHoverId(id); positionAdd(); redrawEdges(); };
+  const enter = (id: string) => { clearHide(); hoverRef.current = id; setHoverId(id); positionAdd(); redrawEdges(); applyFocus(id); };
   const leave = () => {
     clearHide();
-    hideTimer.current = setTimeout(() => { hoverRef.current = null; setHoverId(null); positionAdd(); redrawEdges(); }, 160);
+    hideTimer.current = setTimeout(() => {
+      hoverRef.current = null; setHoverId(null); positionAdd(); redrawEdges();
+      applyFocus(selectedId ?? null); // fall back to the selected node's neighbourhood
+    }, 160);
   };
   useEffect(() => { positionAdd(); }, [hoverId, positionAdd]);
+  // Selection change (from the Inspector / click) re-applies focus dimming.
+  useEffect(() => { applyFocus(hoverRef.current ?? selectedId ?? null); }, [selectedId, nodes, applyFocus]);
 
   return (
     <div
@@ -428,9 +565,10 @@ export function MemoryGraphView({
         <svg ref={edgesRef} className="mg-edges absolute inset-0 overflow-visible text-foreground" viewBox="0 0 1600 1000" aria-hidden />
         {nodes.map((n) => {
           const role = meta.roleOf(n);
-          const cls = `mg-node mg-${role}${n.hub ? " mg-verified" : ""}${hoverId === n.id ? " mg-hover" : ""}${selectedId === n.id ? " mg-selected" : ""}`;
+          const cls = `mg-node mg-${role}${n.hub ? " mg-verified" : ""}${hoverId === n.id ? " mg-hover" : ""}${selectedId === n.id ? " mg-selected" : ""}${display.colorGroups ? " mg-tinted" : ""}`;
           const label = n.title || "Untitled";
-          const degStyle = { "--deg": n.degree } as React.CSSProperties;
+          const hue = tint.get(meta.groupOf(n) ?? "") ?? 0;
+          const degStyle = { "--deg": n.degree, "--mg-hue": hue } as React.CSSProperties;
           const handlers = {
             onPointerEnter: () => enter(n.id),
             onPointerLeave: leave,
@@ -474,13 +612,17 @@ export function MemoryGraphView({
 
 const MG_CSS = `
 .mg-world{transform-origin:0 0;will-change:transform;--mg-scale:1;--mg-link:1.2;--mg-pill:.72}
-.mg-edges line{vector-effect:non-scaling-stroke}
+.mg-edges line,.mg-edges path{vector-effect:non-scaling-stroke}
+.mg-edges path{fill:none;stroke-linecap:round;transition:opacity .18s ease,stroke .18s ease}
 .mg-edge{stroke:var(--border);stroke-width:calc(1.1 * var(--mg-link))}
-.mg-edge-hot{stroke:color-mix(in srgb, var(--primary) 80%, transparent);stroke-width:calc(1.5 * var(--mg-link))}
+.mg-edge-hot{stroke:color-mix(in srgb, var(--primary) 85%, transparent);stroke-width:calc(1.7 * var(--mg-link));filter:drop-shadow(0 0 3px color-mix(in srgb,var(--primary) 40%, transparent))}
 .mg-edge-temp{stroke:color-mix(in srgb, var(--primary) 55%, transparent);stroke-width:1.6;stroke-dasharray:4 5}
 .mg-edge-db{stroke:color-mix(in srgb, var(--primary) 45%, var(--border));stroke-width:calc(1.3 * var(--mg-link))}
 .mg-edge-rel{stroke:color-mix(in srgb, var(--primary) 60%, transparent);stroke-width:calc(1.2 * var(--mg-link));stroke-dasharray:5 4}
-.mg-node{position:absolute;left:var(--x,0);top:var(--y,0);transform:translate(-50%,-50%);border:0;background:transparent;padding:0;cursor:grab;user-select:none;touch-action:none;display:flex;flex-direction:column;align-items:center}
+.mg-edge-dim{opacity:.12}
+.mg-node{position:absolute;left:var(--x,0);top:var(--y,0);transform:translate(-50%,-50%);border:0;background:transparent;padding:0;cursor:grab;user-select:none;touch-action:none;display:flex;flex-direction:column;align-items:center;transition:opacity .18s ease}
+.mg-dim{opacity:.28;filter:saturate(.55)}
+.mg-dim .mg-label{opacity:.08}
 .mg-disc{--d:calc(clamp(18px, 20px + var(--deg,0) * 2.4px, 54px) * var(--mg-scale));width:var(--d);height:var(--d);border-radius:999px;display:grid;place-items:center;
   background:color-mix(in srgb,var(--card) 92%, transparent);border:1px solid var(--border);color:var(--foreground);
   box-shadow:0 4px 14px rgba(0,0,0,.14);transition:transform .15s ease,border-color .15s ease,box-shadow .15s ease}
@@ -494,6 +636,12 @@ const MG_CSS = `
 .mg-database .mg-disc{border-radius:calc(12px * var(--mg-scale))}
 .mg-ghost .mg-disc{border-style:dashed;color:var(--muted-foreground);opacity:.7}
 .mg-ghost .mg-label{font-style:italic;opacity:calc(var(--mg-pill) * .8)}
+.mg-tinted .mg-disc{border-color:color-mix(in srgb, hsl(var(--mg-hue,0) 60% 55%) 60%, var(--border))}
+.mg-tinted .mg-icon{color:color-mix(in srgb, hsl(var(--mg-hue,0) 60% 55%) 65%, var(--foreground))}
+.mg-tinted.mg-hover .mg-disc,.mg-tinted.mg-selected .mg-disc,.mg-tinted .mg-disc:hover{border-color:hsl(var(--mg-hue,0) 65% 55%)}
+@keyframes mg-pulse{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--primary) 30%, transparent),0 8px 22px rgba(0,0,0,.2)}50%{box-shadow:0 0 0 5px color-mix(in srgb,var(--primary) 10%, transparent),0 8px 22px rgba(0,0,0,.2)}}
+.mg-selected .mg-disc{animation:mg-pulse 1.8s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){.mg-selected .mg-disc{animation:none}}
 .mg-tag{min-width:44px;height:calc(24px * var(--mg-scale));padding:0 12px;display:flex;flex-direction:row;align-items:center;border-radius:999px;white-space:nowrap;
   font-size:calc(11px * var(--mg-scale));font-weight:600;letter-spacing:-.01em;color:var(--primary);
   background:color-mix(in srgb,var(--primary) 12%, transparent);border:1px solid transparent;

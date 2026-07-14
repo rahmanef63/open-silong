@@ -6,8 +6,8 @@
  *  input. Fully theme-token driven. Portable: data + actions arrive via props.
  */
 
-import { useMemo, useState } from "react";
-import { SlidersHorizontal, Upload } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { SlidersHorizontal, Upload, Maximize2 } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { useNavigate } from "@/shared/lib/router";
 import { ROUTES } from "@/shared/lib/routes";
@@ -44,6 +44,20 @@ const DEFAULTS: Required<MemoryLabels> = {
   importLabel: "Import",
 };
 
+/** localStorage-backed graph prefs — SSR-guarded, spread-merged over the
+ *  default so a newly-added field is never undefined from an old stored blob. */
+function loadPref<T>(key: string, fallback: T): T {
+  if (typeof window === "undefined") return fallback;
+  try {
+    const v = window.localStorage.getItem(key);
+    return v ? { ...fallback, ...(JSON.parse(v) as Partial<T>) } : fallback;
+  } catch { return fallback; }
+}
+function savePref<T>(key: string, value: T): void {
+  if (typeof window === "undefined") return;
+  try { window.localStorage.setItem(key, JSON.stringify(value)); } catch { /* quota / private mode */ }
+}
+
 export interface GraphPageProps {
   model?: Graph;
   onAddChild?: (node: GraphNode) => void;
@@ -62,12 +76,20 @@ export function GraphPage({
 }: GraphPageProps = {}) {
   const l = { ...DEFAULTS, ...labels };
   const navigate = useNavigate();
-  const [filters, setFilters] = useState<GraphFilters>(DEFAULT_FILTERS);
-  const [display, setDisplay] = useState<GraphDisplay>(DEFAULT_DISPLAY);
-  const [forces, setForces] = useState<GraphForces>(DEFAULT_FORCES);
+  // Persist the user's tuning across reloads. Spread-merge over DEFAULT_* so a
+  // newly-added setting never comes back undefined from an old stored blob.
+  const [filters, setFilters] = useState<GraphFilters>(() => loadPref("mg:filters", DEFAULT_FILTERS));
+  const [display, setDisplay] = useState<GraphDisplay>(() => loadPref("mg:display", DEFAULT_DISPLAY));
+  const [forces, setForces] = useState<GraphForces>(() => loadPref("mg:forces", DEFAULT_FORCES));
   const [panelOpen, setPanelOpen] = useState(false);
   const [selected, setSelected] = useState<GraphNode | null>(null);
   const [focus, setFocus] = useState<{ id: string; nonce: number } | null>(null);
+  const [reheatNonce, setReheatNonce] = useState(0);
+  const [fitNonce, setFitNonce] = useState(0);
+
+  useEffect(() => { savePref("mg:filters", filters); }, [filters]);
+  useEffect(() => { savePref("mg:display", display); }, [display]);
+  useEffect(() => { savePref("mg:forces", forces); }, [forces]);
 
   const groups = useMemo(() => (model ? deriveGroups(model) : []), [model]);
   const hasNodes = !!model && model.nodes.length > 0;
@@ -92,6 +114,18 @@ export function GraphPage({
       <div className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-center justify-between px-5 py-4">
         <span className="text-[15px] font-semibold text-foreground">{l.title}</span>
         <div className="pointer-events-auto flex items-center gap-2">
+          {hasNodes && (
+            <Button
+              size="icon"
+              variant="secondary"
+              className="rounded-full"
+              onClick={() => setFitNonce((n) => n + 1)}
+              aria-label="Zoom to fit"
+              title="Zoom to fit"
+            >
+              <Maximize2 className="size-4" />
+            </Button>
+          )}
           <Button
             size="icon"
             variant="secondary"
@@ -123,6 +157,8 @@ export function GraphPage({
             onSelect={setSelected}
             onAddChild={onAddChild}
             focusTarget={focus}
+            reheatNonce={reheatNonce}
+            fitNonce={fitNonce}
             className="absolute inset-0"
           />
         ) : (
@@ -143,6 +179,7 @@ export function GraphPage({
         onDisplayChange={setDisplay}
         forces={forces}
         onForcesChange={setForces}
+        onReheat={() => setReheatNonce((n) => n + 1)}
         groups={groups}
       />
 

@@ -28,6 +28,8 @@ export interface GraphDisplay {
   nodeSize: number;
   /** 60..240 (%) — edge stroke width multiplier. */
   linkThickness: number;
+  /** Tint nodes by connected-component (categorical hue). */
+  colorGroups: boolean;
 }
 
 export interface GraphForces {
@@ -64,6 +66,7 @@ export const DEFAULT_DISPLAY: GraphDisplay = {
   textFade: 42,
   nodeSize: 100,
   linkThickness: 100,
+  colorGroups: true,
 };
 
 export const DEFAULT_FORCES: GraphForces = {

@@ -21,6 +21,7 @@ import {
   ChevronRight,
   Play,
   Pause,
+  Flame,
 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { Button } from "@/shared/ui/button";
@@ -46,6 +47,8 @@ export interface ControlPanelProps {
   onDisplayChange: (next: GraphDisplay) => void;
   forces: GraphForces;
   onForcesChange: (next: GraphForces) => void;
+  /** Re-energize the simulation on demand. */
+  onReheat: () => void;
   groups: GroupInfo[];
 }
 
@@ -159,6 +162,7 @@ export function ControlPanel({
   onDisplayChange,
   forces,
   onForcesChange,
+  onReheat,
   groups,
 }: ControlPanelProps) {
   const toggleGroup = (id: string) => {
@@ -318,6 +322,14 @@ export function ControlPanel({
                 onDisplayChange({ ...display, arrows: v })
               }
             />
+            <SwitchRow
+              id="graph-display-colorgroups"
+              label="Colour groups"
+              checked={display.colorGroups}
+              onCheckedChange={(v) =>
+                onDisplayChange({ ...display, colorGroups: v })
+              }
+            />
             <SliderRow
               label="Text fade"
               value={display.textFade}
@@ -396,6 +408,16 @@ export function ControlPanel({
                 <Play className="h-3.5 w-3.5" />
               )}
               {forces.animate ? "Pause" : "Animate"}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={onReheat}
+              className="w-full gap-1.5"
+            >
+              <Flame className="h-3.5 w-3.5" />
+              Reheat
             </Button>
           </Section>
         </div>
