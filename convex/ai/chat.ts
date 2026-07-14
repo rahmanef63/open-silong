@@ -7,6 +7,7 @@ import { internal } from "../_generated/api";
 
 import { CHAR_CAPS, RATE_LIMITS } from "../_shared/limits";
 import { AI_PROVIDERS, resolveProviderBaseUrl } from "../_shared/aiProviders";
+import { resolveAiKey, type Provider as ByokProvider } from "../_shared/aiKeyResolver";
 import { SKILL_BY_TOOL_NAME, SKILL_BY_ID, toolsForLLM, type Skill } from "./skillCatalog";
 import { SKILL_HANDLERS } from "./skillHandlers";
 
@@ -31,17 +32,19 @@ interface ResolvedAI {
   baseUrl: string;
   apiKey: string;
   model: string;
-  source: "global" | "env" | "inline";
+  source: "global" | "env" | "inline" | "user" | "workspace";
 }
 
-/** Resolution order:
- *  1. admin-managed `globalAISettings` (live config from the admin panel).
- *     Per-user `aiUserModelOverrides` row may swap the model field while
- *     keeping the same provider + key.
- *  2. env var `OPENROUTER_API_KEY` — original behaviour, preserved as
- *     the fallback so a fresh deploy without admin config still works.
- *     Default model + base URL pulled from `AI_PROVIDERS.openrouter`
- *     so the SSOT catalog is the only place these strings live.
+const BYOK_PROVIDERS = new Set(["openai", "anthropic", "google", "openrouter", "custom"]);
+
+/** Resolution order (BYOK-first — a stored user key is the whole point):
+ *  1. The signed-in user's PERSONAL / workspace-SHARED `aiUserKeys` key for
+ *     the active provider (Settings → AI, incl. the OpenRouter OAuth key).
+ *  2. admin-managed `globalAISettings` (live config from the admin panel).
+ *     Per-user `aiUserModelOverrides` may swap the model.
+ *  3. env var `OPENROUTER_API_KEY` — preserved fallback for fresh deploys.
+ *  Provider/model/baseUrl come from the admin config when present, else the
+ *  OpenRouter catalog default, so BYOK also works with no admin config.
  */
 async function resolveAI(
   ctx: ActionCtx,
@@ -49,49 +52,66 @@ async function resolveAI(
 ): Promise<ResolvedAI> {
   const userId = await getAuthUserId(ctx);
 
-  // Single combined query — global config + per-user override in one
-  // round-trip. Null `global` means EITHER no row exists, OR the row
-  // is disabled / missing key; the probe below disambiguates for the
-  // error message.
-  const { global, override } = await ctx.runQuery(
+  // Global config + per-user override + active workspace in one round-trip.
+  const { global, override, activeWorkspaceId } = await ctx.runQuery(
     internal.ai.queries._getAIResolution,
     userId ? { userId } : {},
   );
+
+  // Desired provider / model / base URL.
+  const provider = global?.provider ?? "openrouter";
+  let model = global?.model ?? AI_PROVIDERS.openrouter.defaultModel;
+  if (override) model = override;
+  if (callerOverrideModel) model = callerOverrideModel; // caller wins (e.g. summaries)
+  const baseUrl = resolveProviderBaseUrl(provider, global?.baseUrl ?? undefined);
+
+  // 1) BYOK — user's own or workspace-shared key for this provider wins.
+  //    resolveAiKey throws on miss; treat that as "no user key" and fall
+  //    through. It also returns an env "admin" tier, which we ignore here
+  //    so the admin/env fallbacks below own that path.
+  if (userId && activeWorkspaceId && BYOK_PROVIDERS.has(provider)) {
+    try {
+      const k = await resolveAiKey(ctx, {
+        userId,
+        workspaceId: activeWorkspaceId,
+        provider: provider as ByokProvider,
+      });
+      if (k.source === "user" || k.source === "workspace") {
+        return { baseUrl: k.endpoint || baseUrl, apiKey: k.plaintext, model, source: k.source };
+      }
+    } catch {
+      /* no user/workspace key — fall through to admin/env */
+    }
+  }
+
+  // 2) Admin global config.
   if (global) {
-    let model = global.model;
-    if (override) model = override;
-    // Caller-supplied model wins over both — used by features that need
-    // a specific model (e.g. summaries) regardless of the per-user pick.
-    if (callerOverrideModel) model = callerOverrideModel;
+    return { baseUrl, apiKey: global.apiKey, model, source: "global" };
+  }
+
+  // 3) env fallback (OpenRouter), preserved so a fresh deploy still works.
+  const envKey = process.env.OPENROUTER_API_KEY;
+  if (envKey) {
+    const openrouter = AI_PROVIDERS.openrouter;
     return {
-      baseUrl: resolveProviderBaseUrl(global.provider, global.baseUrl ?? undefined),
-      apiKey: global.apiKey,
-      model,
-      source: "global",
+      baseUrl: openrouter.baseUrl,
+      apiKey: envKey,
+      model: callerOverrideModel ?? openrouter.defaultModel,
+      source: "env",
     };
   }
 
-  const envKey = process.env.OPENROUTER_API_KEY;
-  if (!envKey) {
-    // Diagnose the global row state so the message is actionable.
-    const probe = await ctx.runQuery(internal.ai.queries._probeGlobalAISettings, {});
-    if (probe?.exists && !probe.enabled) {
-      throw new Error("AI is configured but disabled — toggle Enabled in /dashboard/admin → AI and Save.");
-    }
-    if (probe?.exists && !probe.hasKey) {
-      throw new Error("AI provider is set but the API key is missing — paste a key in /dashboard/admin → AI and Save.");
-    }
-    throw new Error(
-      "AI not configured — set the OpenRouter key in /dashboard/admin → AI (recommended) or set OPENROUTER_API_KEY in Convex env.",
-    );
+  // 4) Nothing available — actionable diagnostics.
+  const probe = await ctx.runQuery(internal.ai.queries._probeGlobalAISettings, {});
+  if (probe?.exists && !probe.enabled) {
+    throw new Error("AI is configured but disabled — toggle Enabled in /dashboard/admin → AI and Save.");
   }
-  const openrouter = AI_PROVIDERS.openrouter;
-  return {
-    baseUrl: openrouter.baseUrl,
-    apiKey: envKey,
-    model: callerOverrideModel ?? openrouter.defaultModel,
-    source: "env",
-  };
+  if (probe?.exists && !probe.hasKey) {
+    throw new Error("AI provider is set but the API key is missing — paste a key in /dashboard/admin → AI and Save.");
+  }
+  throw new Error(
+    "AI not configured — connect a key in Settings → AI (BYOK), set the OpenRouter key in /dashboard/admin → AI, or set OPENROUTER_API_KEY in Convex env.",
+  );
 }
 
 export const complete = action({

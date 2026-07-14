@@ -1,8 +1,10 @@
 import { query, internalQuery } from "../_generated/server";
 import { v } from "convex/values";
+import type { Id } from "../_generated/dataModel";
 import { requireAdminQuery } from "../_shared/auth";
 import { listProvidersPublic } from "../_shared/aiProviders";
 import { decryptApiKey, isEncryptedApiKey } from "../_shared/aiCrypto";
+import { readActiveWorkspace } from "../_shared/workspace";
 import { COUNT_CAPS } from "../_shared/limits";
 
 function maskKey(key: string): string {
@@ -98,14 +100,18 @@ export const _getAIResolution = internalQuery({
         }
       : null;
     let override: string | null = null;
+    let activeWorkspaceId: Id<"workspaces"> | null = null;
     if (userId) {
       const ov = await ctx.db
         .query("aiUserModelOverrides")
         .withIndex("by_user", (q) => q.eq("userId", userId))
         .first();
       override = ov?.model ?? null;
+      // Active workspace resolves BYOK workspace-shared keys in the runtime.
+      const ws = await readActiveWorkspace(ctx, userId);
+      activeWorkspaceId = ws?._id ?? null;
     }
-    return { global, override };
+    return { global, override, activeWorkspaceId };
   },
 });
 
