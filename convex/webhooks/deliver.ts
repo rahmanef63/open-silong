@@ -36,7 +36,10 @@ export const run = internalAction({
     event: v.string(),
     payload: v.any(),
   },
-  handler: async (ctx, { ownerId, event, payload }) => {
+  // Explicit return type breaks the self-reference cycle: this handler reads
+  // `internal.webhooks.deliver.*`, whose type depends on `run`'s inferred
+  // type (TS7022/7023 → `any` poisons the `internal` graph).
+  handler: async (ctx, { ownerId, event, payload }): Promise<{ fanOut: number; delivered: number }> => {
     const endpoints = await ctx.runQuery(internal.webhooks.deliver.listEnabledForOwner, {
       ownerId,
     });

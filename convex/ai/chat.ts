@@ -318,7 +318,11 @@ export const complete = action({
 
     let reply = "";
     let totalLlmMs = 0;
-    let lastUsage: { input_tokens: number; output_tokens: number } | null = null;
+    // Plain number accumulators — an object that reads its own prior value
+    // in its initializer (`x = { in: x?.in + d }`) makes tsc collapse the
+    // in-flight type to `never`/`any` (TS2339/TS7022). Sum, wrap once at return.
+    let usageIn = 0;
+    let usageOut = 0;
     let lastModel = cfg.model;
     let hop = 0;
     let exhausted = true;
@@ -356,10 +360,8 @@ export const complete = action({
       if (data.usage) {
         const inDelta = data.usage.prompt_tokens ?? 0;
         const outDelta = data.usage.completion_tokens ?? 0;
-        lastUsage = {
-          input_tokens: (lastUsage?.input_tokens ?? 0) + inDelta,
-          output_tokens: (lastUsage?.output_tokens ?? 0) + outDelta,
-        };
+        usageIn += inDelta;
+        usageOut += outDelta;
         // Record spend immediately so the next hop / call sees the
         // updated ledger — important inside the multi-hop loop where a
         // runaway tool-call chain could otherwise blow past the cap
@@ -461,7 +463,7 @@ export const complete = action({
 
     return {
       text: reply,
-      usage: lastUsage,
+      usage: usageIn + usageOut > 0 ? { input_tokens: usageIn, output_tokens: usageOut } : null,
       model: lastModel,
       source: cfg.source,
       progress,

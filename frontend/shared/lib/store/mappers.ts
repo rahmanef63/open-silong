@@ -1,7 +1,17 @@
+import type { FunctionReturnType } from "convex/server";
 import type { Doc } from "@convex/_generated/dataModel";
+import { api } from "@convex/_generated/api";
 import type { Database, Page } from "@/shared/types/domain";
 
-export function toPage(doc: Doc<"pages">): Page {
+// `toPage` maps the slim `pages.listMeta` projection (its only caller) — that
+// shape omits the heavy `blocks` plus small fields (`workspaceId`,
+// `shareIndexable`, `wiki`) and derives `databaseHostFor` as `string[]`, which
+// is exactly the domain type. Add the omitted fields back as optional so the
+// guarded reads below (`doc.blocks ?? []`, `doc.workspaceId`, …) typecheck.
+type PageDocLike = FunctionReturnType<typeof api.pages.listMeta>[number] &
+  Partial<Pick<Doc<"pages">, "blocks" | "workspaceId" | "shareIndexable" | "wiki">>;
+
+export function toPage(doc: PageDocLike): Page {
   // Schema stores cover.type / font as v.string(); domain narrows them to
   // unions. Trust the writer (every write goes through validated mutations)
   // and cast at the boundary rather than re-validating in the mapper.
@@ -28,9 +38,9 @@ export function toPage(doc: Doc<"pages">): Page {
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
     databaseHostFor: doc.databaseHostFor,
-    // Denormalised reader fields written by `convex/pages.ts` indexers.
-    blockCount: (doc as Doc<"pages"> & { blockCount?: number }).blockCount,
-    previewText: (doc as Doc<"pages"> & { previewText?: string }).previewText,
+    // Denormalised reader fields — part of the listMeta projection.
+    blockCount: doc.blockCount,
+    previewText: doc.previewText,
   };
 }
 

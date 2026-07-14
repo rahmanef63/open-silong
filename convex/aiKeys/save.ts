@@ -5,6 +5,7 @@
 import { v } from "convex/values";
 import { action } from "../_generated/server";
 import { api } from "../_generated/api";
+import type { Id } from "../_generated/dataModel";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { encryptApiKey } from "../_shared/aiCrypto";
 
@@ -43,7 +44,11 @@ export const save = action({
     enabledModels: v.array(modelValidator),
     preferOwn: v.boolean(),
   },
-  handler: async (ctx, args) => {
+  // Explicit return type: the handler calls `api.aiKeys.write.*`, so its
+  // inferred type would depend on `api`, which depends on this module's
+  // exported `save` — a self-reference cycle tsc resolves to `any` (TS7022/
+  // 7023) and poisons the whole `api`/`internal` graph. Annotating breaks it.
+  handler: async (ctx, args): Promise<{ id: Id<"aiUserKeys">; last4: string }> => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not signed in");
 
