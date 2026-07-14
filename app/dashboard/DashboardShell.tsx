@@ -9,7 +9,6 @@ import { RouteSkeleton, PageBodySkeleton } from "@/shared/components/RouteSkelet
 import { SiteLoader } from "@/shared/components/SiteLoader";
 import { useStore } from "@/shared/lib/store";
 import { TooltipProvider } from "@/shared/ui/tooltip";
-import { Toaster } from "@/shared/ui/toaster";
 import { Toaster as Sonner } from "@/shared/ui/sonner";
 import { StoreProvider } from "@/shared/lib/store";
 import { NotionAppProvider } from "@/slices/notion";
@@ -138,7 +137,6 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
   return (
     <ErrorBoundary>
       <TooltipProvider>
-        <Toaster />
         <Sonner />
         <AuthGuard>
           <RouterProvider basename="/dashboard">

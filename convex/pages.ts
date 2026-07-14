@@ -127,22 +127,6 @@ export const setShareSlug = mutation({
   },
 });
 
-/** Workspace-scoped full list — includes `blocks` and `searchText`.
- *  Heavy. Prefer `listMeta` for tree / sidebar / palette callers.
- *  Returns every page in the viewer's active workspace they are a
- *  member of (any role), regardless of which member created it.
- *  Anonymous → []. */
-export const list = query({
-  args: {},
-  handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) return [];
-    const active = await readActiveWorkspace(ctx, userId);
-    if (!active) return [];
-    return await pagesInActiveWorkspace(ctx, userId, active);
-  },
-});
-
 /** Anonymous-readable. Returns the bare minimum for sitemap entries —
  *  page id, optional slug, updatedAt. Capped + only published pages. */
 export const listPublicForSitemap = query({

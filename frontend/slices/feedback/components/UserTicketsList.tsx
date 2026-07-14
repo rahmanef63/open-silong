@@ -7,10 +7,7 @@ import { useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { cn } from "@/shared/lib/utils";
 import { KIND_META, STATUS_META, PRIORITY_META, type TicketKind, type TicketStatus, type TicketPriority } from "../lib/ticketMeta";
-
-function fmtDate(ts: number): string {
-  return new Date(ts).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
-}
+import { formatDateLong } from "@/shared/lib/format";
 
 export function UserTicketsList() {
   const tickets = useQuery(api.feedback.queries.listMine);
@@ -43,7 +40,7 @@ export function UserTicketsList() {
                 <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[10px]">
                   <span className={cn("rounded-full px-2 py-0.5 font-medium", status.className)}>{status.label}</span>
                   {priority && <span className={cn("rounded-full px-2 py-0.5 font-medium", priority.className)}>{priority.label}</span>}
-                  <span className="text-muted-foreground">· {fmtDate(t.createdAt)}</span>
+                  <span className="text-muted-foreground">· {formatDateLong(t.createdAt)}</span>
                 </div>
               </div>
             </header>
@@ -52,7 +49,7 @@ export function UserTicketsList() {
               <aside className="rounded-md border border-border bg-muted/40 p-3 text-xs">
                 <div className="mb-1 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                   <span>Admin reply</span>
-                  {t.repliedAt && <span>· {fmtDate(t.repliedAt)}</span>}
+                  {t.repliedAt && <span>· {formatDateLong(t.repliedAt)}</span>}
                 </div>
                 <p className="whitespace-pre-wrap">{t.adminReply}</p>
               </aside>

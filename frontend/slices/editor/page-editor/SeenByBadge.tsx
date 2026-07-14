@@ -2,23 +2,12 @@ import { Eye } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/ui/popover";
 import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
+import { formatRelTime } from "@/shared/lib/format";
 import { useNotionAdapter } from "@/slices/notion";
 
 interface Props {
   pageId: string;
   className?: string;
-}
-
-function relative(ts: number): string {
-  const diff = Date.now() - ts;
-  const s = Math.round(diff / 1000);
-  if (s < 60) return "just now";
-  const m = Math.round(s / 60);
-  if (m < 60) return `${m}m ago`;
-  const h = Math.round(m / 60);
-  if (h < 24) return `${h}h ago`;
-  const d = Math.round(h / 24);
-  return `${d}d ago`;
 }
 
 export function SeenByBadge({ pageId, className }: Props) {
@@ -56,7 +45,7 @@ export function SeenByBadge({ pageId, className }: Props) {
           {viewers.map((v) => (
             <li key={v.userId} className="flex items-center justify-between gap-2">
               <span className="truncate text-xs">{v.name}</span>
-              <span className="shrink-0 text-[10px] text-muted-foreground">{relative(v.lastSeenAt)}</span>
+              <span className="shrink-0 text-[10px] text-muted-foreground">{formatRelTime(v.lastSeenAt)}</span>
             </li>
           ))}
         </ul>
