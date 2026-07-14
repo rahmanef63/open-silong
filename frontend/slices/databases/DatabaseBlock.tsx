@@ -145,7 +145,19 @@ export function DatabaseBlock({
         <RowSelectionToolbar databaseId={db.id} />
         <RowSelectionKeyboard databaseId={db.id} />
         <ErrorBoundary>
-          <Suspense fallback={<DatabaseSkeleton />}>
+          {/* Body-only placeholder while the view chunk loads — the header +
+              toolbar above are already painted, so a full DatabaseSkeleton
+              (which redraws a header) would flash a second skeleton on top of
+              the route/data-gate one. */}
+          <Suspense
+            fallback={
+              <div className="space-y-1.5 p-2" aria-hidden>
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="h-8 rounded bg-muted/40 animate-pulse" />
+                ))}
+              </div>
+            }
+          >
             <ViewComponent db={db} view={view} rows={filtered} onOpenRow={setOpenRowId} writeView={writeView} />
           </Suspense>
         </ErrorBoundary>

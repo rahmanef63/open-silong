@@ -55,15 +55,17 @@ export async function collectOutgoing(
   ctx: QueryCtx,
   pages: Doc<"pages">[],
 ): Promise<Doc<"pageLinks">[]> {
-  const edges: Doc<"pageLinks">[] = [];
-  for (const p of pages) {
-    const rows = await ctx.db
-      .query("pageLinks")
-      .withIndex("by_source", (q) => q.eq("sourcePageId", p._id))
-      .take(LINKS_PER_PAGE_CAP);
-    for (const r of rows) edges.push(r);
-  }
-  return edges;
+  // Parallel fan-out: one indexed read per source page, awaited together
+  // instead of serially (was up to GRAPH_PAGE_CAP sequential round-trips).
+  const perPage = await Promise.all(
+    pages.map((p) =>
+      ctx.db
+        .query("pageLinks")
+        .withIndex("by_source", (q) => q.eq("sourcePageId", p._id))
+        .take(LINKS_PER_PAGE_CAP),
+    ),
+  );
+  return perPage.flat();
 }
 
 /** All pages in the same workspace as `page` (trashed included — the

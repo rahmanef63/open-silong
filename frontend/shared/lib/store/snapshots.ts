@@ -81,5 +81,10 @@ export function useSnapshots(authorName: string) {
     [mutRestoreSnapshot],
   );
 
-  return { snapshots, snapshotsForPage, restoreSnapshot, snapshotIfNeeded };
+  // Stable identity so the store context value memo isn't invalidated every
+  // render — inner deps are all memo/useCallback-stable.
+  return useMemo(
+    () => ({ snapshots, snapshotsForPage, restoreSnapshot, snapshotIfNeeded }),
+    [snapshots, snapshotsForPage, restoreSnapshot, snapshotIfNeeded],
+  );
 }

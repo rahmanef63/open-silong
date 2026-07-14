@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { isTextInputTarget } from "@/shared/lib/keyboard";
 
 export interface StructuralAction {
@@ -50,5 +50,11 @@ export function useHistoryStack() {
   const canUndo = historyVersion >= 0 && undoStackRef.current.length > 0;
   const canRedo = historyVersion >= 0 && redoStackRef.current.length > 0;
 
-  return { pushStructuralAction, undo, redo, canUndo, canRedo };
+  // Stable identity: callbacks are useCallback-stable, so this object only
+  // changes when canUndo/canRedo flip — otherwise the monolithic store
+  // context value memo (which spreads this) is invalidated every render.
+  return useMemo(
+    () => ({ pushStructuralAction, undo, redo, canUndo, canRedo }),
+    [pushStructuralAction, undo, redo, canUndo, canRedo],
+  );
 }

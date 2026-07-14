@@ -15,7 +15,7 @@ import { v } from "convex/values";
 import { mutation, query } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
 import { rateLimit } from "../_shared/rateLimit";
-import { RATE_LIMITS } from "../_shared/limits";
+import { RATE_LIMITS, COUNT_CAPS } from "../_shared/limits";
 import { uid } from "../_shared/uid";
 
 interface FormViewLite {
@@ -48,10 +48,12 @@ async function findBySlug(
   ctx: { db: { query: (t: "databases") => any } },
   slug: string,
 ): Promise<{ db: Record<string, unknown>; view: FormViewLite } | null> {
+  // Bounded scan (no bare .collect): only databases with a public form are
+  // in this index; cap keeps the anonymous-reachable path O(cap) worst-case.
   const dbs = (await ctx.db
     .query("databases")
     .withIndex("by_has_public_form", (q: any) => q.eq("hasPublicForm", true))
-    .collect()) as Array<Record<string, unknown> & { views?: FormViewLite[]; trashed?: boolean }>;
+    .take(COUNT_CAPS.databasesPerWorkspaceScan)) as Array<Record<string, unknown> & { views?: FormViewLite[]; trashed?: boolean }>;
   for (const db of dbs) {
     if (db.trashed) continue;
     const view = (db.views ?? []).find((v) => v.formIsPublic && (v.formSlug || v.id) === slug);
