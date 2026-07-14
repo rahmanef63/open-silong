@@ -272,22 +272,42 @@ export function MemoryGraphView({
     }
   }, [nodes, edges]);
 
+  // The sim runs while `animate` is on OR while there's residual "cool" (a
+  // settle budget); it self-stops when idle. `loopRef` always holds the latest
+  // closure (step/applyAll change identity with nodes/edges), and
+  // `ensureRunning` restarts a stopped loop so the control effects below can
+  // wake a settled graph.
+  const loopRef = useRef<() => void>(() => {});
+  loopRef.current = () => {
+    const animate = forcesRef.current.animate;
+    if (!animate && coolRef.current <= 0) { rafRef.current = 0; return; }
+    step();
+    if (!animate) coolRef.current -= 1;
+    applyAll();
+    positionAdd();
+    rafRef.current = requestAnimationFrame(() => loopRef.current());
+  };
+  const ensureRunning = useCallback(() => {
+    if (!rafRef.current) rafRef.current = requestAnimationFrame(() => loopRef.current());
+  }, []);
+
+  // Cancel the RAF on unmount only.
+  useEffect(() => () => {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    rafRef.current = 0;
+  }, []);
+
+  // Wake + re-settle the sim whenever the node set, the Animate toggle, or any
+  // Force knob changes. Without this a settled graph ignores Forces-slider
+  // edits — the loop had already exited — which reads as "the controls do
+  // nothing".
   useEffect(() => {
-    const loop = () => {
-      const animate = forcesRef.current.animate;
-      if (!animate && coolRef.current <= 0) { rafRef.current = 0; return; }
-      step();
-      if (!animate) coolRef.current -= 1;
-      applyAll();
-      positionAdd();
-      rafRef.current = requestAnimationFrame(loop);
-    };
-    if (!rafRef.current) rafRef.current = requestAnimationFrame(loop);
-    return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-      rafRef.current = 0;
-    };
-  }, [step, applyAll, positionAdd, nodes, forces.animate]);
+    if (!forcesRef.current.animate) coolRef.current = Math.max(coolRef.current, 160);
+    ensureRunning();
+  }, [nodes, forces.animate, forces.center, forces.repel, forces.link, forces.linkDistance, ensureRunning]);
+
+  // Arrows toggle repaints edges immediately (the loop may be idle).
+  useEffect(() => { redrawEdges(); }, [display.arrows, redrawEdges]);
 
   // Display → CSS vars (no re-render).
   useEffect(() => {

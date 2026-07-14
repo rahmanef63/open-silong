@@ -1,3 +1,5 @@
+import { liveTriggerRange } from "./dom";
+
 export interface State {
   ce: HTMLElement;
   /** Range covering the `@query` substring — used to replace on insert. */
@@ -9,13 +11,19 @@ export interface State {
 export function insertMention(state: State, page: { id: string; title: string; icon: string }) {
   const label = page.title || "Untitled";
   const text = `[${label}](/dashboard/p/${page.id}) `;
-  state.range.deleteContents();
-  state.range.insertNode(document.createTextNode(text));
+  // Re-derive the `@query` span from the live caret (marker `@` = 1 char); the
+  // captured `state.range` may point at decorator-swapped, detached nodes.
+  const range = liveTriggerRange(state.ce, state.query.length + 1) ?? state.range;
+  const node = document.createTextNode(text);
+  range.deleteContents();
+  range.insertNode(node);
   const sel = window.getSelection();
   if (sel) {
     sel.removeAllRanges();
+    // Caret right after the inserted mention (correct even mid-paragraph,
+    // unlike `ce.lastChild` which jumps to the block end).
     const r = document.createRange();
-    r.setStartAfter(state.ce.lastChild ?? state.ce);
+    r.setStartAfter(node);
     r.collapse(true);
     sel.addRange(r);
   }

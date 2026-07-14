@@ -1,3 +1,23 @@
+/** Re-derive the `[start, caret]` Range spanning the trigger marker + query
+ *  from the LIVE caret, given how many chars to walk back (marker + query
+ *  length). The inline decorator (`inlineDecorator.ts`) rebuilds the block's
+ *  text nodes after every input, so a Range captured at trigger time points at
+ *  detached nodes and its `deleteContents()` silently no-ops — leaving the
+ *  typed `@query` / `[[query` behind next to the inserted link. Reading the
+ *  current caret and walking the current nodes at insert time avoids that. */
+export function liveTriggerRange(ce: HTMLElement, backCount: number): Range | null {
+  const sel = window.getSelection();
+  if (!sel || sel.rangeCount === 0) return null;
+  const caret = sel.getRangeAt(0);
+  if (!caret.collapsed || !ce.contains(caret.endContainer)) return null;
+  const start = walkBack(ce, caret.endContainer, caret.endOffset, backCount);
+  if (!start) return null;
+  const range = document.createRange();
+  range.setStart(start.node, start.offset);
+  range.setEnd(caret.endContainer, caret.endOffset);
+  return range;
+}
+
 /** Walk backward from `(node, offset)` by `count` characters. Returns the
  *  resulting node + offset, or null if the walk falls off the front. */
 export function walkBack(

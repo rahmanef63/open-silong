@@ -1,3 +1,5 @@
+import { liveTriggerRange } from "../mention-typeahead/dom";
+
 export interface State {
   ce: HTMLElement;
   /** Range covering the `[[query` substring — used to replace on insert. */
@@ -13,13 +15,17 @@ export interface State {
 export function insertWikiLink(state: State, page: { id: string; title: string; icon: string }) {
   const title = page.title || "Untitled";
   const text = `[[${title}]] `;
-  state.range.deleteContents();
-  state.range.insertNode(document.createTextNode(text));
+  // Re-derive the `[[query` span from the live caret (marker `[[` = 2 chars);
+  // the captured `state.range` may point at decorator-swapped, detached nodes.
+  const range = liveTriggerRange(state.ce, state.query.length + 2) ?? state.range;
+  const node = document.createTextNode(text);
+  range.deleteContents();
+  range.insertNode(node);
   const sel = window.getSelection();
   if (sel) {
     sel.removeAllRanges();
     const r = document.createRange();
-    r.setStartAfter(state.ce.lastChild ?? state.ce);
+    r.setStartAfter(node);
     r.collapse(true);
     sel.addRange(r);
   }
