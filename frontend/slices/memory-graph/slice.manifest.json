@@ -1,6 +1,6 @@
 {
   "name": "memory-graph",
-  "description": "Knowledge graph (global route + per-page ego panel) — a DOM+SVG renderer with radial layout, pan/zoom/drag, and theme-token styling.",
+  "description": "Knowledge graph (global route + per-page ego panel) — a DOM+SVG renderer with a free-floating force-directed layout (Obsidian-style cloud), pan/zoom/drag, and theme-token styling.",
   "deps": {
     "shared": [
       "components/icon-picker",

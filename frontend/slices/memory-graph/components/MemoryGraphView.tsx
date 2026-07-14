@@ -3,11 +3,13 @@
 /** DOM + SVG knowledge graph — purpose-built (no canvas lib) so page ICONS
  *  render natively and colours stay theme-token dynamic.
  *
- *  Glowing CORE orb · icon-CHIP hubs (emoji icon, lucide fallback) · faded PILL
- *  leaves · SVG connectors (highlight on hover). Pan (drag bg) · zoom (wheel) ·
- *  drag nodes · hover a node for a "+" that adds a child. A damped force sim
- *  (driven by the Forces sliders) settles the layout; "Animate" keeps it live.
- *  Filters/display/selection come from props (see lib/graphSettings).
+ *  Obsidian-style FREE-FLOATING CLOUD: no imposed core/hub/leaf hierarchy.
+ *  Every page is an equal icon-disc sized by degree; clusters emerge purely
+ *  from links. Pages · icon-disc leaves · #tag chips · dashed ghost discs ·
+ *  database discs. SVG connectors (highlight on hover). Pan (drag bg) · zoom
+ *  (wheel) · drag nodes · hover a page for a "+" that adds a child. A damped
+ *  force sim (repel + link springs + gentle pull to centre, driven by the
+ *  Forces sliders) settles the layout; "Animate" keeps it live.
  *
  *  Positions live in a ref and are applied imperatively (CSS vars + SVG attrs)
  *  so pan/zoom/drag/sim never re-render the node list.
@@ -22,13 +24,14 @@ import {
   DEFAULT_DISPLAY,
   DEFAULT_FILTERS,
   DEFAULT_FORCES,
+  componentOf,
   type GraphDisplay,
   type GraphFilters,
   type GraphForces,
 } from "../lib/graphSettings";
 
-type Role = "core" | "hub" | "leaf" | "ghost" | "tag" | "database";
-interface P { x: number; y: number; vx: number; vy: number; ax: number; ay: number }
+type Role = "page" | "ghost" | "tag" | "database";
+interface P { x: number; y: number; vx: number; vy: number }
 
 const CX = 800;
 const CY = 500;
@@ -44,59 +47,23 @@ function analyze(graph: Graph) {
     add(e.source, e.target);
     add(e.target, e.source);
   }
-  let core: GraphNode | null = null;
-  for (const n of graph.nodes) {
-    if (n.kind !== "page") continue;
-    if (!core || n.degree > core.degree) core = n;
-  }
-  const coreId = core?.id ?? null;
-  const hubIds = coreId ? (adj.get(coreId) ?? new Set<string>()) : new Set<string>();
-  const roleOf = (n: GraphNode): Role => {
-    if (n.kind === "ghost") return "ghost";
-    if (n.kind === "tag") return "tag";
-    if (n.kind === "database") return "database";
-    if (n.id === coreId) return "core";
-    if (hubIds.has(n.id)) return "hub";
-    return "leaf";
-  };
-  const groupOf = (n: GraphNode): string | null => {
-    if (hubIds.has(n.id)) return n.id;
-    for (const nb of adj.get(n.id) ?? []) if (hubIds.has(nb)) return nb;
-    return null;
-  };
-  return { adj, coreId, hubIds, roleOf, groupOf };
+  const rep = componentOf(graph); // node id → its cluster representative
+  const roleOf = (n: GraphNode): Role =>
+    n.kind === "ghost" ? "ghost" : n.kind === "tag" ? "tag" : n.kind === "database" ? "database" : "page";
+  // Group = connected component (hierarchy-free); powers the hide-cluster filter.
+  const groupOf = (n: GraphNode): string | null => rep.get(n.id) ?? null;
+  return { adj, roleOf, groupOf };
 }
 
-function anchors(nodes: GraphNode[], a: ReturnType<typeof analyze>): Map<string, { x: number; y: number }> {
+/** Deterministic phyllotaxis (golden-angle) spread around centre — a spacious
+ *  seed the force sim then refines into link-driven clusters. */
+function seed(nodes: GraphNode[]): Map<string, { x: number; y: number }> {
   const pos = new Map<string, { x: number; y: number }>();
-  if (a.coreId) pos.set(a.coreId, { x: CX, y: CY });
-  const hubs = nodes.filter((n) => a.roleOf(n) === "hub");
-  hubs.forEach((h, i) => {
-    const ang = (i / Math.max(1, hubs.length)) * Math.PI * 2 - Math.PI / 2;
-    pos.set(h.id, { x: CX + Math.cos(ang) * 210, y: CY + Math.sin(ang) * 210 });
-  });
-  const hubSet = new Set(hubs.map((h) => h.id));
-  const byHub = new Map<string, GraphNode[]>();
-  const orphans: GraphNode[] = [];
-  for (const n of nodes) {
-    const r = a.roleOf(n);
-    if (r === "core" || r === "hub") continue;
-    let hub: string | null = null;
-    for (const nb of a.adj.get(n.id) ?? []) if (hubSet.has(nb)) { hub = nb; break; }
-    if (hub) (byHub.get(hub) ?? byHub.set(hub, []).get(hub)!).push(n);
-    else orphans.push(n);
-  }
-  for (const [hubId, kids] of byHub) {
-    const hp = pos.get(hubId)!;
-    const out = Math.atan2(hp.y - CY, hp.x - CX);
-    kids.forEach((k, i) => {
-      const ang = out + (i - (kids.length - 1) / 2) * 0.5;
-      pos.set(k.id, { x: hp.x + Math.cos(ang) * (150 + (i % 2) * 26), y: hp.y + Math.sin(ang) * (150 + (i % 2) * 26) });
-    });
-  }
-  orphans.forEach((n, i) => {
-    const ang = (i / Math.max(1, orphans.length)) * Math.PI * 2;
-    pos.set(n.id, { x: CX + Math.cos(ang) * 480, y: CY + Math.sin(ang) * 480 });
+  const golden = Math.PI * (3 - Math.sqrt(5));
+  nodes.forEach((n, i) => {
+    const r = 34 * Math.sqrt(i + 0.5);
+    const a = i * golden;
+    pos.set(n.id, { x: CX + Math.cos(a) * r, y: CY + Math.sin(a) * r });
   });
   return pos;
 }
@@ -138,11 +105,10 @@ export function MemoryGraphView({
     const hidden = new Set(filters.hiddenGroups);
     const ok = (n: GraphNode): boolean => {
       const r = meta.roleOf(n);
-      if (r === "core") return true;
       if (r === "database" && !filters.showDatabases) return false;
       if (r === "tag" && !filters.showTags) return false;
       if (r === "ghost" && !filters.showGhosts) return false;
-      if (r === "leaf" && n.degree === 0 && !filters.showOrphans) return false;
+      if (r === "page" && n.degree === 0 && !filters.showOrphans) return false;
       const g = meta.groupOf(n);
       if (g && hidden.has(g)) return false;
       if (q && !n.title.toLowerCase().includes(q)) return false;
@@ -168,17 +134,17 @@ export function MemoryGraphView({
   const nodeById = useCallback((id: string) => graph.nodes.find((n) => n.id === id) ?? null, [graph]);
 
   // Seed / preserve positions when the visible set changes.
-  const anchorMap = useMemo(() => anchors(nodes, meta), [nodes, meta]);
+  const seedMap = useMemo(() => seed(nodes), [nodes]);
   useMemo(() => {
     const next = new Map<string, P>();
     for (const n of nodes) {
-      const a = anchorMap.get(n.id) ?? { x: CX, y: CY };
+      const s = seedMap.get(n.id) ?? { x: CX, y: CY };
       const prev = posRef.current.get(n.id);
-      next.set(n.id, prev ? { ...prev, ax: a.x, ay: a.y } : { x: a.x, y: a.y, vx: 0, vy: 0, ax: a.x, ay: a.y });
+      next.set(n.id, prev ?? { x: s.x, y: s.y, vx: 0, vy: 0 });
     }
     posRef.current = next;
-    coolRef.current = 180; // settle the new layout
-  }, [nodes, anchorMap]);
+    coolRef.current = 220; // settle the new layout
+  }, [nodes, seedMap]);
 
   const applyView = useCallback(() => {
     const w = worldRef.current;
@@ -251,26 +217,27 @@ export function MemoryGraphView({
     } else btn.classList.remove("mg-add-visible");
   }, [addSlot, nodeById, onAddChild]);
 
-  // ── force simulation (damped, clamped) ─────────────────────
+  // ── force simulation (free cloud: repel + link springs + centre pull) ──
   const step = useCallback(() => {
     const f = forcesRef.current;
-    const list = nodes.filter((n) => meta.roleOf(n) !== "core");
     const pm = posRef.current;
     const repel = (f.repel / 100) * 900;
     const centerF = f.center / 100;
     const linkF = f.link / 100;
     const desired = f.linkDistance;
-    for (const n of list) {
+    // ponytail: gentle isotropic pull to one centre — tune via the Centre
+    // slider; disconnected islands settle in a ring where repel balances it.
+    for (const n of nodes) {
       const p = pm.get(n.id);
       if (!p) continue;
-      p.vx += (p.ax - p.x) * 0.003 * centerF;
-      p.vy += (p.ay - p.y) * 0.003 * centerF;
+      p.vx += (CX - p.x) * 0.0016 * centerF;
+      p.vy += (CY - p.y) * 0.0016 * centerF;
     }
-    for (let i = 0; i < list.length; i++) {
-      const a = pm.get(list[i].id);
+    for (let i = 0; i < nodes.length; i++) {
+      const a = pm.get(nodes[i].id);
       if (!a) continue;
-      for (let j = i + 1; j < list.length; j++) {
-        const b = pm.get(list[j].id);
+      for (let j = i + 1; j < nodes.length; j++) {
+        const b = pm.get(nodes[j].id);
         if (!b) continue;
         let dx = a.x - b.x;
         let dy = a.y - b.y;
@@ -293,12 +260,9 @@ export function MemoryGraphView({
       const diff = (d - desired) * 0.006 * linkF;
       const fx = (dx / d) * diff;
       const fy = (dy / d) * diff;
-      const ca = e.source === meta.coreId;
-      const cb = e.target === meta.coreId;
-      if (!ca) { a.vx += fx; a.vy += fy; }
-      if (!cb) { b.vx -= fx; b.vy -= fy; }
+      a.vx += fx; a.vy += fy; b.vx -= fx; b.vy -= fy;
     }
-    for (const n of list) {
+    for (const n of nodes) {
       const p = pm.get(n.id);
       if (!p) continue;
       p.vx *= 0.85; p.vy *= 0.85;
@@ -306,7 +270,7 @@ export function MemoryGraphView({
       if (v > 8) { p.vx = (p.vx / v) * 8; p.vy = (p.vy / v) * 8; }
       p.x += p.vx; p.y += p.vy;
     }
-  }, [nodes, edges, meta]);
+  }, [nodes, edges]);
 
   useEffect(() => {
     const loop = () => {
@@ -395,7 +359,8 @@ export function MemoryGraphView({
       if (p) {
         p.x = d.ox + (e.clientX - d.sx) / s;
         p.y = d.oy + (e.clientY - d.sy) / s;
-        p.ax = p.x; p.ay = p.y; p.vx = 0; p.vy = 0;
+        p.vx = 0; p.vy = 0;
+        coolRef.current = Math.max(coolRef.current, 60); // nudge the sim awake
         applyNode(d.id);
         redrawEdges();
         positionAdd();
@@ -443,38 +408,27 @@ export function MemoryGraphView({
         <svg ref={edgesRef} className="mg-edges absolute inset-0 overflow-visible text-foreground" viewBox="0 0 1600 1000" aria-hidden />
         {nodes.map((n) => {
           const role = meta.roleOf(n);
-          const cls = `mg-node mg-${role}${hoverId === n.id ? " mg-hover" : ""}${selectedId === n.id ? " mg-selected" : ""}`;
+          const cls = `mg-node mg-${role}${n.hub ? " mg-verified" : ""}${hoverId === n.id ? " mg-hover" : ""}${selectedId === n.id ? " mg-selected" : ""}`;
           const label = n.title || "Untitled";
+          const degStyle = { "--deg": n.degree } as React.CSSProperties;
           const handlers = {
             onPointerEnter: () => enter(n.id),
             onPointerLeave: leave,
             onClick: (e: React.MouseEvent) => { e.stopPropagation(); if (!drag.current.moved) onSelect?.(n); },
           };
-          if (role === "core")
-            return <button key={n.id} data-id={n.id} type="button" className={cls} aria-label={label} {...handlers} />;
-          if (role === "hub")
-            return (
-              <button key={n.id} data-id={n.id} type="button" className={cls} aria-label={label} {...handlers}>
-                <DynamicIcon value={n.icon} fallback="🗂️" className="mg-icon" />
-              </button>
-            );
-          if (role === "database")
-            return (
-              <button key={n.id} data-id={n.id} type="button" className={cls} aria-label={label} {...handlers}>
-                <DynamicIcon value={n.icon} fallback="lucide:Database" className="mg-icon" />
-                <span className="mg-db-label">{label}</span>
-              </button>
-            );
           if (role === "tag")
             return (
               <button key={n.id} data-id={n.id} type="button" className={cls} title={label} {...handlers}>
-                #{label.replace(/^tag:/, "")}
+                #{label.replace(/^#?/, "")}
               </button>
             );
+          // page · ghost · database → icon-disc + label, sized by degree.
           return (
-            <button key={n.id} data-id={n.id} type="button" className={cls} title={label} {...handlers}>
-              {n.icon ? <DynamicIcon value={n.icon} className="mg-icon-sm" /> : null}
-              {label}
+            <button key={n.id} data-id={n.id} type="button" className={cls} style={degStyle} aria-label={label} {...handlers}>
+              <span className="mg-disc">
+                <DynamicIcon value={n.icon} fallback={role === "database" ? "lucide:Database" : role === "ghost" ? "○" : "📄"} className="mg-icon" />
+              </span>
+              <span className="mg-label">{label}</span>
             </button>
           );
         })}
@@ -506,30 +460,26 @@ const MG_CSS = `
 .mg-edge-temp{stroke:color-mix(in srgb, var(--primary) 55%, transparent);stroke-width:1.6;stroke-dasharray:4 5}
 .mg-edge-db{stroke:color-mix(in srgb, var(--primary) 45%, var(--border));stroke-width:calc(1.3 * var(--mg-link))}
 .mg-edge-rel{stroke:color-mix(in srgb, var(--primary) 60%, transparent);stroke-width:calc(1.2 * var(--mg-link));stroke-dasharray:5 4}
-.mg-node{position:absolute;left:var(--x,0);top:var(--y,0);transform:translate(-50%,-50%);border:0;background:transparent;padding:0;cursor:pointer;user-select:none;touch-action:none}
-.mg-core{width:calc(56px * var(--mg-scale));height:calc(56px * var(--mg-scale));border-radius:999px;cursor:grab;
-  background:radial-gradient(circle at 50% 50%, color-mix(in srgb,var(--primary) 92%, white) 0 22%, color-mix(in srgb,var(--primary) 70%, transparent) 40%, color-mix(in srgb,var(--primary) 22%, transparent) 68%, transparent 100%);
-  box-shadow:0 0 26px color-mix(in srgb,var(--primary) 30%, transparent), 0 12px 40px rgba(0,0,0,.25)}
-.mg-hub{width:calc(34px * var(--mg-scale));height:calc(34px * var(--mg-scale));display:grid;place-items:center;border-radius:calc(11px * var(--mg-scale));cursor:grab;
-  background:color-mix(in srgb,var(--card) 90%, transparent);border:1px solid var(--border);color:var(--foreground);
-  box-shadow:0 8px 22px rgba(0,0,0,.16);transition:transform .15s ease,border-color .15s ease}
-.mg-hub:hover,.mg-hub.mg-hover,.mg-hub.mg-selected{transform:translate(-50%,-50%) scale(1.08);border-color:color-mix(in srgb,var(--primary) 45%, var(--border))}
-.mg-database{display:grid;place-items:center;gap:2px;padding:6px 10px;border-radius:calc(11px * var(--mg-scale));cursor:grab;
+.mg-node{position:absolute;left:var(--x,0);top:var(--y,0);transform:translate(-50%,-50%);border:0;background:transparent;padding:0;cursor:grab;user-select:none;touch-action:none;display:flex;flex-direction:column;align-items:center}
+.mg-disc{--d:calc(clamp(18px, 20px + var(--deg,0) * 2.4px, 54px) * var(--mg-scale));width:var(--d);height:var(--d);border-radius:999px;display:grid;place-items:center;
   background:color-mix(in srgb,var(--card) 92%, transparent);border:1px solid var(--border);color:var(--foreground);
-  box-shadow:0 8px 22px rgba(0,0,0,.18);transition:transform .15s ease,border-color .15s ease}
-.mg-database:hover,.mg-database.mg-hover,.mg-database.mg-selected{transform:translate(-50%,-50%) scale(1.06);border-color:color-mix(in srgb,var(--primary) 50%, var(--border))}
-.mg-db-label{font-size:calc(9px * var(--mg-scale));font-weight:600;color:var(--muted-foreground);max-width:96px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.mg-icon{font-size:calc(17px * var(--mg-scale));line-height:1;display:grid;place-items:center}
-.mg-icon-sm{font-size:11px;margin-right:2px;display:inline-grid;place-items:center}
-.mg-leaf,.mg-tag{min-width:64px;height:calc(24px * var(--mg-scale));padding:0 12px;display:flex;align-items:center;gap:4px;border-radius:999px;white-space:nowrap;
-  font-size:calc(11px * var(--mg-scale));font-weight:600;letter-spacing:-.01em;
-  color:var(--muted-foreground);background:color-mix(in srgb,var(--muted) 55%, transparent);border:1px solid transparent;
-  opacity:var(--mg-pill);transition:opacity .15s ease,transform .15s ease,color .15s ease,background .15s ease,border-color .15s ease}
-.mg-leaf:hover,.mg-leaf.mg-hover,.mg-leaf.mg-selected,.mg-tag:hover,.mg-tag.mg-hover,.mg-tag.mg-selected{opacity:1;color:var(--foreground);transform:translate(-50%,-50%) scale(1.05);
-  background:color-mix(in srgb,var(--card) 90%, transparent);border-color:color-mix(in srgb,var(--primary) 30%, var(--border))}
-.mg-tag{color:var(--primary);background:color-mix(in srgb,var(--primary) 12%, transparent)}
-.mg-ghost{border-style:dashed;border-color:var(--muted-foreground);opacity:.5}
-.mg-add{position:absolute;left:var(--x,0);top:var(--y,0);transform:translate(-50%,-50%) scale(.9);width:30px;height:30px;border-radius:999px;
+  box-shadow:0 4px 14px rgba(0,0,0,.14);transition:transform .15s ease,border-color .15s ease,box-shadow .15s ease}
+.mg-icon{font-size:calc(var(--d,22px) * .5);line-height:1;display:grid;place-items:center}
+.mg-label{margin-top:4px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  font-size:calc(11px * var(--mg-scale));font-weight:600;letter-spacing:-.01em;color:var(--muted-foreground);
+  opacity:var(--mg-pill);pointer-events:none;transition:opacity .15s ease,color .15s ease}
+.mg-node:hover .mg-disc,.mg-hover .mg-disc,.mg-selected .mg-disc{transform:scale(1.09);border-color:color-mix(in srgb,var(--primary) 45%, var(--border));box-shadow:0 8px 22px rgba(0,0,0,.2)}
+.mg-node:hover .mg-label,.mg-hover .mg-label,.mg-selected .mg-label{opacity:1;color:var(--foreground)}
+.mg-verified .mg-disc{border-color:color-mix(in srgb,var(--primary) 55%, var(--border));box-shadow:0 0 0 1px color-mix(in srgb,var(--primary) 35%, transparent),0 6px 18px rgba(0,0,0,.18)}
+.mg-database .mg-disc{border-radius:calc(12px * var(--mg-scale))}
+.mg-ghost .mg-disc{border-style:dashed;color:var(--muted-foreground);opacity:.7}
+.mg-ghost .mg-label{font-style:italic;opacity:calc(var(--mg-pill) * .8)}
+.mg-tag{min-width:44px;height:calc(24px * var(--mg-scale));padding:0 12px;display:flex;flex-direction:row;align-items:center;border-radius:999px;white-space:nowrap;
+  font-size:calc(11px * var(--mg-scale));font-weight:600;letter-spacing:-.01em;color:var(--primary);
+  background:color-mix(in srgb,var(--primary) 12%, transparent);border:1px solid transparent;
+  opacity:var(--mg-pill);transition:opacity .15s ease,transform .15s ease,border-color .15s ease}
+.mg-tag:hover,.mg-tag.mg-hover,.mg-tag.mg-selected{opacity:1;transform:translate(-50%,-50%) scale(1.06);border-color:color-mix(in srgb,var(--primary) 35%, var(--border))}
+.mg-add{position:absolute;left:var(--x,0);top:var(--y,0);transform:translate(-50%,-50%) scale(.9);width:30px;height:30px;border-radius:999px;flex-direction:row;
   display:grid;place-items:center;border:1px solid color-mix(in srgb,var(--primary) 40%, var(--border));
   background:color-mix(in srgb,var(--background) 70%, var(--primary) 12%);color:var(--foreground);
   box-shadow:0 10px 26px rgba(0,0,0,.3);cursor:pointer;opacity:0;pointer-events:none;transition:opacity .14s ease,transform .14s ease;z-index:8}
