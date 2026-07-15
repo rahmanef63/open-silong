@@ -50,10 +50,26 @@ async function main() {
   // ── sign in ──────────────────────────────────────────────
   console.log(`→ ${BASE}/auth`);
   await page.goto(`${BASE}/auth`, { waitUntil: "networkidle" });
-  await page.locator('input[type="email"]').fill(EMAIL);
-  await page.locator('input[type="password"]').fill(PASSWORD);
+  await page.waitForTimeout(2000); // let React hydrate before filling controlled inputs
+  const emailEl = page.locator('input[type="email"]');
+  await emailEl.waitFor({ state: "visible" });
+  await emailEl.click();
+  await emailEl.fill(EMAIL);
+  const pwEl = page.locator('input[type="password"]');
+  await pwEl.click();
+  await pwEl.fill(PASSWORD);
+  // confirm the controlled inputs actually took the value (React hydration guard)
+  if ((await emailEl.inputValue()) !== EMAIL) { await emailEl.fill(EMAIL); }
   await page.locator('button[type="submit"]').click();
-  await page.waitForURL(/\/dashboard(\/|$)/, { timeout: 45_000 });
+  try {
+    await page.waitForURL(/\/dashboard(\/|$)/, { timeout: 30_000 });
+  } catch {
+    const err = await page.locator(".text-destructive").first().textContent().catch(() => null);
+    await page.screenshot({ path: `${OUT}/_debug-auth.png` }).catch(() => {});
+    console.error(`  ✗ never reached /dashboard. url=${page.url()} error=${err ?? "(no error shown)"}`);
+    await browser.close();
+    process.exit(2);
+  }
   await page.waitForLoadState("networkidle");
   console.log("  ✓ signed in");
 
