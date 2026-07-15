@@ -84,7 +84,7 @@ export default function WorkspaceSitePage({ params }: Props) {
       </ul>
       <footer className="mt-8 flex items-center justify-center gap-1.5 text-[10px] text-muted-foreground/60">
         <FileText className="h-3 w-3" />
-        Powered by Nosion
+        Powered by Silong
       </footer>
     </div>
   );

@@ -53,7 +53,7 @@ export const metadata: Metadata = {
       { url: "/favicon.ico", sizes: "any" },
     ],
     apple: "/apple-touch-icon.png",
-    other: [{ rel: "mask-icon", url: "/logo-mark-fill-black.svg", color: "#f08a40" }],
+    other: [{ rel: "mask-icon", url: "/logo-mark-fill-black.svg", color: "#7c5cff" }],
   },
   appleWebApp: {
     capable: true,
@@ -66,13 +66,13 @@ export const metadata: Metadata = {
     type: "website",
     url: SITE_URL,
     siteName: "Silong",
-    images: [{ url: "/banner-light.png", width: 1200, height: 630 }],
+    images: [{ url: "/banner-dark.png", width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Silong — Open-source collaborative workspace",
     description: "Open-source Notion-inspired workspace. Block editor, databases, sharing, MIT licensed.",
-    images: ["/banner-light.png"],
+    images: ["/banner-dark.png"],
   },
   verification: {
     google: "cIVgVzi0xUCpY-4p2HRfbJpvllEnbGu8poddkl3qFng",
@@ -84,8 +84,8 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: "cover",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f08a40" },
-    { media: "(prefers-color-scheme: dark)", color: "#1a1d24" },
+    { media: "(prefers-color-scheme: light)", color: "#7c5cff" },
+    { media: "(prefers-color-scheme: dark)", color: "#16181d" },
   ],
 };
 
