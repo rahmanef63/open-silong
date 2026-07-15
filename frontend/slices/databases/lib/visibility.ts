@@ -11,7 +11,3 @@ export function getVisibleProps(db: Database, view: DatabaseViewConfig | undefin
 export function isHiddenInView(view: DatabaseViewConfig | undefined, propId: string): boolean {
   return !!view?.hiddenPropIds?.includes(propId);
 }
-
-export function isVisibleInView(view: DatabaseViewConfig | undefined, prop: Property): boolean {
-  return !isHiddenInView(view, prop.id);
-}

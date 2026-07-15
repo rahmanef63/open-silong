@@ -4,7 +4,6 @@ import {
   regenAllBlockIds,
   walkBlocks,
   findDuplicateBlockId,
-  topLevelDatabaseIds,
   type BlockLike,
 } from "./blocks";
 
@@ -113,31 +112,5 @@ describe("findDuplicateBlockId", () => {
       { id: "a", children: [{ id: "x" }] },
       { id: "b", columns: [[{ id: "x" }]] },
     ])).toBe("x");
-  });
-});
-
-describe("topLevelDatabaseIds", () => {
-  it("returns ids of top-level database blocks", () => {
-    const blocks: BlockLike[] = [
-      { id: "a", type: "paragraph" },
-      { id: "b", type: "database", databaseId: "db1" },
-      { id: "c", type: "database", databaseId: "db2" },
-    ];
-    expect(topLevelDatabaseIds(blocks).sort()).toEqual(["db1", "db2"]);
-  });
-
-  it("ignores database blocks nested inside toggles", () => {
-    // Nested DB blocks aren't supported today — helper is top-level only.
-    const blocks: BlockLike[] = [
-      { id: "tog", type: "toggle", children: [
-        { id: "db", type: "database", databaseId: "db1" },
-      ] },
-    ];
-    expect(topLevelDatabaseIds(blocks)).toEqual([]);
-  });
-
-  it("skips database blocks without a databaseId", () => {
-    const blocks: BlockLike[] = [{ id: "x", type: "database" }];
-    expect(topLevelDatabaseIds(blocks)).toEqual([]);
   });
 });

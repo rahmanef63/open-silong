@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   extractEdges,
   slug,
-  normalizeTitleKey,
   titleKeyFor,
   type RawEdge,
 } from "./links";
@@ -62,8 +61,7 @@ describe("slug / titleKey", () => {
     expect(slug("a/b")).toBe("a-b");
     expect(slug("")).toBe("");
   });
-  it("normalizeTitleKey / titleKeyFor alias slug", () => {
-    expect(normalizeTitleKey("Design Doc")).toBe(slug("Design Doc"));
+  it("titleKeyFor aliases slug", () => {
     expect(titleKeyFor("Design Doc")).toBe(slug("Design Doc"));
   });
 });

@@ -39,17 +39,3 @@ export const touchLastSeen = mutation({
     return { ok: true };
   },
 });
-
-/** Persist a name on the authed user. Idempotent. Trims; rejects empty. */
-export const setMyName = mutation({
-  args: { name: v.string() },
-  handler: async (ctx, { name }) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Belum login");
-    const trimmed = name.trim();
-    if (!trimmed) throw new Error("Nama kosong");
-    if (trimmed.length > 80) throw new Error("Nama terlalu panjang");
-    await ctx.db.patch(userId, { name: trimmed });
-    return { ok: true };
-  },
-});

@@ -45,11 +45,6 @@ export function slug(title: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
-/** Alias of `slug` — the resolver key for `[[Title]]` and `pages.titleKey`. */
-export function normalizeTitleKey(title: string): string {
-  return slug(title);
-}
-
 /** Alias of `slug` for call-site readability at write time. */
 export function titleKeyFor(title: string): string {
   return slug(title);

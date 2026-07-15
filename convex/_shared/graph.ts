@@ -237,16 +237,3 @@ export function bfs(
   }
   return seen;
 }
-
-/** Resolve a title to a unique page id within a candidate set (same rule
- *  the reindex uses server-side: exactly one slug match wins, else null).
- *  Handy for MCP `note_link` by-title and ghost promotion. */
-export function resolveTitleToPageId(
-  pages: GraphPageMeta[],
-  title: string,
-): string | undefined {
-  const key = slug(title);
-  if (!key) return undefined;
-  const matches = pages.filter((p) => slug(p.title) === key);
-  return matches.length === 1 ? matches[0]._id : undefined;
-}

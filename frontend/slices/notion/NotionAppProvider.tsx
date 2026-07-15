@@ -152,11 +152,6 @@ export function NotionAppProvider({
   );
 }
 
-/** Direct context — exported so the `useNotionConfig` hook can read it
- *  without a circular import. Sub-slices should NOT import this; use
- *  `useNotionConfig` instead. */
-export const NotionAppContext = Ctx;
-
 export function useNotionConfig(): NotionAppConfig {
   return useContext(Ctx);
 }

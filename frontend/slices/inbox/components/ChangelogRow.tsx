@@ -4,7 +4,6 @@ import { useState } from "react";
 import { ChevronDown, Sparkles } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { formatRelTime } from "@/shared/lib/format";
-import { Button } from "@/shared/ui/button";
 import type { ChangelogEntry, ChangelogItemKind } from "../hooks/useChangelog";
 
 const KIND_META: Record<ChangelogItemKind, { label: string; className: string }> = {
@@ -67,30 +66,5 @@ export function ChangelogRow({ entry }: Props) {
         </div>
       )}
     </div>
-  );
-}
-
-interface CompactProps {
-  entries: ChangelogEntry[];
-}
-export function ChangelogEmpty({ entries }: CompactProps) {
-  if (entries.length > 0) return null;
-  return null;
-}
-
-interface ButtonProps {
-  onClick: () => void;
-  busy: boolean;
-}
-export function ChangelogMarkReadButton({ onClick, busy }: ButtonProps) {
-  return (
-    <Button
-      variant="outline"
-      onClick={onClick}
-      disabled={busy}
-      className="h-auto gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-normal [&_svg]:size-3.5"
-    >
-      <Sparkles className="h-3.5 w-3.5" /> Mark changelog read
-    </Button>
   );
 }

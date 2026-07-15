@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach } from "vitest";
-import { clearHistory, HISTORY_KEY, HISTORY_MAX, loadHistory, saveHistory } from "./cmdkHistory";
+import { HISTORY_KEY, HISTORY_MAX, loadHistory, saveHistory } from "./cmdkHistory";
 
 class FakeStorage implements Storage {
   store = new Map<string, string>();
@@ -57,11 +57,5 @@ describe("cmdkHistory", () => {
       null,
     ]));
     expect(loadHistory(s)).toEqual([{ id: "ok", label: "Ok" }]);
-  });
-
-  it("clears history", () => {
-    saveHistory({ id: "x", label: "X" }, s);
-    clearHistory(s);
-    expect(loadHistory(s)).toEqual([]);
   });
 });

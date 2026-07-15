@@ -104,4 +104,3 @@ export const NOTIFICATION_LABELS: Record<NonNullable<Property["dateNotification"
   "1d": "1 day before",
   "2d": "2 days before",
 };
-export const DATE_FORMATS = Object.keys(FORMATS) as DateFormatKind[];

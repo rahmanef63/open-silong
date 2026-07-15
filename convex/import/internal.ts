@@ -103,25 +103,6 @@ export const createPage = internalMutation({
   },
 });
 
-/** Append blocks to an existing page (used to drop a database block reference
- *  into the just-created index page). */
-export const appendBlocks = internalMutation({
-  args: {
-    userId: v.id("users"),
-    pageId: v.id("pages"),
-    blocks: v.array(v.any()),
-  },
-  handler: async (ctx, { userId, pageId, blocks }) => {
-    const page = await ctx.db.get(pageId as Id<"pages">);
-    if (!page || page.userId !== userId) return;
-    const existing = await readPageBlocks(ctx, page);
-    const next = [...existing, ...blocks];
-    await writePageBlocks(ctx, pageId as Id<"pages">, next, {
-      searchText: buildSearchText(page.title, next),
-    });
-  },
-});
-
 /** Create a database from CSV data + a host page that contains a `database`
  *  block referencing it. Without the host page the new database is invisible
  *  in the sidebar tree and only reachable by direct URL. */
@@ -155,22 +136,6 @@ export const createDatabaseFromCsvWithHost = internalMutation({
     });
     await insertPageBlocks(ctx, pageId, blocks);
     return { dbId, pageId: String(pageId) };
-  },
-});
-
-/** Create a database from CSV data: header row → text properties, body rows
- *  → child pages with rowProps. Standalone (no host page). Kept for backward
- *  compatibility — new callers should prefer createDatabaseFromCsvWithHost. */
-export const createDatabaseFromCsv = internalMutation({
-  args: {
-    userId: v.id("users"),
-    name: v.string(),
-    headers: v.array(v.string()),
-    rows: v.array(v.array(v.string())),
-  },
-  handler: async (ctx, { userId, name, headers, rows }) => {
-    const dbId = await insertDb(ctx, userId, name, headers, rows);
-    return String(dbId);
   },
 });
 

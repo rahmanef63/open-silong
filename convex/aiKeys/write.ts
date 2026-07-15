@@ -147,20 +147,3 @@ export const setPreferOwn = mutation({
   },
 });
 
-/** Called by the validate action after a test call resolves. */
-export const recordValidation = mutation({
-  args: {
-    id: v.id("aiUserKeys"),
-    ok: v.boolean(),
-    error: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    const row = await ctx.db.get(args.id);
-    if (!row) return;
-    await ctx.db.patch(args.id, {
-      validatedAt: args.ok ? Date.now() : row.validatedAt,
-      validatedError: args.ok ? undefined : args.error,
-      updatedAt: Date.now(),
-    });
-  },
-});

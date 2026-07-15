@@ -40,23 +40,6 @@ export const createFeedback = mutation({
   },
 });
 
-/** Legacy admin endpoint — kept so existing UI keeps working. Prefer
- *  `setStatus` below which supports the full four-state flow. */
-export const markResolved = mutation({
-  args: { id: v.id("feedbackEntries"), resolved: v.boolean() },
-  handler: async (ctx, { id, resolved }) => {
-    const actorId = await requireAdmin(ctx);
-    const doc = await ctx.db.get(id);
-    if (!doc) throw new Error("Feedback tidak ditemukan");
-    await ctx.db.patch(id, {
-      status: resolved ? "resolved" : "open",
-      resolvedAt: resolved ? Date.now() : undefined,
-    });
-    await logAuditEventInternal(ctx, actorId, "feedback.resolve", String(id), { resolved });
-    return { ok: true };
-  },
-});
-
 /** Admin: set any of the four states. Stamps resolvedAt when moving
  *  to `resolved` / `closed`. */
 export const setStatus = mutation({

@@ -84,17 +84,3 @@ export function findDuplicateBlockId(blocks: BlockLike[]): string | null {
   });
   return dup;
 }
-
-/** Cheap signal: "does this page host any database block?" — used by
- *  `pages.listMeta` to populate `databaseHostFor[]` without a full
- *  walk. Top-level only (database blocks aren't nestable today). */
-export function topLevelDatabaseIds(blocks: BlockLike[]): string[] {
-  const out: string[] = [];
-  for (const b of blocks) {
-    if ((b as { type?: string }).type === "database") {
-      const id = (b as { databaseId?: string }).databaseId;
-      if (typeof id === "string") out.push(id);
-    }
-  }
-  return out;
-}

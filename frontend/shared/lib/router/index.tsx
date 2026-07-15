@@ -120,19 +120,3 @@ export const Link = React.forwardRef<HTMLAnchorElement, LinkProps>(function Link
     </NextLink>
   );
 });
-
-interface NavigateProps {
-  to: string;
-  replace?: boolean;
-}
-
-export function Navigate({ to, replace = true }: NavigateProps) {
-  const router = useRouter();
-  const basename = useBasename();
-  React.useEffect(() => {
-    const href = joinBase(basename, to);
-    if (replace) router.replace(href);
-    else router.push(href);
-  }, [router, basename, to, replace]);
-  return null;
-}

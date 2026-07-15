@@ -131,19 +131,6 @@ export const _probeGlobalAISettings = internalQuery({
   },
 });
 
-/** Internal — model override for a single user (returns just the model
- *  string or null). */
-export const _getUserModelOverride = internalQuery({
-  args: { userId: v.id("users") },
-  handler: async (ctx, { userId }) => {
-    const row = await ctx.db
-      .query("aiUserModelOverrides")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
-      .first();
-    return row?.model ?? null;
-  },
-});
-
 /** Internal — used by AI actions to assert the caller is an admin. Throws
  *  on failure with the same error string as `requireAdminQuery`. Actions
  *  cannot touch ctx.db directly, so this query is the gate. */

@@ -699,37 +699,4 @@ export default defineSchema({
     userCode: v.optional(v.string()),
     createdAt: v.number(),
   }).index("by_user", ["userId"]),
-
-  /** AI usage log — one row per successful AI call. Drives Settings →
-   *  AI → Usage tab + Admin → AI Usage panel. `keySource` records
-   *  which fallback tier was used:
-   *    - "user"      → ownerUserId's personal key
-   *    - "workspace" → workspace-scoped key (keyOwnerUserId = creator)
-   *    - "admin"     → process.env admin fallback
-   *  `costEstimateUsd` is computed at log-time from a hardcoded
-   *  pricing table; refreshed quarterly via redeploy. `feature` lets
-   *  us break down which surfaces drive cost (chat, summarize, etc).
-   *  Indexed for per-user-month and per-workspace-month rollups. */
-  aiUsageLog: defineTable({
-    userId: v.id("users"),
-    workspaceId: v.id("workspaces"),
-    provider: v.string(),
-    model: v.string(),
-    keySource: v.union(
-      v.literal("user"),
-      v.literal("workspace"),
-      v.literal("admin"),
-    ),
-    keyId: v.optional(v.id("aiUserKeys")),        // null when source="admin"
-    keyOwnerUserId: v.optional(v.id("users")),    // creator of workspace-scope key
-    tokensInput: v.number(),
-    tokensOutput: v.number(),
-    costEstimateUsd: v.number(),
-    feature: v.string(),                          // "chat" / "summarize" / "mention" / etc
-    durationMs: v.number(),
-    timestamp: v.number(),
-  })
-    .index("by_user_time", ["userId", "timestamp"])
-    .index("by_workspace_time", ["workspaceId", "timestamp"])
-    .index("by_key", ["keyId"]),
 });

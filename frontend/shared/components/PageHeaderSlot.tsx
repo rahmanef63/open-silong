@@ -42,8 +42,3 @@ export function PageHeaderSlot({ left, right }: { left?: ReactNode; right?: Reac
     </>
   );
 }
-
-export function usePageHeaderActive() {
-  const ctx = useContext(Ctx);
-  return Boolean(ctx?.leftEl || ctx?.rightEl);
-}

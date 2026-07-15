@@ -6,7 +6,6 @@ import { RATE_LIMITS } from "../_shared/limits";
 import {
   checkAiTokenQuota,
   recordAiTokenUsage,
-  readAiTokenUsage,
 } from "../_shared/aiQuota";
 
 /** Internal — upsert the in-flight run's progress doc. Called from
@@ -61,12 +60,6 @@ export const recordAiUsage = internalMutation({
     const userId = await requireAuth(ctx);
     await recordAiTokenUsage(ctx, userId, tokens);
   },
-});
-
-/** Read-only — for the AI console quota meter / admin overview. */
-export const getMyAiUsage = internalQuery({
-  args: { userId: v.id("users") },
-  handler: async (ctx, { userId }) => readAiTokenUsage(ctx, userId),
 });
 
 /** Admin-scoped rate limit used by AI admin actions (test connection,

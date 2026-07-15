@@ -123,15 +123,6 @@ export const COUNT_CAPS = {
   mcpTokensScan:             200,
 } as const;
 
-// ─── Time windows ─────────────────────────────────────────────────
-export const RETENTION = {
-  /** Days a trashed page lives before `purgeStaleTrash` cron deletes
-   *  it permanently. */
-  trashedPageDays:  30,
-  /** ms equivalent for cron handler. */
-  get trashedPageMs() { return this.trashedPageDays * 24 * 60 * 60_000; },
-} as const;
-
 // ─── File size caps ───────────────────────────────────────────────
 export const FILE_SIZES = {
   /** Workspace JSON import. */

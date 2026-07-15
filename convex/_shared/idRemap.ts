@@ -145,18 +145,6 @@ export function remapPropertyXRefs(props: unknown[], maps: RemapMaps): PropertyL
   });
 }
 
-/** Rewrite database top-level cross-refs that aren't on properties:
- *  `subItemsParentPropId` (stays — it's a property id on the same db),
- *  `defaultTemplateId` (stays — template ids are scoped to the db).
- *  This helper exists so callers don't forget — it currently only
- *  passes through, future fields go here. */
-export function remapDatabaseXRefs<T extends Record<string, unknown>>(
-  db: T,
-  _maps: RemapMaps,
-): T {
-  return { ...db };
-}
-
 /** Rewrite property values that carry foreign ids — today: relation
  *  arrays (page ids of rows on a target db). `person` arrays carry
  *  user ids, not page ids; we drop them on import (cross-workspace

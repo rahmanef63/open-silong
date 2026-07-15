@@ -260,26 +260,3 @@ export const pollCodexLogin = action({
     return { status: "done" };
   },
 });
-
-/** Live model refs for the connected account, as `openai-codex/<id>`.
- *  Optional re-sync surface — the picker itself reads the stored
- *  enabledModels via `aiKeys.list.myModelRefs`. */
-export const codexModelList = action({
-  args: {},
-  handler: async (ctx): Promise<string[]> => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not signed in");
-    const row = await ctx.runQuery(internal.aiKeys.codex._getCodexKey, { userId });
-    if (!row) return [];
-    const bundle: CodexBundle = JSON.parse(await decryptApiKey(row.encryptedKey));
-    const { bundle: fresh, refreshed } = await ensureFreshCodex(bundle);
-    if (refreshed) {
-      await ctx.runMutation(internal.aiKeys.codex._storeCodexBundle, {
-        keyId: row._id,
-        encryptedKey: await encryptApiKey(JSON.stringify(fresh)),
-      });
-    }
-    const ids = await codexModels(fresh);
-    return (ids.length > 0 ? ids : DEFAULT_CODEX_MODELS).map((id) => `openai-codex/${id}`);
-  },
-});

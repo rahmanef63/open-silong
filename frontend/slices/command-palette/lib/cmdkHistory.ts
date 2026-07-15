@@ -41,9 +41,3 @@ export function saveHistory(entry: HistoryEntry, storage?: Storage | null): Hist
   try { s.setItem(HISTORY_KEY, JSON.stringify(next)); } catch { /* quota */ }
   return next;
 }
-
-export function clearHistory(storage?: Storage | null): void {
-  const s = storage ?? (typeof window !== "undefined" ? window.localStorage : null);
-  if (!s) return;
-  try { s.removeItem(HISTORY_KEY); } catch { /* quota */ }
-}

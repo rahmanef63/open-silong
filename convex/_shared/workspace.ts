@@ -307,5 +307,3 @@ export async function requireActiveWorkspaceWritable(
   if (member.role === "viewer") throw new Error(FORBIDDEN);
   return ws;
 }
-
-export const ERR_WORKSPACE_FORBIDDEN = FORBIDDEN;

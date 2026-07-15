@@ -87,15 +87,6 @@ export async function requireAdminQuery(ctx: QueryCtx): Promise<Id<"users">> {
   return userId;
 }
 
-/** Stricter: requires `userProfiles.role === "superadmin"`. Works in
- *  queries + mutations. Auth keyed on user id, not email. */
-export async function requireSuperAdmin(ctx: QueryCtx | MutationCtx): Promise<Id<"users">> {
-  const userId = await requireAuth(ctx);
-  const profile = await readProfile(ctx, userId);
-  if (!profile || profile.role !== "superadmin") throw new Error(FORBIDDEN);
-  return userId;
-}
-
 export async function actorEmail(ctx: QueryCtx | MutationCtx, userId: Id<"users">): Promise<string | undefined> {
   const u = await ctx.db.get(userId);
   return (u?.email as string | undefined) ?? undefined;
@@ -163,5 +154,3 @@ export async function requireWorkspaceAccess<T extends OwnedTable>(
   if (opts.write && role === "viewer") throw new Error(FORBIDDEN);
   return { userId, doc: doc as Doc<T>, role };
 }
-
-export const ERR_FORBIDDEN = FORBIDDEN;

@@ -93,9 +93,3 @@ function containsRefToSyncId(blocks: Block[], syncId: string): boolean {
   }
   return false;
 }
-
-/** Marks a block as a sync reference. Caller is responsible for setting
- *  block.type = "synced" and providing the syncId beforehand. */
-export function makeSyncRef(syncId: string): Pick<Block, "syncId" | "syncRef" | "children"> {
-  return { syncId, syncRef: true, children: undefined };
-}
