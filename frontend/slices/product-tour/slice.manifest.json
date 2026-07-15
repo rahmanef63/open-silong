@@ -1,0 +1,16 @@
+{
+  "name": "product-tour",
+  "description": "",
+  "deps": {
+    "shared": [
+      "lib/router",
+      "lib/routes",
+      "lib/utils",
+      "ui/button",
+      "ui/responsive-dialog"
+    ],
+    "slices": [],
+    "convex": []
+  },
+  "notes": ""
+}

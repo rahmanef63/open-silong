@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import {
-  Inbox, Search, Settings, Sparkles, Trash2, User, ShieldAlert, FileBox, Bot, Plus, FileJson, Library, Network,
+  Inbox, Search, Settings, Sparkles, Trash2, User, ShieldAlert, FileBox, Bot, Plus, FileJson, Library, Network, Compass,
 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import {
@@ -28,6 +28,7 @@ import { TemplateGalleryDialog } from "@/slices/templates";
 import { AIAgentConsole } from "@/slices/ai-agent";
 import { InboxBadge } from "@/slices/inbox";
 import { useWorkspaceIO } from "@/slices/workspace-io";
+import { ProductTour } from "@/slices/product-tour";
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
 import { NavUser } from "./NavUser";
 import { PagesPanel } from "./PagesPanel";
@@ -40,15 +41,32 @@ import { ROUTE_BASE } from "@/shared/lib/routes";
 
 const path = (p: string) => (p === "/" ? ROUTE_BASE : `${ROUTE_BASE}${p}`);
 
+const TOUR_SEEN_KEY = "silong:tour:v1";
+
 export function AppSidebar({ onOpenSearch }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const { setOpenMobile, isMobile } = useSidebar();
   const { isAdmin, claimableSuperAdmin } = useAdminRole();
-  const { createPage, pages, user, workspace } = useStore();
+  const { createPage, pages, user, workspace, isInitialLoading } = useStore();
   const [templatesOpen, setTemplatesOpen] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
+  const [tourOpen, setTourOpen] = useState(false);
   const workspaceIO = useWorkspaceIO();
+
+  // First-run auto-open, once per browser. Wait out the workspace splash so it
+  // doesn't pop over the loader; localStorage-guarded for Safari private mode.
+  useEffect(() => {
+    if (isInitialLoading) return;
+    try {
+      if (!localStorage.getItem(TOUR_SEEN_KEY)) setTourOpen(true);
+    } catch { /* storage blocked → skip auto-open */ }
+  }, [isInitialLoading]);
+
+  const handleTourOpenChange = (o: boolean) => {
+    setTourOpen(o);
+    if (!o) { try { localStorage.setItem(TOUR_SEEN_KEY, "1"); } catch { /* ignore */ } }
+  };
 
   // Build the agent's active-context snapshot. activePageId comes from
   // the URL (/dashboard/p/:id); page title is looked up in the slim
@@ -102,6 +120,7 @@ export function AppSidebar({ onOpenSearch }: Props) {
   ];
 
   const accountItems: NavItem[] = [
+    { icon: Compass, label: "Take a tour", onClick: () => { closeMobile(); setTourOpen(true); }, active: false },
     { icon: User, label: "Profile", onClick: () => go("/profile"), active: pathname === path("/profile") },
     { icon: Settings, label: "Settings", onClick: () => go("/settings"), active: pathname === path("/settings") },
     { icon: Trash2, label: "Trash", onClick: () => go("/trash"), active: pathname === path("/trash") },
@@ -167,6 +186,7 @@ export function AppSidebar({ onOpenSearch }: Props) {
         onInstantiated={(rootPageId) => go(`/p/${rootPageId}`)}
       />
       <AIAgentConsole open={aiOpen} onOpenChange={setAiOpen} activeContext={aiActiveContext} />
+      <ProductTour open={tourOpen} onOpenChange={handleTourOpenChange} />
     </Sidebar>
   );
 }
