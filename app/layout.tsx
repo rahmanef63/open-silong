@@ -53,7 +53,7 @@ export const metadata: Metadata = {
       { url: "/favicon.ico", sizes: "any" },
     ],
     apple: "/apple-touch-icon.png",
-    other: [{ rel: "mask-icon", url: "/logo-mark-fill-black.svg", color: "#7c5cff" }],
+    other: [{ rel: "mask-icon", url: "/logo-mark-fill-black.svg", color: "#f08a40" }],
   },
   appleWebApp: {
     capable: true,
@@ -84,8 +84,8 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: "cover",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#7c5cff" },
-    { media: "(prefers-color-scheme: dark)", color: "#16181d" },
+    { media: "(prefers-color-scheme: light)", color: "#f08a40" },
+    { media: "(prefers-color-scheme: dark)", color: "#1a1d24" },
   ],
 };
 
