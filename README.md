@@ -2,7 +2,7 @@
 
 # open-silong
 
-**Open-source, self-hostable, Notion-inspired collaborative workspace.**
+**Open-source, self-hostable collaborative workspace — inspired by Notion & Obsidian.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 [![Stack](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org)
@@ -20,10 +20,17 @@
 
 ---
 
-A block-based workspace for notes, docs, and lightweight databases.
-Built for teams that want to **own their data**: self-host the full
-stack with Docker Compose, or run on Convex Cloud free tier. MIT
-licensed. No vendor lock-in.
+A block-based workspace for notes, docs, and lightweight databases,
+with an Obsidian-style knowledge graph on top. Built for teams that
+want to **own their data**: self-host the full stack with Docker
+Compose, or run on Convex Cloud free tier. MIT licensed. No vendor
+lock-in.
+
+> **Inspired by [Notion](https://notion.so) & [Obsidian](https://obsidian.md).**
+> open-silong is an independent, clean-room project — not affiliated with,
+> endorsed by, or connected to Notion Labs, Inc. or Dynalist Inc. It borrows
+> *ideas* (the block editor, the knowledge graph), never code or brand assets.
+> See [`TRADEMARKS.md`](./TRADEMARKS.md).
 
 ## Screenshots
 
@@ -53,6 +60,10 @@ licensed. No vendor lock-in.
 - **Databases.** Six views (Table · Board · List · Gallery · Calendar
   · Feed). Filter, sort, search, group, hide. Ten property types.
   Inline embed in any page OR open as full page.
+- **Knowledge graph.** Obsidian-style interactive graph of every page,
+  `[[wikilink]]`, `@mention`, `#tag`, and database row — with backlinks
+  and unresolved "ghost" nodes. Live d3-force layout with tunable
+  forces, cluster tinting, and focus/neighbourhood highlighting.
 - **Multi-workspace.** Per-user workspaces, member roles, invites.
   Workspace switcher in sidebar.
 - **Sharing.** Public read-only share links (optional password +
@@ -154,7 +165,24 @@ npx rahman-resources@latest add notion-page-clone-os
 | Search | Convex full-text index | No external search service |
 | Deploy | Docker Compose + Traefik (self-host) OR Convex Cloud | Pick your trade-off |
 
-## Architecture (one screen)
+## Architecture
+
+A one-screen system view. The full set — data model, auth/authz flow, slice
+graph, and the memory-graph pipeline — lives in
+[`docs/architecture/diagrams.md`](./docs/architecture/diagrams.md).
+
+```mermaid
+flowchart LR
+    B["Browser<br/>Next 16 · React 19"] --> P["proxy.ts<br/>optimistic auth gate"]
+    B -- "reactive queries" --> C["Convex backend<br/>queries · mutations<br/>in-handler authz"]
+    P --> C
+    C --> S["schema.ts · 33 tables"]
+    S --> DB[("Postgres / Convex Cloud")]
+    C --> F[("Files: Convex blob / S3")]
+    A["AI agents"] -- "Notion-canonical JSON" --> H["MCP HTTP surface"] --> C
+```
+
+Repository layout:
 
 ```
 app/                  Next 16 App Router routes
@@ -186,12 +214,14 @@ mirror. Cross-slice imports go **through the barrel only**. See
 | Topic | Where |
 |---|---|
 | Per-slice API + UX docs | [`docs/api/`](./docs/api/) |
+| Architecture diagrams (system · data model · flows) | [`docs/architecture/diagrams.md`](./docs/architecture/diagrams.md) |
 | Deploy walkthroughs (cloud + self-host + Dokploy) | [`DEPLOY.md`](./DEPLOY.md) |
 | Slice catalog (every feature in one page) | [`docs/api/slices.md`](./docs/api/slices.md) |
 | Architecture decisions + audit notes | [`docs/audit/`](./docs/audit/) |
 | Contributing guide | [`CONTRIBUTING.md`](./CONTRIBUTING.md) |
 | Security policy | [`SECURITY.md`](./SECURITY.md) |
 | Code of Conduct | [`CODE_OF_CONDUCT.md`](./CODE_OF_CONDUCT.md) |
+| Trademarks + inspiration + legal notes | [`TRADEMARKS.md`](./TRADEMARKS.md) |
 | Changelog | [`CHANGELOG.md`](./CHANGELOG.md) |
 
 ## Roadmap
@@ -234,24 +264,29 @@ see [`SECURITY.md`](./SECURITY.md) for SLAs and scope.
 
 `open-silong` is an **independent open-source project**. It is **not
 affiliated with, sponsored by, endorsed by, or associated with Notion
-Labs, Inc.** in any way.
+Labs, Inc. or Dynalist Inc.** (the maker of Obsidian) in any way.
 
-"Notion" is a registered trademark of Notion Labs, Inc., used here
-only in a **nominative / descriptive sense** to identify a familiar UI
-pattern (block-based editor + lightweight databases). This usage is
-analogous to how an "iPhone case" advertises compatibility without
-claiming any link to Apple.
+It is **inspired by** [Notion](https://notion.so) (the block editor +
+lightweight databases) and [Obsidian](https://obsidian.md) (the
+local-first knowledge graph). "Notion" and "Obsidian" are trademarks of
+their respective owners, used here only in a **nominative / descriptive
+sense** to identify familiar UI patterns — analogous to how an "iPhone
+case" advertises compatibility without claiming any link to Apple.
 
-The project is **inspired by** Notion's block-editor pattern but is a
-**clean-room implementation** built independently with the
-[Convex](https://convex.dev) backend, [Next.js](https://nextjs.org)
-frontend, and [shadcn/ui](https://ui.shadcn.com) primitives. No
-proprietary Notion code, assets, or trade secrets have been used.
-Database import/export adapters (CSV / JSON / Markdown / ZIP) target
-documented public file formats for the explicit purpose of
-**interoperability** — a use case covered by fair-use principles.
+open-silong is a **clean-room implementation** built independently on
+[Convex](https://convex.dev), [Next.js](https://nextjs.org),
+[shadcn/ui](https://ui.shadcn.com), and the open-source
+[d3-force](https://d3js.org/d3-force) layout. **No proprietary Notion or
+Obsidian code, design files, brand assets, or trade secrets are used.**
+Import/export adapters target documented public file formats purely for
+**interoperability**.
 
-If you are a representative of Notion Labs, Inc. and have concerns
-about this project, please reach out via the email in
-[`SECURITY.md`](./SECURITY.md) — we are happy to adjust naming,
-disclaimers, or surfaces in good faith.
+A full plain-language explanation — the idea/expression distinction,
+nominative fair use, and international (EU/CJEU) anchors — is in
+[**`TRADEMARKS.md`**](./TRADEMARKS.md). If you represent a rights holder
+and have a good-faith concern, reach us via the email in
+[`SECURITY.md`](./SECURITY.md) — we will adjust naming, disclaimers, or
+surfaces in good faith.
+
+> This notice is **not legal advice**; consult a qualified attorney for
+> guidance specific to your jurisdiction and use.

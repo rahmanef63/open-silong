@@ -2,7 +2,7 @@
   "name": "open-silong",
   "private": true,
   "version": "0.1.0",
-  "description": "An open-source Notion-inspired workspace for teams and personal use.",
+  "description": "An open-source, self-hostable workspace inspired by Notion & Obsidian — block editor, databases, and a knowledge graph.",
   "license": "MIT",
   "author": "Rahman Effendi",
   "homepage": "https://silong-os.vercel.app",

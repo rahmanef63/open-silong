@@ -10,7 +10,33 @@ notes under `docs/audit/`.
 
 ## [Unreleased]
 
-Polish wave — root `CHANGELOG.md`, smoke-test golden flow doc, env
+### Added
+- **Knowledge graph, Obsidian-style** (`/dashboard/graph`) — interactive
+  cloud of pages, `[[wikilinks]]`, `@mentions`, `#tags`, and database
+  rows, with backlinks and unresolved "ghost" nodes.
+- **Architecture diagrams** — `docs/architecture/diagrams.md` (Mermaid:
+  system, auth/authz flow, data model, slice graph, memory-graph
+  pipeline), embedded in the README.
+- **`TRADEMARKS.md`** — plain-language inspiration + trademark
+  clarification for Notion & Obsidian (idea/expression distinction,
+  nominative fair use, interoperability, international/EU anchors).
+  Not legal advice.
+
+### Changed
+- **Graph Forces rebuilt on the d3-force model** Obsidian uses:
+  inverse-square many-body repulsion, degree-normalised link springs
+  with a bias (hubs stay put without a mass hack), `forceX/Y` centre
+  gravity. Fixes weak/unresponsive Forces sliders — link-distance now
+  tracks settled spacing ~1:1; repel spreads monotonically. (`8c95727`)
+- **Graph Animate + controls** — alpha/temperature simulation with
+  reheat + breathing, neighbourhood focus dimming, curved edges,
+  cluster tinting, zoom-to-fit, persisted settings; controls panel
+  scrolls natively. (`f43df31`, `3bb3c92`)
+- **README / NOTICE** — Obsidian added alongside Notion in the
+  inspiration + trademark notices; links to the diagrams and
+  `TRADEMARKS.md`.
+
+Prior polish wave — root `CHANGELOG.md`, smoke-test golden flow doc, env
 gitignore hardening, OSS readiness tick-off.
 
 ## 2026-05-23 — Production hardening (post-Phase 7)

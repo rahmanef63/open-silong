@@ -8,22 +8,29 @@ Trademark notice
 ===============================================================================
 
 This project is **not affiliated with, sponsored by, endorsed by, or
-associated with Notion Labs, Inc.** in any way.
+associated with Notion Labs, Inc. or Dynalist Inc. (the maker of
+Obsidian)** in any way.
 
-"Notion" is a registered trademark of Notion Labs, Inc. Any reference to
-"Notion" within this project's documentation, source code comments,
-configuration files, or user interface is made in a **nominative /
-descriptive sense** — to identify a familiar UI pattern (block-based
-editor + lightweight relational databases) or to document
-interoperability with Notion's published file formats (CSV, ZIP, JSON
-export shape). No claim of affiliation, endorsement, or origin is made
-or implied.
+"Notion" is a trademark of Notion Labs, Inc. "Obsidian" is a trademark
+of Dynalist Inc. Any reference to either within this project's
+documentation, source code comments, configuration files, or user
+interface is made in a **nominative / descriptive sense** — to identify
+a familiar UI pattern (Notion: block-based editor + lightweight
+relational databases; Obsidian: the local-first knowledge graph /
+backlinks) or to document interoperability with published file formats
+(CSV, ZIP, JSON, Markdown). No claim of affiliation, endorsement, or
+origin is made or implied.
 
-This project is an **independent, clean-room implementation**. It has
-been built from scratch using publicly available technologies
-(Convex, Next.js, React, Tailwind CSS, shadcn/ui) and contains **no
-proprietary Notion code, design files, brand assets, trade secrets, or
-confidential information**.
+This project is **inspired by** Notion and Obsidian but is an
+**independent, clean-room implementation**. It has been built from
+scratch using publicly available technologies (Convex, Next.js, React,
+Tailwind CSS, shadcn/ui, and the open-source d3-force layout) and
+contains **no proprietary Notion or Obsidian code, design files, brand
+assets, fonts, icons, trade secrets, or confidential information**.
+
+A fuller plain-language explanation — inspiration, the idea/expression
+distinction, nominative fair use, and international (EU/CJEU) anchors —
+is in TRADEMARKS.md.
 
 ===============================================================================
 Third-party software
