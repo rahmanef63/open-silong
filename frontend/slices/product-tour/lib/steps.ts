@@ -1,6 +1,8 @@
 /** Ordered feature-tour steps. Pure data — the icon is a lucide component
- *  ref (same pattern as the sidebar's NavRow) and `routeKey` is a ROUTES key
- *  so the CTA can deep-link without hardcoding a "/dashboard/..." literal. */
+ *  ref (same pattern as the sidebar's NavRow). `target` names a surface the
+ *  tour navigates to as the step is shown; steps without a target describe a
+ *  feature that has no standalone route (command palette, sharing, templates,
+ *  multi-workspace) and leave the current view in place. */
 
 import type { LucideIcon } from "lucide-react";
 import {
@@ -15,44 +17,41 @@ import {
   Building2,
 } from "lucide-react";
 
-/** Routes a tour step may deep-link to (string-valued ROUTES keys only). */
-export type TourRouteKey = "dashboard" | "library" | "graph" | "inbox";
+/** A visible surface a step can open. `page` opens a real page (the editor);
+ *  the rest are dashboard routes. Resolved to a path in ProductTour. */
+export type TourTarget = "page" | "library" | "graph" | "inbox";
 
 export interface TourStep {
   icon: LucideIcon;
   title: string;
   body: string;
-  /** Deep-link target for the step's optional CTA. */
-  routeKey?: TourRouteKey;
-  ctaLabel?: string;
+  /** Surface to reveal while this step is shown (omit → keep current view). */
+  target?: TourTarget;
 }
 
 export const TOUR_STEPS: TourStep[] = [
   {
     icon: Compass,
     title: "Welcome to open-silong",
-    body: "An open-source workspace that blends Notion-style docs and databases with an Obsidian-style knowledge graph. Take a quick tour of the essentials — and your data always stays yours, exportable to JSON or Markdown anytime.",
+    body: "An open-source workspace that blends Notion-style docs and databases with an Obsidian-style knowledge graph. This tour opens each feature as we go — your data always stays yours, exportable to JSON or Markdown anytime.",
   },
   {
     icon: FileText,
     title: "Block editor",
     body: "A slash-menu editor with drag-to-reorder blocks, nesting, and 30+ block types — to-dos, callouts, code, tables, equations, images, and embeds.",
-    routeKey: "dashboard",
-    ctaLabel: "Open your workspace",
+    target: "page",
   },
   {
     icon: Database,
     title: "Databases, six views",
     body: "Turn any list into a database and see it six ways — Table, Board, List, Gallery, Calendar, or Feed — with filters, sorting, grouping, and ten property types. Embed one inline or open it as a full page.",
-    routeKey: "library",
-    ctaLabel: "Browse the library",
+    target: "library",
   },
   {
     icon: Network,
     title: "Knowledge graph",
     body: "See how everything connects in an Obsidian-style live graph of your pages, [[wikilinks]], @mentions, #tags, and database rows — with backlinks and clickable focus.",
-    routeKey: "graph",
-    ctaLabel: "Open the graph",
+    target: "graph",
   },
   {
     icon: Command,
@@ -68,8 +67,7 @@ export const TOUR_STEPS: TourStep[] = [
     icon: MessageSquare,
     title: "Comments & mentions",
     body: "Discuss work in threaded comments on any block, @mention other pages inline, see who's currently present, and roll back to earlier version snapshots.",
-    routeKey: "inbox",
-    ctaLabel: "Open your inbox",
+    target: "inbox",
   },
   {
     icon: LayoutTemplate,

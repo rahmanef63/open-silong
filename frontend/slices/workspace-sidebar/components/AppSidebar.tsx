@@ -186,7 +186,7 @@ export function AppSidebar({ onOpenSearch }: Props) {
         onInstantiated={(rootPageId) => go(`/p/${rootPageId}`)}
       />
       <AIAgentConsole open={aiOpen} onOpenChange={setAiOpen} activeContext={aiActiveContext} />
-      <ProductTour open={tourOpen} onOpenChange={handleTourOpenChange} />
+      <ProductTour open={tourOpen} onOpenChange={handleTourOpenChange} firstPageId={pages[0]?.id} />
     </Sidebar>
   );
 }
