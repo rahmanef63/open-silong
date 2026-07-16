@@ -261,7 +261,7 @@ export const duplicateWithRows = mutation({
         if (!newPropId) continue;
         remappedRowProps[newPropId] = val;
       }
-      const clonedBlocks = JSON.parse(JSON.stringify(await readPageBlocks(ctx, page)));
+      const clonedBlocks = structuredClone(await readPageBlocks(ctx, page));
       const newId = await ctx.db.insert("pages", {
         userId,
         workspaceId: target.workspaceId,

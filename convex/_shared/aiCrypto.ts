@@ -12,6 +12,8 @@
  *  Runs inside Convex isolate (queries / mutations / actions) — WebCrypto
  *  `crypto.subtle` is available everywhere. */
 
+import { toBase64Url } from "./encoding";
+
 const PREFIX = "enc:v1:";
 
 function envSecret(): string | null {
@@ -23,13 +25,6 @@ async function deriveKey(secret: string): Promise<CryptoKey> {
   const bytes = new TextEncoder().encode(secret);
   const hash = await crypto.subtle.digest("SHA-256", bytes);
   return await crypto.subtle.importKey("raw", hash, "AES-GCM", false, ["encrypt", "decrypt"]);
-}
-
-function b64uEncode(buf: ArrayBuffer | Uint8Array): string {
-  const bytes = buf instanceof Uint8Array ? buf : new Uint8Array(buf);
-  let s = "";
-  for (let i = 0; i < bytes.length; i += 1) s += String.fromCharCode(bytes[i]);
-  return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
 function b64uDecode(s: string): Uint8Array<ArrayBuffer> {
@@ -56,7 +51,7 @@ export async function encryptApiKey(plain: string): Promise<string> {
     key,
     new TextEncoder().encode(plain),
   );
-  return `${PREFIX}${b64uEncode(iv)}:${b64uEncode(cipher)}`;
+  return `${PREFIX}${toBase64Url(iv)}:${toBase64Url(cipher)}`;
 }
 
 /** Decrypts an envelope. Pass-through for non-enveloped (plaintext) inputs.

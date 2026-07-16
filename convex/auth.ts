@@ -3,6 +3,7 @@ import { ConvexError } from "convex/values";
 import { Password } from "@convex-dev/auth/providers/Password";
 import { Anonymous } from "@convex-dev/auth/providers/Anonymous";
 import Google from "@auth/core/providers/google";
+import { toHex } from "./_shared/encoding";
 
 export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
   providers: [
@@ -35,12 +36,8 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
             keyMaterial,
             256
           );
-          const hashHex = Array.from(new Uint8Array(hashBuffer))
-            .map((b) => b.toString(16).padStart(2, "0"))
-            .join("");
-          const saltHex = Array.from(salt)
-            .map((b) => b.toString(16).padStart(2, "0"))
-            .join("");
+          const hashHex = toHex(new Uint8Array(hashBuffer));
+          const saltHex = toHex(salt);
           return `pbkdf2_${saltHex}_${hashHex}`;
         },
         async verifySecret(password: string, hash: string) {
@@ -63,9 +60,7 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
             keyMaterial,
             256
           );
-          const hashHex = Array.from(new Uint8Array(hashBuffer))
-            .map((b) => b.toString(16).padStart(2, "0"))
-            .join("");
+          const hashHex = toHex(new Uint8Array(hashBuffer));
           return hashHex === parts[2];
         },
       },

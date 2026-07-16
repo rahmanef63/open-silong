@@ -5,6 +5,7 @@
 
 import type { Database, Page } from "../types/domain";
 import { valueToCell } from "./csv";
+import { escapeHtml } from "./html";
 
 function escMdCell(s: string): string {
   return s.replace(/\|/g, "\\|").replace(/\r?\n/g, " ");
@@ -37,21 +38,13 @@ export function databaseToMarkdownTable(
   return lines.join("\n");
 }
 
-function escHtml(s: string): string {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
-
 export function databaseToHtmlTable(db: Database, rows: Page[], allPages?: Page[]): string {
   const live = rows.filter((r) => !r.trashed);
   const headers = ["Title", ...db.properties.map((p) => p.name)]
-    .map((h) => `<th>${escHtml(h)}</th>`).join("");
+    .map((h) => `<th>${escapeHtml(h)}</th>`).join("");
   const body = live.map((row) => {
     const cells = [row.title || "", ...db.properties.map((p) => valueToCell(p, row.rowProps?.[p.id] ?? null, allPages))]
-      .map((c) => `<td>${escHtml(c)}</td>`).join("");
+      .map((c) => `<td>${escapeHtml(c)}</td>`).join("");
     return `<tr>${cells}</tr>`;
   }).join("");
   return `<table><thead><tr>${headers}</tr></thead><tbody>${body}</tbody></table>`;

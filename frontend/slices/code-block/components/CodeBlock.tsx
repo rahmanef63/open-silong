@@ -6,6 +6,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
 import { Button } from "@/shared/ui/button";
+import { escapeHtml } from "@/shared/lib/html";
 import { CODE_LANGUAGES, normalizeLang } from "../lib/languages";
 import type { CodeBlockProps } from "../types";
 
@@ -96,13 +97,4 @@ export function CodeBlock({ text, lang, registerRef, onText, onLang, onKeyDown }
       )}
     </div>
   );
-}
-
-function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
 }

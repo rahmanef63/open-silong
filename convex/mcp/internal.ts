@@ -252,7 +252,7 @@ export const duplicatePage = internalMutation({
     if (!src || src.userId !== args.userId) throw new Error("Tidak ditemukan");
     const now = Date.now();
     const srcBlocks = await readPageBlocks(ctx, src);
-    const cloned = JSON.parse(JSON.stringify(srcBlocks)) as BlockLike[];
+    const cloned = structuredClone(srcBlocks) as BlockLike[];
     const blocks = regenAllBlockIds(cloned);
     const title = src.title ? `${src.title} (copy)` : "";
     const newPageId = await ctx.db.insert("pages", {
@@ -268,7 +268,7 @@ export const duplicatePage = internalMutation({
       trashed: false,
       isPublic: false,
       rowOfDatabaseId: src.rowOfDatabaseId,
-      rowProps: src.rowProps ? JSON.parse(JSON.stringify(src.rowProps)) : undefined,
+      rowProps: src.rowProps ? structuredClone(src.rowProps) : undefined,
       searchText: buildSearchText(title, blocks),
       createdAt: now,
       updatedAt: now,

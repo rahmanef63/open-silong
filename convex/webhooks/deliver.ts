@@ -12,6 +12,7 @@ import { v } from "convex/values";
 import { internalAction, internalMutation, internalQuery } from "../_generated/server";
 import { internal } from "../_generated/api";
 import { COUNT_CAPS } from "../_shared/limits";
+import { toHex } from "../_shared/encoding";
 
 const TIMEOUT_MS = 5000;
 
@@ -25,9 +26,7 @@ async function hmacHex(secret: string, body: string): Promise<string> {
     ["sign"],
   );
   const sig = await crypto.subtle.sign("HMAC", key, enc.encode(body));
-  return Array.from(new Uint8Array(sig))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
+  return toHex(new Uint8Array(sig));
 }
 
 export const run = internalAction({

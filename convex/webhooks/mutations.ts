@@ -6,6 +6,7 @@
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { toBase64Url } from "../_shared/encoding";
 
 const MAX_URL_LEN = 500;
 const MAX_EVENTS = 20;
@@ -14,8 +15,7 @@ function randomSecret(): string {
   // 32 bytes of base64url — convex action runtime exposes `crypto`.
   const bytes = new Uint8Array(32);
   crypto.getRandomValues(bytes);
-  return btoa(String.fromCharCode(...bytes))
-    .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  return toBase64Url(bytes);
 }
 
 export const create = mutation({

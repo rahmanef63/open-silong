@@ -19,7 +19,7 @@ interface TweakcnSwitcherProps {
   triggerClassName?: string;
 }
 
-/** Tweakcn preset switcher (separate from the existing simple ThemePicker).
+/** Tweakcn preset switcher.
  *  Loads the ~36-preset registry and lets the user pick by mood group,
  *  with hover-preview and click-to-commit semantics. */
 export function TweakcnSwitcher({ size = "sm", triggerClassName }: TweakcnSwitcherProps) {

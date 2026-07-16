@@ -10,7 +10,7 @@
  *      NotionAppProvider, NotionPage, NotionDatabase, NotionSidebar,
  *    } from "@/slices/notion";
  *
- *    <NotionAppProvider config={{ routes: { basePath: "/notes" } }}>
+ *    <NotionAppProvider adapter={adapter}>
  *      <NotionSidebar pages={pages} onSelect={...} />
  *      <NotionPage pageId={openId} />
  *    </NotionAppProvider>
@@ -22,15 +22,10 @@
  *  Each one is still individually consumable via its own slice path
  *  if a project only wants part of the experience. */
 
-// ─── Config provider (must wrap the wrappers below if consumer is
-//     overriding routes / roles / features / i18n). Optional otherwise.
-export { NotionAppProvider, useNotionConfig } from "./NotionAppProvider";
+// ─── Umbrella provider (composes the adapter + editor/databases
+//     component registries into one mount). Wrap the wrappers below.
+export { NotionAppProvider } from "./NotionAppProvider";
 export type { NotionAppProviderProps } from "./NotionAppProvider";
-export {
-  DEFAULT_NOTION_CONFIG, mergeNotionConfig,
-  type NotionAppConfig, type NotionAppRoutes,
-  type NotionAppRoles, type NotionAppFeatures, type NotionAppI18n,
-} from "./lib/config";
 
 // ─── Portable wrappers (pure / props-driven). These already live under
 //     shared/components/notion/; the mega-slice re-exports them so

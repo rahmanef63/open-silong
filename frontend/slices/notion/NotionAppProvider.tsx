@@ -2,15 +2,13 @@
 
 /** NotionAppProvider — umbrella provider for the `notion` mega-slice.
  *
- *  Wraps four contexts in one mount:
+ *  Wraps three contexts in one mount:
  *
- *  1. `NotionAppConfig` — static config (routes, labels, roles,
- *     feature flags). Defaults to `DEFAULT_NOTION_CONFIG`.
- *  2. `NotionAdapter` — backend-agnostic data layer (pages, databases,
+ *  1. `NotionAdapter` — backend-agnostic data layer (pages, databases,
  *     files + optional ai/presence/etc.). REQUIRED prop.
- *  3. `EditorComponentsRegistry` — peer-slice overrides for the editor
+ *  2. `EditorComponentsRegistry` — peer-slice overrides for the editor
  *     (today: `DatabaseBlock`). Bundled defaults from `@/slices/databases`.
- *  4. `DatabasesComponentsRegistry` — peer-slice overrides for databases
+ *  3. `DatabasesComponentsRegistry` — peer-slice overrides for databases
  *     (today: `BlockEditor`, `RowPropertiesPanel`). Bundled defaults
  *     from `@/slices/editor`.
  *
@@ -21,15 +19,13 @@
  *
  *  Consumer pattern:
  *
- *    import {
- *      NotionAppProvider, useConvexNotionAdapter,
- *    } from "@/slices/notion";
+ *    import { NotionAppProvider } from "@/slices/notion";
  *    import { useConvexNotionAdapter } from
  *      "@/slices/notion/adapter/convexAdapter";
  *
  *    const adapter = useConvexNotionAdapter();
  *    return (
- *      <NotionAppProvider adapter={adapter} config={{ … }}>
+ *      <NotionAppProvider adapter={adapter}>
  *        <NotionPage pageId={id} />
  *      </NotionAppProvider>
  *    );
@@ -38,13 +34,12 @@
  *  `useLocalStorageNotionAdapter` (skeleton today, full impl Phase 4+).
  *
  *  Sub-slices read via:
- *    - `useNotionConfig()` for static config
  *    - `useNotionAdapter()` for data
  *    - `useEditorComponents()` / `useDatabasesComponents()` for peer
  *      overrides
  */
 
-import { createContext, useContext, useMemo, type ComponentType, type ReactNode } from "react";
+import { useMemo, type ComponentType, type ReactNode } from "react";
 import dynamic from "next/dynamic";
 import type { Block, Database, Page, Property } from "@/shared/types/domain";
 // Import the tiny context providers from their LEAF modules, NOT the slice
@@ -82,12 +77,6 @@ const DefaultPropertyCell = dynamic(
 );
 import { NotionAdapterProvider } from "./adapter/context";
 import type { NotionAdapter } from "./adapter/types";
-import {
-  DEFAULT_NOTION_CONFIG, mergeNotionConfig,
-  type NotionAppConfig,
-} from "./lib/config";
-
-const Ctx = createContext<NotionAppConfig>(DEFAULT_NOTION_CONFIG);
 
 /** Per-slot component overrides — consumer can replace any bundled
  *  default (e.g. swap DatabaseBlock for a custom inline renderer). */
@@ -119,9 +108,6 @@ export interface NotionAppProviderProps {
    *  `useConvexNotionAdapter` for production or
    *  `useLocalStorageNotionAdapter` for demo / no-backend setups. */
   adapter: NotionAdapter;
-  /** Partial override — merged onto DEFAULT_NOTION_CONFIG. Anything
-   *  not specified falls through to the default. */
-  config?: Parameters<typeof mergeNotionConfig>[0];
   /** Optional component overrides — defaults bundle in the editor +
    *  databases components from the same mega-slice. */
   components?: NotionAppComponents;
@@ -129,9 +115,8 @@ export interface NotionAppProviderProps {
 }
 
 export function NotionAppProvider({
-  adapter, config, components, children,
+  adapter, components, children,
 }: NotionAppProviderProps) {
-  const merged = useMemo(() => mergeNotionConfig(config), [config]);
   const editorComponents = useMemo(
     () => ({
       DatabaseBlock: components?.DatabaseBlock ?? DefaultDatabaseBlock,
@@ -148,18 +133,12 @@ export function NotionAppProvider({
   );
 
   return (
-    <Ctx.Provider value={merged}>
-      <NotionAdapterProvider adapter={adapter}>
-        <EditorComponentsProvider value={editorComponents}>
-          <DatabasesComponentsProvider value={databasesComponents}>
-            {children}
-          </DatabasesComponentsProvider>
-        </EditorComponentsProvider>
-      </NotionAdapterProvider>
-    </Ctx.Provider>
+    <NotionAdapterProvider adapter={adapter}>
+      <EditorComponentsProvider value={editorComponents}>
+        <DatabasesComponentsProvider value={databasesComponents}>
+          {children}
+        </DatabasesComponentsProvider>
+      </EditorComponentsProvider>
+    </NotionAdapterProvider>
   );
-}
-
-export function useNotionConfig(): NotionAppConfig {
-  return useContext(Ctx);
 }

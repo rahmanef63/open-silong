@@ -1,4 +1,5 @@
 import type { Database, Page } from "@/shared/types/domain";
+import { downloadBlob } from "@/shared/lib/download";
 import type { DatabaseExportV1 } from "./types";
 
 function stripUndefined<T extends object>(o: T): T {
@@ -34,14 +35,7 @@ export function exportDatabase(db: Database, rows: Page[]): DatabaseExportV1 {
 
 export function downloadJson(filename: string, payload: unknown) {
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename.endsWith(".json") ? filename : `${filename}.json`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  downloadBlob(filename.endsWith(".json") ? filename : `${filename}.json`, blob);
 }
 
 export function parseExport(raw: string): DatabaseExportV1 {

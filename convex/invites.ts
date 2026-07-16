@@ -5,6 +5,7 @@ import { requireAuth } from "./_shared/auth";
 import { ensurePersonalWorkspace, requireWorkspaceMember } from "./_shared/workspace";
 import { rateLimit } from "./_shared/rateLimit";
 import { COUNT_CAPS } from "./_shared/limits";
+import { toBase64Url } from "./_shared/encoding";
 
 const EXPIRY_MS = 14 * 24 * 60 * 60 * 1000;
 
@@ -13,9 +14,7 @@ const EXPIRY_MS = 14 * 24 * 60 * 60 * 1000;
 function randomCode(): string {
   const bytes = new Uint8Array(24);
   crypto.getRandomValues(bytes);
-  let s = "";
-  for (let i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
-  return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  return toBase64Url(bytes);
 }
 
 /** Owner-only — mints a new single-use invite. Returns the code so the

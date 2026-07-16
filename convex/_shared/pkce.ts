@@ -1,12 +1,7 @@
 /** PKCE S256 helpers — RFC 7636.
  *  Convex isolate exposes SubtleCrypto via global `crypto`. No node:crypto. */
 
-const toBase64Url = (buf: ArrayBuffer): string => {
-  const bytes = new Uint8Array(buf);
-  let s = "";
-  for (let i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
-  return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-};
+import { toBase64Url, toHex } from "./encoding";
 
 export const sha256Base64Url = async (input: string): Promise<string> => {
   const buf = await crypto.subtle.digest(
@@ -19,9 +14,7 @@ export const sha256Base64Url = async (input: string): Promise<string> => {
 export const randomHex = (byteLen: number): string => {
   const bytes = new Uint8Array(byteLen);
   crypto.getRandomValues(bytes);
-  return Array.from(bytes)
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
+  return toHex(bytes);
 };
 
 /** Verify codeVerifier matches stored codeChallenge.

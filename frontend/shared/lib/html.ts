@@ -29,19 +29,20 @@ import type { Block, Page } from "../types/domain";
 import { lookupDb, type ExportContext } from "./exportContext";
 import { databaseToHtmlTable } from "./databaseTable";
 
-function escape(s: string): string {
+export function escapeHtml(s: string): string {
   return s
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 const TABLE_ROW_DELIM = "\n";
 const TABLE_CELL_DELIM = "|";
 
 export function blockToHtml(b: Block, ctx?: ExportContext): string {
-  const t = escape(b.text ?? "");
+  const t = escapeHtml(b.text ?? "");
   switch (b.type) {
     case "paragraph": return `<p>${t}</p>`;
     case "h1": return `<h1>${t}</h1>`;
@@ -54,43 +55,43 @@ export function blockToHtml(b: Block, ctx?: ExportContext): string {
     case "quote": return `<blockquote>${t}</blockquote>`;
     case "callout": return `<blockquote>💡 ${t}</blockquote>`;
     case "code": {
-      const lang = b.lang ? ` class="lang-${escape(b.lang)}"` : "";
+      const lang = b.lang ? ` class="lang-${escapeHtml(b.lang)}"` : "";
       return `<pre><code${lang}>${t}</code></pre>`;
     }
     case "divider": return `<hr>`;
     case "image": {
       if (!b.url) return "";
-      const cap = b.caption ? `<figcaption>${escape(b.caption)}</figcaption>` : "";
-      return `<figure><img src="${escape(b.url)}" alt="${escape(b.caption ?? "")}">${cap}</figure>`;
+      const cap = b.caption ? `<figcaption>${escapeHtml(b.caption)}</figcaption>` : "";
+      return `<figure><img src="${escapeHtml(b.url)}" alt="${escapeHtml(b.caption ?? "")}">${cap}</figure>`;
     }
     case "audio":
-      return b.url ? `<audio controls src="${escape(b.url)}"></audio>` : "";
+      return b.url ? `<audio controls src="${escapeHtml(b.url)}"></audio>` : "";
     case "video":
-      return b.url ? `<video controls src="${escape(b.url)}"></video>` : "";
+      return b.url ? `<video controls src="${escapeHtml(b.url)}"></video>` : "";
     case "embed":
       return b.url
-        ? `<p><a href="${escape(b.url)}" target="_blank" rel="noopener">${escape(b.url)}</a></p>`
+        ? `<p><a href="${escapeHtml(b.url)}" target="_blank" rel="noopener">${escapeHtml(b.url)}</a></p>`
         : "";
     case "button":
-      return `<p><a class="button" href="${escape((b as { url?: string }).url ?? "#")}">${t || "Button"}</a></p>`;
+      return `<p><a class="button" href="${escapeHtml((b as { url?: string }).url ?? "#")}">${t || "Button"}</a></p>`;
     case "equation":
       return `<pre>$$${t}$$</pre>`;
     case "table": {
       const rows = (b.text ?? "").split(TABLE_ROW_DELIM).filter(Boolean);
       const html = rows
         .map((row) => {
-          const cells = row.split(TABLE_CELL_DELIM).map((c) => `<td>${escape(c.trim())}</td>`).join("");
+          const cells = row.split(TABLE_CELL_DELIM).map((c) => `<td>${escapeHtml(c.trim())}</td>`).join("");
           return `<tr>${cells}</tr>`;
         })
         .join("");
       return `<table>${html}</table>`;
     }
     case "page":
-      return `<p><a href="#page-${escape(b.pageId ?? "")}">${t || "Subpage"}</a></p>`;
+      return `<p><a href="#page-${escapeHtml(b.pageId ?? "")}">${t || "Subpage"}</a></p>`;
     case "database": {
       const hit = lookupDb(ctx, b.databaseId);
       if (!hit) return `<p>[Database: ${t || "embedded"}]</p>`;
-      const title = t || escape(hit.db.name || "Database");
+      const title = t || escapeHtml(hit.db.name || "Database");
       return `<section class="db-embed"><h3>🗂️ ${title}</h3>${databaseToHtmlTable(hit.db, hit.rows, ctx?.allPages)}</section>`;
     }
     case "toggle": {
@@ -134,7 +135,7 @@ details{margin:.5em 0}summary{cursor:pointer;font-weight:600}
 `.trim();
 
 export function pageToHtml(page: Page, includeStyles = true, ctx?: ExportContext): string {
-  const title = escape(page.title || "Untitled");
+  const title = escapeHtml(page.title || "Untitled");
   const body = page.blocks.map((b) => blockToHtml(b, ctx)).filter(Boolean).join("\n");
   const head = `<title>${title}</title>${includeStyles ? `<style>${HTML_STYLE}</style>` : ""}`;
   return `<!doctype html><html><head><meta charset="utf-8">${head}</head><body><h1>${title}</h1>\n${body}</body></html>`;
@@ -144,7 +145,7 @@ export function pageToHtml(page: Page, includeStyles = true, ctx?: ExportContext
  *  multi-format clipboard so paste targets (Notion / Google Docs)
  *  receive a semantic snippet not a full document. */
 export function pageToHtmlFragment(page: Page, ctx?: ExportContext): string {
-  const title = escape(page.title || "Untitled");
+  const title = escapeHtml(page.title || "Untitled");
   const body = page.blocks.map((b) => blockToHtml(b, ctx)).filter(Boolean).join("\n");
   return `<h1>${title}</h1>\n${body}`;
 }

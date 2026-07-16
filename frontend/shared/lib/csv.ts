@@ -14,6 +14,7 @@
  */
 
 import type { Database, Page, Property, PropertyValue } from "../types/domain";
+import { downloadBlob } from "./download";
 
 const UTF8_BOM = "﻿";
 const CELL_DELIM = ",";
@@ -135,12 +136,5 @@ export function databaseToCsv(db: Database, rows: Page[], allPages?: Page[]): st
 /** Trigger a browser download of CSV content. */
 export function downloadCsv(filename: string, content: string): void {
   const blob = new Blob([content], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename.endsWith(".csv") ? filename : `${filename}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  downloadBlob(filename.endsWith(".csv") ? filename : `${filename}.csv`, blob);
 }

@@ -102,12 +102,12 @@ export const restore = mutation({
   handler: async (ctx, args) => {
     const { doc: snap } = await requireOwned(ctx, "snapshots", args.snapshotId as Id<"snapshots">);
     const { doc: page } = await requireOwned(ctx, "pages", snap.pageId as Id<"pages">);
-    const blocks = JSON.parse(JSON.stringify(snap.blocks));
+    const blocks = structuredClone(snap.blocks);
     await writePageBlocks(ctx, snap.pageId as Id<"pages">, blocks, {
       title: snap.title,
       icon: snap.icon,
       cover: snap.cover,
-      rowProps: snap.rowProps ? JSON.parse(JSON.stringify(snap.rowProps)) : page.rowProps,
+      rowProps: snap.rowProps ? structuredClone(snap.rowProps) : page.rowProps,
       searchText: buildSearchText(snap.title, blocks),
     });
   },

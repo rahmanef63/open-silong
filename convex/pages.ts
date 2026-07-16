@@ -485,7 +485,7 @@ export const duplicate = mutation({
     await rateLimit(ctx, userId, RATE_LIMITS.pagesDuplicateDay);
     const now = Date.now();
     const srcBlocks = await readPageBlocks(ctx, src);
-    const cloned = JSON.parse(JSON.stringify(srcBlocks)) as BlockLike[];
+    const cloned = structuredClone(srcBlocks) as BlockLike[];
     const blocks = regenAllBlockIds(cloned);
     const title = src.title ? `${src.title} (copy)` : "";
     const active = await getActiveWorkspaceMutation(ctx, userId);
@@ -502,7 +502,7 @@ export const duplicate = mutation({
       trashed: false,
       isPublic: src.isPublic,
       rowOfDatabaseId: src.rowOfDatabaseId,
-      rowProps: src.rowProps ? JSON.parse(JSON.stringify(src.rowProps)) : undefined,
+      rowProps: src.rowProps ? structuredClone(src.rowProps) : undefined,
       searchText: buildSearchText(title, blocks),
       createdAt: now,
       updatedAt: now,

@@ -58,8 +58,8 @@ export function useSnapshots(authorName: string) {
           title: page.title,
           icon: page.icon,
           cover: page.cover ?? null,
-          blocks: JSON.parse(JSON.stringify(page.blocks)),
-          rowProps: page.rowProps ? JSON.parse(JSON.stringify(page.rowProps)) : undefined,
+          blocks: structuredClone(page.blocks),
+          rowProps: page.rowProps ? structuredClone(page.rowProps) : undefined,
         }).catch((err) => {
           // Surface to dev console only — snapshots are advisory.
           console.warn("[snapshotIfNeeded] failed", err);

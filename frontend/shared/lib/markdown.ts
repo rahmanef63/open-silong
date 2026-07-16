@@ -1,4 +1,5 @@
 import { Block, Page } from "../types";
+import { downloadBlob } from "./download";
 import { uid } from "./uid";
 import { lookupDb, type ExportContext } from "./exportContext";
 import { databaseToMarkdownTable } from "./databaseTable";
@@ -303,15 +304,7 @@ function splitTableCells(line: string): string[] {
 }
 
 export function downloadFile(filename: string, content: string, mime = "text/markdown") {
-  const blob = new Blob([content], { type: mime });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  downloadBlob(filename, new Blob([content], { type: mime }));
 }
 
 export function pickFile(accept: string): Promise<File | null> {

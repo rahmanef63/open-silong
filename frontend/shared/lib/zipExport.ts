@@ -24,6 +24,7 @@ import JSZip from "jszip";
 import type { Database, Page } from "../types/domain";
 import { pageToMarkdown } from "./markdown";
 import { databaseToCsv } from "./csv";
+import { downloadBlob } from "./download";
 import { buildExportContext } from "./exportContext";
 
 interface Bundle {
@@ -109,13 +110,5 @@ export async function buildWorkspaceZip(bundle: Bundle): Promise<Blob> {
 
 /** Trigger a browser download of the ZIP. Use from page action menus. */
 export async function downloadWorkspaceZip(bundle: Bundle, filename = "silong-export.zip"): Promise<void> {
-  const blob = await buildWorkspaceZip(bundle);
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  downloadBlob(filename, await buildWorkspaceZip(bundle));
 }
