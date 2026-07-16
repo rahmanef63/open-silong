@@ -89,6 +89,13 @@ export function decorateLineToFragment(line: string, opts?: { hideMarkers?: bool
           // non-text SVG icon is prepended (adds no text). The label carries
           // data-href so BlockEditor's onContentClick navigates on click.
           const chip = document.createElement("span");
+          // Atomic: the browser refuses to place the caret inside a
+          // contentEditable=false island, so a `@` / char typed against the
+          // chip lands in a sibling text node after `)` instead of being
+          // absorbed into the hidden url span (which broke the mention
+          // trigger + corrupted the source on a 2nd mention). innerText still
+          // round-trips the chip's text, so source parity is preserved.
+          chip.setAttribute("contenteditable", "false");
           chip.className =
             "mention-chip inline-flex items-baseline gap-1 rounded px-1 bg-brand/10 text-brand no-underline";
           const ico = document.createElement("span");

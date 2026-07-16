@@ -10,6 +10,7 @@
  *  (←/→ step, Esc close), dismissible. Fully controlled `open` by the host. */
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { useNavigate } from "@/shared/lib/router";
@@ -77,7 +78,11 @@ export function ProductTour({ open, onOpenChange, firstPageId }: ProductTourProp
     last ? close() : setStep((i) => Math.min(i + 1, TOUR_STEPS.length - 1));
   const back = () => setStep((i) => Math.max(0, i - 1));
 
-  return (
+  if (typeof document === "undefined") return null;
+  // Portal to <body> so the panel escapes the sidebar's `fixed z-10` stacking
+  // context — otherwise its z-50 only ranks within the sidebar and page-level
+  // overlays (e.g. the graph composer at z-20) paint over Next/Finish.
+  return createPortal(
     <div
       role="dialog"
       aria-modal="false"
@@ -142,6 +147,7 @@ export function ProductTour({ open, onOpenChange, firstPageId }: ProductTourProp
           {last ? "Finish" : first ? "Start" : "Next"}
         </Button>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

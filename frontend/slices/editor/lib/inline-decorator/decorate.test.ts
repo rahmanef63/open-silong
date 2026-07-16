@@ -51,6 +51,9 @@ describe("decorateLineToFragment", () => {
     // SVG icon contributes NO text, the brackets/url are 0px but still present.
     expect(host.textContent).toBe("[My Page](/dashboard/p/abc123)");
     expect(host.querySelector(".mention-chip")).not.toBeNull();
+    // Atomic chip: contentEditable=false so the browser can't drop a typed
+    // char inside its hidden url span (breaks the trigger + corrupts source).
+    expect(host.querySelector<HTMLElement>(".mention-chip")?.getAttribute("contenteditable")).toBe("false");
     expect(host.querySelector(".mention-ico svg")).not.toBeNull();
     const label = host.querySelector<HTMLElement>("[data-href]");
     expect(label?.dataset.href).toBe("/dashboard/p/abc123");
