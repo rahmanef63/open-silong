@@ -12,7 +12,7 @@
 // member / not found, "Tidak berwenang" = viewer role forbidden).
 import { expect, test } from "vitest";
 import { api } from "../_generated/api";
-import { testCtx, seedUser } from "../_testHarness";
+import { testCtx, seedUser } from "../testHarness.test";
 
 // ---------------------------------------------------------------------------
 // (1) Happy path — an owner-member can perform workspace-scoped writes.

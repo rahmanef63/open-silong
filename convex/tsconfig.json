@@ -22,5 +22,5 @@
   },
   "include": ["./**/*"],
   "// exclude note": "Test files import frontend @/ modules (resolved by the root tsconfig + vitest, not this convex-runtime config) and are never deployed — keep them out of the runtime typecheck.",
-  "exclude": ["./_generated", "./_testHarness.ts", "./**/*.test.ts", "./**/*.test.tsx"]
+  "exclude": ["./_generated", "./**/*.test.ts", "./**/*.test.tsx"]
 }

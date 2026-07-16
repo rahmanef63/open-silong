@@ -1,7 +1,7 @@
 // @vitest-environment edge-runtime
 import { expect, test } from "vitest";
 import { api } from "../_generated/api";
-import { testCtx, seedUser } from "../_testHarness";
+import { testCtx, seedUser } from "../testHarness.test";
 
 // ── Happy path: create seeds a page + getById returns the editor DTO ──
 test("create seeds a page; getById returns a DTO with title/icon/layouts/blocks", async () => {

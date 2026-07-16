@@ -1,7 +1,7 @@
 // @vitest-environment edge-runtime
 import { expect, test } from "vitest";
 import { api } from "../_generated/api";
-import { testCtx, seedUser } from "../_testHarness";
+import { testCtx, seedUser } from "../testHarness.test";
 
 // ── Happy path: create a database ─────────────────────────────────────
 test("create seeds a database in the active workspace (empty rowIds)", async () => {
