@@ -60,7 +60,7 @@ export function DatabaseHeaderBar({
           <>
             <span
               title="This database is embedded inline. The canonical home is a dedicated page — open it to edit without surrounding blocks."
-              className="ml-1 inline-flex items-center gap-1 rounded-full border border-muted-foreground/30 bg-muted/50 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground"
+              className="ml-1 hidden sm:inline-flex items-center gap-1 rounded-full border border-muted-foreground/30 bg-muted/50 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground"
             >
               <BoxSelect className="h-3 w-3" /> inline
             </span>
@@ -80,7 +80,7 @@ export function DatabaseHeaderBar({
         {isLinked && (
           <span
             title="This database is also embedded on other pages — edits sync everywhere."
-            className="ml-1 inline-flex items-center gap-1 rounded-full border border-brand/30 bg-brand/5 px-1.5 py-0.5 text-[10px] font-medium text-brand"
+            className="ml-1 hidden sm:inline-flex items-center gap-1 rounded-full border border-brand/30 bg-brand/5 px-1.5 py-0.5 text-[10px] font-medium text-brand"
           >
             <Link2 className="h-3 w-3" /> linked
           </span>
@@ -131,7 +131,7 @@ export function DatabaseHeaderBar({
               <Plus className="h-3.5 w-3.5" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
+          <DropdownMenuContent align="start">
             <DropdownMenuLabel className="text-xs">Add view</DropdownMenuLabel>
             {(Object.keys(VIEW_META) as DbView[]).map((t) => {
               const M = VIEW_META[t];
