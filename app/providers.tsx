@@ -1,47 +1,33 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
-import { ConvexReactClient } from "convex/react";
-import { ConvexAuthNextjsProvider } from "@convex-dev/auth/nextjs";
+import { type ReactNode } from "react";
 import { ThemeProvider } from "next-themes";
 import { Toaster as SonnerToaster } from "@/shared/ui/sonner";
 import { ChunkErrorBoundary } from "@/shared/components/ChunkErrorBoundary";
 import { GlobalErrorListeners } from "@/shared/components/GlobalErrorListeners";
 import { ServiceWorkerCleanup } from "@/shared/components/ServiceWorkerCleanup";
-import { VersionWatcher } from "@/shared/components/VersionWatcher";
-import { FilesAdapterProvider } from "@/slices/files";
-import { useConvexFilesAdapter } from "@/slices/files/adapter/convexAdapter";
 
-function FilesProvider({ children }: { children: ReactNode }) {
-  // Must mount inside ConvexAuthNextjsProvider — the adapter calls
-  // useMutation/useQuery which need the Convex client context.
-  const adapter = useConvexFilesAdapter();
-  return <FilesAdapterProvider adapter={adapter}>{children}</FilesAdapterProvider>;
-}
-
-export default function Providers({ children }: { children: ReactNode }) {
-  const [convex] = useState(
-    () => new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL as string),
-  );
+/** Universal client providers mounted at the ROOT for EVERY route — cheap and
+ *  Convex-free: theme, chunk-error recovery, global error listeners, SW
+ *  cleanup, and the toast container (sonner's toasts are global, so a single
+ *  root Toaster surfaces toasts fired from anywhere, including the (app)
+ *  group's VersionWatcher). The expensive Convex realtime/auth stack is scoped
+ *  to the (app) group + /forms so anonymous public routes don't boot it. */
+export default function RootProviders({ children }: { children: ReactNode }) {
   return (
     <ChunkErrorBoundary>
-      <ConvexAuthNextjsProvider client={convex}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange={false}
-          storageKey="silong-theme"
-        >
-          <GlobalErrorListeners />
-          <ServiceWorkerCleanup />
-          <VersionWatcher />
-          {/* Mounted at root so the version-update toast also shows on
-           *  /auth, /share, and other routes outside DashboardShell. */}
-          <SonnerToaster richColors closeButton />
-          <FilesProvider>{children}</FilesProvider>
-        </ThemeProvider>
-      </ConvexAuthNextjsProvider>
+      <ThemeProvider
+        attribute="class"
+        defaultTheme="system"
+        enableSystem
+        disableTransitionOnChange={false}
+        storageKey="silong-theme"
+      >
+        <GlobalErrorListeners />
+        <ServiceWorkerCleanup />
+        <SonnerToaster richColors closeButton />
+        {children}
+      </ThemeProvider>
     </ChunkErrorBoundary>
   );
 }

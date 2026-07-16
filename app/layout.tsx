@@ -1,8 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import { Inter, Fraunces } from "next/font/google";
-import { ConvexAuthNextjsServerProvider } from "@convex-dev/auth/nextjs/server";
-import Providers from "./providers";
+import RootProviders from "./providers";
 import { HeadHints } from "@/shared/components/HeadHints";
 import { InstallPrompt } from "@/shared/components/InstallPrompt";
 import { AnalyticsBeacon } from "@/shared/components/AnalyticsBeacon";
@@ -91,25 +90,23 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <ConvexAuthNextjsServerProvider>
-      <html lang="en" suppressHydrationWarning className={`${inter.variable} ${fraunces.variable}`}>
-        <HeadHints />
-        <body>
-          <div id="root">
-            <Providers>
-              <Suspense fallback={null}>{children}</Suspense>
-            </Providers>
-          </div>
-          <InstallPrompt />
-          {/* Cookieless visitor beacon + GA4 — both self-skip /dashboard and
-              non-page routes, so analytics load only on public
-              marketing/share/site traffic. */}
-          <Suspense fallback={null}>
-            <AnalyticsBeacon />
-            <GoogleAnalytics />
-          </Suspense>
-        </body>
-      </html>
-    </ConvexAuthNextjsServerProvider>
+    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${fraunces.variable}`}>
+      <HeadHints />
+      <body>
+        <div id="root">
+          <RootProviders>
+            <Suspense fallback={null}>{children}</Suspense>
+          </RootProviders>
+        </div>
+        <InstallPrompt />
+        {/* Cookieless visitor beacon + GA4 — both self-skip /dashboard and
+            non-page routes, so analytics load only on public
+            marketing/share/site traffic. */}
+        <Suspense fallback={null}>
+          <AnalyticsBeacon />
+          <GoogleAnalytics />
+        </Suspense>
+      </body>
+    </html>
   );
 }
