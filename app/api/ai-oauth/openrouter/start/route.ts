@@ -10,7 +10,9 @@ import crypto from "node:crypto";
  *  never reaches the browser JS or a DB — the /callback route reads the
  *  cookie to redeem the code for a key. See ../callback/route.ts. */
 
-export const dynamic = "force-dynamic";
+// Reads request headers + sets a cookie → dynamic by nature under
+// cacheComponents; the `dynamic = "force-dynamic"` segment config is no
+// longer permitted.
 
 const b64url = (b: Buffer) => b.toString("base64url");
 

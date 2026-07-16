@@ -9,7 +9,8 @@ import { api } from "@convex/_generated/api";
  *  BYOK path as a pasted key (`aiKeys.save`, forwarding the signed-in user's
  *  Convex auth token). The key is never exposed to browser JS. */
 
-export const dynamic = "force-dynamic";
+// Reads the request (cookie + `?code`) → dynamic by nature under
+// cacheComponents; the `dynamic = "force-dynamic"` segment config is gone.
 
 function origin(req: NextRequest): string {
   const proto = req.headers.get("x-forwarded-proto") ?? req.nextUrl.protocol.replace(":", "");

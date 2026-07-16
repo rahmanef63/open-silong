@@ -1,7 +1,32 @@
-# Cache Components — deferral note
+# Cache Components — IMPLEMENTED 2026-07-16
 
-`next.config.mjs` keeps `cacheComponents` commented out. This doc records
-why and what unblocks the flip.
+**Status: shipped.** `cacheComponents: true` is enabled and PPR is active —
+every route builds as `◐ Partial Prerender` (static HTML shell + streamed
+dynamic data); `/_not-found` and `/.well-known/*` are now fully static. Path A
+(auth provider moved into the `(app)` route group) landed in commit
+`8a8f7be`; the flip + route-handler fixes in the follow-up commit.
+
+The rest of this doc is retained as the design record + the remaining
+follow-up (per-route `"use cache"` data caching).
+
+## Remaining follow-up — `"use cache"` on the public data loaders
+
+The flip gives static SHELLS; the DATA (`loadShare`/`loadSite`/`loadForm`
+`fetchQuery`) still runs per request. To edge-cache the data too, add
+`"use cache"` + `cacheLife` to each loader. **Per-route privacy nuance:**
+- `/site`, `/forms` — `cacheLife('minutes')` is fine (unpublish reflects
+  within minutes; low risk).
+- `/share` — a page unpublish MUST invalidate immediately (privacy). Use
+  `cacheTag('share-'+id)` + `revalidateTag` on `setPublic`/unpublish/slug/
+  block-write mutations, OR leave `/share` data per-request. Do NOT ship a
+  time-only cache for `/share`.
+
+---
+
+## Original deferral note (design record)
+
+`next.config.mjs` kept `cacheComponents` commented out. This recorded why and
+what unblocked the flip.
 
 ## Why deferred
 

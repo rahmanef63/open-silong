@@ -10,9 +10,6 @@ import { api } from "@convex/_generated/api";
  *    code_verifier=<verifier>
  *  Response: JSON { access_token, token_type, expires_in, scope? } */
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
-
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 const errorResponse = (

@@ -41,11 +41,11 @@ const nextConfig = {
       { protocol: "https", hostname: "avatars.githubusercontent.com" },
     ],
   },
-  // cacheComponents: requires every route under a Suspense boundary OR
-  // explicit "use cache" — the ConvexAuthNextjsServerProvider in layout
-  // reads cookies dynamically, currently blocking layout-level enablement.
-  // Tracking deferral + exit criteria in docs/audit/cache-components.md.
-  // cacheComponents: true,
+  // Cache Components (PPR) — the cookie-reading auth provider now lives in the
+  // (app) route group (not root), so public /share·/site·/forms can be
+  // statically shelled + stream their dynamic data. Dynamic access must sit
+  // under <Suspense> or use "use cache". See docs/audit/cache-components.md.
+  cacheComponents: true,
   deploymentId: process.env.NEXT_PUBLIC_DEPLOYMENT_ID,
   typescript: { ignoreBuildErrors: false },
   experimental: {

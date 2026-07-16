@@ -6,7 +6,8 @@ import { NextResponse } from "next/server";
  *  CIMD is not advertised (user-defined-client mode). DCR is not
  *  implemented — `registration_endpoint` is omitted. */
 
-export const revalidate = 3600;
+// Static metadata — prerendered under cacheComponents; the `public,
+// max-age=3600` response header (below) still drives client/proxy caching.
 
 const SITE = "https://silong.rahmanef.com";
 
