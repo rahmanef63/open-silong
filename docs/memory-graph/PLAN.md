@@ -26,7 +26,7 @@ This spec is grounded in a real read of the codebase; every path below exists.
 | Inline tokenizer + decorator (Slack model) | `frontend/shared/lib/inlineMd.tsx` (read surfaces) + `frontend/slices/editor/lib/inlineDecorator.ts` + `decorate.ts` (editor WYSIWYG) | add `wikilink`+`tag` token **once**, renders everywhere |
 | Wiki/verified marker | `pages.wiki` + `convex/features/wiki/` | graph node emphasis (hub weight) |
 | MCP: JSON-RPC 2.0 `/mcp`, OAuth2.1+PKCE, `nsn_` tokens, 25 tools | `convex/mcp/jsonrpc.ts` (TOOLS[] + `dispatchTool`), `internal.ts` (userId-gated internalQuery), `http.ts` (bearer→userId) | **add graph tools = 3 edits, zero new transport/auth** |
-| Slice scaffolding + porting | `slice.json`/`slice.contract.ts`/`slice.manifest.json`, `scripts/generate-slice-*.mjs`, `copy-slice.mjs` | new slice plugs in for free |
+| Slice scaffolding | `slice.json` / `slice.contract.ts` + `index.ts` barrel convention | new slice plugs in for free |
 | Theme CSS vars synced to `:root` | `slices/theme-presets` `ThemeColorSync` + `next-themes` | canvas colors via `getComputedStyle` |
 
 **Gaps (net-new):** no edge/link table, no `[[..]]` syntax, no `#tags`, no
@@ -217,7 +217,7 @@ Portable (reads `@/shared/lib/store` only — **never** `@convex/_generated`, pe
 ```
 frontend/slices/memory-graph/
   index.ts                      # barrel
-  slice.json / slice.contract.ts / slice.manifest.json   # deps.npm: ['react-force-graph-2d']
+  slice.json / slice.contract.ts   # deps.npm: ['react-force-graph-2d']
   hooks/
     useGraphModel.ts            # usePages() → Graph (client extract, memoized, mirrors useBacklinks.walk)
     useLocalGraph.ts            # BFS ego over the model, depth control
@@ -324,8 +324,7 @@ allowlist is ChatGPT-only today — Claude/others use `nsn_` tokens until widene
 | **P3 Polish** | MCP write tools + unlinked-mentions UI + aliases + hover preview + `[[#heading]]` refs + graph search/jump | Some | Full parity |
 
 Each phase: `pnpm typecheck` + `pnpm test` (incl. `extractEdges` unit + parity test) →
-push to `main` (Convex deploy auto-runs via pre-push hook / `build:auto`) →
-`node scripts/generate-slice-manifests.mjs` + `audit-portability.mjs` after the slice lands.
+push to `main` (Convex deploy auto-runs via pre-push hook / `build:auto`).
 
 ---
 

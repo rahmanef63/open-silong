@@ -15,9 +15,8 @@ Lift status: ✅ standalone-ready (Phase 4 of the mega-lift plan, see
 # 1. Install the slice (currently via the open-silong source repo;
 #    npm publish pending). Copy `frontend/slices/notion/` +
 #    `frontend/slices/editor/` + `frontend/slices/databases/` +
-#    `frontend/slices/files/` + the shared deps the manifests
-#    declare into your project. Use `scripts/sync-to-rr.mjs` for the
-#    automated lift.
+#    `frontend/slices/files/` + the shared deps they import into
+#    your project.
 ```
 
 ```tsx
@@ -50,12 +49,11 @@ export default function Workspace() {
 ```
 
 ```tsx
-// 4. (Optional) override defaults — config + adapter + components.
+// 4. (Optional) swap the adapter or override per-slot components.
 import { NotionAppProvider, useConvexNotionAdapter } from "@/slices/notion";
 
 <NotionAppProvider
   adapter={useConvexNotionAdapter()}
-  config={{ routes: { basePath: "/notes" } }}
   components={{ DatabaseBlock: MyCustomDatabaseRenderer }}
 >
   …
@@ -73,7 +71,6 @@ import { NotionAppProvider, useConvexNotionAdapter } from "@/slices/notion";
                  │                                │
                  │   Mounts in one wrap:          │
                  │   ─ NotionAdapterProvider      │
-                 │   ─ NotionAppConfig context    │
                  │   ─ EditorComponentsRegistry   │
                  │   ─ DatabasesComponentsRegistry│
                  └──┬─────────────────────────────┘
@@ -161,10 +158,6 @@ frontend/slices/notion/
 ├── NotionAppProvider.tsx         # the umbrella — mount this
 ├── index.ts                      # barrel — public API
 ├── README.md                     # this file
-├── slice.manifest.json           # dep declaration for the lift script
-├── lib/
-│   ├── config.ts                 # NotionAppConfig + defaults
-│   └── useNotionConfig.ts        # config hook
 └── adapter/
     ├── types.ts                  # NotionAdapter interface (the contract)
     ├── context.tsx               # NotionAdapterProvider + useNotionAdapter

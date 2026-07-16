@@ -1,9 +1,8 @@
 # Slice catalog
 
 Every feature in `frontend/slices/<name>/` is summarised here. Each
-slice has a `slice.manifest.json` declaring its dependencies, and an
-`index.ts` barrel that defines its public surface. Cross-slice
-imports go **through the barrel only** — never reach into
+slice exposes an `index.ts` barrel that defines its public surface.
+Cross-slice imports go **through the barrel only** — never reach into
 `<slice>/lib/*` or `<slice>/components/*` from outside.
 
 For deeper docs on individual features, see the dedicated pages in
@@ -338,10 +337,8 @@ outer shell; `<PagesPanel/>` renders the page tree;
 1. `mkdir frontend/slices/<name>/{components,hooks,lib,types.ts,index.ts}`
 2. (Backend?) `mkdir convex/features/<name>` with `_schema.ts`,
    `queries.ts`, `mutations.ts`.
-3. Run `node scripts/generate-slice-manifests.mjs` to regenerate the
-   manifest.
-4. Add a row to the table at the top of this file.
-5. If it needs a dedicated doc (>1 paragraph), add
+3. Add a row to the table at the top of this file.
+4. If it needs a dedicated doc (>1 paragraph), add
    `docs/api/<name>.md` and link it from the table.
 
 See [`CONTRIBUTING.md`](../../CONTRIBUTING.md#slice-contract) for the

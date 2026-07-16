@@ -39,24 +39,13 @@ another React project:
 ```tsx
 import { NotionAppProvider, NotionPage } from "@/slices/notion";
 
-<NotionAppProvider config={{ routes: { basePath: "/notes" } }}>
+<NotionAppProvider adapter={adapter}>
   <NotionPage pageId={openId} />
 </NotionAppProvider>
 ```
 
 See `docs/notion-mega-slice.md` for the full API contract,
 generalisation blockers, and roadmap.
-
-## Slice portability auditor
-
-```bash
-node scripts/audit-portability.mjs           # summary
-node scripts/audit-portability.mjs --json    # per-slice JSON
-```
-
-Scans every slice for hardcoded routes, role enums, Convex table-name
-leaks, and env-var reads. Output drives the generalisation roadmap in
-`docs/notion-mega-slice.md`.
 
 ## Hard rules
 

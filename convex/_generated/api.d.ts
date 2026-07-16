@@ -16,6 +16,7 @@ import type * as _shared_auth from "../_shared/auth.js";
 import type * as _shared_blockOps from "../_shared/blockOps.js";
 import type * as _shared_blocks from "../_shared/blocks.js";
 import type * as _shared_codexLib from "../_shared/codexLib.js";
+import type * as _shared_encoding from "../_shared/encoding.js";
 import type * as _shared_graph from "../_shared/graph.js";
 import type * as _shared_hash from "../_shared/hash.js";
 import type * as _shared_idRemap from "../_shared/idRemap.js";
@@ -161,6 +162,7 @@ declare const fullApi: ApiFromModules<{
   "_shared/blockOps": typeof _shared_blockOps;
   "_shared/blocks": typeof _shared_blocks;
   "_shared/codexLib": typeof _shared_codexLib;
+  "_shared/encoding": typeof _shared_encoding;
   "_shared/graph": typeof _shared_graph;
   "_shared/hash": typeof _shared_hash;
   "_shared/idRemap": typeof _shared_idRemap;

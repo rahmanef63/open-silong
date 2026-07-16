@@ -626,7 +626,6 @@ Plan is complete when ALL of:
   per round
 - `docs/rr-sync/2026-05-20-pivot-nosion-source-of-truth.md` — why
   open-silong + rr is a two-repo system
-- `docs/rr-sync/README.md` — rr-sync infrastructure overview
 - `scripts/sync-to-rr.mjs` — the lift script
 - `rr-sync.json` — scrubs + skipFiles + pathMap config
 

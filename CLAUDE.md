@@ -77,14 +77,6 @@ reference deploy now.
 - Local CI: `/sc-git ci --repo notion-page-clone` or pre-push hook —
   no GitHub Actions cloud minutes.
 
-### Slice metadata
-
-Each slice ships a `slice.manifest.json` declaring its shared/slices/
-convex dependency list. Regenerate via
-`node scripts/generate-slice-manifests.mjs`. Portability blockers
-(hardcoded routes / role enums / table-name leaks) are tracked by
-`node scripts/audit-portability.mjs`.
-
 ### MCP
 
 `convex/mcp/` is a Notion-canonical JSON HTTP surface.
@@ -322,15 +314,6 @@ blocks gets rewritten via `convex/_shared/idRemap.ts:rewriteMentions`.
   `docs/audit/2026-05-12-database-route-refactor.md` — porting
   playbook + provider stack + gotchas for downstream agents.
 
-## Slice portability
-
-- Each `frontend/slices/<name>/` carries a `slice.manifest.json`
-  declaring its `deps.shared` / `deps.slices` / `deps.convex`.
-  Regenerate via `node scripts/generate-slice-manifests.mjs`.
-- Port a slice with `node scripts/copy-slice.mjs <slice> --to <dest>` —
-  recursively copies the slice + every declared dep, prints next-steps
-  checklist (RouterProvider basename, env vars, schema deltas).
-
 ## Feature surfaces (per-slice index)
 
 Every feature lives in `frontend/slices/<name>/` and exports through
@@ -356,21 +339,10 @@ Every feature lives in `frontend/slices/<name>/` and exports through
 
 ---
 
-## Slice portability + `notion` mega-slice
+## `notion` mega-slice
 
 This project ships a `notion` mega-slice (`frontend/slices/notion/`)
 that bundles editor + databases + templates + workspace-io + wrappers
 as one drop-in for embedding inside other React projects. See
 `docs/notion-mega-slice.md` for the API contract + generalisation
 roadmap.
-
-Track per-slice portability blockers with:
-
-```bash
-node scripts/audit-portability.mjs
-```
-
-Categories scanned: hardcoded `/dashboard` routes, role-enum literals,
-`Id<"table">` leaks, `process.env.NEXT_PUBLIC_*` reads inside slice
-code. Fix path: replace with `useNotionConfig().routes.*` /
-`config.roles.*` / props at the call site.
