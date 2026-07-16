@@ -54,3 +54,7 @@ coverage/
 *.bak
 *.backup
 *.orig
+
+# Brand-kit source dropzone — raw art kept local for regen, not shipped
+# (derived assets live in public/*.{svg,png,webp,ico}); regen via sharp
+public/open-silong-asset/
