@@ -1,15 +1,22 @@
-"use client";
-
-import { use } from "react";
-import { useQuery } from "convex/react";
+import { cache } from "react";
+import { notFound } from "next/navigation";
+import type { Metadata } from "next";
+import { fetchQuery } from "convex/nextjs";
 import Link from "next/link";
-import { FileText, Globe } from "lucide-react";
+import { FileText } from "lucide-react";
 import { api } from "@convex/_generated/api";
 import { DynamicIcon } from "@/shared/components/icon-picker";
 
 interface Props {
   params: Promise<{ ws: string }>;
 }
+
+// Server-rendered: the public workspace directory needs SSR HTML + per-
+// workspace metadata (crawlers were seeing an empty spinner and every /site/*
+// inherited the root title). React.cache dedupes the fetch across
+// generateMetadata + the page handler. Directory listing needs no live
+// reactivity, so fetchQuery (one-shot server read) is the right primitive.
+const loadSite = cache((ws: string) => fetchQuery(api.sites.workspaceDirectory, { wsSlug: ws }));
 
 function relative(ts: number): string {
   const diff = Date.now() - ts;
@@ -21,25 +28,24 @@ function relative(ts: number): string {
   return `${Math.round(d / 365)}y ago`;
 }
 
-export default function WorkspaceSitePage({ params }: Props) {
-  const { ws } = use(params);
-  const data = useQuery(api.sites.workspaceDirectory, { wsSlug: ws });
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { ws } = await params;
+  const data = await loadSite(ws);
+  if (!data) return { title: "Workspace not found" };
+  const name = data.workspace.name || "Workspace";
+  const description = `${data.workspace.emoji ?? "🌐"} ${name} · public pages on Silong`;
+  return {
+    title: `${name} — Silong`,
+    description,
+    openGraph: { title: name, description, type: "website" },
+    twitter: { card: "summary", title: name, description },
+  };
+}
 
-  if (data === undefined) {
-    return (
-      <div className="mx-auto max-w-3xl px-4 py-12 text-sm text-muted-foreground">Loading site…</div>
-    );
-  }
-
-  if (data === null) {
-    return (
-      <div className="mx-auto max-w-3xl px-4 py-12 text-center">
-        <Globe className="mx-auto mb-2 h-8 w-8 text-muted-foreground/40" />
-        <h1 className="text-xl font-semibold">Workspace not found</h1>
-        <p className="mt-1 text-sm text-muted-foreground">No workspace with slug “{ws}” exists.</p>
-      </div>
-    );
-  }
+export default async function WorkspaceSitePage({ params }: Props) {
+  const { ws } = await params;
+  const data = await loadSite(ws);
+  if (!data) notFound();
 
   if (data.pages.length === 0) {
     return (

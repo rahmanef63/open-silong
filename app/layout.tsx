@@ -1,12 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
-import Script from "next/script";
 import { Inter, Fraunces } from "next/font/google";
 import { ConvexAuthNextjsServerProvider } from "@convex-dev/auth/nextjs/server";
 import Providers from "./providers";
 import { HeadHints } from "@/shared/components/HeadHints";
 import { InstallPrompt } from "@/shared/components/InstallPrompt";
 import { AnalyticsBeacon } from "@/shared/components/AnalyticsBeacon";
+import { GoogleAnalytics } from "@/shared/components/GoogleAnalytics";
 import "./globals.css";
 
 const inter = Inter({
@@ -101,18 +101,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </Providers>
           </div>
           <InstallPrompt />
-          {/* Cookieless visitor beacon — self-skips /dashboard + non-page routes,
-              so only public marketing/share/site traffic is counted. */}
+          {/* Cookieless visitor beacon + GA4 — both self-skip /dashboard and
+              non-page routes, so analytics load only on public
+              marketing/share/site traffic. */}
           <Suspense fallback={null}>
             <AnalyticsBeacon />
+            <GoogleAnalytics />
           </Suspense>
-          <Script
-            src="https://www.googletagmanager.com/gtag/js?id=G-82JXWGW4GM"
-            strategy="afterInteractive"
-          />
-          <Script id="ga4-init" strategy="afterInteractive">
-            {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-82JXWGW4GM');`}
-          </Script>
         </body>
       </html>
     </ConvexAuthNextjsServerProvider>

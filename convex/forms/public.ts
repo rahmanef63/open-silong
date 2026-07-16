@@ -102,6 +102,7 @@ export const submitForm = mutation({
     const db = found.db as {
       _id: Id<"databases">;
       userId: Id<"users">;
+      workspaceId?: Id<"workspaces">;
       properties?: { id: string; type: string; uniqueIdPrefix?: string }[];
       rowIds: Id<"pages">[];
       uniqueIdCounter?: number;
@@ -143,6 +144,11 @@ export const submitForm = mutation({
     const now = Date.now();
     const rowId = await ctx.db.insert("pages", {
       userId: db.userId,
+      // Stamp the DB's workspace so the anonymously-submitted row is visible
+      // in team-workspace reads (pagesInActiveWorkspace) and gets cascaded on
+      // DB delete — every other row-insert path stamps this. undefined for
+      // legacy non-workspace DBs, matching prior behavior for those.
+      workspaceId: db.workspaceId,
       parentId: null,
       title: cleanTitle,
       icon: "📝",

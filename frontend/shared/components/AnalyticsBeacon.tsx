@@ -21,7 +21,12 @@ type UtmBag = Partial<Record<UtmKey, string>>;
 // non-page — never track them. Public surfaces (/, /share/*, /site/*, /forms/*)
 // fall through and ARE tracked.
 const SKIP = ["/dashboard", "/api", "/oauth", "/setup", "/auth", "/.well-known"];
-const skip = (p: string) => SKIP.some((s) => p === s || p.startsWith(s + "/"));
+/** True for private / non-page routes that should never be tracked or carry
+ *  third-party analytics. Public surfaces (/, /share/*, /site/*, /forms/*)
+ *  return false. Source of truth for the public/private split — reused by
+ *  GoogleAnalytics so GA4 loads only where this beacon fires. */
+export const isPrivateRoute = (p: string) => SKIP.some((s) => p === s || p.startsWith(s + "/"));
+const skip = isPrivateRoute;
 
 function viewportClass(): "mobile" | "tablet" | "desktop" {
   const w = window.innerWidth;

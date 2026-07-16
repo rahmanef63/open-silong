@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, MoreHorizontal, Trash2, ChevronRight, ChevronDown } from "lucide-react";
@@ -13,11 +14,17 @@ import { SelectableCell } from "@/slices/database-cell-selection";
 import { useRowSelectionOptional } from "../../row-selection";
 import { RowCheckbox } from "./Checkboxes";
 
-export function SortableRow({
-  row, rowIndex, db, visibleProps, onOpen, onDelete, autoEdit, onAutoEditConsumed,
+export const SortableRow = memo(function SortableRow({
+  row, rowIndex, db, visibleProps, onOpenRow, onDeleteRow, autoEdit, onAutoEditConsumed,
   selectedCell, onSelectCell, fill, wrap, rowHeightClass,
-  treeEnabled = false, depth = 0, hasChildren = false, expanded = true, onToggleExpand,
+  treeEnabled = false, depth = 0, hasChildren = false, expanded = true, onToggleExpandRow,
 }: any) {
+  // Zero-arg closures built from row-id-based stable parent callbacks. Kept
+  // inside the memoized child so the parent passes stable fn identities —
+  // otherwise React.memo would re-render every row on any parent render.
+  const onOpen = () => onOpenRow(row.id);
+  const onDelete = () => onDeleteRow(db.id, row.id);
+  const onToggleExpand = () => onToggleExpandRow?.(row.id);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: row.id });
   const rowSel = useRowSelectionOptional();
   const isRowSelected = !!rowSel?.isSelected(row.id);
@@ -119,4 +126,4 @@ export function SortableRow({
       </div>
     </div>
   );
-}
+});

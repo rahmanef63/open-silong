@@ -11,7 +11,6 @@ import {
   deletePageBlocks,
 } from "./_shared/pageContent";
 import { reindexPageLinks, titleKeyFor } from "./_shared/links";
-import { collectDescendantsFromDocs } from "./_shared/pageTree";
 import { regenAllBlockIds, findDuplicateBlockId, type BlockLike } from "./_shared/blocks";
 import {
   addBlockToArray, replaceBlockInArray, duplicateBlockInArray,
@@ -32,28 +31,52 @@ function emptyBlock() {
   return { id: uid(), type: "paragraph", text: "" };
 }
 
-/** Pulls every page in the same scope as the doc being mutated — by
- *  workspace if the doc is workspace-stamped, otherwise the viewer's
- *  legacy by_user pool. Used by the descendant-walking mutations
- *  (trash / restore / permanentlyDelete) so subpages created by other
- *  members get included. Bare .collect() here is INTENTIONAL — capping
- *  would silently leave orphan subpages in a cascade. The real fix is
- *  pagination of the cascade itself (cycle 8 follow-up). */
-async function collectScopedPages(
+/** `rootId` + every descendant reachable via `parentId`, walked by index
+ *  within the doc's scope (by_workspace_parent when the root is workspace-
+ *  stamped, otherwise the viewer's legacy by_user_parent pool). Used by the
+ *  descendant-walking mutations (trash / restore / permanentlyDelete).
+ *
+ *  Replaces the old whole-scope `.collect()`: trashing one leaf page used to
+ *  read EVERY page in the workspace into memory (and threw once the workspace
+ *  exceeded a mutation's read budget). This reads only the target subtree.
+ *  Each level is FULLY paginated — never capped — so no subpage is silently
+ *  orphaned in a cascade, and a visited-set guards corrupt self-referential
+ *  parent chains. */
+async function collectDescendantIds(
   ctx: MutationCtx,
+  rootId: Id<"pages">,
   userId: Id<"users">,
   workspaceId: Id<"workspaces"> | undefined,
-) {
-  if (workspaceId) {
-    return await ctx.db
-      .query("pages")
-      .withIndex("by_workspace", (q) => q.eq("workspaceId", workspaceId))
-      .collect();
+): Promise<Id<"pages">[]> {
+  const visited = new Set<string>([rootId]);
+  const out: Id<"pages">[] = [rootId];
+  let frontier: Id<"pages">[] = [rootId];
+  while (frontier.length) {
+    const next: Id<"pages">[] = [];
+    for (const parentId of frontier) {
+      let cursor: string | null = null;
+      for (;;) {
+        // Narrow indexed range = one parent's direct children only.
+        const batch = await (workspaceId
+          ? ctx.db.query("pages").withIndex("by_workspace_parent", (q) =>
+              q.eq("workspaceId", workspaceId).eq("parentId", parentId))
+          : ctx.db.query("pages").withIndex("by_user_parent", (q) =>
+              q.eq("userId", userId).eq("parentId", parentId))
+        ).paginate({ cursor, numItems: 500 });
+        for (const child of batch.page) {
+          if (!visited.has(child._id)) {
+            visited.add(child._id);
+            out.push(child._id);
+            next.push(child._id);
+          }
+        }
+        if (batch.isDone) break;
+        cursor = batch.continueCursor;
+      }
+    }
+    frontier = next;
   }
-  return await ctx.db
-    .query("pages")
-    .withIndex("by_user", (q) => q.eq("userId", userId))
-    .collect();
+  return out;
 }
 
 /**
@@ -394,8 +417,7 @@ export const trash = mutation({
   args: { pageId: v.id("pages") },
   handler: async (ctx, args) => {
     const { userId, doc: page } = await requireWorkspaceAccess(ctx, "pages", args.pageId as Id<"pages">, { write: true });
-    const allPages = await collectScopedPages(ctx, userId, page.workspaceId);
-    const ids = collectDescendantsFromDocs(allPages, args.pageId);
+    const ids = await collectDescendantIds(ctx, args.pageId, userId, page.workspaceId);
     const now = Date.now();
     for (const id of ids) {
       await ctx.db.patch(id as Id<"pages">, { trashed: true, updatedAt: now });
@@ -416,8 +438,7 @@ export const restore = mutation({
   args: { pageId: v.id("pages") },
   handler: async (ctx, args) => {
     const { userId, doc: page } = await requireWorkspaceAccess(ctx, "pages", args.pageId as Id<"pages">, { write: true });
-    const allPages = await collectScopedPages(ctx, userId, page.workspaceId);
-    const ids = collectDescendantsFromDocs(allPages, args.pageId);
+    const ids = await collectDescendantIds(ctx, args.pageId, userId, page.workspaceId);
     for (const id of ids) {
       await ctx.db.patch(id as Id<"pages">, { trashed: false });
     }
@@ -430,8 +451,7 @@ export const permanentlyDelete = mutation({
   args: { pageId: v.id("pages") },
   handler: async (ctx, args) => {
     const { userId, doc: page } = await requireWorkspaceAccess(ctx, "pages", args.pageId as Id<"pages">, { write: true });
-    const allPages = await collectScopedPages(ctx, userId, page.workspaceId);
-    const ids = collectDescendantsFromDocs(allPages, args.pageId);
+    const ids = await collectDescendantIds(ctx, args.pageId, userId, page.workspaceId);
     for (const id of ids) {
       // Snapshot cleanup is best-effort — only the viewer's own snapshots get
       // deleted (snapshots are author-owned, no by_workspace index yet).

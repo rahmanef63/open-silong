@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { Database, DatabaseViewConfig, Page } from "@/shared/types/domain";
 import { useDbAdapter } from "../lib/useDbAdapter";
 import {
@@ -38,18 +38,28 @@ export function TableView({ db, view, rows, onOpenRow, writeView }: ViewProps) {
   // writes to db). Empty/undefined `view.subItemsExpanded` means
   // "all expanded by default".
   const [localExpanded, setLocalExpanded] = useState<Set<string>>(() => new Set(view.subItemsExpanded ?? []));
-  const expanded = view.subItemsExpanded ? new Set(view.subItemsExpanded) : localExpanded;
-  const toggleExpand = (id: string) => {
-    const next = new Set(expanded);
+  // Stable identity across unrelated re-renders so the memoized `tree` (and
+  // therefore every row's stable `row` identity) isn't rebuilt on every render.
+  const expanded = useMemo(
+    () => (view.subItemsExpanded ? new Set(view.subItemsExpanded) : localExpanded),
+    [view.subItemsExpanded, localExpanded],
+  );
+  const expandedRef = useRef(expanded);
+  expandedRef.current = expanded;
+  const toggleExpand = useCallback((id: string) => {
+    const next = new Set(expandedRef.current);
     if (next.has(id)) next.delete(id);
     else next.add(id);
     if (writeView) writeView(view.id, { subItemsExpanded: [...next] });
     else setLocalExpanded(next);
-  };
-  const tree = buildSubItemsTree(db, rows, expanded.size === 0 && db.subItemsParentPropId
-    ? new Set(rows.map((r) => r.id))
-    : expanded);
+  }, [writeView, view.id]);
   const treeEnabled = !!db.subItemsParentPropId;
+  const tree = useMemo(
+    () => buildSubItemsTree(db, rows, expanded.size === 0 && db.subItemsParentPropId
+      ? new Set(rows.map((r) => r.id))
+      : expanded),
+    [db, rows, expanded],
+  );
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
@@ -67,6 +77,7 @@ export function TableView({ db, view, rows, onOpenRow, writeView }: ViewProps) {
     targets.forEach((rid) => setRowValue(db.id, rid, source.propId, value));
   };
   const fill = useDragFill({ rowIds, onFill });
+  const consumeAutoEdit = useCallback(() => setPendingFocusId(null), []);
 
   const onColEnd = (e: DragEndEvent) => {
     const { active, over } = e;
@@ -111,10 +122,10 @@ export function TableView({ db, view, rows, onOpenRow, writeView }: ViewProps) {
                     rowIndex={rowIndex}
                     db={db}
                     visibleProps={visibleProps}
-                    onOpen={() => onOpenRow(node.row.id)}
-                    onDelete={() => deleteRow(db.id, node.row.id)}
+                    onOpenRow={onOpenRow}
+                    onDeleteRow={deleteRow}
                     autoEdit={pendingFocusId === node.row.id}
-                    onAutoEditConsumed={() => setPendingFocusId(null)}
+                    onAutoEditConsumed={consumeAutoEdit}
                     selectedCell={selectedCell}
                     onSelectCell={setSelectedCell}
                     fill={fill}
@@ -127,7 +138,7 @@ export function TableView({ db, view, rows, onOpenRow, writeView }: ViewProps) {
                       expanded.has(node.row.id) ||
                       (expanded.size === 0 && treeEnabled)
                     }
-                    onToggleExpand={() => toggleExpand(node.row.id)}
+                    onToggleExpandRow={toggleExpand}
                   />
                 ))}
               </SortableContext>

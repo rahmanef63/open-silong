@@ -6,8 +6,11 @@ import { parseIconValue, type IconValue } from "../lib/parse";
 import { twemojiUrl } from "../lib/twemoji";
 import { useIconStyle, type Style } from "../lib/style-pref";
 import { LUCIDE_ICONS, FallbackLucideIcon } from "../lib/lucide-icons";
-import { PHOSPHOR_ICONS, FallbackPhosphorIcon } from "../lib/phosphor-icons";
 import { renderSizeFor, type IconRenderKind } from "../lib/icon-render-config";
+
+// Code-split the heavy ~200-icon phosphor map out of the eager shell chunk;
+// it loads on demand the first time a `phosphor:` icon actually renders.
+const LazyPhosphor = React.lazy(() => import("./LazyPhosphor"));
 
 interface CommonProps {
   value: string | null | undefined;
@@ -68,15 +71,11 @@ function RawIconImpl({ value, style, className, fallback = "📄", title, size }
   }
 
   if (parsed.kind === "phosphor") {
-    const Cmp = PHOSPHOR_ICONS[parsed.name] ?? FallbackPhosphorIcon;
-    if (Cmp === FallbackPhosphorIcon && process.env.NODE_ENV !== "production") {
-      console.warn(`[DynamicIcon] Unknown phosphor icon: "${parsed.name}". Falling back to FileText.`);
-    }
-    return renderWithKind("phosphor", size, parsed.color, className, title, (renderSize) =>
-      renderSize !== undefined
-        ? <Cmp weight="fill" size={renderSize} style={{ width: renderSize, height: renderSize }} />
-        : <Cmp weight="fill" className="h-[1em] w-[1em]" />,
-    );
+    return renderWithKind("phosphor", size, parsed.color, className, title, (renderSize) => (
+      <React.Suspense fallback={null}>
+        <LazyPhosphor name={parsed.name} renderSize={renderSize} />
+      </React.Suspense>
+    ));
   }
 
   const glyph = parsed.kind === "emoji" ? parsed.emoji : "";

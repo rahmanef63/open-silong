@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import { Database, Page, Property, PropertyValue } from "@/shared/types/domain";
 import { useDbAdapter } from "./lib/useDbAdapter";
 import { cn } from "@/shared/lib/utils";
@@ -32,9 +33,9 @@ export function PropertyCell({ db, prop, row, compact = false }: Props) {
   switch (prop.type) {
     case "text":
       return (
-        <input
+        <BufferedTextCell
           value={(value as string) ?? ""}
-          onChange={(e) => set(e.target.value)}
+          onCommit={set}
           placeholder="-"
           className={cn(cellClass, "w-full bg-transparent outline-none px-2 py-1 rounded hover:bg-accent/50 focus:bg-accent/50")}
         />
@@ -52,9 +53,9 @@ export function PropertyCell({ db, prop, row, compact = false }: Props) {
     case "email":
     case "phone":
       return (
-        <input
+        <BufferedTextCell
           value={(value as string) ?? ""}
-          onChange={(e) => set(e.target.value)}
+          onCommit={set}
           placeholder="-"
           className={cn(cellClass, "w-full bg-transparent outline-none px-2 py-1 rounded hover:bg-accent/50 text-brand")}
         />
@@ -115,9 +116,9 @@ export function PropertyCell({ db, prop, row, compact = false }: Props) {
       return <ButtonCell prop={prop} row={row} />;
     case "place":
       return (
-        <input
+        <BufferedTextCell
           value={(value as string) ?? ""}
-          onChange={(e) => set(e.target.value)}
+          onCommit={set}
           placeholder="Address or location"
           className={cn(cellClass, "w-full bg-transparent outline-none px-2 py-1 rounded hover:bg-accent/50")}
         />
@@ -130,6 +131,45 @@ export function PropertyCell({ db, prop, row, compact = false }: Props) {
     case "ai_custom":
       return <AIStubCell type={prop.type} cellClass={cellClass} />;
   }
+}
+
+/** Text-ish cell input that buffers keystrokes locally and commits once on
+ *  blur / Enter instead of writing to the store per character. Without this
+ *  every keystroke did a store write → new `pages` identity → the whole table
+ *  (N rows × M cells + N dnd-kit sortables) re-rendered, and the echo was
+ *  gated on the Convex round-trip. External value changes (collaborator edit,
+ *  undo) reconcile into the buffer only while the field is unfocused so they
+ *  never clobber in-progress typing. */
+function BufferedTextCell({
+  value,
+  onCommit,
+  placeholder,
+  className,
+}: {
+  value: string;
+  onCommit: (v: string) => void;
+  placeholder?: string;
+  className?: string;
+}) {
+  const [local, setLocal] = useState(value);
+  const focused = useRef(false);
+  useEffect(() => {
+    if (!focused.current) setLocal(value);
+  }, [value]);
+  const commit = () => {
+    if (local !== value) onCommit(local);
+  };
+  return (
+    <input
+      value={local}
+      onChange={(e) => setLocal(e.target.value)}
+      onFocus={() => { focused.current = true; }}
+      onBlur={() => { focused.current = false; commit(); }}
+      onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+      placeholder={placeholder}
+      className={className}
+    />
+  );
 }
 
 function AIStubCell({ type, cellClass }: { type: "ai_summary" | "ai_translation" | "ai_keywords" | "ai_custom"; cellClass: string }) {

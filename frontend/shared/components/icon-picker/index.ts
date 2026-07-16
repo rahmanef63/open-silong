@@ -32,7 +32,9 @@ export { EMOJI_GROUPS, ALL_EMOJIS } from "./lib/emoji-catalog";
 export { LUCIDE_GROUPS, ALL_LUCIDE } from "./lib/lucide-catalog";
 export { LUCIDE_ICONS, resolveLucideIcon, type LucideIconName } from "./lib/lucide-icons";
 export { PHOSPHOR_GROUPS, ALL_PHOSPHOR } from "./lib/phosphor-catalog";
-export { PHOSPHOR_ICONS, resolvePhosphorIcon, type PhosphorIconName } from "./lib/phosphor-icons";
+// NOTE: the heavy PHOSPHOR_ICONS component map is intentionally NOT re-exported
+// here — it is code-split via DynamicIcon's React.lazy(./components/LazyPhosphor)
+// so it stays out of the eager shell chunk. Import it only from that lazy path.
 
 // Theming + style preference.
 export { ICON_COLORS, type IconColor } from "./lib/colors";
