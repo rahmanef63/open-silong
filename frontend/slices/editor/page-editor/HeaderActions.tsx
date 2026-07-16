@@ -24,11 +24,15 @@ export function HeaderActions({ page, onShare, onHistory, historyOpen }: Props) 
       <Button variant="outline" size="sm" onClick={onShare}>
         <Share2 className="h-3.5 w-3.5" /> Share
       </Button>
+      {/* Secondary actions collapse into the kebab menu on mobile
+          (<640px) to keep the header row from crowding — see
+          PageActionsMenu for the mobile-only Favorite / Version history
+          entries. */}
       <Button
         variant="ghost"
         size="icon"
         onClick={onHistory}
-        className={cn("h-8 w-8 text-muted-foreground", historyOpen && "bg-accent text-foreground")}
+        className={cn("hidden h-8 w-8 text-muted-foreground sm:inline-flex", historyOpen && "bg-accent text-foreground")}
         aria-label="Version history"
       >
         <History className="h-4 w-4" />
@@ -37,7 +41,7 @@ export function HeaderActions({ page, onShare, onHistory, historyOpen }: Props) 
         variant="ghost"
         size="icon"
         onClick={() => toggleFavorite(page.id)}
-        className="h-8 w-8 text-muted-foreground"
+        className="hidden h-8 w-8 text-muted-foreground sm:inline-flex"
         aria-label="Favorite"
       >
         <Star className={cn("h-4 w-4", page.favorite && "fill-brand text-brand")} />

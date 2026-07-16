@@ -12,12 +12,13 @@ import { buildExportContext } from "@/shared/lib/exportContext";
 import { useWorkspaceIO } from "@/slices/workspace-io";
 
 export function usePageActions(page: Page, close: () => void) {
-  const { updatePage, duplicatePage, deletePage, addBlock, pages, databases } = useEditorAdapter();
+  const { updatePage, duplicatePage, deletePage, addBlock, toggleFavorite, pages, databases } = useEditorAdapter();
   const navigate = useNavigate();
   const workspaceIO = useWorkspaceIO();
   const exportCtx = buildExportContext(databases, pages);
 
   const setFont = (font: PageFont) => updatePage(page.id, { font });
+  const onToggleFavorite = () => toggleFavorite(page.id);
   const toggleSmall = () => updatePage(page.id, { smallText: !page.smallText });
   const toggleFull = () => updatePage(page.id, { fullWidth: !page.fullWidth });
   const toggleLock = () => {
@@ -139,7 +140,7 @@ export function usePageActions(page: Page, close: () => void) {
   }, [page.id]);
 
   return {
-    setFont, toggleSmall, toggleFull, toggleLock,
+    setFont, onToggleFavorite, toggleSmall, toggleFull, toggleLock,
     copyLink, copyContents, onDuplicate, onTrash,
     onExportMd, onImportMd, onExportJson, onImportJson, onImportZip,
     onExportPdf, onExportHtml, onExportTxt,

@@ -12,7 +12,7 @@ import {
   Link2, ClipboardCopy, Files, Trash2,
   Palette, Lock, Unlock,
   Sparkles, MessageSquare, Languages,
-  BarChart3, History, Bell, AtSign,
+  BarChart3, History, Bell, AtSign, Star,
 } from "lucide-react";
 import { FONT_OPTIONS } from "./page-actions/fonts";
 import { RowButton, Row, ToggleRow, SectionLabel } from "./page-actions/MenuRows";
@@ -43,7 +43,7 @@ export function PageActionsMenu({ page, onShowHistory }: Props) {
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8 text-muted-foreground"
+          className="h-10 w-10 text-muted-foreground sm:h-8 sm:w-8"
           aria-label="Page actions"
         >
           <MoreHorizontal className="h-4 w-4" />
@@ -63,6 +63,19 @@ export function PageActionsMenu({ page, onShowHistory }: Props) {
             className="flex-1 bg-transparent text-xs outline-none placeholder:text-muted-foreground/60"
           />
         </div>
+
+        {/* Favorite lives as a persistent star in the header on >=sm;
+            on mobile that icon is collapsed away, so surface it here. */}
+        {!q && (
+          <div className="border-b border-border py-1 sm:hidden">
+            <ToggleRow
+              icon={Star}
+              label="Add to favorites"
+              checked={!!page.favorite}
+              onChange={actions.onToggleFavorite}
+            />
+          </div>
+        )}
 
         {!q && (
           <div className="grid grid-cols-3 gap-1 p-2 border-b border-border">

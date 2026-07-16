@@ -2,6 +2,7 @@ import type { FormEvent, MutableRefObject } from "react";
 import type { Block, BlockType } from "@/shared/types/domain";
 import { MARKDOWN_TRIGGERS } from "../lib/markdownTriggers";
 import { decorateInPlace } from "../lib/inlineDecorator";
+import { readEditableSource } from "../lib/inline-decorator/readSource";
 import { DECORATE_TYPES } from "./decorateTypes";
 
 interface History { record: (txt: string) => void }
@@ -20,7 +21,10 @@ interface Deps {
 export function handleBlockInput(e: FormEvent<HTMLElement>, deps: Deps) {
   const { pageId, block, history, composingRef, setBlockType, updateBlock, setSlashOpen, setSlashQuery } = deps;
   const el = e.currentTarget as HTMLElement;
-  const text = el.innerText;
+  // Read via readEditableSource, not raw innerText: a block ending in an atomic
+  // mention chip makes Chromium append a filler <br>, inflating innerText with a
+  // trailing "\n" that would otherwise persist as a stray empty line.
+  const text = readEditableSource(el);
   history.record(text);
 
   if (block.type === "paragraph") {

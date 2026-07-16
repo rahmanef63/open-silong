@@ -2,6 +2,7 @@ import type { KeyboardEvent } from "react";
 import type { Block, BlockType } from "@/shared/types/domain";
 import { decorateInPlace } from "../lib/inlineDecorator";
 import { getCaretOffset, setCaretAtOffset } from "../lib/inline-decorator/caret";
+import { readEditableSource } from "../lib/inline-decorator/readSource";
 import { mentionDeleteRange } from "./mentionDelete";
 import { DECORATE_TYPES } from "./decorateTypes";
 
@@ -133,7 +134,10 @@ export async function handleBlockKeyDown(e: KeyboardEvent<HTMLElement>, deps: De
   if (e.key === "Backspace" && !meta && DECORATE_TYPES.has(block.type)) {
     const sel = window.getSelection();
     if (sel && sel.isCollapsed && el.innerText !== "") {
-      const src = el.innerText;
+      // Clean read: when the deleted mention is the last thing in the block,
+      // Chromium's filler <br> adds a trailing "\n" to innerText; without
+      // stripping it the atomic delete would leave a stray empty line behind.
+      const src = readEditableSource(el);
       const del = mentionDeleteRange(src, getCaretOffset(el));
       if (del) {
         e.preventDefault();
