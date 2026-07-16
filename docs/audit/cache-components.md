@@ -58,9 +58,62 @@ the diff is smaller.
 - Manual smoke: open the share URL twice in fresh tabs; second hit serves
   from `.next/cache/v1/...` not Convex.
 
+## Concrete scope (2026-07-16 — Path A, verified)
+
+Round-2 perf audit re-confirmed this is the biggest untouched lever for
+public-route perf/SEO. `app/layout.tsx:94` wraps `<html>` in
+`ConvexAuthNextjsServerProvider`, an async server component that
+`await`s request cookies unconditionally → the whole tree is dynamic and
+`cacheComponents:true` cannot be enabled. Additionally `app/providers.tsx`
+boots the full realtime stack (ConvexReactClient + auth handshake +
+`FilesProvider` + `VersionWatcher` 5-min poll) on anonymous `/share` and
+`/site` visitors that use **zero** Convex client hooks.
+
+**Route classification (verified against source):**
+- `app/share/[id]`, `app/site/[ws]` — pure `fetchQuery` RSCs, **no** Convex
+  client hooks. `ShareThemeBoot` handles theme via `matchMedia`. Need
+  neither the auth server provider nor the realtime client.
+- `app/forms/[slug]` — RSC shell, but `PublicFormClient` uses `useMutation`
+  → needs a plain client `ConvexProvider` (NOT the cookie server provider),
+  and likely `FilesProvider` (file-property inputs via `PropertyFormInput`).
+- `app/page.tsx` (landing) — uses `useConvexAuth` (line ~20) → must stay in
+  the authed group.
+- `app/dashboard/*`, `app/auth`, `app/setup`, `app/oauth` — authed / private.
+
+**Steps:**
+1. `app/layout.tsx` → pure-static shell only: `<html>/<body>`, fonts,
+   metadata/`HeadHints`, `InstallPrompt`, and the `AnalyticsBeacon` +
+   `GoogleAnalytics` Suspense. Remove `ConvexAuthNextjsServerProvider` and
+   `<Providers>` from here.
+2. `app/(app)/layout.tsx` → `<ConvexAuthNextjsServerProvider><Providers>`
+   {children}`</Providers></…>`. Move `dashboard/`, `auth/`, `setup/`,
+   `oauth/`, and `page.tsx` (landing) into `(app)/` — route groups don't
+   change URLs, so `/` still resolves.
+3. `app/(public)/layout.tsx` for `share/` + `site/` — no Convex provider;
+   just theme handling (mirror `ShareThemeBoot`; `/site` relies on theme
+   tokens so give it an equivalent `matchMedia` boot).
+4. `forms/` → a public layout that mounts a **plain** `ConvexProvider`
+   (client, no cookie server provider) + `FilesProvider`. Verify the file
+   inputs before dropping `FilesProvider`.
+5. Flip `cacheComponents: true` (`next.config.mjs:48`), mark `loadShare` /
+   `loadSite` / `loadForm` `"use cache"` + `cacheTag('share-'+id)` +
+   `cacheLife('hours')`; `revalidateTag` on the publish/unpublish mutation.
+
+**Risks / decisions before implementing:**
+- `VersionWatcher` + `SonnerToaster` live at root deliberately (the
+  "new version" toast shows on `/auth`, `/share`, etc.). Relocating them into
+  `(app)` removes that toast from public tabs — decide whether to duplicate a
+  lightweight version check on the public layout.
+- `ThemeProvider` (next-themes) is in `Providers`; the public layout must
+  handle theme without it (`/share` already does via `ShareThemeBoot`).
+- `cacheComponents:true` makes EVERY remaining route a build error unless it
+  is `"use cache"` or `<Suspense>`-wrapped — budget a pass over all routes +
+  a full `next build` verification. Non-mechanical, medium-large blast radius.
+
 ## Owner / next checkpoint
 
-Pick this back up after the legacy TS drift in `frontend/slices/databases`
-and `frontend/slices/editor` is paid down (those are larger-blast-radius
-items currently blocking `ignoreBuildErrors: false`). Re-evaluate when the
-typecheck CI gate stops finding errors on a clean main.
+Ready to implement — the earlier blocker (legacy TS drift blocking
+`ignoreBuildErrors:false`) is cleared; typecheck is green on clean main.
+This is a dedicated-session task (route-group restructure + `next build`
+verification), not a drive-by. See progress tracker
+`docs/audit/2026-07-16-perf-round2.md`.

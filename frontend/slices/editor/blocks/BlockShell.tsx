@@ -78,7 +78,14 @@ export function BlockShell({
           />
         </>
       )}
-      <div className="min-w-0">{children}</div>
+      {/* content-visibility:auto lets the browser SKIP layout+paint of this
+          block's body while it's off-screen — a big scroll/paint win on long
+          (500+ block) pages. Applied to the inner body only (NOT the shell
+          root) so the out-of-box hover controls + drop indicator aren't paint-
+          clipped. The DOM is never removed, so dnd-kit drag, block selection,
+          caret restore, and keyboard nav all keep working; contain-intrinsic-
+          size:auto remembers each block's real height to minimize scroll jank. */}
+      <div className="min-w-0 [content-visibility:auto] [contain-intrinsic-size:auto_1.5rem]">{children}</div>
     </div>
   );
 }
