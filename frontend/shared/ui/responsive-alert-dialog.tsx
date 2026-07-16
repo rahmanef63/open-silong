@@ -24,7 +24,7 @@ import {
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
-} from "@/shared/ui/drawer";
+} from "@/shared/ui/drawer-lazy";
 import { Button, buttonVariants } from "@/shared/ui/button";
 
 /**
@@ -56,11 +56,22 @@ export function ResponsiveAlertDialog({
   const mode: Mode = forceMode ?? (isMobile ? "drawer" : "dialog");
   const Root = mode === "dialog" ? AlertDialog : Drawer;
 
+  const rootTree = (
+    <Root open={open} onOpenChange={onOpenChange}>
+      {children}
+    </Root>
+  );
+
   return (
     <ResponsiveAlertDialogContext.Provider value={mode}>
-      <Root open={open} onOpenChange={onOpenChange}>
-        {children}
-      </Root>
+      {/* Drawer primitives are lazy (vaul is code-split out of first-load);
+          Suspense catches the chunk fetch. Closed drawer renders nothing,
+          so fallback null is visually identical to the closed state. */}
+      {mode === "drawer" ? (
+        <React.Suspense fallback={null}>{rootTree}</React.Suspense>
+      ) : (
+        rootTree
+      )}
     </ResponsiveAlertDialogContext.Provider>
   );
 }

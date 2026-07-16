@@ -4,7 +4,7 @@ import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { requireAuth, requireOwned, requireWorkspaceAccess } from "./_shared/auth";
 import { rateLimit } from "./_shared/rateLimit";
-import { Id } from "./_generated/dataModel";
+import { Id, Doc } from "./_generated/dataModel";
 import { buildSearchText } from "./features/search/lib";
 import {
   readPageBlocks, writePageBlocks, insertPageBlocks, newPageBlockFields, pageMetaOf,
@@ -249,8 +249,42 @@ export const getById = query({
     } else if (doc.userId !== userId) {
       return null;
     }
-    // Splice blocks back in from pageBlocks (falls back to legacy doc.blocks).
-    return { ...doc, blocks: await readPageBlocks(ctx, doc) };
+    // Explicit editor DTO — return ONLY fields the page subscription's
+    // consumers actually read (notion adapter `useOne`, `useWiki`,
+    // AI skill handlers). Drops the denorm columns that no getById
+    // consumer reads: `searchText` (≤8KB duplicate of block text),
+    // `tags`, `titleKey`, `blockCount`, `previewText` — those are
+    // `listMeta`-only projections. `blocks` is spliced from the
+    // pageBlocks table (falls back to legacy doc.blocks).
+    return {
+      _id: doc._id,
+      _creationTime: doc._creationTime,
+      userId: doc.userId,
+      workspaceId: doc.workspaceId,
+      parentId: doc.parentId,
+      title: doc.title,
+      icon: doc.icon,
+      cover: doc.cover,
+      layouts: doc.layouts,
+      favorite: doc.favorite,
+      trashed: doc.trashed,
+      isPublic: doc.isPublic,
+      rowOfDatabaseId: doc.rowOfDatabaseId,
+      rowProps: doc.rowProps,
+      databaseHostFor: doc.databaseHostFor,
+      font: doc.font,
+      smallText: doc.smallText,
+      fullWidth: doc.fullWidth,
+      locked: doc.locked,
+      shareSlug: doc.shareSlug,
+      shareIndexable: doc.shareIndexable,
+      wiki: doc.wiki,
+      createdAt: doc.createdAt,
+      updatedAt: doc.updatedAt,
+      // Cast back to the schema column type so the return shape matches the
+      // prior `{ ...doc }` spread — readPageBlocks is intentionally `unknown[]`.
+      blocks: (await readPageBlocks(ctx, doc)) as Doc<"pages">["blocks"],
+    };
   },
 });
 

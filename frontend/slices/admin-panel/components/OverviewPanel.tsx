@@ -1,8 +1,12 @@
 "use client";
 
-import { useMemo } from "react";
-import { useQuery } from "convex/react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useConvex, useQuery } from "convex/react";
+import type { FunctionReturnType } from "convex/server";
+import { RefreshCw } from "lucide-react";
 import { api } from "@convex/_generated/api";
+import { Button } from "@/shared/ui/button";
+import { cn } from "@/shared/lib/utils";
 import { ViewSwitcher, type AdminView } from "./ViewSwitcher";
 import { useAdminView } from "../hooks/useAdminView";
 import { buildKpis } from "./overview/buildKpis";
@@ -11,8 +15,29 @@ import { OverviewDashboardView } from "./overview/DashboardView";
 
 const AVAILABLE_VIEWS: AdminView[] = ["table", "dashboard"];
 
+type Overview = FunctionReturnType<typeof api.admin.queries.getOverview>;
+
 export function OverviewPanel() {
-  const overview = useQuery(api.admin.queries.getOverview);
+  const convex = useConvex();
+  // getOverview runs ~8 full-table scans and is admin-only — it does not
+  // need to stay live. Fetch it ONCE on mount (undefined = loading, null =
+  // unauthorized, mirroring the old useQuery states) plus a manual Refresh
+  // so the scans run per page-open instead of on every write to any of the
+  // eight scanned tables.
+  const [overview, setOverview] = useState<Overview | null | undefined>(undefined);
+  const [refreshing, setRefreshing] = useState(false);
+  const load = useCallback(() => {
+    setRefreshing(true);
+    convex
+      .query(api.admin.queries.getOverview, {})
+      .then((res) => setOverview(res))
+      .catch(() => setOverview(null))
+      .finally(() => setRefreshing(false));
+  }, [convex]);
+  useEffect(() => {
+    load();
+  }, [load]);
+
   const [view, setView] = useAdminView("overview", AVAILABLE_VIEWS);
   // Trend/role/topUsers queries fire only when the dashboard view is
   // active. Table view never reads them — wasted Convex round-trips +
@@ -39,7 +64,18 @@ export function OverviewPanel() {
         <div className="flex items-center gap-2">
           <h3 className="text-sm font-semibold">Overview</h3>
           <span className="text-xs text-muted-foreground">{kpis.length} metrics</span>
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={load}
+              disabled={refreshing}
+              className="h-7 gap-1.5 px-2 text-xs"
+            >
+              <RefreshCw className={cn("h-3.5 w-3.5", refreshing && "animate-spin")} />
+              Refresh
+            </Button>
             <ViewSwitcher value={view} onChange={setView} available={AVAILABLE_VIEWS} />
           </div>
         </div>
