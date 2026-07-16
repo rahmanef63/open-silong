@@ -59,7 +59,11 @@ describe("decorateLineToFragment", () => {
     // flex items, shredding `[label](url)` on read-back → source corruption.
     expect(chip?.className).toContain("inline");
     expect(chip?.className).not.toContain("flex");
-    expect(host.querySelector(".mention-ico svg")).not.toBeNull();
+    // Icon svg must be inline-block: Tailwind Preflight forces `svg{display:block}`,
+    // which would push the icon onto its own line above the label (an "extra line").
+    const ico = host.querySelector<HTMLElement>(".mention-ico svg");
+    expect(ico).not.toBeNull();
+    expect(ico?.getAttribute("style")).toContain("display:inline-block");
     const label = host.querySelector<HTMLElement>("[data-href]");
     expect(label?.dataset.href).toBe("/dashboard/p/abc123");
     expect(label?.textContent).toBe("My Page");

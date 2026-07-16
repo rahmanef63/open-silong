@@ -12,8 +12,13 @@ const HEADING_MARKER_CLS =
 
 /** Inline icons for `@`-mention chips — pure SVG (no text nodes) so they never
  *  affect innerText / caret counting. Sized to 1em, painted currentColor. */
-const PAGE_ICON_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:1em;height:1em;vertical-align:-0.15em"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>`;
-const DB_ICON_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:1em;height:1em;vertical-align:-0.15em"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3"/><path d="M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>`;
+// `display:inline-block` is REQUIRED: Tailwind Preflight sets `svg{display:block}`,
+// which would drop the icon onto its own line above the label (the "extra line"
+// on a `@`-mention) — and a block-level svg can inject a stray `\n` into the
+// block's innerText. Inline-block keeps it on the text line + text-free so
+// innerText is unaffected.
+const PAGE_ICON_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;width:1em;height:1em;vertical-align:-0.15em"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>`;
+const DB_ICON_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;width:1em;height:1em;vertical-align:-0.15em"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3"/><path d="M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>`;
 
 function makeMarker(text: string, opts?: { hideMarkers?: boolean }): HTMLSpanElement {
   const span = document.createElement("span");
