@@ -15,9 +15,6 @@ export interface ParsedBlock {
   [key: string]: unknown;
 }
 
-const LEGACY_COLUMN_TYPES = new Set(["columns2", "columns3", "columns4", "columns5"]);
-void LEGACY_COLUMN_TYPES; // unused; placeholder for parity
-
 export function markdownToBlocks(md: string): ParsedBlock[] {
   const rawLines = md.replace(/\r\n/g, "\n").split("\n");
   const blocks: ParsedBlock[] = [];

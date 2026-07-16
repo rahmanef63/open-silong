@@ -31,8 +31,15 @@ export const getMyRole = query({
       .withIndex("by_user", (q) => q.eq("userId", userId))
       .unique();
     const role = (profile?.role ?? "user") as "superadmin" | "admin" | "user";
-    const allProfiles = await ctx.db.query("userProfiles").take(ADMIN_SCAN_CAP);
-    const hasSuperAdmin = allProfiles.some((p) => p.role === "superadmin");
+    // Indexed single-row existence check instead of a full-table scan. This
+    // also narrows the reactive dependency to the superadmin index range, so
+    // ordinary profile writes (e.g. lastSeenAt heartbeats) no longer
+    // invalidate this hot, every-session subscription. Mirrors mutations.ts.
+    const anySuper = await ctx.db
+      .query("userProfiles")
+      .withIndex("by_role", (q) => q.eq("role", "superadmin"))
+      .first();
+    const hasSuperAdmin = anySuper !== null;
     return {
       role,
       signedIn: true,

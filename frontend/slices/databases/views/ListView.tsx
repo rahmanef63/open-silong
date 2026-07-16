@@ -11,14 +11,14 @@ import {
 } from "@/shared/ui/dropdown-menu";
 import { Button } from "@/shared/ui/button";
 import { QuickCreateDialog } from "../components/QuickCreateDialog";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 interface Props { db: Database; view: DatabaseViewConfig; rows: Page[]; onOpenRow: (id: string) => void }
 
 export function ListView({ db, view, rows, onOpenRow }: Props) {
   const { deleteRow } = useDbAdapter();
   const [quickOpen, setQuickOpen] = useState(false);
-  const viewVisible = getVisibleProps(db, view);
+  const viewVisible = useMemo(() => getVisibleProps(db, view), [db, view]);
   const visibleSet = new Set(viewVisible.map(p => p.id));
   const summaries: Property[] = view.listSummaryProps?.length
     ? view.listSummaryProps

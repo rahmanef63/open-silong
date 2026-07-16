@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 export interface FillSource {
   rowId: string;
@@ -62,5 +62,11 @@ export function useDragFill({ rowIds, onFill }: Options) {
     [source, targetIndex],
   );
 
-  return { source, start, isInFillRange, isFilling: !!source };
+  // Stable identity while not filling so the `fill` prop doesn't defeat
+  // React.memo on every row on unrelated re-renders. `start`/`isInFillRange`
+  // are already useCallback-stable; only `source` changes identity.
+  return useMemo(
+    () => ({ source, start, isInFillRange, isFilling: !!source }),
+    [source, start, isInFillRange],
+  );
 }

@@ -55,7 +55,6 @@ const nextConfig = {
     },
     optimizePackageImports: [
       "lucide-react",
-      "date-fns",
       "@radix-ui/react-dialog",
       "@radix-ui/react-dropdown-menu",
       "@radix-ui/react-popover",
@@ -63,7 +62,6 @@ const nextConfig = {
       "@radix-ui/react-select",
       "@radix-ui/react-tabs",
       "@radix-ui/react-scroll-area",
-      "@radix-ui/react-context-menu",
       "@dnd-kit/core",
       "@dnd-kit/sortable",
       "@dnd-kit/utilities",

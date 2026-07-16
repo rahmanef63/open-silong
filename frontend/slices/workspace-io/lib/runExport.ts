@@ -3,7 +3,6 @@
  *  triggers the browser download. Component just wires inputs. */
 
 import { downloadFile } from "@/shared/lib/markdown";
-import { downloadWorkspaceZip } from "@/shared/lib/zipExport";
 import type { Page } from "@/shared/types/domain";
 import { buildSelectionExport, type BuildExportInput } from "./buildExport";
 
@@ -34,6 +33,9 @@ export async function runExport(opts: RunExportOptions): Promise<RunExportResult
       arr.push(p);
       dbRows.set(p.rowOfDatabaseId, arr);
     }
+    // Lazy-load JSZip (~90KB) only on ZIP export so it stays out of the
+    // eager dashboard-shell chunk that mounts WorkspaceIODialog.
+    const { downloadWorkspaceZip } = await import("@/shared/lib/zipExport");
     await downloadWorkspaceZip(
       { pages: r.pages, databases: r.databases, databaseRows: dbRows },
       `${name}.zip`,

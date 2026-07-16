@@ -13,7 +13,7 @@ import {
 import { Button } from "@/shared/ui/button";
 import { QuickCreateDialog } from "../components/QuickCreateDialog";
 import { DynamicIcon } from "@/shared/components/icon-picker";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 interface Props { db: Database; view: DatabaseViewConfig; rows: Page[]; onOpenRow: (id: string) => void }
 
@@ -57,7 +57,7 @@ export function GalleryView({ db, view, rows, onOpenRow }: Props) {
       : aspect === "portrait" ? "aspect-[3/4]"
       : "aspect-video";
 
-  const viewVisible = getVisibleProps(db, view);
+  const viewVisible = useMemo(() => getVisibleProps(db, view), [db, view]);
   const visibleSet = new Set(viewVisible.map(p => p.id));
   const visible: Property[] = view.galleryCardProps?.length
     ? view.galleryCardProps

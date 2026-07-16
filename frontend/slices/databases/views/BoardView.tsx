@@ -92,7 +92,7 @@ export function BoardView({ db, view, rows, onOpenRow }: Props) {
   const cardPadding = cardSize === "small" ? "p-2" : cardSize === "large" ? "p-4" : "p-3";
   const cardSpacing = cardSize === "small" ? "space-y-1.5" : cardSize === "large" ? "space-y-3" : "space-y-2";
   const cardPropIds = view.boardCardProps;
-  const viewVisible = getVisibleProps(db, view);
+  const viewVisible = useMemo(() => getVisibleProps(db, view), [db, view]);
 
   // Apply persisted column order (boardColumnOrder) — unknown ids fall to
   // the end in their original order. Cheap O(n) — board columns rarely > 20.

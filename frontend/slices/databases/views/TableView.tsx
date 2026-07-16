@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Database, DatabaseViewConfig, Page } from "@/shared/types/domain";
 import { useDbAdapter } from "../lib/useDbAdapter";
 import {
@@ -56,7 +56,7 @@ export function TableView({ db, view, rows, onOpenRow, writeView }: ViewProps) {
   );
   const tableScrollRef = useRef<HTMLDivElement | null>(null);
 
-  const visibleProps = getVisibleProps(db, view);
+  const visibleProps = useMemo(() => getVisibleProps(db, view), [db, view]);
   const rowIds = rows.map((r) => r.id);
 
   const onFill = (source: FillSource, targets: string[]) => {

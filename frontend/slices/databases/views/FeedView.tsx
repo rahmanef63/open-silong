@@ -59,7 +59,7 @@ export function FeedView({ db, view, rows, onOpenRow }: Props) {
     });
   }, [rows, source]);
 
-  const viewVisible = getVisibleProps(db, view);
+  const viewVisible = useMemo(() => getVisibleProps(db, view), [db, view]);
   const visibleSet = new Set(viewVisible.map(p => p.id));
   const summaryProps: Property[] = view.feedSummaryProps?.length
     ? view.feedSummaryProps
