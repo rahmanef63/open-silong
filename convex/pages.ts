@@ -3,6 +3,7 @@ import { internal } from "./_generated/api";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { requireAuth, requireOwned, requireWorkspaceAccess } from "./_shared/auth";
+import { canReadPage, requirePageWritable, deletePageGrantsForPage } from "./_shared/pageGrants";
 import { rateLimit } from "./_shared/rateLimit";
 import { Id, Doc } from "./_generated/dataModel";
 import { buildSearchText } from "./features/search/lib";
@@ -221,6 +222,60 @@ export const listMeta = query({
   },
 });
 
+/** Pages shared with the current user via a per-page grant (viewer|editor),
+ *  for the library "Shared" section. Separate feed from `listMeta` /
+ *  `pagesInActiveWorkspace` — a grant is workspace-independent, so this walks
+ *  the `pageGrants.by_user` index directly. Missing / trashed target pages are
+ *  filtered; deduped by page id. Projects the SAME slim `listMeta` DTO plus
+ *  `grantRole`. A grantee who is ALSO a workspace member will appear in both
+ *  feeds — dedupe by `_id` at the frontend merge point. */
+export const sharedWithMe = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
+    const grants = await ctx.db
+      .query("pageGrants")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .take(COUNT_CAPS.pageGrantsScan);
+    const seen = new Set<string>();
+    const out = [];
+    for (const g of grants) {
+      const d = await ctx.db.get(g.pageId);
+      if (!d || d.trashed) continue;
+      if (seen.has(d._id)) continue;
+      seen.add(d._id);
+      const meta = pageMetaOf(d);
+      out.push({
+        _id: d._id,
+        _creationTime: d._creationTime,
+        userId: d.userId,
+        parentId: d.parentId,
+        title: d.title,
+        icon: d.icon,
+        cover: d.cover,
+        favorite: d.favorite,
+        trashed: d.trashed,
+        isPublic: d.isPublic,
+        shareSlug: d.shareSlug,
+        rowOfDatabaseId: d.rowOfDatabaseId,
+        rowProps: d.rowProps,
+        font: d.font,
+        smallText: d.smallText,
+        fullWidth: d.fullWidth,
+        locked: d.locked,
+        createdAt: d.createdAt,
+        updatedAt: d.updatedAt,
+        databaseHostFor: meta.databaseHostFor as string[],
+        blockCount: meta.blockCount,
+        previewText: meta.previewText,
+        grantRole: g.role,
+      });
+    }
+    return out;
+  },
+});
+
 /** Full page doc for the editor. Subscribe to a single page so block edits
  *  on this page don't re-broadcast all other pages. */
 export const getById = query({
@@ -235,19 +290,11 @@ export const getById = query({
       return null;
     }
     if (!doc) return null;
-    // Membership-aware: any member of the page's workspace can read.
-    // Legacy unstamped rows fall back to owner-only.
-    if (doc.workspaceId) {
-      const m = await ctx.db
-        .query("workspaceMembers")
-        .withIndex("by_user_workspace", (q) =>
-          q.eq("userId", userId).eq("workspaceId", doc.workspaceId!),
-        )
-        .unique();
-      if (!m) return null;
-    } else if (doc.userId !== userId) {
-      return null;
-    }
+    // Membership-aware + grant-aware: the owner, any member of the page's
+    // workspace, OR a viewer|editor page-grantee can read. Legacy unstamped
+    // rows fall back to owner-only (inside canReadPage). Single read-authz
+    // surface so grant power stays grep-able.
+    if (!(await canReadPage(ctx, userId, doc))) return null;
     // Explicit editor DTO — return ONLY fields the page subscription's
     // consumers actually read (notion adapter `useOne`, `useWiki`,
     // AI skill handlers). Drops the denorm columns that no getById
@@ -388,7 +435,8 @@ export const update = mutation({
     if (args.patch.blocks !== undefined && args.patch.blocks.length > COUNT_CAPS.blocksPerPage) {
       throw new Error(`Page exceeds block cap (${COUNT_CAPS.blocksPerPage})`);
     }
-    const { userId, doc: page } = await requireWorkspaceAccess(ctx, "pages", args.pageId as Id<"pages">, { write: true });
+    // Editor-grant write path: owner || workspace-writable || editor-grant.
+    const { userId, doc: page } = await requirePageWritable(ctx, args.pageId as Id<"pages">);
     const hasBlocks = "blocks" in args.patch;
     const nextTitle = args.patch.title ?? page.title;
     const touchesContent = "title" in args.patch || hasBlocks;
@@ -495,6 +543,8 @@ export const permanentlyDelete = mutation({
       const snaps = await ctx.db.query("snapshots").withIndex("by_user_page", (q) => q.eq("userId", userId).eq("pageId", id as Id<"pages">)).take(100);
       for (const s of snaps) await ctx.db.delete(s._id);
       await deletePageBlocks(ctx, id as Id<"pages">);
+      // Orphan hygiene — drop any per-page grants on the deleted page.
+      await deletePageGrantsForPage(ctx, id as Id<"pages">);
       await ctx.db.delete(id as Id<"pages">);
     }
     await ctx.scheduler.runAfter(0, (internal.webhooks.deliver as any).run, {
@@ -560,7 +610,7 @@ export const addBlock = mutation({
     init: v.optional(v.any()),
   },
   handler: async (ctx, args) => {
-    const { doc: page } = await requireWorkspaceAccess(ctx, "pages", args.pageId as Id<"pages">, { write: true });
+    const { doc: page } = await requirePageWritable(ctx, args.pageId as Id<"pages">);
     const curBlocks = await readPageBlocks(ctx, page);
     const { blocks, newId } = addBlockToArray(
       curBlocks as BlockOpLike[], args.afterIndex, args.type, args.init, uid,
@@ -581,7 +631,7 @@ export const addBlock = mutation({
 export const appendMarkdown = mutation({
   args: { pageId: v.id("pages"), markdown: v.string() },
   handler: async (ctx, args) => {
-    const { doc: page } = await requireWorkspaceAccess(ctx, "pages", args.pageId as Id<"pages">, { write: true });
+    const { doc: page } = await requirePageWritable(ctx, args.pageId as Id<"pages">);
     const parsed = markdownToBlocks(args.markdown);
     const cur = (await readPageBlocks(ctx, page)) as Array<{ id: string; type?: string; text?: string }>;
     // Drop the trailing empty paragraph stub that newly-created pages
@@ -613,7 +663,7 @@ export const replaceBlockById = mutation({
     nextBlock: v.any(),
   },
   handler: async (ctx, args) => {
-    const { doc: page } = await requireWorkspaceAccess(ctx, "pages", args.pageId as Id<"pages">, { write: true });
+    const { doc: page } = await requirePageWritable(ctx, args.pageId as Id<"pages">);
     const curBlocks = await readPageBlocks(ctx, page);
     const blocks = replaceBlockInArray(curBlocks as BlockOpLike[], args.blockId, args.nextBlock);
     if (!blocks) throw new Error("Block not found");
@@ -630,7 +680,7 @@ export const replaceBlockById = mutation({
 export const duplicateBlockById = mutation({
   args: { pageId: v.id("pages"), blockId: v.string() },
   handler: async (ctx, args) => {
-    const { doc: page } = await requireWorkspaceAccess(ctx, "pages", args.pageId as Id<"pages">, { write: true });
+    const { doc: page } = await requirePageWritable(ctx, args.pageId as Id<"pages">);
     const curBlocks = await readPageBlocks(ctx, page);
     const dup = duplicateBlockInArray(curBlocks as BlockOpLike[], args.blockId, uid);
     if (!dup) throw new Error("Block not found");
@@ -663,7 +713,7 @@ export const insertBlocksAfter = mutation({
     replaceAnchor: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    const { doc: page } = await requireWorkspaceAccess(ctx, "pages", args.pageId as Id<"pages">, { write: true });
+    const { doc: page } = await requirePageWritable(ctx, args.pageId as Id<"pages">);
     const curBlocks = await readPageBlocks(ctx, page);
     const blocks = insertBlocksAfterAnchor(
       curBlocks as BlockOpLike[], args.anchorBlockId, args.blocks as BlockOpLike[], !!args.replaceAnchor,
@@ -686,7 +736,7 @@ export const insertBlocksAfter = mutation({
 export const updateBlock = mutation({
   args: { pageId: v.id("pages"), blockId: v.string(), patch: v.any() },
   handler: async (ctx, args) => {
-    const { doc: page } = await requireWorkspaceAccess(ctx, "pages", args.pageId as Id<"pages">, { write: true });
+    const { doc: page } = await requirePageWritable(ctx, args.pageId as Id<"pages">);
     const curBlocks = await readPageBlocks(ctx, page);
     const blocks = updateBlockInArray(curBlocks as BlockOpLike[], args.blockId, args.patch);
     // Only rebuild searchText when the patch touches text-bearing fields.
@@ -709,7 +759,7 @@ export const updateBlock = mutation({
 export const deleteBlock = mutation({
   args: { pageId: v.id("pages"), blockId: v.string() },
   handler: async (ctx, args) => {
-    const { doc: page } = await requireWorkspaceAccess(ctx, "pages", args.pageId as Id<"pages">, { write: true });
+    const { doc: page } = await requirePageWritable(ctx, args.pageId as Id<"pages">);
     const curBlocks = await readPageBlocks(ctx, page);
     const blocks = deleteBlockFromArray(curBlocks as BlockOpLike[], args.blockId, uid);
     await writePageBlocks(ctx, args.pageId as Id<"pages">, blocks, {
@@ -726,7 +776,7 @@ export const deleteBlock = mutation({
 export const reorderBlocks = mutation({
   args: { pageId: v.id("pages"), orderedIds: v.array(v.string()) },
   handler: async (ctx, args) => {
-    const { doc: page } = await requireWorkspaceAccess(ctx, "pages", args.pageId as Id<"pages">, { write: true });
+    const { doc: page } = await requirePageWritable(ctx, args.pageId as Id<"pages">);
     const curBlocks = await readPageBlocks(ctx, page);
     const blocks = reorderBlocksInArray(curBlocks as BlockOpLike[], args.orderedIds);
     // searchText unchanged — reorder doesn't change the set of words. But

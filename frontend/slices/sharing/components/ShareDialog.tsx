@@ -1,28 +1,67 @@
 import { useState } from "react";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/shared/ui/dialog";
 import { Switch } from "@/shared/ui/switch";
 import { Input } from "@/shared/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/ui/select";
+import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
 import { Page } from "@/shared/types/domain";
 import { useStore } from "@/shared/lib/store";
 import { DynamicIcon } from "@/shared/components/icon-picker";
-import { Copy, Globe, Lock, ExternalLink, Check } from "lucide-react";
+import { Copy, Globe, Lock, ExternalLink, Check, UserPlus, X } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { toast } from "sonner";
 import { useAsyncError } from "@/shared/hooks/useAsyncError";
+
+// Boundary cast (see CLAUDE.md): domain ids are `string`; Convex args are
+// branded. Keep the cast surface local + grep-able.
+const asPageId = (s: string): Id<"pages"> => s as Id<"pages">;
+
+type GrantRole = "viewer" | "editor";
+const ROLE_LABEL: Record<GrantRole, string> = { viewer: "Can view", editor: "Can edit" };
 
 export function ShareDialog({ open, onOpenChange, page }: { open: boolean; onOpenChange: (o: boolean) => void; page: Page }) {
   const { togglePublic } = useStore();
   const setShareSlug = useMutation(api.pages.setShareSlug);
   const setShareIndexable = useMutation(api.pages.setShareIndexable);
+  const grantAccess = useMutation(api.pageGrants.grant);
+  const revokeAccess = useMutation(api.pageGrants.revoke);
+  const grants = useQuery(api.pageGrants.list, { pageId: asPageId(page.id) });
   const [copied, setCopied] = useState(false);
   const [slugDraft, setSlugDraft] = useState(page.shareSlug ?? "");
+  const [email, setEmail] = useState("");
+  const [role, setRole] = useState<GrantRole>("viewer");
   const slugSave = useAsyncError("ShareDialog.setSlug");
   const indexableSave = useAsyncError("ShareDialog.indexable");
+  const grantSave = useAsyncError("ShareDialog.grant");
+  const revokeSave = useAsyncError("ShareDialog.revoke");
   const slugForUrl = page.shareSlug || page.id;
   const url = `${window.location.origin}/share/${slugForUrl}`;
+
+  const addPerson = async () => {
+    const target = email.trim().toLowerCase();
+    if (!target || grantSave.pending) return;
+    const ok = await grantSave.execute(async () => {
+      const res = await grantAccess({ pageId: asPageId(page.id), email: target, role });
+      toast.success(res.updated ? `Updated access for ${target}` : `Shared with ${target}`);
+      return true;
+    });
+    if (ok) setEmail("");
+  };
+
+  const revokePerson = (userId: Id<"users">, label: string) =>
+    revokeSave.execute(async () => {
+      await revokeAccess({ pageId: asPageId(page.id), userId });
+      toast.success(`Removed ${label}`);
+    });
 
   const copy = async (s: string) => {
     try {
@@ -135,6 +174,88 @@ export function ShareDialog({ open, onOpenChange, page }: { open: boolean; onOpe
               <ExternalLink className="h-3 w-3" /> Open shared view
             </a>
           )}
+
+          <div className="border-t border-border pt-4">
+            <label className="text-xs uppercase tracking-wider font-semibold text-muted-foreground">
+              People with access
+            </label>
+            <form
+              className="mt-2 flex items-center gap-2"
+              onSubmit={(e) => {
+                e.preventDefault();
+                void addPerson();
+              }}
+            >
+              <Input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Email address"
+                className="h-8 flex-1 text-sm"
+              />
+              <Select value={role} onValueChange={(v) => setRole(v as GrantRole)}>
+                <SelectTrigger className="h-8 w-[112px] text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="viewer">{ROLE_LABEL.viewer}</SelectItem>
+                  <SelectItem value="editor">{ROLE_LABEL.editor}</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button type="submit" size="sm" disabled={grantSave.pending || !email.trim()}>
+                <UserPlus className="mr-1 h-3.5 w-3.5" /> Add
+              </Button>
+            </form>
+
+            <div className="mt-3 space-y-1">
+              {grants === undefined ? (
+                <div className="py-1 text-xs text-muted-foreground">Loading…</div>
+              ) : grants.length === 0 ? (
+                <div className="py-1 text-xs text-muted-foreground">
+                  No one has been invited yet. Add someone by email above.
+                </div>
+              ) : (
+                grants.map((g) => {
+                  const label = g.name || g.email || "Unknown user";
+                  return (
+                    <div
+                      key={g._id}
+                      className="flex items-center justify-between gap-2 rounded-md px-1 py-1 hover:bg-muted/40"
+                    >
+                      <div className="flex min-w-0 items-center gap-2">
+                        <Avatar className="h-7 w-7">
+                          <AvatarFallback className="text-xs">
+                            {label.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0">
+                          <div className="truncate text-sm">{label}</div>
+                          {g.name && g.email && (
+                            <div className="truncate text-xs text-muted-foreground">{g.email}</div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs text-muted-foreground">
+                          {ROLE_LABEL[g.role as GrantRole]}
+                        </span>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                          disabled={revokeSave.pending}
+                          onClick={() => void revokePerson(g.userId, label)}
+                          aria-label={`Remove ${label}`}
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

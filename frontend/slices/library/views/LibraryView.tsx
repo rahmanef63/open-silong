@@ -2,9 +2,12 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useQuery } from "convex/react";
+import { api } from "@convex/_generated/api";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { useStore } from "@/shared/lib/store";
+import { toPage } from "@/shared/lib/store/mappers";
 import { ROUTES_ABS } from "@/shared/lib/routes";
 import { groupPagesForLibrary } from "../lib/groupPages";
 import { PagesTable } from "../components/PagesTable";
@@ -18,6 +21,14 @@ import { LibraryHeader } from "./library/Header";
 export function LibraryView() {
   const router = useRouter();
   const { pages, databases, recents, workspace, user, createPage, isInitialLoading } = useStore();
+  // Pages shared WITH the viewer via a per-page grant — surfaced in the
+  // "Shared" tab alongside the viewer's own published pages. Lives outside
+  // the active-workspace `pages` feed, so it's a separate subscription.
+  const rawSharedWithMe = useQuery(api.pages.sharedWithMe);
+  const sharedWithMe = useMemo(
+    () => (rawSharedWithMe ?? []).map(toPage),
+    [rawSharedWithMe],
+  );
   const [tab, setTab] = useState<TabKey>("recents");
   const [filter, setFilter] = useState("");
   const pageSel = useSelectionSet();
@@ -25,11 +36,11 @@ export function LibraryView() {
 
   const sections = useMemo(() => {
     const q = filter.trim().toLowerCase();
-    const filtered = q
-      ? pages.filter((p) => (p.title ?? "").toLowerCase().includes(q))
-      : pages;
-    return groupPagesForLibrary({ pages: filtered, recentIds: recents });
-  }, [pages, recents, filter]);
+    const byTitle = (p: { title?: string }) => (p.title ?? "").toLowerCase().includes(q);
+    const filtered = q ? pages.filter(byTitle) : pages;
+    const filteredShared = q ? sharedWithMe.filter(byTitle) : sharedWithMe;
+    return groupPagesForLibrary({ pages: filtered, recentIds: recents, sharedWithMe: filteredShared });
+  }, [pages, recents, filter, sharedWithMe]);
 
   const filteredDatabases = useMemo(() => {
     const q = filter.trim().toLowerCase();

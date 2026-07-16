@@ -117,6 +117,10 @@ export const COUNT_CAPS = {
    *  walks). All naturally small; the cap is a runaway guard, not a
    *  product limit. Bump here if any becomes a real ceiling. */
   recentsScan:               1_000,
+  /** Bounds the `by_page` take in `pageGrants.list` and the `by_user`
+   *  take in `pages.sharedWithMe`. A page shared with >500 users, or a
+   *  user granted access to >500 pages, is pathological at this scale. */
+  pageGrantsScan:            500,
   webhookEndpointsScan:      200,
   templatesScan:             1_000,
   invitesScan:               500,

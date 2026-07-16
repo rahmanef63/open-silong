@@ -187,6 +187,29 @@ export default defineSchema({
     blocks: v.array(v.any()),
   }).index("by_page", ["pageId"]),
 
+  /** Per-page access grants (v1, flat — no cascade). A grant lets a
+   *  specific EXISTING user read (viewer) or edit page content (editor)
+   *  a single page, INDEPENDENT of workspace membership — that
+   *  independence is the whole point: it lets a non-member read/edit
+   *  one page without joining the workspace. Intentionally has NO
+   *  `workspaceId` column: a grant is page-scoped, not workspace-scoped.
+   *  Consulted for authz ONLY inside `convex/_shared/pageGrants.ts`
+   *  (`canReadPage` / `requirePageWritable`), so grant power stays
+   *  small + grep-able. Managed by `convex/pageGrants.ts`
+   *  (grant/revoke/list) behind the grant-BLIND
+   *  `requireWorkspaceAccess{write:true}` gate — a grantee can never
+   *  grant/revoke/list. `grantedBy` is the granter (owner / ws-member). */
+  pageGrants: defineTable({
+    pageId: v.id("pages"),
+    userId: v.id("users"),                                  // grantee (resolved by email)
+    role: v.union(v.literal("viewer"), v.literal("editor")),
+    grantedBy: v.id("users"),
+    grantedAt: v.number(),
+  })
+    .index("by_page", ["pageId"])                 // list-grants(pageId) + orphan cleanup
+    .index("by_page_user", ["pageId", "userId"])  // O(1) probe in canReadPage/requirePageWritable; upsert + revoke
+    .index("by_user", ["userId"]),                // pages.sharedWithMe
+
   /** Memory-graph edge index — one row per outgoing link found in a page's
    *  block content. Denormalized on every page write by
    *  `convex/_shared/links.ts:reindexPageLinks` (delete-by-source then

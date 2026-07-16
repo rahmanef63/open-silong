@@ -13,6 +13,11 @@ export interface GroupOptions {
   recentIds: string[];
   /** Maximum recents shown. Defaults to 20. */
   recentLimit?: number;
+  /** Pages shared WITH the viewer via a per-page grant (from
+   *  `pages.sharedWithMe`). These live outside the active workspace's
+   *  `pages` array, so they're merged into the "Shared" bucket here
+   *  (deduped against the viewer's own published pages by id). */
+  sharedWithMe?: Page[];
 }
 
 /** Split the workspace's pages into the four Library tab buckets.
@@ -24,6 +29,7 @@ export function groupPagesForLibrary({
   pages,
   recentIds,
   recentLimit = 20,
+  sharedWithMe = [],
 }: GroupOptions): LibrarySection[] {
   const visible = pages.filter((p) => !p.trashed && !p.rowOfDatabaseId);
   const byId = new Map(visible.map((p) => [p.id, p]));
@@ -43,7 +49,15 @@ export function groupPagesForLibrary({
   }
 
   const favorites = sortByUpdated(visible.filter((p) => !!p.favorite));
-  const shared = sortByUpdated(visible.filter((p) => !!p.isPublic));
+  // "Shared" = pages the viewer published to the web (isPublic) PLUS pages
+  // granted to the viewer via a per-page grant. Dedupe by id so a page that
+  // is both never appears twice.
+  const publicShared = visible.filter((p) => !!p.isPublic);
+  const sharedIds = new Set(publicShared.map((p) => p.id));
+  const grantedShared = sharedWithMe.filter(
+    (p) => !p.trashed && !p.rowOfDatabaseId && !sharedIds.has(p.id),
+  );
+  const shared = sortByUpdated([...publicShared, ...grantedShared]);
   // Top-level only for "Private" (matches Notion's Private section).
   const privatePages = sortByUpdated(visible.filter(
     (p) => !p.isPublic && (p.parentId === null || p.parentId === undefined),
