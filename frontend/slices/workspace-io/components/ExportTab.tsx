@@ -163,7 +163,7 @@ export function ExportTab({ preselectPageId }: { preselectPageId?: string }) {
                   : "bg-card text-muted-foreground",
               )}
             >
-              {f === "json" ? "JSON (Nosion native)" : "ZIP (Notion-compatible)"}
+              {f === "json" ? "JSON (Silong native)" : "ZIP (Notion-compatible)"}
             </Button>
           ))}
         </div>
@@ -176,7 +176,7 @@ export function ExportTab({ preselectPageId }: { preselectPageId?: string }) {
 
       <div className="flex items-center justify-between pt-1">
         <p className="text-xs text-muted-foreground">
-          File: <code className="font-mono">nosion-export-YYYY-MM-DD.{format}</code>
+          File: <code className="font-mono">silong-export-YYYY-MM-DD.{format}</code>
         </p>
         <Button onClick={handleExport} disabled={selected.size === 0}>
           <Download className="mr-1.5 h-3.5 w-3.5" />

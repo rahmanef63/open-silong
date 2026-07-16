@@ -49,7 +49,7 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     label: "Generate page template",
     hint: "Describe a page → get TemplateJson you can paste into the admin Templates editor",
     buildPrompt: (input) => ({
-      system: `You generate Nosion page templates as JSON. Schema:
+      system: `You generate Silong page templates as JSON. Schema:
 {
   "version": 1, "name": str, "icon": emoji, "category": str, "description"?: str,
   "page": {
@@ -63,7 +63,7 @@ export const SLASH_COMMANDS: SlashCommand[] = [
   }
 }
 Reply with ONLY a fenced \`\`\`json block — no preamble, no explanation.`,
-      userPrompt: `Generate a Nosion page template for: ${input}`,
+      userPrompt: `Generate a Silong page template for: ${input}`,
     }),
   },
   {

@@ -27,7 +27,7 @@ export const AI_PROVIDERS: Array<{
   { id: "gemini", label: "Gemini", url: "https://gemini.google.com/", emoji: "🟣", hint: "Strong on Google-stack integrations." },
 ];
 
-const SCHEMA_SPEC = `# Nosion TemplateJson schema
+const SCHEMA_SPEC = `# Silong TemplateJson schema
 
 Top-level (required): { version: 1, name, icon (emoji), category, description?, page }
 

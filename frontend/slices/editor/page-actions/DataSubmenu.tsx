@@ -73,7 +73,7 @@ export function DataSubmenu({ actions, close }: Props) {
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">
-          Export — Nosion-only
+          Export — Silong-only
         </DropdownMenuLabel>
         <DropdownMenuItem onClick={fire(actions.onExportJson)} className="gap-2 text-xs">
           <FileJson className="h-3.5 w-3.5 text-muted-foreground" />

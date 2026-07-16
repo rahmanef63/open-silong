@@ -73,7 +73,7 @@ export function ShortcutsDialog() {
       <DialogContent className="max-w-2xl">
         <DialogTitle>Keyboard shortcuts</DialogTitle>
         <DialogDescription className="sr-only">
-          Reference list of every keyboard shortcut Nosion supports.
+          Reference list of every keyboard shortcut Silong supports.
         </DialogDescription>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 max-h-[70vh] overflow-y-auto pr-1">
           {SHORTCUTS.map((s) => (

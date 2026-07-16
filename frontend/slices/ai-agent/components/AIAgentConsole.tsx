@@ -90,7 +90,7 @@ export function AIAgentConsole({ open, onOpenChange, context, activeContext }: P
         <SheetHeader className="px-4 py-3 border-b border-border">
           <div className="flex items-center justify-between gap-2">
             <SheetTitle className="flex items-center gap-2 text-base min-w-0">
-              <Sparkles className="h-4 w-4 text-brand shrink-0" /> Nosion AI
+              <Sparkles className="h-4 w-4 text-brand shrink-0" /> Silong AI
               <span className="text-[10px] rounded border border-border bg-muted/40 px-1.5 py-0 text-muted-foreground truncate">
                 {agent.glyph} {agent.label}
               </span>
