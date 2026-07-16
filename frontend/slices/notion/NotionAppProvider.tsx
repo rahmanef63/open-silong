@@ -47,8 +47,16 @@
 import { createContext, useContext, useMemo, type ComponentType, type ReactNode } from "react";
 import dynamic from "next/dynamic";
 import type { Block, Database, Page, Property } from "@/shared/types/domain";
-import { EditorComponentsProvider } from "@/slices/editor";
-import { DatabasesComponentsProvider } from "@/slices/databases";
+// Import the tiny context providers from their LEAF modules, NOT the slice
+// barrels. A static barrel import pulls the whole editor/databases slice
+// (BlockEditor, DatabaseBlock, …) into this eager provider chunk, defeating
+// the dynamic() splits below — so every dashboard route shipped ~436KB of
+// editor+databases in first-load. Leaf imports keep the barrels reachable
+// ONLY via the dynamic import()s, cutting ~400KB off /library, /dashboard,
+// /inbox, /trash, /admin, /settings first-load. (Deep cross-slice import is
+// sanctioned by the componentsRegistry doc comment; runtime tree is identical.)
+import { EditorComponentsProvider } from "@/slices/editor/lib/componentsRegistry";
+import { DatabasesComponentsProvider } from "@/slices/databases/lib/componentsRegistry";
 
 // Lazy defaults: keep the editor (~9k LOC) and databases (~17k LOC) slices OUT
 // of the shared dashboard-layout chunk. They load on demand when a page /

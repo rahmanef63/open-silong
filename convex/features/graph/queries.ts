@@ -132,7 +132,15 @@ export const listBacklinks = query({
       .withIndex("by_target", (q) => q.eq("targetPageId", pageId))
       .take(BACKLINKS_CAP);
 
-    const cache = new Map<string, { title: string; icon: string } | null>();
+    // Batch-fetch the distinct source pages in parallel (one Promise.all)
+    // instead of N sequential point reads.
+    const ids = [...new Set(rows.map((r) => r.sourcePageId))];
+    const docs = await Promise.all(ids.map((id) => ctx.db.get(id)));
+    const meta = new Map<string, { title: string; icon: string } | null>();
+    ids.forEach((id, i) => {
+      const p = docs[i];
+      meta.set(String(id), p && !p.trashed ? { title: p.title || "Untitled", icon: p.icon } : null);
+    });
     const out: Array<{
       sourcePageId: Doc<"pages">["_id"];
       sourceBlockId?: string;
@@ -142,21 +150,15 @@ export const listBacklinks = query({
       icon: string;
     }> = [];
     for (const r of rows) {
-      const key = String(r.sourcePageId);
-      let meta = cache.get(key);
-      if (meta === undefined) {
-        const p = await ctx.db.get(r.sourcePageId);
-        meta = p && !p.trashed ? { title: p.title || "Untitled", icon: p.icon } : null;
-        cache.set(key, meta);
-      }
-      if (!meta) continue;
+      const m = meta.get(String(r.sourcePageId));
+      if (!m) continue; // trashed / missing source dropped
       out.push({
         sourcePageId: r.sourcePageId,
         sourceBlockId: r.sourceBlockId || undefined,
         kind: r.kind,
         resolved: r.resolved,
-        title: meta.title,
-        icon: meta.icon,
+        title: m.title,
+        icon: m.icon,
       });
     }
     return out;
@@ -176,7 +178,16 @@ export const listOutgoing = query({
       .withIndex("by_source", (q) => q.eq("sourcePageId", pageId))
       .take(LINKS_PER_PAGE_CAP);
 
-    const cache = new Map<string, { title: string; icon: string } | null>();
+    // Batch-fetch the distinct target pages in parallel. Unlike backlinks,
+    // rows are NOT dropped when a target is trashed/missing — they stay as
+    // unresolved so the UI can dim the dead link.
+    const ids = [...new Set(rows.flatMap((r) => (r.targetPageId ? [r.targetPageId] : [])))];
+    const docs = await Promise.all(ids.map((id) => ctx.db.get(id)));
+    const meta = new Map<string, { title: string; icon: string } | null>();
+    ids.forEach((id, i) => {
+      const p = docs[i];
+      meta.set(String(id), p && !p.trashed ? { title: p.title || "Untitled", icon: p.icon } : null);
+    });
     const out: Array<{
       kind: Doc<"pageLinks">["kind"];
       resolved: boolean;
@@ -188,25 +199,15 @@ export const listOutgoing = query({
       blockId?: string;
     }> = [];
     for (const r of rows) {
-      let meta: { title: string; icon: string } | null = null;
-      if (r.targetPageId) {
-        const key = String(r.targetPageId);
-        let cached = cache.get(key);
-        if (cached === undefined) {
-          const p = await ctx.db.get(r.targetPageId);
-          cached = p && !p.trashed ? { title: p.title || "Untitled", icon: p.icon } : null;
-          cache.set(key, cached);
-        }
-        meta = cached;
-      }
+      const m = r.targetPageId ? (meta.get(String(r.targetPageId)) ?? null) : null;
       out.push({
         kind: r.kind,
-        resolved: r.resolved && !!meta,
-        targetPageId: meta ? r.targetPageId : undefined,
+        resolved: r.resolved && !!m,
+        targetPageId: m ? r.targetPageId : undefined,
         targetTitle: r.targetTitle,
         tag: r.tag,
-        title: meta?.title,
-        icon: meta?.icon,
+        title: m?.title,
+        icon: m?.icon,
         blockId: r.sourceBlockId || undefined,
       });
     }

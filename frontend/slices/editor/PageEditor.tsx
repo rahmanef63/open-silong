@@ -123,27 +123,37 @@ export function PageEditor({ components }: PageEditorProps = {}) {
   const legacyHostDbId = legacyHostDbIdOf(page);
   useLegacyHostRedirect(legacyHostDbId, page?.id, getDatabase);
 
-  if (fullPage === undefined) return <PageEditorSkeleton />;
-  if (!page || page.trashed) return <PageNotFound />;
-
-  const chunks = groupBlocksIntoChunks(page.blocks, page.layouts);
-
+  // Memoized so these O(blocks) passes + the block-order array identity don't
+  // churn on unrelated re-renders (shareOpen/historyOpen toggles, parent
+  // pushes). Hoisted above the early returns to satisfy the Rules of Hooks;
+  // null-guarded until `page` resolves.
+  const chunks = useMemo(
+    () => (page ? groupBlocksIntoChunks(page.blocks, page.layouts) : []),
+    [page?.blocks, page?.layouts],
+  );
   // 1-based ordinals for consecutive numbered blocks at the same indent.
   // Reset deeper counters on every non-numbered or shallower-indent block.
-  const ordinals = new Map<string, number>();
-  {
+  const ordinals = useMemo(() => {
+    const m = new Map<string, number>();
+    if (!page) return m;
     const counters: number[] = [];
     for (const b of page.blocks) {
       const depth = b.indent ?? 0;
       if (b.type === "numbered") {
         counters[depth] = (counters[depth] ?? 0) + 1;
         counters.length = depth + 1;
-        ordinals.set(b.id, counters[depth]);
+        m.set(b.id, counters[depth]);
       } else {
         counters.length = depth;
       }
     }
-  }
+    return m;
+  }, [page?.blocks]);
+  // One stable block-id array reused by BlockSelectionProvider + SortableContext.
+  const blockOrder = useMemo(() => (page ? page.blocks.map((b) => b.id) : []), [page?.blocks]);
+
+  if (fullPage === undefined) return <PageEditorSkeleton />;
+  if (!page || page.trashed) return <PageNotFound />;
 
   const renderOneBlock = (b: typeof page.blocks[number], i: number) => (
     <BlockEditor
@@ -186,7 +196,7 @@ export function PageEditor({ components }: PageEditorProps = {}) {
   return (
     <EditorComponentsProvider value={componentsValue}>
     <PageCommentsProvider pageId={page.id}>
-    <BlockSelectionProvider blockOrder={page.blocks.map((b) => b.id)}>
+    <BlockSelectionProvider blockOrder={blockOrder}>
     <div className="flex h-full flex-col overflow-hidden">
       <PageHeaderSlot
         left={<HeaderBreadcrumbs page={page} />}
@@ -239,7 +249,7 @@ export function PageEditor({ components }: PageEditorProps = {}) {
                 collisionDetection={collisionDetection}
                 onDragEnd={(e) => handlePageDragEnd(e, { page, updatePage })}
               >
-                <SortableContext items={page.blocks.map((b) => b.id)} strategy={verticalListSortingStrategy}>
+                <SortableContext items={blockOrder} strategy={verticalListSortingStrategy}>
                   {chunks.map((chunk) => {
                     if (chunk.kind === "block") return renderOneBlock(chunk.block, chunk.index);
                     return (

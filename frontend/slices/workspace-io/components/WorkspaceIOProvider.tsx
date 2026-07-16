@@ -1,7 +1,14 @@
 "use client";
 
-import { createContext, useCallback, useContext, useMemo, useState } from "react";
-import { WorkspaceIODialog, type WorkspaceIOTab } from "./WorkspaceIODialog";
+import { createContext, lazy, Suspense, useCallback, useContext, useMemo, useState } from "react";
+import type { WorkspaceIOTab } from "./WorkspaceIODialog";
+
+// Lazy so the export/import dialog (+ its ZIP/files subtree, ~39KB) leaves the
+// eager dashboard-shell chunk this provider mounts into. Type-only import above
+// keeps the module out of first-load; the code loads on first open().
+const WorkspaceIODialog = lazy(() =>
+  import("./WorkspaceIODialog").then((m) => ({ default: m.WorkspaceIODialog })),
+);
 
 interface OpenOpts {
   tab?: WorkspaceIOTab;
@@ -49,13 +56,17 @@ export function WorkspaceIOProvider({ children }: { children: React.ReactNode })
   return (
     <WorkspaceIOContext.Provider value={ctx}>
       {children}
-      <WorkspaceIODialog
-        open={open}
-        onOpenChange={handleOpenChange}
-        initialTab={opts.tab}
-        preselectPageId={opts.preselectPageId}
-        zipParentId={opts.zipParentId}
-      />
+      {open && (
+        <Suspense fallback={null}>
+          <WorkspaceIODialog
+            open={open}
+            onOpenChange={handleOpenChange}
+            initialTab={opts.tab}
+            preselectPageId={opts.preselectPageId}
+            zipParentId={opts.zipParentId}
+          />
+        </Suspense>
+      )}
     </WorkspaceIOContext.Provider>
   );
 }
