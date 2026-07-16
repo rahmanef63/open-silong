@@ -1,5 +1,5 @@
 import {
-  useEffect, useMemo, useState, type ReactNode, useCallback,
+  useEffect, useMemo, useRef, useState, type ReactNode, useCallback,
 } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
@@ -14,9 +14,32 @@ import { useSnapshots } from "./store/snapshots";
 import { usePageActions } from "./store/pageActions";
 import { useDatabaseActions } from "./store/databaseActions";
 import { toPage, toDatabase } from "./store/mappers";
+import { reconcileStructural, type CacheEntry } from "./store/structuralShare";
 import { useWorkspaceMuts } from "./store/useWorkspaceMuts";
 
 export { useStore };
+
+/** Structural sharing over a Convex reactive array. Convex sends a fresh array
+ *  of fresh objects on every push, so `raw.map(toX)` gives every row a new
+ *  identity each time — one edit then re-renders EVERY sidebar/table row
+ *  (defeating their React.memo). This reuses the previous mapped object when
+ *  its serialized content is byte-identical, so only actually-changed rows get
+ *  a new identity. Content-keyed (not updatedAt-keyed) because several
+ *  mutations change mapped fields — restore→trashed, rowProps mirrors,
+ *  rowIds/views/wiki — WITHOUT bumping updatedAt, so a timestamp key would
+ *  serve stale objects. stringify of these small objects (listMeta omits
+ *  blocks) is far cheaper than the reconciliation it saves. */
+function useStructuralMap<Raw, Out extends { id: string }>(
+  raw: Raw[],
+  map: (r: Raw) => Out,
+): Out[] {
+  const cacheRef = useRef<Map<string, CacheEntry<Out>>>(new Map());
+  return useMemo(() => {
+    const { out, next } = reconcileStructural(raw, map, cacheRef.current);
+    cacheRef.current = next; // only current ids survive → deleted ids pruned
+    return out;
+  }, [raw, map]);
+}
 
 export function StoreProvider({ children }: { children: ReactNode }) {
   const { signOut: authSignOut } = useAuthActions();
@@ -36,9 +59,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const mutUpsertPrefs = useMutation(api.preferences.upsert);
   const mutEnsureBootstrap = useMutation(api.workspaces.ensureBootstrapped);
 
-  // Derived collections
-  const pages: Page[] = useMemo(() => rawPages.map(toPage), [rawPages]);
-  const allDatabases: Database[] = useMemo(() => rawDatabases.map(toDatabase), [rawDatabases]);
+  // Derived collections — structural sharing preserves per-row object identity
+  // across pushes so a single edit only re-renders the row that changed.
+  const pages: Page[] = useStructuralMap(rawPages, toPage);
+  const allDatabases: Database[] = useStructuralMap(rawDatabases, toDatabase);
   const databases: Database[] = useMemo(() => allDatabases.filter((d) => !d.trashed), [allDatabases]);
   const trashedDatabases: Database[] = useMemo(() => allDatabases.filter((d) => d.trashed), [allDatabases]);
   const recents: string[] = rawRecents;

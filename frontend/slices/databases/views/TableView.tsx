@@ -78,6 +78,19 @@ export function TableView({ db, view, rows, onOpenRow, writeView }: ViewProps) {
   };
   const fill = useDragFill({ rowIds, onFill });
   const consumeAutoEdit = useCallback(() => setPendingFocusId(null), []);
+  // Ref-backed stable callbacks so a store push (which re-creates the
+  // useDbAdapter writers + the onOpenRow prop each time) doesn't churn these
+  // SortableRow props and defeat its React.memo now that row/db identity is
+  // structurally shared. The row calls them with its own id.
+  const openRowRef = useRef(onOpenRow);
+  openRowRef.current = onOpenRow;
+  const stableOpenRow = useCallback((id: string) => openRowRef.current(id), []);
+  const deleteRowRef = useRef(deleteRow);
+  deleteRowRef.current = deleteRow;
+  const stableDeleteRow = useCallback(
+    (dbId: string, rowId: string) => deleteRowRef.current(dbId, rowId),
+    [],
+  );
 
   const onColEnd = (e: DragEndEvent) => {
     const { active, over } = e;
@@ -122,8 +135,8 @@ export function TableView({ db, view, rows, onOpenRow, writeView }: ViewProps) {
                     rowIndex={rowIndex}
                     db={db}
                     visibleProps={visibleProps}
-                    onOpenRow={onOpenRow}
-                    onDeleteRow={deleteRow}
+                    onOpenRow={stableOpenRow}
+                    onDeleteRow={stableDeleteRow}
                     autoEdit={pendingFocusId === node.row.id}
                     onAutoEditConsumed={consumeAutoEdit}
                     selectedCell={selectedCell}
