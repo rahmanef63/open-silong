@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useStore } from "@/shared/lib/store";
+import { useStore, useSnapshotsForPage } from "@/shared/lib/store";
 import { usePageComments } from "@/slices/comments";
 import type { Page, Block } from "@/shared/types/domain";
 import type { PageAnalytics } from "../types";
@@ -23,12 +23,12 @@ function walkBlocks(blocks: Block[]): { count: number; chars: number; words: num
 }
 
 export function usePageAnalytics(page: Page | undefined): PageAnalytics | null {
-  const { snapshotsForPage, childrenOf } = useStore();
+  const { childrenOf } = useStore();
+  const snapshots = useSnapshotsForPage(page?.id);
   const { all: comments } = usePageComments();
   return useMemo(() => {
     if (!page) return null;
     const stats = walkBlocks(page.blocks);
-    const snapshots = snapshotsForPage(page.id);
     const subpages = childrenOf(page.id).length;
     const now = Date.now();
     return {
@@ -43,5 +43,5 @@ export function usePageAnalytics(page: Page | undefined): PageAnalytics | null {
       snapshotCount: snapshots.length,
       commentCount: comments.length,
     };
-  }, [page, snapshotsForPage, childrenOf, comments.length]);
+  }, [page, snapshots, childrenOf, comments.length]);
 }

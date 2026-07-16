@@ -134,8 +134,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       isInitialLoading,
       databases, trashedDatabases,
       ...databaseActions,
-      snapshots: snapshotsApi.snapshots,
-      snapshotsForPage: snapshotsApi.snapshotsForPage,
       restoreSnapshot: snapshotsApi.restoreSnapshot,
       undo: history.undo,
       redo: history.redo,
@@ -162,3 +160,7 @@ export {
   useDatabaseRows,
   useUndoRedo,
 } from "./store/hooks";
+
+// Per-page snapshot subscription (replaces the old global store.snapshots).
+// `toPageSnapshot` maps a raw row for the on-demand backup export.
+export { useSnapshotsForPage, toPageSnapshot } from "./store/snapshots";

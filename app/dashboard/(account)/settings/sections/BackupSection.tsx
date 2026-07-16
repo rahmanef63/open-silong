@@ -2,17 +2,18 @@
 
 import { useState } from "react";
 import { Download, Upload, Loader2 } from "lucide-react";
-import { useMutation } from "convex/react";
+import { useMutation, useConvex } from "convex/react";
 import { toast } from "sonner";
 import { api } from "@convex/_generated/api";
-import { useStore } from "@/shared/lib/store";
+import { useStore, toPageSnapshot } from "@/shared/lib/store";
 import { Field } from "@/shared/components/forms/Field";
 import { downloadFile, pickFile } from "@/shared/lib/markdown";
 import { reportError } from "@/shared/lib/error";
 import { Button } from "@/shared/ui/button";
 
 export function BackupSection() {
-  const { workspace, preferences, pages, databases, snapshots } = useStore();
+  const { workspace, preferences, pages, databases } = useStore();
+  const convex = useConvex();
   const importJson = useMutation(api["import/workspace"].importFromJson);
   const [importing, setImporting] = useState(false);
 
@@ -44,11 +45,15 @@ export function BackupSection() {
     }
   }
 
-  function onExportWorkspace() {
+  async function onExportWorkspace() {
     const livePages = pages.filter((p) => !p.trashed);
     const liveDbs = databases.filter((d) => !d.trashed);
     const livePageIds = new Set(livePages.map((p) => p.id));
-    const liveSnapshots = snapshots.filter((s) => livePageIds.has(s.pageId));
+    // Fetch the full snapshot history on demand (one-shot query) rather than
+    // keeping it in an always-mounted global subscription — export is rare and
+    // the history carries every snapshot's full block payload.
+    const rawSnapshots = await convex.query(api.snapshots.listAll, {});
+    const liveSnapshots = rawSnapshots.map(toPageSnapshot).filter((s) => livePageIds.has(s.pageId));
     const payload = {
       version: 1 as const,
       exportedAt: new Date().toISOString(),

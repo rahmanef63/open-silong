@@ -3,7 +3,7 @@
 import { createContext, useContext } from "react";
 import type {
   Block, BlockType, Page, Workspace, UserProfile, Preferences, Database,
-  DatabaseViewConfig, Property, PropertyType, PropertyValue, PageSnapshot, SelectOption,
+  DatabaseViewConfig, Property, PropertyType, PropertyValue, SelectOption,
 } from "@/shared/types/domain";
 
 export interface StoreCtx {
@@ -72,8 +72,6 @@ export interface StoreCtx {
   addView: (dbId: string, view: Omit<DatabaseViewConfig, "id">) => DatabaseViewConfig;
   updateView: (dbId: string, viewId: string, patch: Partial<DatabaseViewConfig>) => void;
   deleteView: (dbId: string, viewId: string) => void;
-  snapshots: PageSnapshot[];
-  snapshotsForPage: (pageId: string) => PageSnapshot[];
   restoreSnapshot: (snapshotId: string) => void;
   undo: () => void;
   redo: () => void;

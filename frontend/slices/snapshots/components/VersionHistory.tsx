@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useStore } from "@/shared/lib/store";
+import { useStore, useSnapshotsForPage } from "@/shared/lib/store";
 import { History, X, RotateCcw, Eye } from "lucide-react";
 import { formatDateTime, formatRelTime } from "@/shared/lib/format";
 import { cn } from "@/shared/lib/utils";
@@ -12,9 +12,9 @@ import { Button } from "@/shared/ui/button";
 import { DynamicIcon } from "@/shared/components/icon-picker";
 
 export function VersionHistory({ pageId, onClose }: { pageId: string; onClose: () => void }) {
-  const { snapshotsForPage, restoreSnapshot, getPage } = useStore();
+  const { restoreSnapshot, getPage } = useStore();
   const page = getPage(pageId);
-  const snaps = snapshotsForPage(pageId);
+  const snaps = useSnapshotsForPage(pageId);
   const [previewId, setPreviewId] = useState<string | null>(null);
   const preview = snaps.find(s => s.id === previewId);
 

@@ -4,45 +4,42 @@ import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 import type { Page, PageSnapshot } from "@/shared/types/domain";
 
+/** Map a raw Convex snapshot row → the frontend PageSnapshot shape. Boundary
+ *  cast (`any`) so the loose stored cover union widens to CoverField, matching
+ *  the pre-refactor mapper. Shared by the per-page hook + the backup export. */
+export function toPageSnapshot(s: any): PageSnapshot {
+  return {
+    id: s._id,
+    pageId: s.pageId,
+    authorId: s.authorId,
+    authorName: s.authorName,
+    takenAt: s.takenAt,
+    title: s.title,
+    icon: s.icon,
+    cover: s.cover,
+    blocks: s.blocks,
+    rowProps: s.rowProps,
+  };
+}
+
+/** Per-page snapshot subscription. Replaces the old always-mounted global
+ *  `listAll` sub, which downloaded up to 500 snapshots — each carrying a full
+ *  page-blocks copy — to every tab on boot AND re-broadcast the entire history
+ *  every ~90s during editing (each `snapshotIfNeeded` insert invalidated the
+ *  by_user read set). Now only the open page's version-history / analytics
+ *  subscribes, to a bounded 50-row per-page query. Pass undefined to skip. */
+export function useSnapshotsForPage(pageId: string | undefined): PageSnapshot[] {
+  const raw = useQuery(
+    api.snapshots.listForPage,
+    pageId ? { pageId: pageId as Id<"pages"> } : "skip",
+  );
+  return useMemo(() => (raw ?? []).map(toPageSnapshot), [raw]);
+}
+
 export function useSnapshots(authorName: string) {
-  const rawSnapshots = useQuery(api.snapshots.listAll) ?? [];
   const mutCreateSnapshot = useMutation(api.snapshots.create);
   const mutRestoreSnapshot = useMutation(api.snapshots.restore);
   const lastSnapshotRef = useRef<Record<string, number>>({});
-
-  const snapshots: PageSnapshot[] = useMemo(
-    () =>
-      rawSnapshots.map((s: any) => ({
-        id: s._id,
-        pageId: s.pageId,
-        authorId: s.authorId,
-        authorName: s.authorName,
-        takenAt: s.takenAt,
-        title: s.title,
-        icon: s.icon,
-        cover: s.cover,
-        blocks: s.blocks,
-        rowProps: s.rowProps,
-      })),
-    [rawSnapshots],
-  );
-
-  const snapshotsByPage = useMemo(() => {
-    const map = new Map<string, PageSnapshot[]>();
-    for (const s of snapshots) {
-      const arr = map.get(s.pageId) ?? [];
-      arr.push(s);
-      map.set(s.pageId, arr);
-    }
-    for (const arr of map.values()) arr.sort((a, b) => b.takenAt - a.takenAt);
-    return map;
-  }, [snapshots]);
-
-  const EMPTY: PageSnapshot[] = useMemo(() => [], []);
-  const snapshotsForPage = useCallback(
-    (pageId: string) => snapshotsByPage.get(pageId) ?? EMPTY,
-    [snapshotsByPage, EMPTY],
-  );
 
   const snapshotIfNeeded = useCallback(
     (pageId: string, page: Page) => {
@@ -84,7 +81,7 @@ export function useSnapshots(authorName: string) {
   // Stable identity so the store context value memo isn't invalidated every
   // render — inner deps are all memo/useCallback-stable.
   return useMemo(
-    () => ({ snapshots, snapshotsForPage, restoreSnapshot, snapshotIfNeeded }),
-    [snapshots, snapshotsForPage, restoreSnapshot, snapshotIfNeeded],
+    () => ({ restoreSnapshot, snapshotIfNeeded }),
+    [restoreSnapshot, snapshotIfNeeded],
   );
 }

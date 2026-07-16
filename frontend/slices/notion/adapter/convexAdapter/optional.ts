@@ -12,7 +12,7 @@ import { useMemo } from "react";
 import { useAction, useMutation, useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
-import { useStore } from "@/shared/lib/store";
+import { useStore, useSnapshotsForPage } from "@/shared/lib/store";
 import type {
   AiAdapter,
   PresenceAdapter,
@@ -143,19 +143,17 @@ export function useConvexSnapshotsAdapter(): SnapshotsAdapter {
   const store = useStore();
   return useMemo<SnapshotsAdapter>(
     () => ({
-      useList: (pageId) => {
-        const all = store.snapshotsForPage(pageId);
-        // PageSnapshot uses `takenAt` — map to the adapter contract's
-        // `createdAt` so non-Convex implementations don't have to
-        // know the legacy field name.
-        return all.map((s) => ({
+      // A proper hook (name starts with `use`) — subscribes to the open
+      // page's snapshots only, mirroring pages.useOne. PageSnapshot uses
+      // `takenAt`; map to the adapter contract's `createdAt`.
+      useList: (pageId) =>
+        useSnapshotsForPage(pageId).map((s) => ({
           id: s.id,
           createdAt: s.takenAt,
           blocks: s.blocks,
           title: s.title,
           icon: s.icon,
-        }));
-      },
+        })),
       snapshotIfNeeded: async () => {
         // The store auto-snapshots via its own hook; no-op here.
         // Surfaces calling this explicitly trigger via store's
