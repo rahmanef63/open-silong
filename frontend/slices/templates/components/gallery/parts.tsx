@@ -98,7 +98,7 @@ export function TemplateCard({
           />
         ) : (
           <div className={cn("text-5xl leading-none drop-shadow-sm", fg)}>
-            <DynamicIcon value={tpl.icon} />
+            <DynamicIcon value={tpl.icon} forceNative />
           </div>
         )}
         <span className="absolute top-2 right-2 rounded-full bg-background/80 backdrop-blur px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
@@ -107,7 +107,7 @@ export function TemplateCard({
       </div>
       <div className="px-3 py-2.5 flex flex-col gap-1 min-h-[64px]">
         <div className="text-sm font-semibold truncate flex items-center gap-1.5">
-          <span className="text-base leading-none shrink-0"><DynamicIcon value={tpl.icon} /></span>
+          <span className="text-base leading-none shrink-0"><DynamicIcon value={tpl.icon} forceNative /></span>
           <span className="truncate">{tpl.name}</span>
         </div>
         <div className="text-[11px] text-muted-foreground truncate">{tpl.category}</div>
@@ -162,7 +162,7 @@ export function FeaturedBanner({
         </div>
       ) : (
         <div className={cn("w-32 grid place-items-center text-6xl shrink-0", fg)}>
-          <DynamicIcon value={tpl.icon} />
+          <DynamicIcon value={tpl.icon} forceNative />
         </div>
       )}
     </Button>

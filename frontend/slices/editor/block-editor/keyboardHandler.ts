@@ -1,6 +1,8 @@
 import type { KeyboardEvent } from "react";
 import type { Block, BlockType } from "@/shared/types/domain";
 import { decorateInPlace } from "../lib/inlineDecorator";
+import { getCaretOffset, setCaretAtOffset } from "../lib/inline-decorator/caret";
+import { mentionDeleteRange } from "./mentionDelete";
 import { DECORATE_TYPES } from "./decorateTypes";
 
 interface History {
@@ -124,6 +126,25 @@ export async function handleBlockKeyDown(e: KeyboardEvent<HTMLElement>, deps: De
     const newId = await addBlock(pageId, index, next, Object.keys(init).length ? init : undefined);
     setTimeout(() => document.querySelector<HTMLElement>(`[data-block-id="${newId}"]`)?.focus(), 0);
     return;
+  }
+  // Atomic mention delete: Backspace right after a mention chip removes the
+  // whole `[label](url)` source in one keystroke instead of nibbling the
+  // hidden bracket chars one at a time.
+  if (e.key === "Backspace" && !meta && DECORATE_TYPES.has(block.type)) {
+    const sel = window.getSelection();
+    if (sel && sel.isCollapsed && el.innerText !== "") {
+      const src = el.innerText;
+      const del = mentionDeleteRange(src, getCaretOffset(el));
+      if (del) {
+        e.preventDefault();
+        const txt = src.slice(0, del[0]) + src.slice(del[1]);
+        el.innerText = txt;
+        if (DECORATE_TYPES.has(block.type)) decorateInPlace(el, txt);
+        deps.updateBlock(pageId, block.id, { text: txt });
+        setCaretAtOffset(el, del[0]);
+        return;
+      }
+    }
   }
   if (e.key === "Backspace" && el.innerText === "") {
     e.preventDefault();

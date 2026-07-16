@@ -8,9 +8,18 @@ export interface State {
   pos: { x: number; y: number };
 }
 
-export function insertMention(state: State, page: { id: string; title: string; icon: string }) {
-  const label = page.title || "Untitled";
-  const text = `[${label}](/dashboard/p/${page.id}) `;
+export interface MentionItem {
+  id: string;
+  title: string;
+  icon?: string;
+  /** page → `/dashboard/p/<id>`, db → `/dashboard/db/<id>` */
+  kind: "page" | "db";
+}
+
+export function insertMention(state: State, item: MentionItem) {
+  const label = item.title || "Untitled";
+  const seg = item.kind === "db" ? "db" : "p";
+  const text = `[${label}](/dashboard/${seg}/${item.id}) `;
   // Re-derive the `@query` span from the live caret (marker `@` = 1 char); the
   // captured `state.range` may point at decorator-swapped, detached nodes.
   const range = liveTriggerRange(state.ce, state.query.length + 1) ?? state.range;

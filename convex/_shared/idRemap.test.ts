@@ -32,6 +32,19 @@ describe("rewriteMentions", () => {
     expect(rewriteMentions("[X](https://x.com/p/src1)", pageMap))
       .toBe("[X](https://x.com/p/src1)");
   });
+  it("rewrites the editor's /dashboard/p/ shape, preserving the prefix", () => {
+    expect(rewriteMentions("[Notes](/dashboard/p/src1)", pageMap))
+      .toBe("[Notes](/dashboard/p/tgt1)");
+  });
+  it("rewrites database mentions via dbMap (both prefixes)", () => {
+    expect(rewriteMentions("[DB](/dashboard/db/db_src)", pageMap, dbMap))
+      .toBe("[DB](/dashboard/db/db_tgt)");
+    expect(rewriteMentions("[DB](/db/db_src)", pageMap, dbMap))
+      .toBe("[DB](/db/db_tgt)");
+  });
+  it("leaves a db mention alone when no dbMap is passed", () => {
+    expect(rewriteMentions("[DB](/db/db_src)", pageMap)).toBe("[DB](/db/db_src)");
+  });
 });
 
 describe("rewriteMentionsInBlocks", () => {
@@ -46,7 +59,7 @@ describe("rewriteMentionsInBlocks", () => {
         columns: [[{ id: "col0", text: "col [W](/p/src1)" }]],
       },
     ];
-    rewriteMentionsInBlocks(blocks, pageMap);
+    rewriteMentionsInBlocks(blocks, { pageMap, dbMap });
     expect(blocks[0].text).toBe("[X](/p/tgt1)");
     expect(blocks[1].caption).toBe("see [Y](/p/tgt2)");
     expect(blocks[2].tableRows![0][0]).toBe("[A](/p/tgt1)");

@@ -46,31 +46,36 @@ export interface RemapMaps {
   dbMap: IdMap;
 }
 
-const MENTION_RE = /\[([^\]]+)\]\(\/p\/([A-Za-z0-9_-]{4,})\)/g;
+// Matches both the editor's `/dashboard/p/<id>` shape and the legacy
+// bare `/p/<id>`, for page (`p`) AND database (`db`) mentions. Groups:
+// 1=label, 2=prefix (`/` or `/dashboard/`), 3=kind (`p`|`db`), 4=id.
+const MENTION_RE = /\[([^\][]+)\]\((\/(?:dashboard\/)?)(p|db)\/([A-Za-z0-9_-]{4,})\)/g;
 
-/** Rewrite every `[label](/p/<id>)` markdown mention so `<id>` resolves
- *  to the new page id. Mentions with unknown source ids are left
+/** Rewrite every `[label](/…/p/<id>)` / `[label](/…/db/<id>)` markdown
+ *  mention so `<id>` resolves to the new page/database id, preserving
+ *  the original path prefix. Mentions with unknown source ids are left
  *  alone (they may point outside the imported set — better a broken
  *  link than a silent drop). */
-export function rewriteMentions(text: string, pageMap: IdMap): string {
-  if (!text || !text.includes("/p/")) return text;
-  return text.replace(MENTION_RE, (full, label, oldId) => {
-    const newId = pageMap.get(oldId);
-    return newId ? `[${label}](/p/${newId})` : full;
+export function rewriteMentions(text: string, pageMap: IdMap, dbMap?: IdMap): string {
+  if (!text || !(text.includes("/p/") || text.includes("/db/"))) return text;
+  return text.replace(MENTION_RE, (full, label, prefix, kind, oldId) => {
+    const map = kind === "db" ? dbMap : pageMap;
+    const newId = map?.get(oldId);
+    return newId ? `[${label}](${prefix}${kind}/${newId})` : full;
   });
 }
 
-/** Walk every text-bearing field on a block tree and rewrite
- *  `/p/<id>` mentions in place. Mutates the structure returned by
+/** Walk every text-bearing field on a block tree and rewrite page/db
+ *  mentions in place. Mutates the structure returned by
  *  `regenBlockIdsDeep` (caller should run this AFTER id regen so
  *  block ids are also fresh). */
-export function rewriteMentionsInBlocks(blocks: BlockLike[], pageMap: IdMap): void {
+export function rewriteMentionsInBlocks(blocks: BlockLike[], maps: RemapMaps): void {
   walkBlocks(blocks, (b) => {
-    if (typeof b.text === "string") b.text = rewriteMentions(b.text, pageMap);
-    if (typeof b.caption === "string") b.caption = rewriteMentions(b.caption, pageMap);
+    if (typeof b.text === "string") b.text = rewriteMentions(b.text, maps.pageMap, maps.dbMap);
+    if (typeof b.caption === "string") b.caption = rewriteMentions(b.caption, maps.pageMap, maps.dbMap);
     if (Array.isArray(b.tableRows)) {
       b.tableRows = b.tableRows.map((row) =>
-        Array.isArray(row) ? row.map((cell) => rewriteMentions(cell ?? "", pageMap)) : row,
+        Array.isArray(row) ? row.map((cell) => rewriteMentions(cell ?? "", maps.pageMap, maps.dbMap)) : row,
       );
     }
   });
@@ -103,7 +108,7 @@ export function remapBlockRefs(blocks: BlockLike[], maps: RemapMaps): BlockLike[
 export function importBlockTree(blocks: BlockLike[], maps: RemapMaps): BlockLike[] {
   const refRewritten = remapBlockRefs(blocks, maps);
   const idRegen = refRewritten.map(regenBlockIdsDeep);
-  rewriteMentionsInBlocks(idRegen, maps.pageMap);
+  rewriteMentionsInBlocks(idRegen, maps);
   return idRegen;
 }
 

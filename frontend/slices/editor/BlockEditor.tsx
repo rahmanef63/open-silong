@@ -83,10 +83,14 @@ function BlockEditorBase({ pageId, block, index, total, focusByOffset, registerR
       if (sel && !sel.isCollapsed) return;
       const href = el.dataset.href;
       if (!href) return;
-      const internal = href.match(/^\/(?:dashboard\/)?p\/([A-Za-z0-9_-]+)/);
-      if (internal) {
+      const pageM = href.match(/^\/(?:dashboard\/)?p\/([A-Za-z0-9_-]+)/);
+      const dbM = href.match(/^\/(?:dashboard\/)?db\/([A-Za-z0-9_-]+)/);
+      if (pageM) {
         e.preventDefault();
-        navigate(ROUTES.page(internal[1]));
+        navigate(ROUTES.page(pageM[1]));
+      } else if (dbM) {
+        e.preventDefault();
+        navigate(ROUTES.database(dbM[1]));
       } else if (/^https?:\/\//i.test(href)) {
         e.preventDefault();
         window.open(href, "_blank", "noopener,noreferrer");
