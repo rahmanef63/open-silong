@@ -53,7 +53,12 @@ describe("decorateLineToFragment", () => {
     expect(host.querySelector(".mention-chip")).not.toBeNull();
     // Atomic chip: contentEditable=false so the browser can't drop a typed
     // char inside its hidden url span (breaks the trigger + corrupts source).
-    expect(host.querySelector<HTMLElement>(".mention-chip")?.getAttribute("contenteditable")).toBe("false");
+    const chip = host.querySelector<HTMLElement>(".mention-chip");
+    expect(chip?.getAttribute("contenteditable")).toBe("false");
+    // MUST NOT be a flex container: Chromium innerText inserts `\n` between
+    // flex items, shredding `[label](url)` on read-back → source corruption.
+    expect(chip?.className).toContain("inline");
+    expect(chip?.className).not.toContain("flex");
     expect(host.querySelector(".mention-ico svg")).not.toBeNull();
     const label = host.querySelector<HTMLElement>("[data-href]");
     expect(label?.dataset.href).toBe("/dashboard/p/abc123");

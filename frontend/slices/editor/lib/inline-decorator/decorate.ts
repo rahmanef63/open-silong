@@ -96,12 +96,17 @@ export function decorateLineToFragment(line: string, opts?: { hideMarkers?: bool
           // trigger + corrupted the source on a 2nd mention). innerText still
           // round-trips the chip's text, so source parity is preserved.
           chip.setAttribute("contenteditable", "false");
+          // MUST stay `inline` (not inline-flex). The source of truth is
+          // `el.innerText`, and Chromium's innerText inserts a `\n` between
+          // every flex item — so an inline-flex chip shreds `[label](url)`
+          // into 6 newline-separated lines on read-back, corrupting the
+          // stored source and breaking a 2nd mention. Plain inline concatenates.
           chip.className =
-            "mention-chip inline-flex items-baseline gap-1 rounded px-1 bg-brand/10 text-brand no-underline";
+            "mention-chip inline rounded px-1 bg-brand/10 text-brand no-underline";
           const ico = document.createElement("span");
           ico.contentEditable = "false";
           ico.setAttribute("aria-hidden", "true");
-          ico.className = "mention-ico select-none";
+          ico.className = "mention-ico select-none mr-1";
           ico.innerHTML = isDb ? DB_ICON_SVG : PAGE_ICON_SVG;
           chip.appendChild(ico);
           chip.appendChild(makeMarker("[", { hideMarkers: true }));
