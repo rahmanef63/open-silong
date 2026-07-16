@@ -39,9 +39,10 @@ function emptyBlock() {
  *  Replaces the old whole-scope `.collect()`: trashing one leaf page used to
  *  read EVERY page in the workspace into memory (and threw once the workspace
  *  exceeded a mutation's read budget). This reads only the target subtree.
- *  Each level is FULLY paginated — never capped — so no subpage is silently
- *  orphaned in a cascade, and a visited-set guards corrupt self-referential
- *  parent chains. */
+ *  Each parent's direct children are read with a single indexed `.take` — NOT
+ *  `.paginate`, because Convex allows only one paginated query per function
+ *  execution, so paginating inside this BFS threw on any multi-node subtree.
+ *  A visited-set guards corrupt self-referential parent chains. */
 async function collectDescendantIds(
   ctx: MutationCtx,
   rootId: Id<"pages">,
@@ -54,24 +55,22 @@ async function collectDescendantIds(
   while (frontier.length) {
     const next: Id<"pages">[] = [];
     for (const parentId of frontier) {
-      let cursor: string | null = null;
-      for (;;) {
-        // Narrow indexed range = one parent's direct children only.
-        const batch = await (workspaceId
-          ? ctx.db.query("pages").withIndex("by_workspace_parent", (q) =>
-              q.eq("workspaceId", workspaceId).eq("parentId", parentId))
-          : ctx.db.query("pages").withIndex("by_user_parent", (q) =>
-              q.eq("userId", userId).eq("parentId", parentId))
-        ).paginate({ cursor, numItems: 500 });
-        for (const child of batch.page) {
-          if (!visited.has(child._id)) {
-            visited.add(child._id);
-            out.push(child._id);
-            next.push(child._id);
-          }
+      // Narrow indexed range = one parent's direct children only.
+      // ponytail: 5k direct-children cap per parent (a page with >5k direct
+      // subpages is pathological); move to a cursor scheme only if that ceiling
+      // is ever real — can't paginate here (one-paginate-per-execution rule).
+      const children = await (workspaceId
+        ? ctx.db.query("pages").withIndex("by_workspace_parent", (q) =>
+            q.eq("workspaceId", workspaceId).eq("parentId", parentId))
+        : ctx.db.query("pages").withIndex("by_user_parent", (q) =>
+            q.eq("userId", userId).eq("parentId", parentId))
+      ).take(COUNT_CAPS.pagesPerWorkspaceScan);
+      for (const child of children) {
+        if (!visited.has(child._id)) {
+          visited.add(child._id);
+          out.push(child._id);
+          next.push(child._id);
         }
-        if (batch.isDone) break;
-        cursor = batch.continueCursor;
       }
     }
     frontier = next;

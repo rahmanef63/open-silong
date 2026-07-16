@@ -90,6 +90,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@edge-runtime/vm": "^5.0.0",
     "@next/eslint-plugin-next": "^16.2.6",
     "@tailwindcss/postcss": "^4.0.0",
     "@tailwindcss/typography": "^0.5.16",
@@ -99,6 +100,7 @@
     "@types/node": "^22.16.5",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "convex-test": "^0.0.54",
     "eslint": "^9",
     "eslint-config-next": "^16.0.0",
     "eslint-plugin-react-hooks": "^7.1.1",
