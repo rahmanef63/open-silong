@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/shared/ui/sheet";
+import { Sheet, SheetContent, SheetTitle } from "@/shared/ui/sheet";
+import { Drawer, DrawerContent, DrawerTitle } from "@/shared/ui/drawer-lazy";
+import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { Button } from "@/shared/ui/button";
 import { Textarea } from "@/shared/ui/textarea";
 import { Alert, AlertDescription } from "@/shared/ui/alert";
@@ -28,6 +30,7 @@ interface Props {
 }
 
 export function AIAgentConsole({ open, onOpenChange, context, activeContext }: Props) {
+  const isMobile = useIsMobile();
   const chat = useAIChat(activeContext);
   const {
     messages, pending, error, send, clear,
@@ -84,17 +87,16 @@ export function AIAgentConsole({ open, onOpenChange, context, activeContext }: P
     await send(text, context);
   }
 
-  return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-md p-0 flex flex-col">
-        <SheetHeader className="px-4 py-3 border-b border-border">
+  const body = (
+    <>
+        <div className="px-4 py-3 border-b border-border space-y-1.5">
           <div className="flex items-center justify-between gap-2">
-            <SheetTitle className="flex items-center gap-2 text-base min-w-0">
+            <div className="flex items-center gap-2 text-base font-semibold min-w-0">
               <Sparkles className="h-4 w-4 text-brand shrink-0" /> Silong AI
-              <span className="text-[10px] rounded border border-border bg-muted/40 px-1.5 py-0 text-muted-foreground truncate">
+              <span className="text-[10px] rounded border border-border bg-muted/40 px-1.5 py-0 text-muted-foreground truncate font-normal">
                 {agent.glyph} {agent.label}
               </span>
-            </SheetTitle>
+            </div>
             {/* mr-8 keeps our buttons clear of the sheet's built-in
                 X close icon at top-right (~24px wide). */}
             <div className="flex items-center gap-1 mr-8 shrink-0">
@@ -118,9 +120,9 @@ export function AIAgentConsole({ open, onOpenChange, context, activeContext }: P
               </Button>
             </div>
           </div>
-          <SheetDescription className="text-xs">
+          <p className="text-xs text-muted-foreground">
             <code>@</code> picks an agent · <code>/</code> picks a skill · mutations need approval.
-          </SheetDescription>
+          </p>
           {modelRefs.length > 0 && (
             <Select
               value={selectedModel || DEFAULT_MODEL}
@@ -137,7 +139,7 @@ export function AIAgentConsole({ open, onOpenChange, context, activeContext }: P
               </SelectContent>
             </Select>
           )}
-        </SheetHeader>
+        </div>
 
         {historyOpen && (
           <SessionRail
@@ -297,6 +299,29 @@ export function AIAgentConsole({ open, onOpenChange, context, activeContext }: P
             </div>
           </div>
         </div>
+    </>
+  );
+
+  // Mobile: bottom-sheet Drawer (vaul) — drag the handle down to close.
+  // Desktop: the side Sheet panel.
+  if (isMobile) {
+    return (
+      <Suspense fallback={null}>
+        <Drawer open={open} onOpenChange={onOpenChange}>
+          <DrawerContent className="flex max-h-[92dvh] flex-col p-0">
+            <DrawerTitle className="sr-only">Silong AI</DrawerTitle>
+            {body}
+          </DrawerContent>
+        </Drawer>
+      </Suspense>
+    );
+  }
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" className="w-full sm:max-w-md p-0 flex flex-col">
+        <SheetTitle className="sr-only">Silong AI</SheetTitle>
+        {body}
       </SheetContent>
     </Sheet>
   );
