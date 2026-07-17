@@ -122,7 +122,7 @@ export function FeaturedBanner({
   tpl: TemplateMeta;
   onSelect: () => void;
 }) {
-  const [bg, fg] = tintFor(tpl.name);
+  const [bg] = tintFor(tpl.name);
   const hero = tpl.images?.[0];
   return (
     <Button
@@ -130,39 +130,54 @@ export function FeaturedBanner({
       variant="outline"
       onClick={onSelect}
       className={cn(
-        "group relative flex h-auto items-stretch rounded-2xl overflow-hidden text-left transition-all hover:shadow-lg p-0 font-normal whitespace-normal",
+        "group relative flex h-auto min-h-[176px] items-stretch overflow-hidden rounded-2xl border-transparent p-0 text-left font-normal whitespace-normal transition-all hover:-translate-y-0.5 hover:shadow-lg",
         !hero && "bg-gradient-to-br",
         !hero && bg,
       )}
     >
-      <div className="flex-1 p-5 flex flex-col justify-between min-h-[180px] z-10">
+      {/* Oversized emoji watermark — depth behind the content, drifts on hover. */}
+      {!hero && (
+        <div className="pointer-events-none absolute -bottom-8 -right-3 select-none text-[10rem] leading-none opacity-[0.16] blur-[1px] transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-110">
+          <DynamicIcon value={tpl.icon} forceNative />
+        </div>
+      )}
+
+      <div className="relative z-10 flex flex-1 flex-col justify-between p-5">
         <div>
-          <span className="inline-block rounded-md bg-background/70 backdrop-blur px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground mb-2">
+          <span className="mb-2.5 inline-block rounded-full bg-background/70 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-foreground/70 backdrop-blur">
             Featured
           </span>
-          <div className="text-lg font-semibold leading-tight">{tpl.name}</div>
+          <div className="text-xl font-semibold leading-tight tracking-tight">{tpl.name}</div>
           {tpl.description && (
-            <div className="text-xs text-muted-foreground mt-1.5 line-clamp-2 max-w-md">
+            <div className="mt-1.5 line-clamp-2 max-w-md text-xs text-muted-foreground">
               {tpl.description}
             </div>
           )}
         </div>
-        <span className="text-[11px] text-muted-foreground">{tpl.category}</span>
+        <div className="flex items-center gap-1.5">
+          <span className="text-[11px] font-medium text-muted-foreground">{tpl.category}</span>
+          <span className="-translate-x-1 text-[11px] font-medium text-foreground/70 opacity-0 transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100">
+            · Use template →
+          </span>
+        </div>
       </div>
+
       {hero ? (
-        <div className="relative w-44 shrink-0 overflow-hidden">
+        <div className="relative z-10 hidden w-44 shrink-0 overflow-hidden sm:block">
           <Image
             src={hero}
             alt=""
             fill
             unoptimized
             sizes="176px"
-            className="object-cover transition-transform group-hover:scale-105"
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
           />
         </div>
       ) : (
-        <div className={cn("w-32 sm:w-40 grid place-items-center text-7xl shrink-0 drop-shadow-sm", fg)}>
-          <DynamicIcon value={tpl.icon} forceNative />
+        <div className="relative z-10 hidden w-40 shrink-0 place-items-center sm:grid">
+          <div className="grid h-24 w-24 place-items-center rounded-2xl border border-border/40 bg-background/50 text-6xl shadow-sm backdrop-blur transition-transform duration-300 group-hover:-rotate-3 group-hover:scale-105">
+            <DynamicIcon value={tpl.icon} forceNative />
+          </div>
         </div>
       )}
     </Button>
