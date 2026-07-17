@@ -10,31 +10,63 @@ notes under `docs/audit/`.
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-07-17
+
+First public open-source release. Consolidates the OSS-readiness prep, the
+Obsidian-style knowledge graph, and a large performance + security + mobile
+pass. Production-deployed on Vercel + Convex Cloud; typecheck + 1,110 tests +
+build green.
+
 ### Added
+- **Per-page share grants** — share a single page with a specific user (by
+  email) as viewer or editor, independent of workspace membership; granted
+  pages surface in the library "Shared" section. Bounded authz through two
+  helpers (`canReadPage` / `requirePageWritable`) so an editor grant reaches
+  page content only — never trash / delete / re-share / grant management.
+- **Convex handler test suite** — a `convex-test` harness
+  (`convex/testHarness.test.ts`) + 33 in-process handler tests covering pages
+  CRUD + descendant cascade, database rows, the workspace membership gate
+  (owner / non-member / viewer / unauth), public share slugs, and per-page
+  grant authz.
 - **Knowledge graph, Obsidian-style** (`/dashboard/graph`) — interactive
-  cloud of pages, `[[wikilinks]]`, `@mentions`, `#tags`, and database
-  rows, with backlinks and unresolved "ghost" nodes.
+  cloud of pages, `[[wikilinks]]`, `@mentions`, `#tags`, and database rows,
+  with backlinks and unresolved "ghost" nodes.
 - **Architecture diagrams** — `docs/architecture/diagrams.md` (Mermaid:
-  system, auth/authz flow, data model, slice graph, memory-graph
-  pipeline), embedded in the README.
-- **`TRADEMARKS.md`** — plain-language inspiration + trademark
-  clarification for Notion & Obsidian (idea/expression distinction,
-  nominative fair use, interoperability, international/EU anchors).
-  Not legal advice.
+  system, auth/authz flow, data model, slice graph, memory-graph pipeline),
+  embedded in the README.
+- **`TRADEMARKS.md`** — plain-language inspiration + trademark clarification
+  for Notion & Obsidian (idea/expression distinction, nominative fair use,
+  interoperability). Not legal advice.
 
 ### Changed
-- **Graph Forces rebuilt on the d3-force model** Obsidian uses:
-  inverse-square many-body repulsion, degree-normalised link springs
-  with a bias (hubs stay put without a mass hack), `forceX/Y` centre
-  gravity. Fixes weak/unresponsive Forces sliders — link-distance now
-  tracks settled spacing ~1:1; repel spreads monotonically. (`8c95727`)
-- **Graph Animate + controls** — alpha/temperature simulation with
-  reheat + breathing, neighbourhood focus dimming, curved edges,
-  cluster tinting, zoom-to-fit, persisted settings; controls panel
-  scrolls natively. (`f43df31`, `3bb3c92`)
-- **README / NOTICE** — Obsidian added alongside Notion in the
-  inspiration + trademark notices; links to the diagrams and
-  `TRADEMARKS.md`.
+- **Partial Prerendering (Next Cache Components)** — the auth + realtime stack
+  is scoped to an `(app)` route group and `cacheComponents` is enabled, so
+  every route builds as a static shell + server-streamed data; public
+  `/share`·`/site`·`/forms` no longer boot the Convex client.
+- **Performance pass** — −~400 KB dashboard first-load (barrel→leaf import
+  split), dropped the always-mounted global snapshot subscription,
+  content-keyed structural sharing so a single edit re-renders one row,
+  `getById` DTO (drops the ~8 KB `searchText` duplicate off the hot editor
+  sub), admin analytics made non-reactive, and ~2.6 k lines of dead code +
+  the orphaned slice-portability apparatus removed.
+- **Mobile UX** — the AI console and the page action menu are now vaul
+  bottom-sheet drawers (drag the handle to close); nested submenus portal
+  into the drawer; the mobile topbar was decluttered (theme relocated into
+  the page menu, redundant search hidden); submenus open centered.
+- **Graph Forces rebuilt on the d3-force model** — inverse-square repulsion,
+  degree-normalised link springs, `forceX/Y` centre gravity. (`8c95727`)
+- **Graph Animate + controls** — alpha/temperature simulation with reheat +
+  breathing, neighbourhood focus dimming, curved edges, cluster tinting,
+  zoom-to-fit, persisted settings. (`f43df31`, `3bb3c92`)
+
+### Fixed
+- **`@`-mention rendered an extra line** — Tailwind Preflight forces
+  `svg{display:block}`, which pushed the inline mention icon onto its own line
+  above the label; the icon is now `display:inline-block`.
+- **Nested trash / restore / permanently-delete threw in production** — the
+  descendant BFS called `.paginate()` once per level, but Convex allows only
+  one paginated query per function execution; each level now reads with an
+  indexed `.take`.
 
 Prior polish wave — root `CHANGELOG.md`, smoke-test golden flow doc, env
 gitignore hardening, OSS readiness tick-off.

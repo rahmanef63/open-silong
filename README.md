@@ -4,6 +4,7 @@
 
 **Open-source, self-hostable collaborative workspace — inspired by Notion & Obsidian.**
 
+[![Release](https://img.shields.io/badge/release-v1.0.0-success.svg)](./CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 [![Stack](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org)
 [![React](https://img.shields.io/badge/React-19-61dafb?logo=react)](https://react.dev)
@@ -57,17 +58,19 @@ lock-in.
   image, 30+ block types (paragraph, headings, todo, bullet/numbered
   lists, toggle, callout, quote, code, equation, table, image,
   video, embed, columns, divider, synced, …).
-- **Databases.** Six views (Table · Board · List · Gallery · Calendar
-  · Feed). Filter, sort, search, group, hide. Ten property types.
-  Inline embed in any page OR open as full page.
+- **Databases.** Eleven views (Table · Board · List · Gallery · Calendar
+  · Feed · Timeline · Chart · Map · Form · Dashboard). Filter, sort,
+  search, group, hide. Ten property types. Inline embed in any page OR
+  open as full page.
 - **Knowledge graph.** Obsidian-style interactive graph of every page,
   `[[wikilink]]`, `@mention`, `#tag`, and database row — with backlinks
   and unresolved "ghost" nodes. Live d3-force layout with tunable
   forces, cluster tinting, and focus/neighbourhood highlighting.
 - **Multi-workspace.** Per-user workspaces, member roles, invites.
   Workspace switcher in sidebar.
-- **Sharing.** Public read-only share links (optional password +
-  expiry). Wiki mode. Per-page grants.
+- **Sharing.** Public read-only share links (custom slug +
+  search-indexable toggle). Wiki mode. Per-page grants — share one
+  page with a specific member as viewer or editor.
 - **Collaboration.** Threaded comments per block, `@page` mentions,
   presence indicators, version snapshots.
 - **Import / export.** JSON round-trip preserves blocks + databases
@@ -176,7 +179,7 @@ flowchart LR
     B["Browser<br/>Next 16 · React 19"] --> P["proxy.ts<br/>optimistic auth gate"]
     B -- "reactive queries" --> C["Convex backend<br/>queries · mutations<br/>in-handler authz"]
     P --> C
-    C --> S["schema.ts · 33 tables"]
+    C --> S["schema.ts · 32 tables"]
     S --> DB[("Postgres / Convex Cloud")]
     C --> F[("Files: Convex blob / S3")]
     A["AI agents"] -- "Notion-canonical JSON" --> H["MCP HTTP surface"] --> C
@@ -232,7 +235,10 @@ mirror. Cross-slice imports go **through the barrel only**. See
 - [x] Comments + mentions + snapshots
 - [x] JSON import/export
 - [x] MCP HTTP surface
-- [ ] OAuth providers (Google, GitHub)
+- [x] Per-page share grants (viewer / editor)
+- [x] Partial Prerendering (Cache Components)
+- [x] Google OAuth sign-in (opt-in)
+- [ ] More OAuth providers (GitHub, Apple)
 - [ ] Real-time multiplayer cursors
 - [ ] PWA + offline mode
 
