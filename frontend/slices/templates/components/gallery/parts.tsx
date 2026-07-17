@@ -142,7 +142,7 @@ export function FeaturedBanner({
           </span>
           <div className="text-lg font-semibold leading-tight">{tpl.name}</div>
           {tpl.description && (
-            <div className="text-xs text-muted-foreground mt-1.5 line-clamp-2 max-w-[280px]">
+            <div className="text-xs text-muted-foreground mt-1.5 line-clamp-2 max-w-md">
               {tpl.description}
             </div>
           )}
@@ -161,7 +161,7 @@ export function FeaturedBanner({
           />
         </div>
       ) : (
-        <div className={cn("w-32 grid place-items-center text-6xl shrink-0", fg)}>
+        <div className={cn("w-32 sm:w-40 grid place-items-center text-7xl shrink-0 drop-shadow-sm", fg)}>
           <DynamicIcon value={tpl.icon} forceNative />
         </div>
       )}
