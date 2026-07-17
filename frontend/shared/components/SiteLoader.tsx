@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { LogoMark } from "./LogoMark";
 
 /** Full-screen initiate splash — fleet-standard loading state (same UX as
  *  the template fleet's site-loader). Shown over the workspace until the
@@ -49,8 +50,8 @@ export function SiteLoader({ ready }: { ready: boolean }) {
       }`}
     >
       <div className="w-full max-w-[220px] px-6 text-center">
-        <div className="mx-auto mb-6 grid size-12 animate-pulse place-items-center rounded-xl bg-foreground text-lg font-bold text-background">
-          S
+        <div className="mx-auto mb-6 grid size-12 animate-pulse place-items-center rounded-xl bg-foreground text-background">
+          <LogoMark className="size-7" />
         </div>
         <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
           <div
