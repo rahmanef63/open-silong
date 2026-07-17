@@ -104,16 +104,6 @@ export function PageActionsMenu({ page, onShowHistory }: Props) {
         </div>
       )}
 
-      {/* Theme & color — relocated off the mobile topbar into the menu. */}
-      {!q && (
-        <div className="flex items-center justify-between border-b border-border px-3 py-1.5 md:hidden">
-          <span className="flex items-center gap-2 text-sm">
-            <Palette className="h-3.5 w-3.5 text-muted-foreground" /> Theme &amp; color
-          </span>
-          <TweakcnSwitcher size="mobile" />
-        </div>
-      )}
-
       {groupVisible("Small text", "Full width") && (
         <div className="border-b border-border py-1">
           {match("Small text") && (
@@ -198,6 +188,16 @@ export function PageActionsMenu({ page, onShowHistory }: Props) {
           {match("Mentions") && (
             <MentionsPopover trigger={<RowButton icon={AtSign} label="Mentions" />} />
           )}
+        </div>
+      )}
+
+      {/* Theme & color — mobile only, pinned to the bottom of the menu. */}
+      {!q && (
+        <div className="flex items-center justify-between border-t border-border px-3 py-1.5 md:hidden">
+          <span className="flex items-center gap-2 text-sm">
+            <Palette className="h-3.5 w-3.5 text-muted-foreground" /> Theme &amp; color
+          </span>
+          <TweakcnSwitcher size="mobile" />
         </div>
       )}
 
