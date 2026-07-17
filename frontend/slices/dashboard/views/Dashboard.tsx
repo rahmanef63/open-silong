@@ -11,7 +11,7 @@ import { DashboardSkeleton } from "./dashboard/DashboardSkeleton";
 import { DatabasesList } from "./dashboard/DatabasesList";
 
 export function Dashboard() {
-  const { pages, recents, childrenOf, createPage, createDatabase, databases, workspace, addBlock, updateBlock, isInitialLoading } = useStore();
+  const { pages, recents, childrenOf, createPage, createDatabase, databases, workspace, isInitialLoading } = useStore();
   const navigate = useNavigate();
   const [tplOpen, setTplOpen] = useState(false);
 
@@ -57,13 +57,12 @@ export function Dashboard() {
             title="New database"
             subtitle="Track and organize rows"
             onClick={async () => {
-              const [p, db] = await Promise.all([
-                createPage(null, { title: "Untitled database", icon: DEFAULT_DATABASE_ICON }),
-                createDatabase("Untitled database"),
-              ]);
-              const blockId = await addBlock(p.id, 0, "database");
-              updateBlock(p.id, blockId, { databaseId: db.id });
-              navigate(`/p/${p.id}`);
+              // First-class database: create the db and open it at /db/:id.
+              // (The old flow also spun up a host PAGE + embedded block, which
+              // left an orphan "Untitled database" page in the sidebar/graph and
+              // desynced on rename — that's the deprecated databaseHostFor path.)
+              const db = await createDatabase("Untitled database", DEFAULT_DATABASE_ICON);
+              navigate(`/db/${db.id}`);
             }}
           />
           <ActionCard

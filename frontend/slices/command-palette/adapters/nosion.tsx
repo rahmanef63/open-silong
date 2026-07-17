@@ -44,8 +44,6 @@ export function useNosionCommandGroups(query: string) {
     createPage,
     createDatabase,
     updateDatabase,
-    addBlock,
-    updateBlock,
     updatePreferences,
     preferences,
   } = useStore();
@@ -205,7 +203,10 @@ export function useNosionCommandGroups(query: string) {
         ),
         onSelect: async () => {
           const seed = preset.build();
-          const stub = await createDatabase(seed.name);
+          // First-class database — populate it and open at /db/:id. No host
+          // page + embedded block (that left an orphan "Untitled" page in the
+          // sidebar/graph and desynced on rename).
+          const stub = await createDatabase(seed.name, seed.icon);
           await updateDatabase(stub.id, {
             name: seed.name,
             icon: seed.icon,
@@ -215,10 +216,7 @@ export function useNosionCommandGroups(query: string) {
             templates: seed.templates ?? ([] as any),
             defaultTemplateId: seed.defaultTemplateId ?? null,
           } as any);
-          const host = await createPage(null, { title: preset.name, icon: preset.icon });
-          const blockId = await addBlock(host.id, -1, "database");
-          updateBlock(host.id, blockId, { type: "database", databaseId: stub.id, text: "" });
-          navigate(ROUTES.page(host.id));
+          navigate(ROUTES.database(stub.id));
         },
       })),
     });
@@ -262,8 +260,6 @@ export function useNosionCommandGroups(query: string) {
     createPage,
     createDatabase,
     updateDatabase,
-    addBlock,
-    updateBlock,
     updatePreferences,
   ]);
 
