@@ -5,6 +5,7 @@ import { Drawer, DrawerContent, DrawerTitle } from "@/shared/ui/drawer-lazy";
 import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
+import { PortalContainerProvider } from "@/shared/ui/portal-container";
 import { AnalyticsPopover } from "@/slices/analytics";
 import { NotifyMePopover } from "@/slices/notifications";
 import { MentionsPopover } from "@/slices/mentions";
@@ -35,6 +36,9 @@ export function PageActionsMenu({ page, onShowHistory }: Props) {
   // swipe/close animation plays (unmounting on close would cut it) — vaul stays
   // out of first-load until the menu is actually opened.
   const [drawerMounted, setDrawerMounted] = useState(false);
+  // The drawer content node — nested submenus (Popover/DropdownMenu) portal
+  // INTO it so the vaul modal doesn't inert them out of existence.
+  const [drawerEl, setDrawerEl] = useState<HTMLElement | null>(null);
   const close = () => setOpen(false);
   const actions = usePageActions(page, close);
 
@@ -213,11 +217,14 @@ export function PageActionsMenu({ page, onShowHistory }: Props) {
         {drawerMounted && (
           <Suspense fallback={null}>
             <Drawer open={open} onOpenChange={setOpen}>
-              <DrawerContent className="max-h-[85dvh]">
+              <DrawerContent ref={setDrawerEl} className="max-h-[85dvh]">
                 <DrawerTitle className="sr-only">Page actions</DrawerTitle>
-                <div className="min-h-0 overflow-y-auto overscroll-contain pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-                  {body}
-                </div>
+                {/* Submenus portal into the drawer node, not body. */}
+                <PortalContainerProvider value={drawerEl}>
+                  <div className="min-h-0 overflow-y-auto overscroll-contain pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+                    {body}
+                  </div>
+                </PortalContainerProvider>
               </DrawerContent>
             </Drawer>
           </Suspense>
