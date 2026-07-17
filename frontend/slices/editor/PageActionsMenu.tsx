@@ -10,6 +10,7 @@ import { AnalyticsPopover } from "@/slices/analytics";
 import { NotifyMePopover } from "@/slices/notifications";
 import { MentionsPopover } from "@/slices/mentions";
 import { WikiToggleAction } from "@/slices/wiki";
+import { TweakcnSwitcher } from "@/slices/theme-presets";
 import {
   MoreHorizontal, Search, Ruler, MoveHorizontal,
   Link2, ClipboardCopy, Files, Trash2,
@@ -100,6 +101,16 @@ export function PageActionsMenu({ page, onShowHistory }: Props) {
               </Button>
             );
           })}
+        </div>
+      )}
+
+      {/* Theme & color — relocated off the mobile topbar into the menu. */}
+      {!q && (
+        <div className="flex items-center justify-between border-b border-border px-3 py-1.5 md:hidden">
+          <span className="flex items-center gap-2 text-sm">
+            <Palette className="h-3.5 w-3.5 text-muted-foreground" /> Theme &amp; color
+          </span>
+          <TweakcnSwitcher size="mobile" />
         </div>
       )}
 

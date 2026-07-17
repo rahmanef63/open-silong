@@ -177,18 +177,21 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
                       <UndoRedoButtons />
                       {/* Left slot: route-injected breadcrumb. Falls back to flex spacer. */}
                       <PageHeaderLeftAnchor className="flex min-w-0 flex-1 items-center gap-2" />
+                      {/* Search + theme are hidden on mobile (redundant with the
+                          bottom nav search / More→Settings) and relocated: search
+                          lives in MobileBottomNav, theme moves into the page menu. */}
                       <Button
                         type="button"
                         variant="outline"
                         onClick={() => setSearchOpen(true)}
-                        className="h-auto gap-2 text-sm font-normal text-muted-foreground bg-background/40 px-2 py-1 hover:text-foreground [&_svg]:size-3.5"
+                        className="hidden md:inline-flex h-auto gap-2 text-sm font-normal text-muted-foreground bg-background/40 px-2 py-1 hover:text-foreground [&_svg]:size-3.5"
                         aria-label="Search"
                       >
                         <Search className="h-3.5 w-3.5" />
                         <span className="hidden md:inline">Search</span>
                         <kbd className="hidden sm:inline-flex text-[10px] tracking-wider text-muted-foreground border border-border rounded px-1.5 py-0.5">⌘K</kbd>
                       </Button>
-                      <TweakcnSwitcher />
+                      <TweakcnSwitcher triggerClassName="hidden md:inline-flex" />
                       {/* Right slot: route-injected actions (Share, history, …). */}
                       <PageHeaderRightAnchor className="flex items-center gap-1" />
                     </div>

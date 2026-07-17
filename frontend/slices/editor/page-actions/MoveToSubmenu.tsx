@@ -7,6 +7,7 @@
  */
 
 import { useMemo } from "react";
+import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useEditorAdapter } from "@/slices/editor/lib/useEditorAdapter";
 import type { Page } from "@/shared/types/domain";
 import { ArrowRight, ChevronRight, Check } from "lucide-react";
@@ -21,6 +22,7 @@ import { Button } from "@/shared/ui/button";
 
 export function MoveToSubmenu({ page, close }: { page: Page; close: () => void }) {
   const { pages, movePage } = useEditorAdapter();
+  const isMobile = useIsMobile();
 
   const moveCandidates = useMemo(() => {
     const isDescendant = (targetId: string, ancestorId: string): boolean => {
@@ -48,7 +50,16 @@ export function MoveToSubmenu({ page, close }: { page: Page; close: () => void }
           <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent side="right" align="start" sideOffset={4} className="w-64 max-h-80 overflow-y-auto scrollbar-thin">
+      <DropdownMenuContent
+        side={isMobile ? "bottom" : "right"}
+        align={isMobile ? "center" : "start"}
+        sideOffset={4}
+        collisionPadding={12}
+        className={cn(
+          "max-h-80 overflow-y-auto scrollbar-thin",
+          isMobile ? "w-[min(20rem,calc(100vw-2rem))]" : "w-64",
+        )}
+      >
         <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">
           Move into
         </DropdownMenuLabel>

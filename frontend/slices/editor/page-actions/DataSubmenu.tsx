@@ -17,6 +17,7 @@ import {
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
 import { Button } from "@/shared/ui/button";
+import { useIsMobile } from "@/shared/hooks/use-mobile";
 
 interface Actions {
   onExportPdf: () => void;
@@ -37,6 +38,7 @@ interface Props {
 }
 
 export function DataSubmenu({ actions, close }: Props) {
+  const isMobile = useIsMobile();
   const fire = (fn: () => void) => () => { fn(); close(); };
 
   return (
@@ -51,7 +53,13 @@ export function DataSubmenu({ actions, close }: Props) {
           <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent side="right" align="start" sideOffset={4} className="w-64">
+      <DropdownMenuContent
+        side={isMobile ? "bottom" : "right"}
+        align={isMobile ? "center" : "start"}
+        sideOffset={4}
+        collisionPadding={12}
+        className={isMobile ? "w-[min(20rem,calc(100vw-2rem))]" : "w-64"}
+      >
         <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">
           Export — Notion-compatible
         </DropdownMenuLabel>
