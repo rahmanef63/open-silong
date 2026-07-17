@@ -22,6 +22,10 @@ import {
   Play,
   Pause,
   Flame,
+  Waypoints,
+  Globe,
+  Layers,
+  type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { Button } from "@/shared/ui/button";
@@ -33,8 +37,16 @@ import type {
   GraphFilters,
   GraphDisplay,
   GraphForces,
+  GraphLayout,
   GroupInfo,
 } from "../lib/graphSettings";
+
+/** Layout patterns surfaced as a segmented picker. */
+const LAYOUTS: { id: GraphLayout; label: string; icon: LucideIcon; hint: string }[] = [
+  { id: "web", label: "Web", icon: Waypoints, hint: "Organic cloud — nodes cluster by their connections." },
+  { id: "radial", label: "Globe", icon: Globe, hint: "Concentric rings around the most-connected node — distance = hops from the hub." },
+  { id: "layered", label: "Layers", icon: Layers, hint: "Neural-style columns ordered by hop-distance — a left→right flow." },
+];
 
 export interface ControlPanelProps {
   open: boolean;
@@ -213,6 +225,35 @@ export function ControlPanel({
       {/* scrollable body — native overflow (bulletproof vs flex-height quirks) */}
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
         <div className="px-3">
+          {/* Layout pattern */}
+          <Section title="Layout">
+            <div className="grid grid-cols-3 gap-1.5">
+              {LAYOUTS.map(({ id, label, icon: Icon }) => {
+                const on = forces.layout === id;
+                return (
+                  <Button
+                    key={id}
+                    type="button"
+                    variant={on ? "secondary" : "outline"}
+                    size="sm"
+                    onClick={() => onForcesChange({ ...forces, layout: id })}
+                    aria-pressed={on}
+                    className={cn(
+                      "h-auto flex-col gap-1 px-1 py-2 text-[11px] font-normal [&_svg]:size-4",
+                      !on && "text-muted-foreground",
+                    )}
+                  >
+                    <Icon className="h-4 w-4" />
+                    {label}
+                  </Button>
+                );
+              })}
+            </div>
+            <p className="text-[11px] leading-snug text-muted-foreground">
+              {LAYOUTS.find((l) => l.id === forces.layout)?.hint}
+            </p>
+          </Section>
+
           {/* Search */}
           <Section title="Search">
             <div className="relative">

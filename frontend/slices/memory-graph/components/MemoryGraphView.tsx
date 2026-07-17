@@ -25,6 +25,7 @@ import {
   DEFAULT_FILTERS,
   DEFAULT_FORCES,
   componentOf,
+  layoutScaffold,
   type GraphDisplay,
   type GraphFilters,
   type GraphForces,
@@ -57,6 +58,12 @@ const REPEL_MAX2 = 640000; // (~800px)² perf backstop — inverse-square force 
 const CENTER_K = 0.1;      // forceX/Y gravity strength at center=100 (d3 default 0.1)
 const DAMPEN = 0.7;        // velocity retained per tick (d3 velocityDecay 0.4 → retain 0.6; a touch livelier)
 const VEL_CAP = 12;        // integrator safety clamp (forces self-limit; rarely reached)
+
+// Layout-pattern tuning — applied on top of the shared repel/link physics.
+const RING_GAP = 130;   // px between concentric rings (radial "globe")
+const LAYER_GAP = 190;  // px between columns (layered / neural flow)
+const RADIAL_K = 0.09;  // strength pulling a node toward its ring radius
+const LAYER_K = 0.1;    // strength pulling a node toward its column x
 
 function analyze(graph: Graph) {
   const adj = new Map<string, Set<string>>();
@@ -173,8 +180,10 @@ export function MemoryGraphView({
       rad.set(n.id, Math.min(54, Math.max(18, 20 + d * 2.4)) / 2);
       deg.set(n.id, Math.max(1, d));
     }
-    return { rad, deg };
-  }, [nodes]);
+    // Pivot + BFS rings drive the radial/layered patterns (pure helper).
+    const { pivot, ring, maxRing } = layoutScaffold(nodes, edges);
+    return { rad, deg, pivot, ring, maxRing };
+  }, [nodes, edges]);
   const simRef = useRef(sim);
   simRef.current = sim;
 
@@ -310,19 +319,52 @@ export function MemoryGraphView({
     const pm = posRef.current;
     const animate = f.animate;
     const dragId = dragIdRef.current;
-    const { rad, deg } = simRef.current;
+    const { rad, deg, pivot, ring, maxRing } = simRef.current;
     const nodeScale = displayRef.current.nodeSize / 100;
     const charge = (f.repel / 100) * REPEL_SCALE;               // many-body strength (inverse-square)
     const gravity = Math.max(0.008, f.center / 100) * CENTER_K; // forceX/Y pull; floored so the cloud can't escape
     const linkMul = f.link / 100;                              // 0..1 link-strength multiplier
     const desired = f.linkDistance;
-    // gentle isotropic pull to one centre — disconnected islands settle in a
-    // ring where repel balances it.
-    for (const n of nodes) {
-      const p = pm.get(n.id);
-      if (!p) continue;
-      p.vx += (CX - p.x) * gravity * alpha;
-      p.vy += (CY - p.y) * gravity * alpha;
+    // Anchor force — the layout pattern. Repel + link springs below are shared;
+    // only what pulls a node toward its "home" changes.
+    //  · web     → gentle isotropic pull to one centre (disconnected islands
+    //              settle in a ring where repel balances it).
+    //  · radial  → pull each node onto its ring radius (hop-distance from the
+    //              highest-degree pivot), pivot pinned at centre → a "globe".
+    //  · layered → pull each node onto a column keyed by hop-distance → a
+    //              left→right neural-style flow; repel spreads each column.
+    const layout = f.layout;
+    if (layout === "radial") {
+      for (const n of nodes) {
+        const p = pm.get(n.id);
+        if (!p) continue;
+        if (n.id === pivot) { p.vx += (CX - p.x) * 0.3 * alpha; p.vy += (CY - p.y) * 0.3 * alpha; continue; }
+        const targetR = (ring.get(n.id) || 1) * RING_GAP;
+        const dx = p.x - CX, dy = p.y - CY;
+        const dist = Math.hypot(dx, dy) || 1;
+        const k = RADIAL_K * alpha;
+        p.vx += (dx / dist) * (targetR - dist) * k;
+        p.vy += (dy / dist) * (targetR - dist) * k;
+        p.vx += (CX - p.x) * 0.006 * alpha; // keep the whole cloud framed
+        p.vy += (CY - p.y) * 0.006 * alpha;
+      }
+    } else if (layout === "layered") {
+      const mid = maxRing / 2;
+      for (const n of nodes) {
+        const p = pm.get(n.id);
+        if (!p) continue;
+        const targetX = CX + ((ring.get(n.id) || 0) - mid) * LAYER_GAP;
+        const k = LAYER_K * alpha;
+        p.vx += (targetX - p.x) * k;         // snap to its column
+        p.vy += (CY - p.y) * 0.012 * alpha;  // gentle vertical centring
+      }
+    } else {
+      for (const n of nodes) {
+        const p = pm.get(n.id);
+        if (!p) continue;
+        p.vx += (CX - p.x) * gravity * alpha;
+        p.vy += (CY - p.y) * gravity * alpha;
+      }
     }
     for (let i = 0; i < nodes.length; i++) {
       const a = pm.get(nodes[i].id);
@@ -414,7 +456,7 @@ export function MemoryGraphView({
 
   // Reheat so a settled graph visibly re-flows on any node-set or Forces edit
   // (works even while paused → the controls always respond).
-  useEffect(() => { reheat(); }, [nodes, forces.center, forces.repel, forces.link, forces.linkDistance, reheat]);
+  useEffect(() => { reheat(); }, [nodes, forces.layout, forces.center, forces.repel, forces.link, forces.linkDistance, reheat]);
   // Toggling Animate ON reheats so you SEE it wake; OFF runs the loop down to
   // the freeze threshold. The `animate` flag also drives per-frame breathing.
   useEffect(() => {
